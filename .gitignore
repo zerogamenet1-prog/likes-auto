@@ -1,0 +1,34 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# App data and secrets
+data/
+*.db
+*.sqlite
+.env
+!.env.example
+sms.env
+*.pem
+*.key
+
+# Build and runtime
+dist/
+.gunicorn/
+*.log
+
+# User uploads (keep built-in blog art)
+static/uploads/
+
+# One-off local scripts
+_typo.py
+_split_mods_tab.py
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/

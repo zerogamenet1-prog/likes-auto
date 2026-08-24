@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-home la-home-v2">
+  <section class="la-hero la-hero-v2">
+    <div class="la-hero-orbs" aria-hidden="true"><span class="a"></span><span class="b"></span><span class="c"></span></div>
+    <div class="la-hero-spark" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="la-wrap la-hero-grid">
+      <div class="la-fade">
+        <div class="la-badge"><span class="dot"></span> {{ t.badge }}</div>
+        <h1>{{ t.hero_h1 }}<br><span>{{ t.hero_span }}</span></h1>
+        <p class="la-lead">{{ t.hero_lead }}</p>
+        <div class="la-hero-benefits">
+          <span><i class="ri-flashlight-line"></i> {{ t.hero_b1 }}</span>
+          <span><i class="ri-customer-service-2-line"></i> {{ t.hero_b2 }}</span>
+          <span><i class="ri-code-s-slash-line"></i> {{ t.hero_b3 }}</span>
+          <span><i class="ri-shield-check-line"></i> {{ t.hero_b4 }}</span>
+        </div>
+        <div class="la-cta">
+          <a class="la-btn" href="/signup"><i class="ri-user-add-line"></i> {{ t.cta_free }}</a>
+          <a class="la-btn la-btn-ghost" href="/services"><i class="ri-price-tag-3-line"></i> {{ t.cta_prices }}</a>
+        </div>
+        <ul class="la-trust">
+          <li><i class="ri-lock-2-fill"></i> {{ t.trust_ssl }}</li>
+          <li><i class="ri-shield-check-fill"></i> {{ t.trust_nopass }}</li>
+          <li><i class="ri-time-fill"></i> {{ t.trust_auto }}</li>
+        </ul>
+      </div>
+
+      {% if not user %}
+      <aside class="la-hero-login la-login-card">
+        <div class="la-login-hi">
+          <h3>{{ t.welcome_back }}</h3>
+          <p>{{ t.new_here }} <a href="/signup">{{ t.cta_free }}</a></p>
+        </div>
+        {% include "_google_btn.html" %}
+        <form method="post" action="/signin">
+          <label class="la-field">{{ t.label_user }}</label>
+          <input class="la-input" type="text" name="username" required autocomplete="username" placeholder="{{ t.label_user }}">
+          <label class="la-field">{{ t.label_pass }}</label>
+          <input class="la-input" type="password" name="password" required autocomplete="current-password" placeholder="{{ t.label_pass }}">
+          <div class="la-login-row">
+            <label><input type="checkbox" name="remember" value="1"> {{ t.remember }}</label>
+            <a href="/tickets">{{ t.forgot }}</a>
+          </div>
+          <button class="la-btn" type="submit" style="width:100%">{{ t.nav_login }}</button>
+        </form>
+      </aside>
+      {% else %}
+      <div class="la-hero-shot la-phone-wrap">
+        <img src="/static/assets/dash-laptop.jpg" alt="แผงสั่งซื้อ Likes Auto บนคอมพิวเตอร์" width="560" height="420" decoding="async" fetchpriority="low">
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="la-statsbar">
+    <div class="la-wrap la-bigstats">
+      <div class="la-bigstat">
+        <strong id="c1" data-target="{{ live_stats.orders or 0 }}">0</strong>
+        <span>{{ t.stat_orders }}</span>
+      </div>
+      <div class="la-bigstat">
+        <strong id="c3" data-target="{{ live_stats.clients or 0 }}">0</strong>
+        <span>{{ t.stat_users }}</span>
+      </div>
+      <div class="la-bigstat">
+        <strong id="c2" data-target="{{ live_stats.services or 0 }}">0</strong>
+        <span>{{ t.stat_svcs }}</span>
+      </div>
+      <div class="la-bigstat">
+        <strong>24/7</strong>
+        <span>{{ t.stat_auto }}</span>
+      </div>
+    </div>
+  </section>
+
+  {% if shop_plats %}
+  <div class="la-marquee" aria-hidden="true">
+    <div class="la-marquee-track">
+      {% for n in [1, 2] %}
+        {% for p in shop_plats %}
+        <span class="la-marquee-item"><img src="{{ p.logo or '/static/assets/plats/app.svg' }}" alt="{{ p.name }}" width="20" height="20"> {{ p.name }}</span>
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <section class="la-section" id="about">
+    <div class="la-wrap">
+      <div class="la-kicker">{{ t.about_kicker }}</div>
+      <h2>{{ t.about_h2 }}</h2>
+      <p class="sub">{{ t.about_sub }}</p>
+      <div class="la-about-grid">
+        <article class="la-about-card"><i class="ri-building-4-line"></i><h3>{{ t.about1_t }}</h3><p>{{ t.about1_d }}</p></article>
+        <article class="la-about-card"><i class="ri-apps-2-line"></i><h3>{{ t.about2_t }}</h3><p>{{ t.about2_d }}</p></article>
+        <article class="la-about-card"><i class="ri-timer-flash-line"></i><h3>{{ t.about3_t }}</h3><p>{{ t.about3_d }}</p></article>
+        <article class="la-about-card"><i class="ri-store-2-line"></i><h3>{{ t.about4_t }}</h3><p>{{ t.about4_d }}</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="la-section" id="platforms">
+    <div class="la-wrap">
+      <div class="la-kicker">{{ t.pop_kicker }}</div>
+      <h2>{{ t.pop_h2 }}</h2>
+      <p class="sub">{{ t.pop_sub }}</p>
+      <div class="la-pop-grid">
+        {% if shop_plats %}
+          {% for p in shop_plats[:6] %}
+          <a class="la-pop-card" href="/services?cat={{ p.name|urlencode }}">
+            <img class="la-platlogo" src="{{ p.logo or '/static/assets/plats/app.svg' }}" alt="{{ p.name }}" width="40" height="40">
+            <div>
+              <h3>{{ p.name }}</h3>
+              <p>{{ p.blurb or (p.count ~ ' รายการ') }}</p>
+              <div class="la-pop-meta">
+                {% if p.from_rate is defined and p.from_rate is not none %}
+                <b>{{ t.from_price }} ฿{{ "%.4f"|format(p.from_rate) }} {{ t.per_1k }}</b>
+                {% else %}
+                <b>{{ p.count }} รายการ</b>
+                {% endif %}
+                <span>{{ t.cta_prices }}</span>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        {% else %}
+          <a class="la-pop-card" href="/services?cat=Instagram"><img class="la-platlogo" src="/static/assets/plats/instagram.svg" alt="Instagram" width="44" height="44"><div><h3>Instagram</h3><p>{{ t.ig_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
+          <a class="la-pop-card" href="/services?cat=Youtube"><img class="la-platlogo" src="/static/assets/plats/youtube.svg" alt="YouTube" width="44" height="44"><div><h3>YouTube</h3><p>{{ t.yt_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
+          <a class="la-pop-card" href="/services?cat=Tiktok"><img class="la-platlogo" src="/static/assets/plats/tiktok.svg" alt="TikTok" width="44" height="44"><div><h3>TikTok</h3><p>{{ t.tt_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
+          <a class="la-pop-card" href="/services?cat=Facebook"><img class="la-platlogo" src="/static/assets/plats/facebook.svg" alt="Facebook" width="44" height="44"><div><h3>Facebook</h3><p>{{ t.fb_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
+        {% endif %}
+      </div>
+      <div class="la-home-cta">
+        <a class="la-btn" href="/services"><i class="ri-apps-2-line"></i> {{ t.cta_prices }}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="la-section" id="features">
+    <div class="la-wrap">
+      <div class="la-kicker">{{ t.why_kicker }}</div>
+      <h2>{{ t.why_h2 }}</h2>
+      <p class="sub">{{ t.why_sub }}</p>
+      <div class="la-why-grid">
+        <article class="la-why-card"><i class="ri-flashlight-line"></i><h3>{{ t.why1_t }}</h3><p>{{ t.why1_d }}</p></article>
+        <article class="la-why-card"><i class="ri-shield-check-line"></i><h3>{{ t.why2_t }}</h3><p>{{ t.why2_d }}</p></article>
+        <article class="la-why-card"><i class="ri-coin-line"></i><h3>{{ t.why3_t }}</h3><p>{{ t.why3_d }}</p></article>
+        <article class="la-why-card"><i class="ri-time-line"></i><h3>{{ t.why4_t }}</h3><p>{{ t.why4_d }}</p></article>
+        <article class="la-why-card"><i class="ri-customer-service-2-line"></i><h3>{{ t.why5_t }}</h3><p>{{ t.why5_d }}</p></article>
+        <article class="la-why-card"><i class="ri-code-s-slash-line"></i><h3>{{ t.why6_t }}</h3><p>{{ t.why6_d }}</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="la-section" id="howto">
+    <div class="la-wrap">
+      <div class="la-kicker">{{ t.howto_kicker }}</div>
+      <h2>{{ t.howto_h2 }}</h2>
+      <p class="sub">{{ t.howto_sub }}</p>
+      <div class="la-steps la-steps-4">
+        <article class="la-card la-step-card"><div class="la-num">1</div><h3>{{ t.step1_t }}</h3><p>{{ t.step1_d }}</p></article>
+        <article class="la-card la-step-card"><div class="la-num">2</div><h3>{{ t.step2_t }}</h3><p>{{ t.step2_d }}</p></article>
+        <article class="la-card la-step-card"><div class="la-num">3</div><h3>{{ t.step3_t }}</h3><p>{{ t.step3_d }}</p></article>
+        <article class="la-card la-step-card"><div class="la-num">4</div><h3>{{ t.step4_t }}</h3><p>{{ t.step4_d }}</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="la-section" id="pay">
+    <div class="la-wrap">
+      <div class="la-kicker">{{ t.pay_kicker }}</div>
+      <h2>{{ t.pay_h2 }}</h2>
+      <p class="sub">{{ t.pay_sub }}</p>
+      <div class="la-pay-grid">
+        <article class="la-pay-shot">
+          <img src="/static/assets/pay-qr.jpg" alt="เติมเงินด้วยพร้อมเพย์ QR" width="420" height="280" loading="lazy" decoding="async">
+          <div><i class="ri-qr-code-line"></i><h3>{{ t.pay1_t }}</h3><p>{{ t.pay1_d }}</p></div>
+        </article>
+        <article class="la-pay-shot">
+          <img src="/static/assets/pay-wallet.jpg" alt="เติมเงินด้วยทรูมันนี่วอลเล็ท" width="420" height="280" loading="lazy" decoding="async">
+          <div><i class="ri-wallet-3-fill"></i><h3>{{ t.pay2_t }}</h3><p>{{ t.pay2_d }}</p></div>
+        </article>
+        <article class="la-pay-shot">
+          <img src="/static/assets/pay-slip.jpg" alt="แนบสลิปโอนเงินเพื่อเติมเครดิต" width="420" height="280" loading="lazy" decoding="async">
+          <div><i class="ri-bank-card-fill"></i><h3>{{ t.pay3_t }}</h3><p>{{ t.pay3_d }}</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="la-section" id="reviews">
+    <div class="la-wrap">
+      <div class="la-kicker">{{ t.rev_kicker }}</div>
+      <h2>{{ t.rev_h2 }}</h2>
+      <p class="sub">{{ t.rev_sub }}</p>
+      <div class="la-rev-slider" id="laRevSlider">
+        <button type="button" class="la-rev-nav is-prev" id="laRevPrev" aria-label="รีวิวก่อนหน้า"><i class="ri-arrow-left-s-line"></i></button>
+        <div class="la-rev-track" id="laRevTrack" tabindex="0">
+          {% for r in reviews %}
+          <article class="la-rev-card is-{{ r.style }}">
+            {% if r.style == 'quote' %}
+            <span class="la-rev-mark" aria-hidden="true">“</span>
+            <p>{{ r.text }}</p>
+            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
+            <div class="la-rev-who">
+              <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="48" height="48">
+              <div><b>{{ r.name }}</b><span>{{ r.role }}</span></div>
+              <em>{{ t.verified }}</em>
+            </div>
+            {% elif r.style == 'cover' %}
+            <img class="la-rev-hero" src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="280" height="168">
+            <em class="la-rev-pill">{{ t.verified }}</em>
+            <div class="la-rev-body">
+              <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
+              <p>{{ r.text }}</p>
+              <b>{{ r.name }}</b>
+              <span>{{ r.role }}</span>
+            </div>
+            {% elif r.style == 'split' %}
+            <img class="la-rev-side" src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="150" height="220">
+            <div class="la-rev-body">
+              <em>{{ t.verified }}</em>
+              <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
+              <p>{{ r.text }}</p>
+              <b>{{ r.name }}</b>
+              <span>{{ r.role }}</span>
+            </div>
+            {% elif r.style == 'glass' %}
+            <img class="la-rev-hex" src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="72" height="72">
+            <div>
+              <b>{{ r.name }}</b>
+              <span>{{ r.role }}</span>
+            </div>
+            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
+            <p>{{ r.text }}</p>
+            <em>{{ t.verified }}</em>
+            {% elif r.style == 'stack' %}
+            <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="88" height="88">
+            <b>{{ r.name }}</b>
+            <span>{{ r.role }}</span>
+            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
+            <p>{{ r.text }}</p>
+            <em>{{ t.verified }}</em>
+            {% elif r.style == 'ticket' %}
+            <span class="la-rev-stamp">{{ t.verified }}</span>
+            <div class="la-rev-who">
+              <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="56" height="56">
+              <div><b>{{ r.name }}</b><span>{{ r.role }}</span></div>
+            </div>
+            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
+            <p>{{ r.text }}</p>
+            {% elif r.style == 'glow' %}
+            <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="92" height="92">
+            <em>{{ t.verified }}</em>
+            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
+            <p>{{ r.text }}</p>
+            <b>{{ r.name }}</b>
+            <span>{{ r.role }}</span>
+            {% else %}
+            <div class="la-rev-who">
+              <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="44" height="44">
+              <div><b>{{ r.name }}</b><span>{{ r.role }}</span></div>
+            </div>
+            <p>{{ r.text }}</p>
+            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
+            <em>{{ t.verified }}</em>
+            {% endif %}
+          </article>
+          {% endfor %}
+        </div>
+        <button type="button" class="la-rev-nav is-next" id="laRevNext" aria-label="รีวิวถัดไป"><i class="ri-arrow-right-s-line"></i></button>
+        <div class="la-rev-dots" id="laRevDots"></div>
+      </div>
+    </div>
+  </section>
+  <script>
+  (function(){
+    var track = document.getElementById('laRevTrack');
+    var slider = document.getElementById('laRevSlider');
+    var dotsBox = document.getElementById('laRevDots');
+    if (!track || !slider || !dotsBox) return;
+    var cards = Array.prototype.slice.call(track.querySelectorAll('.la-rev-card'));
+    if (!cards.length) return;
+    var hold = false, hover = false;
+    function paused(){ return hold || hover; }
+    function leftOf(card){
+      return card.getBoundingClientRect().left - track.getBoundingClientRect().left + track.scrollLeft;
+    }
+    function nearest(){
+      var x = track.scrollLeft, best = 0, gap = 1e9;
+      cards.forEach(function(card, i){
+        var d = Math.abs(leftOf(card) - x);
+        if (d < gap) { gap = d; best = i; }
+      });
+      return best;
+    }
+    function paint(){
+      var i = nearest();
+      Array.prototype.forEach.call(dotsBox.children, function(btn, n){
+        btn.classList.toggle('is-on', n === i);
+      });
+    }
+    function go(dir){
+      var i = nearest() + dir;
+      if (i < 0) i = cards.length - 1;
+      if (i >= cards.length) i = 0;
+      track.scrollTo({ left: leftOf(cards[i]), behavior: 'smooth' });
+    }
+    cards.forEach(function(_, i){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'รีวิว ' + (i + 1));
+      btn.addEventListener('click', function(){
+        track.scrollTo({ left: leftOf(cards[i]), behavior: 'smooth' });
+      });
+      dotsBox.appendChild(btn);
+    });
+    var prev = document.getElementById('laRevPrev');
+    var next = document.getElementById('laRevNext');
+    if (prev) prev.onclick = function(){ go(-1); };
+    if (next) next.onclick = function(){ go(1); };
+    track.addEventListener('scroll', paint, { passive: true });
+    paint();
+    setInterval(function(){ if (!paused()) go(1); }, 4800);
+    track.addEventListener('pointerdown', function(){ hold = true; });
+    ['pointerup','pointercancel'].forEach(function(ev){
+      track.addEventListener(ev, function(){ hold = false; });
+    });
+    slider.addEventListener('mouseenter', function(){ hover = true; });
+    slider.addEventListener('mouseleave', function(){ hover = false; hold = false; });
+  })();
+  </script>
+
+  <section class="la-section" id="faq">
+    <div class="la-wrap">
+      <div class="la-kicker">{{ t.faq_kicker }}</div>
+      <h2>{{ t.faq_h2 }}</h2>
+      <p class="sub">{{ t.faq_sub }}</p>
+      <div class="la-faq">
+        {% for item in faq %}
+        <details{% if loop.first %} open{% endif %}><summary>{{ item.q }}</summary><p>{{ item.a }}</p></details>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="la-section" id="contact">
+    <div class="la-wrap">
+      <div class="la-cta-band">
+        <h2>{{ t.cta_band_h }}</h2>
+        <p class="sub">{{ t.cta_band_p }}</p>
+        <div class="la-cta">
+          <a class="la-btn" href="/signup">{{ t.cta_free }}</a>
+          <a class="la-btn la-btn-ghost" href="/signin" onclick="laOpenLogin(event)">{{ t.cta_login }}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<a class="la-float" href="/signup" title="{{ t.cta_start }}"><i class="ri-rocket-2-fill"></i></a>
+{% endblock %}

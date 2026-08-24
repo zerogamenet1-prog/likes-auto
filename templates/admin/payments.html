@@ -1,0 +1,170 @@
+{% extends "admin/base.html" %}
+{% block title %}เติมเงิน{% endblock %}
+{% block subtitle %}<p class="adm-sub">คิวรอตรวจอยู่ด้านบน กดดูสลิปแล้วอนุมัติหรือปฏิเสธได้ทันที</p>{% endblock %}
+{% block content %}
+{% set payst = {"pending": "รอตรวจ", "paid": "อนุมัติแล้ว", "canceled": "ปฏิเสธ"} %}
+{% set s = pay_sum if pay_sum is defined else {} %}
+{% if ok == 'paid' %}<div class="adm-ok pay-flash">อนุมัติแล้ว เครดิตเข้ากระเป๋าลูกค้า</div>
+{% elif ok == 'canceled' %}<div class="adm-ok pay-flash">ปฏิเสธรายการแล้ว</div>
+{% elif err %}<div class="adm-error">{{ err }}</div>{% endif %}
+
+<div class="kpi-grid pay-kpis">
+  <a class="kpi pay-kpi{% if not status %} is-on{% endif %}" href="/admin/payments">
+    <div><span>ทุกรายการ</span><b>{{ s.all_n or 0 }}</b></div>
+    <div class="kpi-ico blue"><i class="ri-list-check-2"></i></div>
+  </a>
+  <a class="kpi pay-kpi{% if status=='pending' %} is-on{% endif %}{% if (s.pending_n or 0) > 0 %} is-hot{% endif %}" href="/admin/payments?status=pending">
+    <div><span>รอตรวจ</span><b>{{ s.pending_n or 0 }}</b><small>{{ "%.2f"|format(s.pending_s or 0) }} บาท</small></div>
+    <div class="kpi-ico amber"><i class="ri-time-line"></i></div>
+  </a>
+  <a class="kpi pay-kpi{% if status=='paid' %} is-on{% endif %}" href="/admin/payments?status=paid">
+    <div><span>อนุมัติแล้ว</span><b>{{ s.paid_n or 0 }}</b><small>{{ "%.0f"|format(s.paid_s or 0) }} บาท</small></div>
+    <div class="kpi-ico green"><i class="ri-checkbox-circle-line"></i></div>
+  </a>
+  <a class="kpi pay-kpi{% if status=='canceled' %} is-on{% endif %}" href="/admin/payments?status=canceled">
+    <div><span>ปฏิเสธ</span><b>{{ s.canceled_n or 0 }}</b></div>
+    <div class="kpi-ico pink"><i class="ri-close-circle-line"></i></div>
+  </a>
+</div>
+
+<div class="pay-find">
+  <i class="ri-search-line"></i>
+  <input class="la-input" type="search" placeholder="ค้นหาลูกค้า ยอด รหัสอ้างอิง หรือหมายเหตุ" oninput="payFilter(this)">
+</div>
+{% if not status or status == 'pending' %}
+<section class="pay-queue">
+  <div class="pay-queue-head">
+    <h2>คิวรอตรวจ</h2>
+    <span>{{ pending_rows|length if pending_rows is defined else 0 }} รายการ</span>
+  </div>
+  {% if pending_rows %}
+  <div class="pay-cards">
+    {% for r in pending_rows %}
+    <article class="pay-card" data-q="#{{ r.id }} {{ r.client }} {{ r.method }} {{ r.ref_code }} {{ r.note }} {{ r.amount }}">
+      <button class="pay-slip" type="button" {% if r.slip and not r.slip.lower().endswith('.pdf') %}data-slip="{{ r.slip }}"{% elif r.slip %}onclick="window.open('{{ r.slip }}','_blank')"{% endif %} {% if not r.slip %}disabled{% endif %}>
+        {% if r.slip and not r.slip.lower().endswith('.pdf') %}
+        <img src="{{ r.slip }}" alt="สลิป #{{ r.id }}">
+        {% elif r.slip %}
+        <span class="pay-slip-pdf"><i class="ri-file-pdf-line"></i> PDF</span>
+        {% else %}
+        <span class="pay-slip-empty">ยังไม่มีสลิป</span>
+        {% endif %}
+      </button>
+      <div class="pay-card-body">
+        <div class="pay-card-top">
+          <b>#{{ r.id }}</b>
+          <span class="adm-badge pending">รอตรวจ</span>
+        </div>
+        <div class="pay-amt">{{ "%.2f"|format(r.amount or 0) }} <small>บาท</small></div>
+        <p class="pay-meta"><i class="ri-user-line"></i> {{ r.client }}</p>
+        <p class="pay-meta"><i class="ri-bank-card-line"></i> {{ r.method or '-' }}{% if r.ref_code %} · {{ r.ref_code }}{% endif %}</p>
+        <p class="pay-meta"><i class="ri-calendar-line"></i> {{ r.created_at or '-' }}</p>
+        {% if r.note %}<p class="pay-note">{{ r.note }}</p>{% endif %}
+        <div class="pay-acts">
+          <form method="post" action="/admin/payments/{{ r.id }}/approve">
+            <input type="hidden" name="next" value="{{ status }}">
+            <button class="la-btn pay-ok-btn" type="submit"><i class="ri-check-line"></i> อนุมัติ</button>
+          </form>
+          <form class="pay-reject" method="post" action="/admin/payments/{{ r.id }}/reject" onsubmit="return confirm('ปฏิเสธรายการ #{{ r.id }} ?')">
+            <input type="hidden" name="next" value="{{ status }}">
+            <input class="la-input" name="note" placeholder="เหตุผล (ถ้ามี)">
+            <button class="la-btn la-btn-danger" type="submit">ปฏิเสธ</button>
+          </form>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="adm-empty pay-empty">ไม่มีรายการรอตรวจ</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if status != 'pending' %}
+<div class="adm-table-wrap pay-table">
+  <div class="adm-toolbar">
+    <span class="pay-table-n">{{ rows|length }} รายการล่าสุด</span>
+  </div>
+  <table class="adm-table">
+    <thead><tr><th>ID</th><th>ลูกค้า</th><th>ช่องทาง</th><th>ยอด</th><th>อ้างอิง</th><th>สลิป</th><th>สถานะ</th><th>เวลา</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows if status or r.status != 'pending' %}
+      <tr class="pay-row is-{{ r.status }}" data-q="#{{ r.id }} {{ r.client }} {{ r.method }} {{ r.ref_code }} {{ r.note }} {{ r.amount }}">
+        <td>{{ r.id }}</td>
+        <td>{{ r.client }}</td>
+        <td>{{ r.method or '-' }}</td>
+        <td class="pay-td-amt">{{ "%.2f"|format(r.amount or 0) }}</td>
+        <td><code>{{ r.ref_code or '-' }}</code></td>
+        <td>
+          {% if r.slip and not r.slip.lower().endswith('.pdf') %}
+          <button class="adm-slip pay-slip-mini" type="button" data-slip="{{ r.slip }}"><img src="{{ r.slip }}" alt="slip"></button>
+          {% elif r.slip %}
+          <a href="{{ r.slip }}" target="_blank" rel="noopener">PDF</a>
+          {% else %}<span class="la-muted">-</span>{% endif %}
+          {% if r.note %}<div class="la-muted wrap">{{ r.note }}</div>{% endif %}
+        </td>
+        <td><span class="adm-badge {{ r.status }}">{{ payst.get(r.status, st.get(r.status, r.status)) }}</span></td>
+        <td>{{ r.created_at }}</td>
+        <td class="adm-actions">
+          {% if r.status == "pending" %}
+          <form method="post" action="/admin/payments/{{ r.id }}/approve">
+            <input type="hidden" name="next" value="{{ status }}">
+            <button class="la-btn la-btn-mini" type="submit">อนุมัติ</button>
+          </form>
+          <form method="post" action="/admin/payments/{{ r.id }}/reject" onsubmit="return confirm('ปฏิเสธรายการนี้?')">
+            <input type="hidden" name="next" value="{{ status }}">
+            <input class="la-input" name="note" placeholder="เหตุผล" style="width:120px">
+            <button class="la-btn la-btn-mini la-btn-danger" type="submit">ปฏิเสธ</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9">ยังไม่มีรายการ</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="pay-lightbox" id="payLight" hidden>
+  <button class="pay-light-x" type="button" id="payLightClose" aria-label="ปิด">×</button>
+  <img id="payLightImg" alt="สลิป">
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  function payFilter(el){
+    var q = (el.value || '').toLowerCase();
+    document.querySelectorAll('.pay-card, .pay-row').forEach(function(n){
+      var hay = (n.getAttribute('data-q') || n.innerText || '').toLowerCase();
+      n.style.display = !q || hay.indexOf(q) >= 0 ? '' : 'none';
+    });
+  }
+  window.payFilter = payFilter;
+  var box = document.getElementById('payLight');
+  var img = document.getElementById('payLightImg');
+  function openSlip(src){
+    if (!box || !img || !src) return;
+    img.src = src;
+    box.hidden = false;
+    box.classList.add('is-open');
+  }
+  function closeSlip(){
+    if (!box) return;
+    box.classList.remove('is-open');
+    box.hidden = true;
+    if (img) img.removeAttribute('src');
+  }
+  document.querySelectorAll('[data-slip]').forEach(function(btn){
+    btn.addEventListener('click', function(){ openSlip(btn.getAttribute('data-slip')); });
+  });
+  var closeBtn = document.getElementById('payLightClose');
+  if (closeBtn) closeBtn.addEventListener('click', closeSlip);
+  if (box) box.addEventListener('click', function(e){ if (e.target === box) closeSlip(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeSlip(); });
+})();
+</script>
+{% endblock %}

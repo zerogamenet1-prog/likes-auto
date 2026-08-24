@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-form-shell">
+      <div class="la-form-copy">
+        <h1>{{ t.signup_title }}</h1>
+        <p>{{ t.signup_lead }}</p>
+        <img class="la-form-photo" src="/static/assets/support-team.jpg" alt="ทีมซัพพอร์ต Likes Auto" width="480" height="320" loading="lazy" decoding="async">
+        <ul class="la-trust la-trust-col">
+          <li><i class="ri-user-add-fill"></i> สมัครฟรี ใช้ได้ทันที</li>
+          <li><i class="ri-shield-check-fill"></i> {{ t.trust_nopass }}</li>
+          <li><i class="ri-time-fill"></i> {{ t.trust_auto }}</li>
+        </ul>
+      </div>
+      <div class="la-form-side">
+        {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+        {% include "_google_btn.html" %}
+        <form method="post" action="/signup">
+          <label class="la-field">{{ t.label_user }}</label>
+          <input class="la-input" type="text" name="username" required>
+          <label class="la-field">{{ t.label_email }}</label>
+          <input class="la-input" type="email" name="email" required>
+          <label class="la-field">{{ t.label_pass }}</label>
+          <input class="la-input" type="password" name="password" required>
+          <label class="la-field">{{ t.label_confirm }}</label>
+          <input class="la-input" type="password" name="confirm" required>
+          <label class="la-field">โค้ดแนะนำ (ถ้ามี)</label>
+          <input class="la-input" type="text" name="ref" value="{{ ref or '' }}">
+          <button class="la-btn" type="submit" style="width:100%">{{ t.nav_signup }}</button>
+        </form>
+        <p style="margin-top:14px">{{ t.have_account }} <a href="/signin">{{ t.nav_login }}</a></p>
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

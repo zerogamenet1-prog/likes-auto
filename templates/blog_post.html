@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-page-head">
+      <p class="sub"><a href="/blog">บล็อก</a>{% if post.created_at %} · {{ post.created_at }}{% endif %}</p>
+      <h1>{{ post.title }}</h1>
+      {% if post.tag_list %}
+      <div class="la-tags">
+        {% for t in post.tag_list %}
+        <a class="la-tag" href="/blog?tag={{ t|urlencode }}">{{ t }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="la-prose">{{ post.body|safe }}</div>
+    <div class="la-blog-cta">
+      <a class="la-btn" href="/services">ดูราคาปั้มไลค์</a>
+      <a class="la-btn la-btn-ghost" href="/signup">สมัครฟรี</a>
+    </div>
+    {% if related %}
+    <section class="la-related" aria-label="บทความที่เกี่ยวข้อง">
+      <h2>บทความที่เกี่ยวข้อง</h2>
+      <div class="la-blog-list">
+        {% for r in related %}
+        <article class="la-card la-blog-card">
+          {% if r.cover %}<a href="{{ r.href }}"><img class="la-blog-cover" src="{{ r.cover }}" alt="{{ r.title }}"></a>{% endif %}
+          <h3><a href="{{ r.href }}">{{ r.title }}</a></h3>
+          <p>{{ r.excerpt }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

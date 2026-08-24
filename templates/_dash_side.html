@@ -1,0 +1,66 @@
+<aside class="la-side" id="laSide">
+  <a class="la-side-brand" href="{{ shop_home or '/neworder' }}">
+    <img src="/static/assets/brand.svg" width="32" height="32" alt="">
+    <span>Likes Auto</span>
+  </a>
+  {% if user %}
+  {% if mods.mod_account %}<a class="la-side-user" href="/account">{% else %}<div class="la-side-user">{% endif %}
+    <span class="la-side-av">{{ user.username[:1]|upper }}</span>
+    <span>
+      <b>{{ user.username }}</b>
+      <em>&#3647;{{ "%.2f"|format(user.balance or 0) }}</em>
+    </span>
+  {% if mods.mod_account %}</a>{% else %}</div>{% endif %}
+  {% endif %}
+  {% if mods.mod_neworder or mods.mod_dripfeed or mods.mod_services or mods.mod_orders or mods.mod_subscription %}
+  <p class="la-side-h">คำสั่งซื้อใหม่</p>
+  {% if mods.mod_neworder %}
+  <a href="/neworder" class="{% if page == 'neworder' %}is-on{% endif %}"><i class="ri-shopping-bag-3-line"></i> สั่งซื้อใหม่</a>
+  {% endif %}
+  {% if mods.mod_dripfeed %}
+  <a href="/dripfeeds" class="{% if page == 'dripfeeds' %}is-on{% endif %}"><i class="ri-stack-line"></i> ส่งทีละรอบ</a>
+  {% endif %}
+  {% if mods.mod_services %}
+  <a href="/services" class="{% if page == 'services' %}is-on{% endif %}"><i class="ri-store-2-line"></i> บริการทั้งหมด</a>
+  {% endif %}
+  {% if mods.mod_orders %}
+  <a href="/orders" class="{% if page == 'orders' %}is-on{% endif %}"><i class="ri-file-list-3-line"></i> ประวัติคำสั่งซื้อ</a>
+  {% endif %}
+  {% if mods.mod_subscription %}
+  <a href="/subscriptions" class="{% if page == 'subscriptions' %}is-on{% endif %}"><i class="ri-refresh-line"></i> เติมอัตโนมัติ</a>
+  {% endif %}
+  {% endif %}
+  {% if mods.mod_addfunds or mods.mod_affiliate or mods.mod_child %}
+  <p class="la-side-h">เติมเงิน</p>
+  {% if mods.mod_addfunds %}
+  <a href="/addfunds" class="{% if page == 'addfunds' %}is-on{% endif %}"><i class="ri-wallet-3-line"></i> เติมเงิน</a>
+  {% endif %}
+  {% if mods.mod_affiliate %}
+  <a href="/affiliates" class="{% if page == 'affiliates' %}is-on{% endif %}"><i class="ri-share-forward-line"></i> เชิญเพื่อน</a>
+  {% endif %}
+  {% if mods.mod_child %}
+  <a href="/panels" class="{% if page == 'panels' %}is-on{% endif %}"><i class="ri-window-line"></i> แผงลูก</a>
+  {% endif %}
+  {% endif %}
+  {% if mods.mod_tickets or mods.mod_faq %}
+  <p class="la-side-h">ช่วยเหลือ</p>
+  {% if mods.mod_tickets %}
+  <a href="/tickets" class="{% if page == 'tickets' %}is-on{% endif %}"><i class="ri-customer-service-2-line"></i> ซัพพอร์ต</a>
+  {% endif %}
+  {% if mods.mod_faq %}
+  <a href="/faq" class="{% if page == 'faq' %}is-on{% endif %}"><i class="ri-question-line"></i> คำถามที่พบบ่อย</a>
+  {% endif %}
+  {% endif %}
+  {% if mods.mod_account or mods.mod_api or mods.mod_logout %}
+  <p class="la-side-h">อื่นๆ</p>
+  {% if mods.mod_account %}
+  <a href="/account" class="{% if page == 'account' %}is-on{% endif %}"><i class="ri-user-3-line"></i> บัญชี</a>
+  {% endif %}
+  {% if mods.mod_api %}
+  <a href="/api" class="{% if page == 'api' %}is-on{% endif %}"><i class="ri-code-s-slash-line"></i> API</a>
+  {% endif %}
+  {% if mods.mod_logout %}
+  <a href="/logout"><i class="ri-logout-box-r-line"></i> ออกจากระบบ</a>
+  {% endif %}
+  {% endif %}
+</aside>

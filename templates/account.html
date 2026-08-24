@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-page-head"><h1>บัญชี</h1></div>
+    {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+    {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
+    <div class="adm-cards" style="max-width:720px">
+      <article class="adm-card"><span>ชื่อผู้ใช้</span><b>{{ user.username }}</b></article>
+      <article class="adm-card"><span>ยอดเงิน</span><b>{{ "%.2f"|format(user.balance or 0) }}</b></article>
+      <article class="adm-card"><span>อีเมล</span><b style="font-size:16px">{{ user.email }}</b></article>
+      {% if mods.mod_api %}<article class="adm-card"><span>API Key</span><b style="font-size:14px"{% if user.api_key %} data-copy="{{ user.api_key }}" title="แตะเพื่อคัดลอก"{% endif %}>{{ user.api_key or "-" }}</b></article>{% endif %}
+    </div>
+    {% if mods.mod_api %}<form method="post" action="/account/apikey" style="margin:12px 0 22px"><button class="la-btn" type="submit">สร้าง API key ใหม่</button></form>{% endif %}
+    <form method="post" action="/account/password" class="la-order-card" style="margin-bottom:18px">
+      <h3>เปลี่ยนรหัสผ่าน</h3>
+      <label class="la-field">รหัสเดิม</label>
+      <input class="la-input" type="password" name="old_password" required>
+      <label class="la-field">รหัสใหม่</label>
+      <input class="la-input" type="password" name="new_password" required minlength="6">
+      <button class="la-btn" type="submit">บันทึก</button>
+    </form>
+    {% if mods.mod_transfer and (not settings or settings.enable_transfer_funds != '0') %}
+    <form method="post" action="/account/transfer" class="la-order-card">
+      <h3>โอนเงินในระบบ</h3>
+      <label class="la-field">ยูสผู้รับ</label>
+      <input class="la-input" name="receiver" required>
+      <label class="la-field">จำนวน</label>
+      <input class="la-input" type="number" step="0.01" name="amount" required>
+      <button class="la-btn" type="submit">โอน</button>
+    </form>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

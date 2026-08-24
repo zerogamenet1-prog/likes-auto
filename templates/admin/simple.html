@@ -1,0 +1,74 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+{% if tab == 'logs' %}
+<div class="adm-log-links">
+  <a class="la-btn la-btn-mini {% if log_kind != 'system' %}la-btn-ghost{% endif %}" href="/admin/logs">ระบบ</a>
+  <a class="la-btn la-btn-mini {% if log_kind != 'guard' %}la-btn-ghost{% endif %}" href="/admin/logs/guard">เข้าสู่ระบบ</a>
+  <a class="la-btn la-btn-mini {% if log_kind != 'providers' %}la-btn-ghost{% endif %}" href="/admin/logs/providers">ดึงงาน</a>
+</div>
+{% endif %}
+<div class="adm-table-wrap">
+  <div class="adm-toolbar" style="padding:12px 12px 0">
+    <input class="la-input adm-search" type="search" placeholder="ค้นหาในตาราง" oninput="admFilter(this)">
+  </div>
+  <table class="adm-table">
+    <thead><tr>{% for label in labels %}<th>{{ label }}</th>{% endfor %}{% if page in ['dripfeeds','subscriptions','tasks'] %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        {% for col in columns %}
+        <td{% if col in ['detail','service'] %} class="wrap"{% endif %}>
+          {% if col == 'status' %}
+            <span class="adm-badge {{ r[col] }}">{{ st.get(r[col], r[col]) }}</span>
+          {% elif col == 'kind' %}
+            {{ 'เติม' if r[col]=='refill' else ('ยกเลิก' if r[col]=='cancel' else r[col]) }}
+          {% else %}
+            {{ r[col] }}
+          {% endif %}
+        </td>
+        {% endfor %}
+        {% if page == 'dripfeeds' %}
+        <td>
+          <form method="post" action="/admin/dripfeeds/{{ r.id }}/status" class="adm-inline">
+            <select class="la-input adm-select" name="status" onchange="this.form.submit()">
+              {% for s in ['active','paused','completed','canceled'] %}
+              <option value="{{ s }}" {% if r.status==s %}selected{% endif %}>{{ st.get(s, s) }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </td>
+        {% elif page == 'subscriptions' %}
+        <td>
+          <form method="post" action="/admin/subscriptions/{{ r.id }}/status" class="adm-inline">
+            <select class="la-input adm-select" name="status" onchange="this.form.submit()">
+              {% for s in ['active','paused','completed','canceled'] %}
+              <option value="{{ s }}" {% if r.status==s %}selected{% endif %}>{{ st.get(s, s) }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </td>
+        {% elif page == 'tasks' %}
+        <td class="adm-actions">
+          {% if r.status in ['pending','failed'] %}
+          <form method="post" action="/admin/tasks/{{ r.id }}/status">
+            <input type="hidden" name="status" value="{{ 'retry' if r.status=='failed' else 'run' }}">
+            <button class="la-btn la-btn-mini" type="submit">{{ 'ลองใหม่' if r.status=='failed' else 'ส่งตอนนี้' }}</button>
+          </form>
+          {% endif %}
+          {% if r.status == 'pending' %}
+          <form method="post" action="/admin/tasks/{{ r.id }}/status">
+            <input type="hidden" name="status" value="canceled">
+            <button class="la-btn la-btn-mini la-btn-danger" type="submit">ยกเลิก</button>
+          </form>
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+    {% else %}
+      <tr><td colspan="{{ labels|length }}">ยังไม่มีข้อมูล</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

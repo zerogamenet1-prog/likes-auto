@@ -1,0 +1,190 @@
+{% extends "admin/base.html" %}
+{% block title %}บล็อก{% endblock %}
+{% block subtitle %}<p class="adm-sub">เพิ่ม แก้ไข ลบ และตั้งค่าเผยแพร่บทความบนเว็บได้จากหน้านี้</p>{% endblock %}
+{% block content %}
+{% if saved %}<p class="adm-ok">บันทึกบทความแล้ว</p>{% endif %}
+
+<div class="adm-filter blog-topbar">
+  <form method="get" class="adm-filter" style="margin:0">
+    <input class="la-input" name="q" value="{{ q or '' }}" placeholder="ค้นหาหัวข้อ แท็ก หรือสลัก URL" style="min-width:220px">
+    <select class="la-input" name="st" onchange="this.form.submit()">
+      <option value="" {% if not st %}selected{% endif %}>ทุกสถานะ</option>
+      <option value="on" {% if st=='on' %}selected{% endif %}>เผยแพร่แล้ว</option>
+      <option value="off" {% if st=='off' %}selected{% endif %}>ฉบับร่าง / คิว</option>
+    </select>
+    <button class="la-btn la-btn-mini" type="submit">ค้นหา</button>
+  </form>
+  <div class="adm-actions">
+    <span class="la-muted">ทั้งหมด {{ all_n }} · เผยแพร่ {{ pub_n }} · ร่าง {{ draft_n }}</span>
+    <a class="la-btn" href="/admin/appearance/blog?new=1">เขียนบทความใหม่</a>
+  </div>
+</div>
+
+{% if show_form %}
+<form method="post" action="/admin/appearance/blog" class="adm-form adm-form-wide blog-form" style="max-width:none;margin-bottom:22px">
+  <input type="hidden" name="pid" id="blogPid" value="{{ editing.id if editing else '' }}">
+  <div class="adm-form-grid">
+    <div>
+      <label class="la-field">หัวข้อ</label>
+      <input class="la-input" name="title" id="blogTitle" value="{{ editing.title if editing else '' }}" required>
+    </div>
+    <div>
+      <label class="la-field">สลัก URL (เว้นว่างให้ระบบตั้งให้)</label>
+      <input class="la-input" name="slug" value="{{ editing.slug if editing else '' }}" placeholder="pump-likes-guide">
+    </div>
+  </div>
+  <label class="la-field">แท็ก คั่นด้วยจุลภาค</label>
+  <input class="la-input" name="tags" id="blogTags" value="{{ editing.tags if editing else '' }}" placeholder="ปั้มไลค์, Instagram, การตลาด">
+  <div class="adm-sw-row" style="margin:0 0 12px">
+    <button class="adm-sw" type="button" onclick="blogAddTag('ปั้มไลค์')">ปั้มไลค์</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('ปั้มฟอล')">ปั้มฟอล</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('ปั้มวิว')">ปั้มวิว</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('ยิงแอด')">ยิงแอด</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('Instagram')">Instagram</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('TikTok')">TikTok</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('Facebook')">Facebook</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('YouTube')">YouTube</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('การตลาด')">การตลาด</button>
+    <button class="adm-sw" type="button" onclick="blogAddTag('พร้อมเพย์')">พร้อมเพย์</button>
+  </div>
+  <div class="adm-form-grid">
+    <div>
+      <label class="la-field">คำโปรย (เว้นว่างให้ตัดจากเนื้อหา)</label>
+      <input class="la-input" name="excerpt" value="{{ editing.excerpt if editing else '' }}">
+    </div>
+    <div>
+      <label class="la-field">วันเวลา</label>
+      <input class="la-input" name="created_at" value="{{ editing.created_at if editing else '' }}" placeholder="2026-08-21 12:00">
+    </div>
+  </div>
+  <label class="adm-check" style="margin-bottom:14px">
+    <input type="checkbox" name="published" value="1" {% if not editing or editing.published != 0 %}checked{% endif %}>
+    <span>เผยแพร่บนเว็บทันที</span>
+  </label>
+  <div class="blog-editor">
+    <div>
+      <label class="la-field">เนื้อหา (รองรับ HTML)</label>
+      <div class="blog-tools">
+        <button type="button" onclick="blogWrap('&lt;h3&gt;','&lt;/h3&gt;')">หัวข้อ</button>
+        <button type="button" onclick="blogWrap('&lt;p&gt;','&lt;/p&gt;')">ย่อหน้า</button>
+        <button type="button" onclick="blogWrap('&lt;b&gt;','&lt;/b&gt;')">หนา</button>
+        <button type="button" onclick="blogLink()">ลิงก์</button>
+        <button type="button" onclick="blogList()">รายการ</button>
+        <button type="button" onclick="blogImgPrompt()">ใส่รูปจากลิงก์</button>
+      </div>
+      <textarea class="la-input" name="body" id="blogBody" style="min-height:420px;padding:12px;font-family:ui-monospace,Consolas,monospace;font-size:13px">{{ editing.body if editing else '' }}</textarea>
+    </div>
+    <aside class="blog-side">
+      <p class="la-field">คลิกภาพเพื่อแทรกในบทความ</p>
+      <div class="blog-gallery">
+        {% for src in media %}
+        <button type="button" class="blog-thumb" onclick="blogImg('{{ src }}')" title="{{ src }}">
+          <img src="{{ src }}" alt="">
+        </button>
+        {% else %}
+        <p class="la-muted">ยังไม่มีรูปในคลัง</p>
+        {% endfor %}
+      </div>
+    </aside>
+  </div>
+  <div class="adm-actions" style="margin-top:14px">
+    <button class="la-btn" type="submit">{% if editing %}บันทึกการแก้ไข{% else %}บันทึกบทความ{% endif %}</button>
+    <a class="la-btn la-btn-ghost" href="/admin/appearance/blog">ปิดฟอร์ม</a>
+    {% if editing and editing.slug %}
+    <a class="la-btn la-btn-ghost" href="/blog/{{ editing.slug }}" target="_blank" rel="noopener">เปิดบนเว็บ</a>
+    {% endif %}
+  </div>
+</form>
+<form method="post" action="/admin/appearance/blog/upload" enctype="multipart/form-data" class="adm-form" style="margin-bottom:22px">
+  <input type="hidden" name="pid" value="{{ editing.id if editing else '' }}">
+  <label class="la-field">อัปโหลดรูปเข้าบทความ</label>
+  <input class="la-input" type="file" name="upload" accept="image/*" required>
+  <button class="la-btn la-btn-mini" type="submit">อัปโหลดแล้วแทรก</button>
+</form>
+{% endif %}
+
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    <thead>
+      <tr><th>บทความ</th><th>แท็ก</th><th>สถานะ</th><th>เวลา</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for r in posts %}
+    <tr>
+      <td class="wrap" data-label="บทความ">
+        {% if r.cover %}<img class="blog-list-cover" src="{{ r.cover }}" alt="">{% endif %}
+        <b>{{ r.title }}</b>
+        <div class="la-muted">/blog/{{ r.slug or r.id }}</div>
+      </td>
+      <td class="wrap" data-label="แท็ก">{{ r.tags or '-' }}</td>
+      <td data-label="สถานะ">
+        {% if r.published == 0 %}<span class="adm-badge">ฉบับร่าง</span>{% else %}<span class="adm-badge completed">เผยแพร่</span>{% endif %}
+      </td>
+      <td data-label="เวลา">{{ r.created_at }}</td>
+      <td class="adm-actions" data-label="">
+        <a class="la-btn la-btn-mini" href="/admin/appearance/blog?edit={{ r.id }}">แก้</a>
+        <a class="la-btn la-btn-mini la-btn-ghost" href="{{ r.href }}" target="_blank" rel="noopener">เปิด</a>
+        <form method="post" action="/admin/appearance/blog/{{ r.id }}/toggle">
+          <button class="la-btn la-btn-mini la-btn-ghost" type="submit">{% if r.published == 0 %}เผยแพร่{% else %}ซ่อน{% endif %}</button>
+        </form>
+        <form method="post" action="/admin/appearance/blog/{{ r.id }}/copy">
+          <button class="la-btn la-btn-mini la-btn-ghost" type="submit">สำเนา</button>
+        </form>
+        <form method="post" action="/admin/appearance/blog/{{ r.id }}/delete" onsubmit="return confirm('ลบบทความนี้ถาวร?')">
+          <button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5">ยังไม่มีบทความ{% if q %} ที่ตรงคำค้น{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function blogBody(){ return document.getElementById("blogBody"); }
+function blogWrap(a,b){
+  var t=blogBody(); if(!t) return;
+  var s=t.selectionStart, e=t.selectionEnd, sel=t.value.substring(s,e)||"ข้อความ";
+  t.value=t.value.slice(0,s)+a+sel+b+t.value.slice(e);
+  t.focus();
+}
+function blogLink(){
+  var href=prompt("ลิงก์","/services");
+  if(!href) return;
+  blogWrap('<a href="'+href+'">',"</a>");
+}
+function blogList(){
+  blogWrap("<ul>\n<li>","</li>\n<li>รายการ</li>\n</ul>");
+}
+function blogImg(src){
+  if(!src) return;
+  var t=document.getElementById("blogTitle");
+  var alt=t ? t.value : "";
+  var html='<figure class="la-blog-fig"><img src="'+src+'" alt="'+alt+'" width="1280" height="720" loading="lazy"><figcaption></figcaption></figure>\n';
+  var box=blogBody(); if(!box) return;
+  box.value=box.value+"\n"+html;
+  box.focus();
+}
+function blogImgPrompt(){
+  var src=prompt("ที่อยู่รูป เช่น /static/assets/blog/blog-likes.jpg");
+  if(src) blogImg(src);
+}
+function blogAddTag(tag){
+  var el=document.getElementById("blogTags"); if(!el) return;
+  var cur=(el.value||"").split(",").map(function(x){return x.trim();}).filter(Boolean);
+  if(cur.indexOf(tag)<0) cur.push(tag);
+  el.value=cur.join(", ");
+}
+(function(){
+  var up={{ uploaded|tojson if uploaded else '""' }};
+  if(up){
+    var t=blogBody();
+    if(t && t.value.indexOf(up)<0) blogImg(up);
+  }
+})();
+</script>
+{% endblock %}

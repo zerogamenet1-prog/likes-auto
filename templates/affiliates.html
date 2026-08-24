@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page"><div class="la-wrap">
+  <div class="la-page-head"><h1>แนะนำเพื่อน</h1></div>
+  <article class="adm-card" style="max-width:640px">
+    <span>ลิงก์แนะนำ</span>
+    <b style="font-size:16px" data-copy="{{ site.url }}/signup?ref={{ user.ref_code }}">{{ site.url }}/signup?ref={{ user.ref_code }}</b>
+    <p class="la-muted">ได้ {{ settings.affiliate_percent or 5 }}% เมื่อเพื่อนเติมเงินสำเร็จ</p>
+    <p>รายได้สะสม {{ "%.2f"|format(user.ref_earn or 0) }} บาท</p>
+    <button class="la-btn la-btn-mini" type="button" data-copy="{{ site.url }}/signup?ref={{ user.ref_code }}">คัดลอกลิงก์</button>
+  </article>
+</div></main>
+{% endblock %}

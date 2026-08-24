@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-page-head">
+      <div class="la-kicker">API</div>
+      <h1>{{ t.api_title }}</h1>
+      <p class="sub">{{ t.api_lead }}</p>
+    </div>
+    <p class="la-notice">{{ t.notice }}</p>
+    {% if user and user.api_key %}<p>API Key ของคุณ: <code data-copy="{{ user.api_key }}" title="แตะเพื่อคัดลอก">{{ user.api_key }}</code></p>{% endif %}
+    <pre class="la-code" data-copy title="แตะเพื่อคัดลอกตัวอย่าง">POST {{ site.url }}/api/v2
+{
+  "key": "YOUR_API_KEY",
+  "action": "add",
+  "service": 1,
+  "link": "https://instagram.com/p/xxxxx",
+  "quantity": 100
+}</pre>
+  </div>
+</main>
+{% endblock %}

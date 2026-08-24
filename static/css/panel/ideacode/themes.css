@@ -1,0 +1,141 @@
+html[data-la-pack] body.la-theme {
+  background:
+    radial-gradient(900px 480px at 85% 8%, var(--la-glow), transparent 55%),
+    radial-gradient(700px 420px at 8% 18%, var(--la-glow2), transparent 50%),
+    radial-gradient(700px 400px at 50% 100%, var(--la-glow3), transparent 50%),
+    var(--la-bg) !important;
+  color: var(--la-text) !important;
+}
+html[data-la-pack] .la-fx .blob.a { background: var(--la-accent); }
+html[data-la-pack] .la-fx .blob.b { background: var(--la-accent2); }
+html[data-la-pack] .la-fx .blob.c { background: var(--la-cyan); }
+html[data-la-pack] a { color: var(--la-text); }
+html[data-la-pack] a:hover { color: var(--la-cyan); }
+html[data-la-pack] .la-header {
+  background: var(--la-nav) !important;
+  border-bottom-color: var(--la-stroke) !important;
+}
+html[data-la-pack] .la-header.is-scrolled { background: var(--la-nav-scrolled) !important; }
+html[data-la-pack] .la-header .la-brand,
+html[data-la-pack] .la-header .la-nav a,
+html[data-la-pack] .la-header .la-lang,
+html[data-la-pack] .la-header .la-menu-btn,
+html[data-la-pack] .la-header .la-iconbtn { color: var(--la-ink) !important; }
+html[data-la-pack] .la-header .la-nav > a:hover,
+html[data-la-pack] .la-header .la-drop-toggle:hover,
+html[data-la-pack] .la-header .la-nav > a.active,
+html[data-la-pack] .la-header .la-drop-toggle.active { color: var(--la-cyan) !important; }
+html[data-la-pack] .la-header a.la-nav-login {
+  color: var(--la-ink) !important;
+  border-color: color-mix(in srgb, var(--la-ink) 72%, transparent) !important;
+}
+html[data-la-pack] .la-header .la-btn-mini { box-shadow: 0 0 28px var(--la-glow); }
+html[data-la-pack] .la-drop-menu {
+  background: var(--la-foot);
+  border-color: var(--la-stroke);
+}
+html[data-la-pack] .la-drop-menu a { color: var(--la-ink) !important; }
+html[data-la-pack] .la-drop-menu a:hover { background: var(--la-soft); color: var(--la-ink) !important; }
+html[data-la-pack] .la-footer {
+  background:
+    radial-gradient(700px 240px at 50% 0%, var(--la-glow2), transparent 58%),
+    var(--la-foot);
+}
+html[data-la-pack] .la-footer::before {
+  background: linear-gradient(90deg, transparent, var(--la-accent), var(--la-cyan), transparent);
+}
+html[data-la-pack] .la-foot-cta h2,
+html[data-la-pack] .la-foot-brand .la-brand { color: var(--la-ink) !important; }
+html[data-la-pack] .la-foot-grid h5 { color: var(--la-accent); }
+html[data-la-pack] .la-foot-social a { color: var(--la-ink) !important; }
+html[data-la-pack] .la-foot-social a:hover {
+  background: var(--la-soft);
+  box-shadow: 0 8px 20px var(--la-glow);
+}
+html[data-la-pack] .la-top { background: var(--la-card); color: var(--la-ink); }
+html[data-la-pack] .la-top:hover { background: var(--la-accent); color: #fff; }
+html[data-la-pack] body.la-theme .card,
+html[data-la-pack] body.la-theme .card-custom,
+html[data-la-pack] body.la-theme .well,
+html[data-la-pack] body.la-theme .g-card,
+html[data-la-pack] body.la-theme .table,
+html[data-la-pack] body.la-theme .page-header {
+  background: var(--la-card) !important;
+  color: var(--la-text) !important;
+  border-color: var(--la-stroke) !important;
+}
+html[data-la-pack] .la-header .la-nav.open { background: var(--la-nav-scrolled); }
+html[data-la-pack] .la-header .la-nav.open a { color: var(--la-ink); }
+html[data-la-pack] .la-header .la-nav.open a.active,
+html[data-la-pack] .la-header .la-nav.open a:hover {
+  color: var(--la-cyan);
+  background: var(--la-soft);
+}
+
+.la-pack-switch {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px; border-radius: 999px;
+  border: 1px solid var(--la-stroke);
+  background: color-mix(in srgb, var(--la-card) 70%, transparent);
+}
+.la-pack-switch button {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.35);
+  background: linear-gradient(135deg, var(--sw, #070512), var(--sw2, #a855f7));
+  cursor: pointer; padding: 0;
+}
+.la-pack-switch button.is-on {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+  border-color: #fff;
+}
+html[data-la-pack="light"] .la-pack-switch button { border-color: rgba(30,18,51,.25); }
+html[data-la-pack="light"] .la-pack-switch button.is-on { outline-color: var(--la-accent); }
+html[data-la-switch="0"] .la-pack-switch { display: none !important; }
+
+html[data-la-pack="light"] body.la-theme {
+  background:
+    radial-gradient(900px 480px at 85% 8%, var(--la-glow), transparent 55%),
+    radial-gradient(700px 420px at 8% 18%, var(--la-glow2), transparent 50%),
+    var(--la-bg) !important;
+  color: var(--la-text) !important;
+}
+html[data-la-pack="light"] .la-header a.la-nav-login {
+  color: var(--la-accent) !important;
+  border-color: var(--la-accent) !important;
+}
+
+.theme-head { margin: 0 0 16px; }
+.theme-head p { margin: 6px 0 0; color: var(--t-muted); }
+.theme-switch-row {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 18px;
+  padding: 12px 14px; border-radius: 14px; border: 1px solid var(--stroke);
+  background: var(--bg-card);
+}
+.theme-packs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.theme-pack > input[type=radio] { position:absolute; opacity:0; pointer-events:none; }
+.theme-pack { position:relative;
+  border: 2px solid var(--stroke); border-radius: 18px; padding: 14px;
+  background: var(--bg-card); cursor: pointer;
+}
+.theme-pack.is-on { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent); }
+.theme-swatch {
+  height: 84px; border-radius: 14px; margin-bottom: 10px;
+  border: 1px solid rgba(0,0,0,.08);
+}
+.theme-pack b { display: block; font-size: 15px; }
+.theme-pack small { color: var(--t-muted); display: block; margin: 4px 0 12px; line-height: 1.45; }
+.theme-colors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.theme-color { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--t-muted); }
+.theme-color input[type="color"] {
+  width: 100%; height: 34px; border: 0; padding: 0; background: none; cursor: pointer;
+}
+.theme-color input[type="text"] { min-height: 34px; font-size: 12px; }
+.theme-pack-actions { margin-top: 12px; display: flex; justify-content: flex-end; }
+@media (max-width: 980px) {
+  .theme-packs { grid-template-columns: 1fr; }
+}
+
+html[data-la-pack] .la-footer a { color: var(--la-ink-dim); }
+html[data-la-pack] .la-footer a:hover { color: var(--la-ink); }
+html[data-la-pack] .la-btn { box-shadow: 0 10px 28px var(--la-glow); }

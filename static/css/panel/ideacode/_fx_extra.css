@@ -1,0 +1,69 @@
+.la-fx .la-grid {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse at 50% 18%, #000 12%, transparent 74%);
+  opacity: .45;
+}
+.la-fx .la-glow {
+  position: absolute; width: 46vw; height: 46vw; min-width: 360px; min-height: 360px;
+  border-radius: 50%; left: 0; top: 0; pointer-events: none;
+  transform: translate3d(calc(var(--lx, 72vw) - 50%), calc(var(--ly, 14vh) - 50%), 0);
+  background: radial-gradient(circle, rgba(168,85,247,.26) 0%, rgba(255,77,157,.12) 34%, transparent 68%);
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+.la-fx .la-grain {
+  position: absolute; inset: 0; opacity: .042; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.6'/></svg>");
+}
+.la-card, .la-plat, .la-why, .la-svc, .la-stat, .la-order-card, .la-form-shell, .la-cta-band, .la-faq details {
+  position: relative; isolation: isolate; overflow: hidden;
+}
+.la-card::before, .la-plat::before, .la-why::before, .la-svc::before, .la-stat::before,
+.la-order-card::before, .la-form-shell::before, .la-cta-band::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(280px circle at var(--sx, 50%) var(--sy, 0%), rgba(255,255,255,.16), transparent 46%);
+  opacity: 0; transition: opacity .35s ease;
+}
+.la-card:hover::before, .la-plat:hover::before, .la-why:hover::before, .la-svc:hover::before,
+.la-stat:hover::before, .la-order-card:hover::before, .la-form-shell:hover::before, .la-cta-band:hover::before { opacity: 1; }
+.la-card > *, .la-plat > *, .la-why > *, .la-svc > *, .la-stat > *, .la-order-card > *, .la-form-shell > *, .la-cta-band > * { position: relative; z-index: 1; }
+.la-reveal { opacity: 0; transform: translate3d(0, 18px, 0); }
+.la-reveal.is-in { opacity: 1; transform: none; transition: opacity .75s cubic-bezier(.22,1,.36,1), transform .75s cubic-bezier(.22,1,.36,1); }
+.la-section { content-visibility: auto; contain-intrinsic-size: 1px 720px; }
+.la-hero, .la-page { content-visibility: visible; }
+.la-line {
+  background: linear-gradient(90deg, #22d3ee, #a855f7, #ff4d9d, #22d3ee);
+  background-size: 220% 100%;
+  animation: lineMove 4s linear infinite;
+}
+@keyframes lineMove { to { background-position: 220% 0; } }
+.la-faq details { transition: border-color .3s ease, transform .3s ease, box-shadow .3s ease; }
+.la-faq details[open] { border-color: rgba(168,85,247,.5); box-shadow: 0 12px 32px rgba(0,0,0,.18); }
+.la-faq summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.la-faq summary::after { content: "+"; color: #c4b5fd; font-weight: 500; font-size: 18px; }
+.la-faq details[open] summary::after { content: "–"; }
+.la-brand { text-shadow: 0 0 24px rgba(168,85,247,.18); }
+.la-input:focus, body.la-theme input:focus, body.la-theme select:focus, body.la-theme textarea:focus {
+  outline: none; border-color: rgba(168,85,247,.75) !important;
+  box-shadow: 0 0 0 4px rgba(168,85,247,.16);
+}
+.la-cta-band { position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(124,58,237,.18); }
+.la-modal-card { box-shadow: 0 30px 80px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06); }
+.la-phone-wrap { position: relative; }
+.la-phone-wrap::after {
+  content: ""; position: absolute; left: 15%; right: 15%; bottom: 2%; height: 28%;
+  background: radial-gradient(ellipse, rgba(168,85,247,.4), transparent 70%);
+  filter: blur(16px); z-index: -1; pointer-events: none;
+}
+html.la-light .la-fx .la-glow, html.la-light .la-fx .la-grain { opacity: .2; }
+html.la-light .la-header.is-scrolled { background: rgba(255,255,255,.88); }
+@media (pointer: coarse) {
+  .la-fx .la-glow { display: none; }
+  .la-phone-wrap { transform: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .la-reveal { opacity: 1; transform: none; }
+  .la-fx .la-glow, .la-fx .blob { display: none; }
+}

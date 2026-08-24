@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{% block title %}แอดมิน{% endblock %} | LIKES AUTO</title>
+  <link rel="icon" href="/static/assets/admin-crest.png">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.2.0/fonts/remixicon.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/panel/ideacode/admin.css?v=dash15">
+  <link rel="stylesheet" href="/css/panel/ideacode/responsive.css?v=r3">
+  <script>
+    (function(){ try { var t=localStorage.getItem('la-dash-theme'); if(t) document.documentElement.setAttribute('data-theme', t); } catch(e){} })();
+  </script>
+</head>
+<body class="dash-body">
+  <div class="adm-scrim" onclick="document.body.classList.remove('adm-nav-open')"></div>
+  <div class="dash">
+    <aside class="dash-side">
+      <div class="dash-side-top">
+        <a class="dash-brand" href="/admin">
+          <span class="dash-mark"><img src="/static/assets/admin-crest.png" alt="LIKES AUTO"></span>
+          <span class="dash-brand-text">
+            <strong>LIKES AUTO</strong>
+            <small>ADMIN PANEL</small>
+          </span>
+        </a>
+        <button class="dash-iconbtn dash-side-close" type="button" onclick="dashToggleNav()" aria-label="ปิดเมนู"><i class="ri-close-line"></i></button>
+      </div>
+      <input class="dash-side-search" type="search" placeholder="ค้นหาเมนู..." oninput="dashSearch(this)">
+      {% for group, items in nav_groups %}
+      <p class="dash-nav-label">{{ group }}</p>
+      {% for key, href, label, icon in items %}
+      <a href="{{ href }}" class="{% if section == key %}active{% endif %}"><i class="{{ icon }}"></i> {{ label }}</a>
+      {% endfor %}
+      {% endfor %}
+      <div class="dash-side-foot">
+        <a href="/" target="_blank" rel="noopener"><i class="ri-home-line"></i> หน้าเว็บ</a>
+        <a href="/admin/logout"><i class="ri-logout-box-r-line"></i> ออกจากระบบ</a>
+      </div>
+    </aside>
+    <div class="dash-main">
+      <header class="dash-top">
+        <button class="dash-iconbtn dash-menu-btn" type="button" onclick="dashToggleNav()" aria-label="เมนู"><i class="ri-menu-line"></i></button>
+        <div>
+          <div class="dash-crumbs">แอดมิน / <b>{{ self.title() }}</b></div>
+        </div>
+        <input class="dash-search" type="search" placeholder="ค้นหาเมนู..." oninput="dashSearch(this)">
+        <div class="dash-top-right">
+          <button class="dash-iconbtn" type="button" onclick="dashToggleTheme()" title="สลับธีม">
+            <i class="ri-moon-line theme-moon"></i>
+            <i class="ri-sun-line theme-sun"></i>
+          </button>
+          <div class="dash-drop">
+            <button class="dash-iconbtn" type="button" onclick="dashToggleMenu('alert-menu')" title="งานค้าง">
+              <i class="ri-notification-3-line"></i>
+              {% if alerts and ((alerts.pending_pay_n or 0) > 0 or (alerts.open_tickets or 0) > 0 or (alerts.pending_tasks or 0) > 0) %}
+              <span class="dot"></span>
+              {% endif %}
+            </button>
+            <div class="dash-menu" id="alert-menu">
+              <a href="/admin/payments">เติมเงินรอ {{ alerts.pending_pay_n or 0 }}</a>
+              <a href="/admin/tickets">ตั๋วเปิด {{ alerts.open_tickets or 0 }}</a>
+              <a href="/admin/tasks">ขอเติม {{ alerts.pending_tasks or 0 }}</a>
+            </div>
+          </div>
+          <div class="dash-drop">
+            <button class="dash-user" type="button" onclick="dashToggleMenu('user-menu')">
+              <span class="dash-avatar">{{ admin_name[:1]|upper }}</span>
+              <span class="dash-user-name">{{ admin_name }}</span>
+              <i class="ri-arrow-down-s-line"></i>
+            </button>
+            <div class="dash-menu" id="user-menu">
+              <a href="/admin/account"><i class="ri-lock-line"></i> รหัสแอดมิน</a>
+              <a href="/admin/settings/general"><i class="ri-settings-3-line"></i> ตั้งค่า</a>
+              <a href="/admin/logout"><i class="ri-logout-box-r-line"></i> ออกจากระบบ</a>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="dash-content">
+        <h1 class="dash-h">{{ self.title() }}</h1>
+        {% block subtitle %}{% endblock %}
+        {% if tabs %}
+        <nav class="adm-tabs">
+          {% for key, href, label in tabs %}
+          <a href="{{ href }}" class="{% if tab == key %}active{% endif %}">{{ label }}</a>
+          {% endfor %}
+        </nav>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+      <footer class="dash-foot">LIKES AUTO Admin Panel</footer>
+    </div>
+  </div>
+  <script src="/static/js/admin-shell.js?v=4"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

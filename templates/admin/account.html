@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+{% block title %}รหัสแอดมิน{% endblock %}
+{% block subtitle %}<p class="adm-sub">เปลี่ยนรหัสของบัญชีที่กำลังเข้าใช้อยู่</p>{% endblock %}
+{% block content %}
+{% if saved %}<div class="adm-ok">เปลี่ยนรหัสแล้ว</div>{% endif %}
+{% if error %}<div class="adm-error">รหัสต้องตรงกันและอย่างน้อย 8 ตัว</div>{% endif %}
+<form method="post" action="/admin/account" class="adm-form">
+  <label class="la-field">รหัสผ่านใหม่</label>
+  <input class="la-input" type="password" name="password" required minlength="8">
+  <label class="la-field">ยืนยันรหัส</label>
+  <input class="la-input" type="password" name="confirm" required minlength="8">
+  <button class="la-btn" type="submit">บันทึก</button>
+</form>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "admin/base.html" %}
+{% block title %}ตั๋วสนับสนุน{% endblock %}
+{% block subtitle %}<p class="adm-sub">ตอบลูกค้าแล้วปิดตั๋วเมื่อจบเรื่อง</p>{% endblock %}
+{% block content %}
+<form method="get" class="adm-filter">
+  <select class="la-input adm-select" name="status" onchange="this.form.submit()">
+    <option value="">ทุกสถานะ</option>
+    <option value="open" {% if status=='open' %}selected{% endif %}>เปิด</option>
+    <option value="answered" {% if status=='answered' %}selected{% endif %}>ตอบแล้ว</option>
+    <option value="closed" {% if status=='closed' %}selected{% endif %}>ปิด</option>
+  </select>
+</form>
+{% for r in rows %}
+<article class="adm-card adm-ticket">
+  <div class="adm-actions" style="justify-content:space-between">
+    <b>#{{ r.id }} {{ r.subject }}</b>
+    <span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span>
+  </div>
+  <p class="la-muted">{{ r.client }} · {{ r.created_at }}</p>
+  <div class="adm-thread"><b>ลูกค้า:</b> {{ r.message }}</div>
+  {% for m in (replies or {}).get(r.id, []) %}
+  <div class="adm-thread"><b>{{ m.author }}:</b> {{ m.message }} <span class="la-muted">{{ m.created_at }}</span></div>
+  {% else %}
+    {% if r.reply %}<div class="adm-thread"><b>แอดมิน:</b> {{ r.reply }}</div>{% endif %}
+  {% endfor %}
+  {% if r.status != "closed" %}
+  <form method="post" action="/admin/tickets/{{ r.id }}/reply" class="adm-actions">
+    <input class="la-input" name="message" placeholder="พิมพ์คำตอบ" required style="flex:1;min-width:180px">
+    <button class="la-btn" type="submit">ตอบ</button>
+  </form>
+  <form method="post" action="/admin/tickets/{{ r.id }}/close" style="margin-top:8px">
+    <button class="la-btn la-btn-mini la-btn-ghost" type="submit">ปิดตั๋ว</button>
+  </form>
+  {% endif %}
+</article>
+{% else %}
+<p class="adm-empty">ยังไม่มีตั๋ว</p>
+{% endfor %}
+{% endblock %}

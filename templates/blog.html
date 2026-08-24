@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-page-head">
+      <h1>{% if tag %}แท็ก {{ tag }}{% else %}บล็อกปั้มไลค์{% endif %}</h1>
+      <p class="sub">{% if tag %}บทความเรื่อง {{ tag }} ปั้มไลค์ ปั้มฟอล ปั้มวิว และการตลาดออนไลน์{% else %}บทความปั้มไลค์ เพิ่มฟอล เพิ่มวิว ยิงแอด และการตลาดโซเชียล จาก Likes Auto{% endif %}</p>
+    </div>
+    {% if all_tags %}
+    <div class="la-tags" aria-label="แท็กคีย์เวิร์ด">
+      <a class="la-tag{% if not tag %} is-on{% endif %}" href="/blog">ทั้งหมด</a>
+      {% for t in all_tags %}
+      <a class="la-tag{% if tag == t %} is-on{% endif %}" href="/blog?tag={{ t|urlencode }}">{{ t }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="la-blog-list">
+      {% for r in posts %}
+      <article class="la-card la-blog-card">
+        {% if r.cover %}<a href="{{ r.href }}"><img class="la-blog-cover" src="{{ r.cover }}" alt="{{ r.title }}"></a>{% endif %}
+        <h2><a href="{{ r.href }}">{{ r.title }}</a></h2>
+        <p>{{ r.excerpt }}</p>
+        {% if r.tag_list %}
+        <div class="la-tags la-tags-mini">
+          {% for t in r.tag_list %}
+          <a class="la-tag" href="/blog?tag={{ t|urlencode }}">{{ t }}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </article>
+      {% else %}
+      <p class="la-muted">ยังไม่มีบทความในแท็กนี้</p>
+      {% endfor %}
+    </div>
+  </div>
+</main>
+{% endblock %}

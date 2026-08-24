@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+{% block title %}ดึงงาน{% endblock %}
+{% block subtitle %}<p class="adm-sub">ส่งออเดอร์ทุก 2 นาที · อัปเดทร้านอัตโนมัติทุกวัน 04:15 ไม่ต้องเพิ่มบริการเอง</p>{% endblock %}
+{% block content %}
+{% if ran %}<div class="adm-ok">รันแล้ว {{ ran }}</div>{% endif %}
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin:0 0 18px">
+  <form method="post" action="/admin/crons/run" style="margin:0">
+    <button class="la-btn" type="submit">ดึงออเดอร์ตอนนี้</button>
+  </form>
+  <form method="post" action="/admin/crons/shop" style="margin:0">
+    <button class="la-btn la-btn-ghost" type="submit">อัปเดทร้านตอนนี้</button>
+  </form>
+</div>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    <thead><tr><th>ID</th><th>งาน</th><th>รายละเอียด</th><th>เวลา</th></tr></thead>
+    <tbody>
+    {% for r in logs %}
+      <tr><td>{{ r.id }}</td><td>{{ r.job }}</td><td class="wrap">{{ r.detail }}</td><td>{{ r.created_at }}</td></tr>
+    {% else %}
+      <tr><td colspan="4">ยังไม่มีบันทึกการดึง</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

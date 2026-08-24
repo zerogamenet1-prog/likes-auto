@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-form-shell">
+      <div class="la-form-copy">
+        <h1>{{ t.signin_title }}</h1>
+        <p>{{ t.signin_lead }}</p>
+        <img class="la-form-photo" src="/static/assets/panel-preview.jpg" alt="ตัวอย่างแผงสั่งซื้อ Likes Auto" width="480" height="320" loading="lazy" decoding="async">
+        <ul class="la-trust la-trust-col">
+          <li><i class="ri-lock-2-fill"></i> {{ t.ssl }}</li>
+          <li><i class="ri-shield-check-fill"></i> {{ t.trust_nopass }}</li>
+          <li><i class="ri-google-fill"></i> {{ t.google }}</li>
+        </ul>
+      </div>
+      <div class="la-form-side">
+        {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+        {% include "_google_btn.html" %}
+        <form method="post" action="/signin">
+          <label class="la-field">{{ t.label_user }}</label>
+          <input class="la-input" type="text" name="username" required>
+          <label class="la-field">{{ t.label_pass }}</label>
+          <input class="la-input" type="password" name="password" required>
+          <button class="la-btn" type="submit" style="width:100%">{{ t.nav_login }}</button>
+        </form>
+        <p style="margin-top:14px">{{ t.no_account }} <a href="/signup">{{ t.nav_signup }}</a></p>
+        {% if settings and settings.get('resetpass','1') != '0' %}
+        <p style="margin-top:8px"><a href="/forgot">{{ t.forgot }}</a></p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</main>
+{% endblock %}

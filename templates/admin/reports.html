@@ -1,0 +1,83 @@
+{% extends "admin/base.html" %}
+{% block title %}รายได้{% endblock %}
+{% block subtitle %}<p class="dash-sub">สรุปยอดเติมเงิน ออเดอร์ และงานค้าง</p>{% endblock %}
+{% block content %}
+<div class="kpi-grid">
+  <article class="kpi"><div><span>เติมเงินสำเร็จ</span><b>{{ "%.0f"|format(report.paid) }}</b></div><div class="kpi-ico green"><i class="ri-checkbox-circle-line"></i></div></article>
+  <article class="kpi"><div><span>รอตรวจสอบ</span><b>{{ "%.0f"|format(report.pending_pay) }}</b></div><div class="kpi-ico amber"><i class="ri-time-line"></i></div></article>
+  <article class="kpi"><div><span>ยอดออเดอร์</span><b>{{ "%.0f"|format(report.order_sum) }}</b></div><div class="kpi-ico blue"><i class="ri-shopping-bag-3-line"></i></div></article>
+  <article class="kpi"><div><span>ตั๋วเปิด</span><b>{{ report.open_tickets }}</b></div><div class="kpi-ico pink"><i class="ri-customer-service-2-line"></i></div></article>
+</div>
+<div class="kpi-grid">
+  <article class="kpi"><div><span>ส่งทีละรอบ</span><b>{{ report.active_drip }}</b></div><div class="kpi-ico cyan"><i class="ri-repeat-line"></i></div></article>
+  <article class="kpi"><div><span>เติมอัตโนมัติ</span><b>{{ report.active_sub }}</b></div><div class="kpi-ico violet"><i class="ri-refresh-line"></i></div></article>
+  <article class="kpi"><div><span>ขอเติมค้าง</span><b>{{ report.pending_tasks }}</b></div><div class="kpi-ico amber"><i class="ri-error-warning-line"></i></div></article>
+  <article class="kpi"><div><span>แผงลูกรอ</span><b>{{ report.pending_panels }}</b></div><div class="kpi-ico blue"><i class="ri-window-line"></i></div></article>
+</div>
+
+<div class="dash-grid">
+  <article class="dash-card">
+    <div class="dash-card-head">
+      <h2>เติมเงินรอตรวจ</h2>
+      <a href="/admin/payments?status=pending">ทั้งหมด</a>
+    </div>
+    <div class="adm-table-wrap" style="border:0;box-shadow:none">
+      <table class="adm-table">
+        <thead><tr><th>ID</th><th>ลูกค้า</th><th>ยอด</th><th>สลิป</th></tr></thead>
+        <tbody>
+        {% for r in pending_pays or [] %}
+          <tr>
+            <td>{{ r.id }}</td><td>{{ r.client }}</td><td>{{ "%.2f"|format(r.amount or 0) }}</td>
+            <td>{% if r.slip %}<a href="{{ r.slip }}" target="_blank" rel="noopener">ดู</a>{% else %}-{% endif %}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4">ไม่มีรายการค้าง</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+  <article class="dash-card">
+    <div class="dash-card-head">
+      <h2>เติมเงินสำเร็จล่าสุด</h2>
+      <a href="/admin/payments?status=paid">ทั้งหมด</a>
+    </div>
+    <div class="adm-table-wrap" style="border:0;box-shadow:none">
+      <table class="adm-table">
+        <thead><tr><th>ID</th><th>ลูกค้า</th><th>ยอด</th><th>เวลา</th></tr></thead>
+        <tbody>
+        {% for r in paid_pays or [] %}
+          <tr>
+            <td>{{ r.id }}</td><td>{{ r.client }}</td><td>{{ "%.2f"|format(r.amount or 0) }}</td><td>{{ r.created_at }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4">ยังไม่มีรายการ</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</div>
+
+<div class="dash-card" style="margin-top:16px">
+  <div class="dash-card-head">
+    <h2>ออเดอร์ล่าสุด</h2>
+    <a href="/admin/orders">จัดการ</a>
+  </div>
+  <div class="adm-table-wrap" style="border:0;box-shadow:none">
+    <table class="adm-table">
+      <thead><tr><th>ID</th><th>ลูกค้า</th><th>บริการ</th><th>ยอด</th><th>สถานะ</th></tr></thead>
+      <tbody>
+      {% for r in orders %}
+        <tr>
+          <td>{{ r.id }}</td><td>{{ r.client }}</td><td class="wrap">{{ r.service }}</td><td>{{ r.charge }}</td>
+          <td><span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">ยังไม่มีออเดอร์</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

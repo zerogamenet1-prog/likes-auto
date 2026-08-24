@@ -1,0 +1,131 @@
+{% extends "admin/base.html" %}
+{% block title %}บริการ{% endblock %}
+{% block subtitle %}<p class="adm-sub">กรองตามหมวดจาก API แล้วค่อยติ๊กปรับราคา หมวดย่อย หรือพักขาย</p>{% endblock %}
+{% block content %}
+{% if added %}<div class="adm-ok">เพิ่ม/อัปเดตแล้ว {{ added }} รายการ</div>{% endif %}
+<div class="adm-actions" style="margin-bottom:16px">
+  <a class="la-btn" href="/admin/services/import">เลือกบริการจาก API</a>
+  <a class="la-btn la-btn-ghost" href="/admin/providers">ผู้ให้บริการ</a>
+</div>
+<form method="get" class="adm-filter">
+  <select class="la-input adm-select" name="main" onchange="this.form.submit()" style="max-width:360px">
+    <option value="">ทุกหมวด</option>
+    {% for m in mains %}
+    <option value="{{ m.name }}" {% if main==m.name %}selected{% endif %}>{{ m.name }} ({{ m.count }})</option>
+    {% endfor %}
+  </select>
+  <input class="la-input adm-search" type="search" name="q" value="{{ q }}" placeholder="ค้นหาชื่อ รหัส หรือหมวดย่อย">
+  <button class="la-btn" type="submit">ค้นหา</button>
+</form>
+<details class="adm-more">
+  <summary>เพิ่มบริการเอง</summary>
+  <form method="post" action="/admin/services/save" class="adm-form" style="margin-top:14px;max-width:none">
+    <input type="hidden" name="sid" value="">
+    <div class="adm-form-grid">
+      <div>
+        <label class="la-field">หมวด</label>
+        <input class="la-input" name="platform" placeholder="เช่น Instagram Likes" required>
+      </div>
+      <div>
+        <label class="la-field">ชื่อบริการ</label>
+        <input class="la-input" name="name" required>
+      </div>
+      <div>
+        <label class="la-field">ราคาขาย / 1,000 (บาท)</label>
+        <input class="la-input" type="number" step="0.01" name="rate" value="10">
+      </div>
+      <div>
+        <label class="la-field">ต่ำสุด</label>
+        <input class="la-input" type="number" name="min_qty" value="10">
+      </div>
+      <div>
+        <label class="la-field">สูงสุด</label>
+        <input class="la-input" type="number" name="max_qty" value="10000">
+      </div>
+      <div>
+        <label class="la-field">ผู้ให้บริการ</label>
+        <select class="la-input" name="provider_id">
+          <option value="">ไม่ผูก</option>
+          {% for p in providers %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <label class="la-field">API Service ID</label>
+    <input class="la-input" name="api_service" placeholder="รหัสบริการจากแผงต้นทาง">
+    <input type="hidden" name="status" value="active">
+    <button class="la-btn" type="submit">เพิ่มบริการ</button>
+  </form>
+</details>
+<form method="post" action="/admin/services/bulk-rate" class="adm-actions" style="margin-bottom:8px" onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
+  <input type="hidden" name="ids" value="">
+  <input class="la-input adm-num" type="number" step="0.1" name="percent" value="10" title="เปอร์เซ็นต์">
+  <button class="la-btn la-btn-mini" type="submit">ปรับราคาที่เลือก +%</button>
+</form>
+<form method="post" action="/admin/services/bulk-category" class="adm-actions" style="margin-bottom:8px" onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
+  <input type="hidden" name="ids" value="">
+  <input class="la-input" name="category" placeholder="หมวดย่อย เช่น ผู้ติดตาม" style="max-width:220px">
+  <button class="la-btn la-btn-mini" type="submit">ตั้งหมวดย่อยที่เลือก</button>
+</form>
+<form method="post" action="/admin/services/bulk-status" class="adm-actions" style="margin-bottom:12px" onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
+  <input type="hidden" name="ids" value="">
+  <select class="la-input adm-select" name="status">
+    <option value="paused">พัก</option>
+    <option value="active">เปิดขาย</option>
+  </select>
+  <button class="la-btn la-btn-mini" type="submit">ตั้งสถานะที่เลือก</button>
+</form>
+<p class="la-muted">{{ total }} รายการ · หน้า {{ page_no }}/{{ pages }}</p>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    <thead>
+      <tr>
+        <th><input type="checkbox" onclick="document.querySelectorAll('.js-sid').forEach(x=>x.checked=this.checked)"></th>
+        <th>ID</th><th>หมวด</th><th>หมวดย่อย</th><th>บริการ</th><th>ทุน</th><th>ราคาขาย (บาท)</th><th>ช่วง</th><th>ต้นทาง</th><th>สถานะ</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td><input class="js-sid" type="checkbox" value="{{ r.id }}"></td>
+        <td>{{ r.id }}</td>
+        <td class="wrap">{{ r.platform }}</td>
+        <td>{{ r.category or "-" }}</td>
+        <td class="wrap">{{ r.name }}</td>
+        <td>{% if r.cost_rate is not none %}{{ "%.2f"|format(r.cost_rate) }}{% else %}-{% endif %}</td>
+        <td>
+          <form method="post" action="/admin/services/{{ r.id }}/rate" class="adm-inline">
+            <input class="la-input adm-num" type="number" step="0.01" name="rate" value="{{ r.rate }}" required>
+            <button class="la-btn la-btn-mini" type="submit">บันทึก</button>
+          </form>
+        </td>
+        <td>{{ r.min_qty }}-{{ r.max_qty }}</td>
+        <td class="wrap">{{ r.provider_name or "-" }} / {{ r.api_service or "-" }}</td>
+        <td><span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span></td>
+        <td class="adm-actions">
+          <form method="post" action="/admin/services/{{ r.id }}/status">
+            <input type="hidden" name="status" value="{{ 'paused' if r.status=='active' else 'active' }}">
+            <button class="la-btn la-btn-mini" type="submit">{{ 'พัก' if r.status=='active' else 'เปิด' }}</button>
+          </form>
+          <form method="post" action="/admin/services/{{ r.id }}/delete" onsubmit="return confirm('ลบบริการนี้?')">
+            <button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="11">ยังไม่มีบริการ กดเลือกจาก API เพื่อเริ่มขาย</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if pages > 1 %}
+<p class="adm-pager">
+  {% if page_no > 1 %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services?main={{ main|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no-1 }}">ก่อนหน้า</a>{% endif %}
+  {% if page_no < pages %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services?main={{ main|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no+1 }}">ถัดไป</a>{% endif %}
+</p>
+{% endif %}
+<script>
+function selectedIds(){
+  return Array.from(document.querySelectorAll(".js-sid:checked")).map(x=>x.value).join(",");
+}
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+{% block title %}ออเดอร์{% endblock %}
+{% block subtitle %}<p class="adm-sub">แถวเดียวต่อรายการ กดจัดการเมื่อต้องดูรายละเอียด</p>{% endblock %}
+{% block content %}
+{% set s = ord_sum if ord_sum is defined else {} %}
+{% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
+{% if err %}<div class="adm-error">{{ err }}</div>{% endif %}
+
+<nav class="ord-pills">
+  <a class="{% if not status %}is-on{% endif %}" href="/admin/orders{% if q %}?q={{ q|urlencode }}{% endif %}">ทั้งหมด {{ s.all_n or 0 }}</a>
+  <a class="{% if status=='pending' %}is-on{% endif %}" href="/admin/orders?status=pending{% if q %}&amp;q={{ q|urlencode }}{% endif %}">รอส่ง {{ s.pending_n or 0 }}</a>
+  <a class="{% if status=='processing' %}is-on{% endif %}" href="/admin/orders?status=processing{% if q %}&amp;q={{ q|urlencode }}{% endif %}">กำลังทำ {{ s.processing_n or 0 }}</a>
+  <a class="{% if status=='completed' %}is-on{% endif %}" href="/admin/orders?status=completed{% if q %}&amp;q={{ q|urlencode }}{% endif %}">สำเร็จ {{ s.completed_n or 0 }}</a>
+  <a class="{% if status=='partial' %}is-on{% endif %}" href="/admin/orders?status=partial{% if q %}&amp;q={{ q|urlencode }}{% endif %}">บางส่วน {{ s.partial_n or 0 }}</a>
+  <a class="{% if status=='canceled' %}is-on{% endif %}" href="/admin/orders?status=canceled{% if q %}&amp;q={{ q|urlencode }}{% endif %}">ยกเลิก {{ s.canceled_n or 0 }}</a>
+</nav>
+
+<form method="get" class="adm-filter ord-filter">
+  <input class="la-input" type="search" name="q" value="{{ q }}" placeholder="ค้นหา ID ลูกค้า ลิงก์ หรือรหัส API">
+  {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+  <button class="la-btn" type="submit">ค้นหา</button>
+</form>
+
+{% if rows %}
+<div class="ord-wrap">
+  {% for r in rows %}
+  <div class="ord-row is-{{ r.status }}{% if r.has_error %} is-err{% endif %}">
+    <span class="ord-id">#{{ r.id }}</span>
+    <span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span>
+    <span class="ord-amt">{{ "%.2f"|format(r.charge or 0) }}</span>
+    <span class="ord-user" title="{{ r.client }}">{{ r.client }}</span>
+    <span class="ord-svc" title="{{ r.service }}">{{ r.service }}</span>
+    <span class="ord-qty">{{ "{:,}".format(r.quantity or 0) }}</span>
+    {% if r.link %}
+    <a class="ord-link" href="{{ r.link }}" target="_blank" rel="noopener" title="เปิดลิงก์">ลิงก์</a>
+    {% else %}
+    <span class="ord-link is-off">-</span>
+    {% endif %}
+    <details class="ord-menu">
+      <summary>จัดการ</summary>
+      <div class="ord-pop">
+        <p>{{ r.created_at or '-' }} · {{ r.client }}</p>
+        <p>เริ่ม {{ r.start_count or '-' }} · คง {{ r.remains_n if r.remains_n is not none else (r.remains or '-') }} · ทำ {{ r.done if r.done is not none else '-' }}{% if r.progress is not none %} ({{ r.progress }}%){% endif %}</p>
+        <p>API {{ r.api_orderid or '-' }}{% if r.provider_name %} · {{ r.provider_name }}{% endif %}{% if r.service_id %} · บริการ #{{ r.service_id }}{% endif %}{% if not r.can_refund %} · คืนแล้ว{% endif %}</p>
+        {% if r.has_error %}<p class="ord-err">{{ r.api_error }}</p>{% endif %}
+        <div class="ord-tools">
+          <form method="post" action="/admin/orders/{{ r.id }}/status" class="ord-st">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="filter_status" value="{{ status }}">
+            <input type="hidden" name="page" value="{{ page_no }}">
+            <select class="la-input" name="status">
+              {% for sname in ['pending','processing','completed','partial','canceled'] %}
+              <option value="{{ sname }}" {% if r.status==sname %}selected{% endif %}>{{ st.get(sname, sname) }}</option>
+              {% endfor %}
+            </select>
+            <button class="la-btn la-btn-mini" type="submit">บันทึก</button>
+          </form>
+          {% if r.can_send %}
+          <form method="post" action="/admin/orders/{{ r.id }}/resend" onsubmit="return confirm('ส่งออเดอร์ #{{ r.id }} ไป API?')">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="filter_status" value="{{ status }}">
+            <input type="hidden" name="page" value="{{ page_no }}">
+            <button class="la-btn la-btn-mini" type="submit">ส่ง API</button>
+          </form>
+          {% endif %}
+          {% if r.can_sync %}
+          <form method="post" action="/admin/orders/{{ r.id }}/sync">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="filter_status" value="{{ status }}">
+            <input type="hidden" name="page" value="{{ page_no }}">
+            <button class="la-btn la-btn-mini la-btn-ghost" type="submit">ดึงสถานะ</button>
+          </form>
+          {% endif %}
+          {% if r.can_refund %}
+          <form method="post" action="/admin/orders/{{ r.id }}/refund" onsubmit="return confirm('คืนเงินและยกเลิกออเดอร์ #{{ r.id }}?')">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="filter_status" value="{{ status }}">
+            <input type="hidden" name="page" value="{{ page_no }}">
+            <button class="la-btn la-btn-mini la-btn-danger" type="submit">คืนเงิน</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </details>
+  </div>
+  {% endfor %}
+</div>
+{% if pages and pages > 1 %}
+<p class="adm-pager">
+  {% if page_no > 1 %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/orders?page={{ page_no-1 }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if status %}&amp;status={{ status }}{% endif %}">ก่อนหน้า</a>{% endif %}
+  หน้า {{ page_no }}/{{ pages }} · {{ total }} รายการ
+  {% if page_no < pages %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/orders?page={{ page_no+1 }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if status %}&amp;status={{ status }}{% endif %}">ถัดไป</a>{% endif %}
+</p>
+{% endif %}
+{% else %}
+<p class="adm-empty">ไม่พบออเดอร์</p>
+{% endif %}
+{% endblock %}

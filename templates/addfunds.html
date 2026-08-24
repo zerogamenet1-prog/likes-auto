@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+{% block content %}
+{% set payst = pay_st if pay_st is defined else st %}
+{% set c = checkout if checkout is defined else {} %}
+{% set min_amt = settings.min_deposit or 50 %}
+{% set max_amt = settings.max_deposit or 5000 %}
+<main class="la-page la-credit">
+  <div class="la-credit-wrap la-fade">
+    <h1>เติมเครดิต</h1>
+    <p class="la-credit-bc"><a href="{{ shop_home or '/neworder' }}">หน้าหลัก</a> / ช่องทางการเติมเครดิต / พร้อมเพย์</p>
+    {% if error %}<div class="adm-error la-pay-banner is-fail" id="laPayResult">{{ error }}</div>
+    {% elif pay_result == 'checking' %}<div class="adm-ok la-pay-banner is-wait" id="laPayResult">{{ ok }}</div>
+    {% elif ok %}<div class="adm-ok la-pay-banner{% if pay_result == 'paid' %} is-paid{% endif %}" id="laPayResult">{{ ok }}</div>
+    {% else %}<div class="adm-ok la-pay-banner" id="laPayResult" hidden></div>{% endif %}
+    {% if pay and pay.status == 'paid' and not ok %}
+    <div class="adm-ok la-pay-banner is-paid">เติมเครดิตสำเร็จ {{ "%.2f"|format(pay.amount) }} บาท</div>
+    {% endif %}
+
+    <section class="la-credit-card">
+      <div class="la-credit-brand">
+        <span class="la-pp-mark" aria-hidden="true">
+          <svg viewBox="0 0 52 52" width="52" height="52">
+            <rect width="52" height="52" rx="8" fill="#0a4d9c"/>
+            <rect x="8" y="8" width="16" height="16" rx="2" fill="#fff"/>
+            <rect x="11" y="11" width="10" height="10" fill="#0a4d9c"/>
+            <rect x="13" y="13" width="6" height="6" fill="#fff"/>
+            <rect x="28" y="8" width="16" height="16" rx="2" fill="#fff"/>
+            <rect x="31" y="11" width="10" height="10" fill="#0a4d9c"/>
+            <rect x="8" y="28" width="16" height="16" rx="2" fill="#fff"/>
+            <rect x="11" y="31" width="10" height="10" fill="#0a4d9c"/>
+            <rect x="30" y="30" width="5" height="5" fill="#fff"/>
+            <rect x="37" y="30" width="5" height="5" fill="#fff"/>
+            <rect x="30" y="37" width="12" height="5" fill="#fff"/>
+          </svg>
+        </span>
+        <div>
+          <b>พร้อมเพย์</b>
+          <small>QR Prompt Pay</small>
+        </div>
+      </div>
+      <ul class="la-credit-points">
+        <li>รองรับ ทุกธนาคาร ผ่านพร้อมเพย์</li>
+        <li>รองรับ แอพวอลเลทที่มีสแกน QR PromptPay เช่น Dolfin Wallet, mPAY, เป๋าตัง</li>
+        <li>เติมเงินขั้นต่ำ {{ min_amt }} บาท สูงสุด {{ max_amt }} บาท</li>
+        <li>ฟรีค่าธรรมเนียม</li>
+      </ul>
+      <p class="la-credit-warn"><span class="la-credit-i">i</span> เครดิตที่เติมแล้วไม่สามารถแลกเปลี่ยนเป็นเงินได้</p>
+      <form method="post" action="/addfunds" class="la-credit-form">
+        {% if pp_method %}
+        <input type="hidden" name="method_id" value="{{ pp_method.id }}">
+        {% endif %}
+        <label class="la-credit-label" for="laAmt">จำนวนเงินที่ต้องการเติม</label>
+        <input class="la-credit-input" id="laAmt" type="number" name="amount" min="{{ min_amt }}" max="{{ max_amt }}" step="1" required>
+        <button class="la-credit-go" type="submit"{% if not pp_method %} disabled{% endif %}>ยืนยันการทำรายการ</button>
+      </form>
+      {% if not pp_method %}
+      <p class="la-notice">ยังไม่ได้ตั้งช่องทางพร้อมเพย์ ให้แอดมินเพิ่มที่ตั้งค่าช่องทางจ่าย</p>
+      {% endif %}
+    </section>
+
+    {% if pay and pay.status == 'pending' %}
+    <section class="la-credit-pending" id="laPendingBox">
+      <p class="la-pend-msg">มีรายการรอชำระ <b>{{ "%.2f"|format(pay.amount) }} บาท</b></p>
+      <div class="la-pend-acts">
+        <button class="la-pend-btn is-main" type="button" id="laOpenQr">เปิด QR</button>
+        {% if c.payload %}<button class="la-pend-btn" type="button" id="laSaveQrBar">บันทึกภาพ</button>{% endif %}
+        <label class="la-pend-btn is-main" for="laSlipFile">แนบสลิป</label>
+        <form method="post" action="/addfunds/pay/{{ pay.id }}/cancel" data-confirm="ยกเลิกรายการนี้?">
+          <button class="la-pend-btn is-ghost" type="submit">ยกเลิก</button>
+        </form>
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="la-credit-hist" aria-labelledby="laHistTitle">
+      <div class="la-hist-head">
+        <h2 id="laHistTitle">ประวัติเติมเครดิต</h2>
+        <span>{% if payments %}{{ payments|length }} รายการ{% else %}0 รายการ{% endif %}</span>
+      </div>
+      {% if payments %}
+      <ul class="la-hist-list">
+        {% for r in payments %}
+        <li class="la-hist-item is-{{ r.status }}">
+          <div class="la-hist-top">
+            <div class="la-hist-main">
+              <b class="la-hist-amt">{{ "%.2f"|format(r.amount) }} บาท</b>
+              <small>{{ r.created_at or '-' }}{% if r.ref_code %} · {{ r.ref_code }}{% endif %}</small>
+            </div>
+            <span class="la-st la-st-{{ r.status }}">{{ payst.get(r.status, st.get(r.status, r.status)) }}</span>
+          </div>
+          {% if r.status=='pending' %}
+          <div class="la-hist-act">
+            <a class="la-hist-open" href="/addfunds/pay/{{ r.id }}">เปิด QR</a>
+            <form method="post" action="/addfunds/pay/{{ r.id }}/cancel" data-confirm="ยกเลิกรายการนี้?">
+              <button class="la-hist-cancel" type="submit">ยกเลิก</button>
+            </form>
+          </div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="la-hist-empty">ยังไม่มีประวัติเติมเครดิต</p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+
+{% if pay and pay.status == 'pending' %}
+<div class="la-qr-modal" id="laQrModal" hidden>
+  <div class="la-qr-dialog" role="dialog" aria-modal="true" aria-labelledby="laQrTitle">
+    <button class="la-qr-x" type="button" id="laCloseQr" aria-label="ปิด">×</button>
+    <h2 id="laQrTitle">ชำระเงินด้วย QR PromptPay</h2>
+    {% if c.payload %}
+    <div class="la-qr-frame">
+      <img class="la-qr-img" src="/addfunds/pay/{{ pay.id }}/qr.png" width="300" height="300" alt="PromptPay QR" onerror="this.style.display='none'; if(window.laDrawQr) window.laDrawQr();">
+      <div id="laQr" class="la-qrcode" hidden data-payload="{{ c.payload }}"></div>
+    </div>
+    {% elif c.target %}
+    <p class="la-qr-amt">โอนเข้า {{ c.target }}</p>
+    {% endif %}
+    <p class="la-qr-amt">จำนวน {{ "%.2f"|format(pay.amount) }} บาท</p>
+    {% if c.payload %}
+    <button class="la-qr-save" type="button" id="laSaveQr">บันทึกภาพ</button>
+    {% endif %}
+    <p class="la-qr-alert">โอนยอดนี้ให้ครบทุกสตางค์ จากนั้นแนบสลิปจากแอปธนาคาร</p>
+    <p class="la-qr-hint">ระบบอ่าน QR บนสลิป ตรวจยอด แล้วเข้าเครดิตทันที</p>
+    <label class="la-qr-slip">แนบสลิปโอนเงิน
+      <input id="laSlipFile" class="la-slip-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+    </label>
+    <p class="la-qr-wait" id="laConfirmMsg" hidden></p>
+    <form class="la-qr-cancel-form" method="post" action="/addfunds/pay/{{ pay.id }}/cancel" data-confirm="ยกเลิกรายการนี้?">
+      <button class="la-qr-cancel" type="submit">ยกเลิก</button>
+    </form>
+  </div>
+</div>
+<script src="/static/js/qrcode.min.js"></script>
+<script>
+  (function(){
+    var modal = document.getElementById('laQrModal');
+    var el = document.getElementById('laQr');
+    var text = el ? (el.getAttribute('data-payload') || '') : '';
+    function show(){ if (modal) { modal.classList.add('is-open'); modal.hidden = false; } }
+    function hide(){ if (modal) { modal.classList.remove('is-open'); modal.hidden = true; } }
+    window.laDrawQr = function(){
+      if (!el || !window.QRCode || !text) return;
+      el.hidden = false;
+      el.innerHTML = '';
+      new QRCode(el, {
+        text: text,
+        width: 300,
+        height: 300,
+        colorDark: '#111111',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    };
+    var openBtn = document.getElementById('laOpenQr');
+    var closeBtn = document.getElementById('laCloseQr');
+    var confirmMsg = document.getElementById('laConfirmMsg');
+    if (openBtn) openBtn.addEventListener('click', show);
+    if (closeBtn) closeBtn.addEventListener('click', hide);
+    if (modal) modal.addEventListener('click', function(e){ if (e.target === modal) hide(); });
+    var pid = {{ pay.id|int }};
+    var hasSlip = {{ 'true' if pay.slip else 'false' }};
+    var resultBox = document.getElementById('laPayResult');
+    if (!hasSlip) show();
+    var saveBtn = document.getElementById('laSaveQr');
+    var saveBar = document.getElementById('laSaveQrBar');
+    function saveQr(){
+      var url = '/addfunds/pay/' + pid + '/qr.png';
+      var name = 'likes-auto-qr.png';
+      setMsg('กำลังบันทึก QR...');
+      fetch(url, { credentials: 'same-origin' })
+        .then(function(r){ if (!r.ok) throw new Error('qr'); return r.blob(); })
+        .then(function(blob){
+          var file = new File([blob], name, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            return navigator.share({ files: [file], title: 'PromptPay QR' }).then(function(){
+              setMsg('บันทึกหรือแชร์ QR แล้ว');
+            }).catch(function(){ setMsg(''); });
+          }
+          var href = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = href;
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(function(){ URL.revokeObjectURL(href); }, 1500);
+          setMsg('บันทึก QR แล้ว ถ้าไม่เจอในเครื่อง ให้เปิดรูปแล้วกดบันทึก');
+        })
+        .catch(function(){
+          window.open(url, '_blank');
+          setMsg('เปิดรูป QR แล้ว กดค้างที่รูปเพื่อบันทึกลงเครื่อง');
+        });
+    }
+    if (saveBtn) saveBtn.addEventListener('click', saveQr);
+    if (saveBar) saveBar.addEventListener('click', saveQr);
+    function setMsg(msg){
+      if (!confirmMsg) return;
+      confirmMsg.hidden = !msg;
+      confirmMsg.textContent = msg || '';
+    }
+    function setPageMsg(msg, kind){
+      if (!resultBox) return;
+      resultBox.hidden = !msg;
+      resultBox.textContent = msg || '';
+      resultBox.className = 'la-pay-banner';
+      if (kind === 'fail') resultBox.className += ' adm-error is-fail';
+      else resultBox.className += ' adm-ok ' + (kind === 'paid' ? 'is-paid' : 'is-wait');
+    }
+    var busy = false;
+    var slipBtn = document.querySelector('.la-qr-slip');
+    function setBusy(on){
+      busy = !!on;
+      if (slipBtn) {
+        slipBtn.style.pointerEvents = busy ? 'none' : '';
+        slipBtn.style.opacity = busy ? '0.6' : '';
+      }
+    }
+    function uploadSlip(file){
+      if (!file || busy) return;
+      setBusy(true);
+      hide();
+      if (window.laStartCheck) window.laStartCheck(pid, {{ "%.2f"|format(pay.amount) }});
+      var body = new FormData();
+      body.append('slip', file, file.name || 'slip.jpg');
+      fetch('/addfunds/pay/' + pid + '/slip', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+        body: body
+      })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d && d.paid) {
+            if (window.laShowPaid) window.laShowPaid({{ "%.2f"|format(pay.amount) }});
+            else location.href = {{ (shop_home or '/neworder')|tojson }};
+            return;
+          }
+          if (d && d.ok === false) {
+            setBusy(false);
+            if (window.laStopCheck) window.laStopCheck();
+            setPageMsg((d && d.message) || 'ส่งสลิปไม่สำเร็จ', 'fail');
+            return;
+          }
+          try { history.replaceState({}, '', '/addfunds?wait=' + pid); } catch (e) {}
+        })
+        .catch(function(){
+          setBusy(false);
+          if (window.laStopCheck) window.laStopCheck();
+          setPageMsg('ส่งสลิปไม่สำเร็จ ลองใหม่อีกครั้ง', 'fail');
+        });
+    }
+    var slipInput = document.getElementById('laSlipFile');
+    if (slipInput) slipInput.addEventListener('change', function(){
+      var file = slipInput.files && slipInput.files[0];
+      slipInput.value = '';
+      uploadSlip(file);
+    });
+    var sawFail = {{ 'true' if pay_result == 'fail' else 'false' }};
+    setInterval(function(){
+      if (window.laChecking) return;
+      fetch('/addfunds/pay/' + pid + '/status', { credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (!d) return;
+          if (d.status === 'paid') {
+            if (window.laShowPaid) window.laShowPaid(d.amount);
+            else location.href = {{ (shop_home or '/neworder')|tojson }};
+            return;
+          }
+          if (d.message && !d.checking && !sawFail) {
+            sawFail = true;
+            location.href = '/addfunds?wait=' + pid;
+          }
+        })
+        .catch(function(){});
+    }, 2500);
+  })();
+</script>
+{% endif %}
+
+<div class="la-pay-pop" id="laCheckModal" hidden>
+  <div class="la-pay-sheet" role="dialog" aria-modal="true" aria-labelledby="laCheckTitle">
+    <div class="la-check-count" id="laCheckCount">45</div>
+    <h2 id="laCheckTitle">กำลังตรวจสลิป</h2>
+    <p id="laCheckText">รอสักครู่ ระบบกำลังยืนยันยอดกับธนาคาร</p>
+  </div>
+</div>
+<div class="la-pay-pop" id="laPaidModal" hidden>
+  <div class="la-pay-sheet" role="dialog" aria-modal="true" aria-labelledby="laPaidTitle">
+    <h2 id="laPaidTitle">เงินเข้าแล้ว</h2>
+    <span class="la-paid-amt" id="laPaidAmt"></span>
+    <p>เครดิตเข้ากระเป๋าแล้ว กำลังไปหน้าสั่งซื้อ</p>
+    <button class="la-pay-ok" type="button" id="laPaidOk">ไปสั่งซื้อ</button>
+  </div>
+</div>
+<script>
+  (function(){
+    var checkModal = document.getElementById('laCheckModal');
+    var paidModal = document.getElementById('laPaidModal');
+    var countEl = document.getElementById('laCheckCount');
+    var textEl = document.getElementById('laCheckText');
+    var amtEl = document.getElementById('laPaidAmt');
+    var okBtn = document.getElementById('laPaidOk');
+    var timer = 0;
+    var poll = 0;
+    var left = 45;
+    var watchPid = 0;
+    function openPop(el){ if (el) { el.classList.add('is-open'); el.hidden = false; } }
+    function closePop(el){ if (el) { el.classList.remove('is-open'); el.hidden = true; } }
+    function fmtAmt(n){
+      var x = Number(n);
+      if (!isFinite(x)) return '';
+      return x.toFixed(2) + ' บาท';
+    }
+    function stopCheck(){
+      window.laChecking = false;
+      if (timer) { clearInterval(timer); timer = 0; }
+      if (poll) { clearInterval(poll); poll = 0; }
+      closePop(checkModal);
+    }
+    var orderUrl = {{ (shop_home or '/neworder')|tojson }};
+    var goTimer = 0;
+    function goOrder(){
+      if (goTimer) { clearTimeout(goTimer); goTimer = 0; }
+      location.href = orderUrl;
+    }
+    function showPaid(amount){
+      stopCheck();
+      var pend = document.getElementById('laPendingBox');
+      if (pend) pend.hidden = true;
+      if (amtEl) amtEl.textContent = fmtAmt(amount);
+      openPop(paidModal);
+      if (goTimer) clearTimeout(goTimer);
+      goTimer = setTimeout(goOrder, 900);
+    }
+    function startCheck(pid, amount){
+      watchPid = pid;
+      window.laChecking = true;
+      left = 45;
+      if (countEl) countEl.textContent = String(left);
+      if (textEl) textEl.textContent = 'รอสักครู่ ระบบกำลังยืนยันยอดกับธนาคาร';
+      closePop(paidModal);
+      openPop(checkModal);
+      if (timer) clearInterval(timer);
+      timer = setInterval(function(){
+        if (left <= 0) {
+          if (textEl) textEl.textContent = 'กำลังตรวจต่อ กรุณารอสักครู่';
+          if (countEl) countEl.textContent = '…';
+          return;
+        }
+        left -= 1;
+        if (countEl) countEl.textContent = String(left);
+      }, 1000);
+      if (poll) clearInterval(poll);
+      function tick(){
+        if (!watchPid) return;
+        fetch('/addfunds/pay/' + watchPid + '/status', { credentials: 'same-origin' })
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            if (!d) return;
+            if (d.status === 'paid') {
+              showPaid(d.amount != null ? d.amount : amount);
+              return;
+            }
+            if (d.message && !d.checking) {
+              stopCheck();
+              var box = document.getElementById('laPayResult');
+              if (box) {
+                box.hidden = false;
+                box.textContent = d.message;
+                box.className = 'adm-error la-pay-banner is-fail';
+              }
+            }
+          })
+          .catch(function(){});
+      }
+      tick();
+      poll = setInterval(tick, 1500);
+    }
+    window.laStartCheck = startCheck;
+    window.laStopCheck = stopCheck;
+    window.laShowPaid = showPaid;
+    if (okBtn) okBtn.addEventListener('click', goOrder);
+    {% if pay_result == 'checking' and (wait_pid or pay) %}
+    startCheck({{ (wait_pid|default(pay.id))|int }}, {{ "%.2f"|format(pay.amount) if pay else 0 }});
+    {% elif pay_result == 'paid' %}
+    showPaid({{ "%.2f"|format(pay.amount) if pay else (payments[0].amount if payments else 0) }});
+    {% endif %}
+  })();
+</script>
+{% endblock %}

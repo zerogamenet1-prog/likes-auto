@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page"><div class="la-wrap">
+  <div class="la-page-head"><h1>ส่งทีละรอบ</h1><p class="sub">ส่งงานเป็นรอบ ตามนาทีที่กำหนด</p></div>
+  {% include "_panel_tabs.html" %}
+  {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+  {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
+  <form method="post" action="/dripfeeds" class="la-order-card" style="margin-bottom:24px">
+    <label class="la-field">หมวดหมู่</label>
+    <select class="la-input" id="cat-pick" data-start="">
+      <option value="">เลือกหมวดหมู่</option>
+      {% for c in categories %}
+      <option value="{{ c.platform }}:::{{ c.category }}">{{ c.label }} ({{ c.count }})</option>
+      {% endfor %}
+    </select>
+    <label class="la-field">บริการ</label>
+    <select class="la-input" id="svc-pick" name="service_id" required></select>
+    <p class="la-muted" id="svc-meta"></p>
+    <label class="la-field">ลิงก์</label>
+    <input class="la-input" type="url" name="link" required>
+    <label class="la-field">จำนวนต่อรอบ</label>
+    <input class="la-input" id="qty-pick" type="number" name="quantity" required>
+    <p id="charge-preview" class="la-charge"></p>
+    <label class="la-field">จำนวนรอบ</label>
+    <input class="la-input" type="number" name="runs" value="2" min="2" required>
+    <label class="la-field">ทุกกี่นาที</label>
+    <input class="la-input" type="number" name="interval_min" value="30" min="1" required>
+    <button class="la-btn" type="submit">เปิดส่งทีละรอบ</button>
+  </form>
+  <div class="la-table-wrap">
+  <table class="la-svc-table">
+    <thead><tr><th>ID</th><th>บริการ</th><th>รอบ</th><th>ส่งแล้ว</th><th>สถานะ</th></tr></thead>
+    <tbody>
+    {% for r in items %}
+      <tr><td data-label="ID">{{ r.id }}</td><td data-label="บริการ">{{ r.service | th }}</td><td data-label="รอบ">{{ r.runs }}</td><td data-label="ส่งแล้ว">{{ r.delivered }}</td><td data-label="สถานะ">{{ st.get(r.status, r.status) }}</td></tr>
+    {% else %}
+      <tr><td colspan="5">ยังไม่มีรายการ</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <script id="cat-data" type="application/json">{{ categories | tojson }}</script>
+  <script src="/static/js/order-form.js?v=pro27"></script>
+</div></main>
+{% endblock %}

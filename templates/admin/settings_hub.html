@@ -1,0 +1,375 @@
+{% extends "admin/base.html" %}
+{% block title %}ตั้งค่า{% endblock %}
+{% block subtitle %}<p class="adm-sub">ตั้งค่าเท่าที่ต้องใช้ รายการเพิ่มเติมซ่อนไว้ด้านล่าง</p>{% endblock %}
+{% block content %}
+{% if saved %}<div class="adm-ok">บันทึกแล้ว</div>{% endif %}
+
+{% if tab=='general' %}
+<form method="post" class="adm-form">
+  <div class="adm-form-grid">
+    <div>
+      <label class="la-field">ชื่อเว็บ</label>
+      <input class="la-input" name="site_name" value="{{ settings.site_name or '' }}">
+    </div>
+    <div>
+      <label class="la-field">สกุลเงิน</label>
+      <input class="la-input" name="currency" value="{{ settings.currency or 'THB' }}">
+    </div>
+    <div>
+      <label class="la-field">อีเมลซัพพอร์ต</label>
+      <input class="la-input" name="support_email" value="{{ settings.support_email or '' }}">
+    </div>
+    <div>
+      <label class="la-field">เขตเวลา</label>
+      <input class="la-input" name="timezone" value="{{ settings.timezone or 'Asia/Bangkok' }}">
+    </div>
+    <div>
+      <label class="la-field">ยอดเติมขั้นต่ำ</label>
+      <input class="la-input" name="min_deposit" value="{{ settings.min_deposit or '20' }}">
+    </div>
+      <div>
+        <label class="la-field">พร้อมเพย์</label>
+        <input class="la-input" name="promptpay" value="{{ settings.promptpay or '' }}" placeholder="เบอร์ 10 หลัก หรือเลขผู้เสียภาษี 13 หลัก">
+      </div>
+      <div>
+        <label class="la-field">ทรูมันนี่วอลเล็ท</label>
+        <input class="la-input" name="truemoney" value="{{ settings.truemoney or '' }}" placeholder="เบอร์วอลเล็ท">
+      </div>
+  </div>
+  <label class="la-field">ประกาศหน้าเว็บ</label>
+  <input class="la-input" name="announcement" value="{{ settings.announcement or '' }}">
+  <details class="adm-more"{% if saved %} open{% endif %}>
+    <summary>ตั้งค่าเพิ่มเติม</summary>
+    <div class="adm-sw-box">
+      <p class="adm-sw-k">ร้าน</p>
+      <div class="adm-sw-row">
+        <label class="adm-sw"><input type="checkbox" name="maintenance" value="1" {% if settings.maintenance=='1' %}checked{% endif %}> ปิดปรับปรุง</label>
+        <label class="adm-sw"><input type="checkbox" name="registration_page" value="1" {% if settings.get('registration_page', '1') != '0' %}checked{% endif %}> สมัครสมาชิก</label>
+        <label class="adm-sw"><input type="checkbox" name="google_login" value="1" {% if settings.get('google_login', '1') != '0' %}checked{% endif %}> Google</label>
+        <label class="adm-sw"><input type="checkbox" name="resetpass" value="1" {% if settings.get('resetpass', '1') != '0' %}checked{% endif %}> รีเซ็ตรหัส</label>
+        <label class="adm-sw"><input type="checkbox" name="ticket_system" value="1" {% if settings.get('ticket_system', '1') != '0' %}checked{% endif %}> ระบบตั๋ว</label>
+        <label class="adm-sw"><input type="checkbox" name="enable_transfer_funds" value="1" {% if settings.get('enable_transfer_funds', '1') != '0' %}checked{% endif %}> โอนเงินในร้าน</label>
+        <label class="adm-sw"><input type="checkbox" name="auto_refill" value="1" {% if settings.get('auto_refill', '1') != '0' %}checked{% endif %}> ขอเติมยอด</label>
+      </div>
+    </div>
+    <div class="adm-form-grid" style="margin-top:12px">
+      <div>
+        <label class="la-field">เรท USD</label>
+        <input class="la-input" name="usd_rate" value="{{ settings.usd_rate or '35' }}">
+      </div>
+      <div>
+        <label class="la-field">กำไรบริการ %</label>
+        <input class="la-input" name="profit_percent" value="{{ settings.profit_percent or '100' }}">
+      </div>
+      <div>
+        <label class="la-field">ค่าธรรมเนียมโอน %</label>
+        <input class="la-input" name="fundstransfer_fees" value="{{ settings.fundstransfer_fees or '0' }}">
+      </div>
+      <div>
+        <label class="la-field">ตั๋วสูงสุดต่อคน</label>
+        <input class="la-input" name="max_ticket" value="{{ settings.max_ticket or '5' }}">
+      </div>
+      <div>
+        <label class="la-field">% แนะนำเพื่อน</label>
+        <input class="la-input" name="affiliate_percent" value="{{ settings.affiliate_percent or '5' }}">
+      </div>
+      <div>
+        <label class="la-field">ราคาแผงลูก</label>
+        <input class="la-input" name="child_panel_price" value="{{ settings.child_panel_price or '500' }}">
+      </div>
+      <div>
+        <label class="la-field">แจ้งเมื่อยอดผู้ให้บริการต่ำกว่า</label>
+        <input class="la-input" name="alert_balance" value="{{ settings.alert_balance or '10' }}">
+      </div>
+    </div>
+    <label class="la-field">Google Client ID</label>
+    <input class="la-input" name="google_client_id" value="{{ settings.google_client_id or '' }}" placeholder="xxxx.apps.googleusercontent.com">
+    <label class="la-field">Google Client Secret</label>
+    <input class="la-input" type="password" name="google_client_secret" placeholder="เว้นว่างถ้าไม่เปลี่ยน">
+    <p class="adm-sub">Redirect URI ที่ต้องใส่ใน Google: <b>https://likes-auto.com/google-login</b></p>
+    <label class="la-field">Custom header</label>
+    <textarea class="la-input" name="custom_header" style="min-height:80px;padding:12px">{{ settings.custom_header or '' }}</textarea>
+    <label class="la-field">Custom footer</label>
+    <textarea class="la-input" name="custom_footer" style="min-height:80px;padding:12px">{{ settings.custom_footer or '' }}</textarea>
+  </details>
+  <button class="la-btn" type="submit">บันทึก</button>
+</form>
+{% endif %}
+
+{% if tab=='currency' %}
+<form method="post" class="adm-form">
+  <p class="adm-help">ใช้ตอนแปลงราคาทุนจาก API เป็นบาท</p>
+  <label class="la-field">สกุลเงินร้าน</label>
+  <input class="la-input" name="currency" value="{{ settings.currency or 'THB' }}">
+  <label class="la-field">1 USD = กี่บาท</label>
+  <input class="la-input" name="usd_rate" value="{{ settings.usd_rate or '35' }}">
+  <label class="la-field">กำไรบริการ %</label>
+  <input class="la-input" name="profit_percent" value="{{ settings.profit_percent or '100' }}">
+  <button class="la-btn" type="submit">บันทึกเรท</button>
+</form>
+{% endif %}
+
+{% if tab=='payments' %}
+<form method="post" action="/admin/settings/payments/options" class="adm-form" style="margin-bottom:18px">
+  <p class="adm-help">เลขพร้อมเพย์และทรูมันนี่ใช้เป็นค่าเริ่มเมื่อช่องทางไม่ได้ใส่เลขเฉพาะ</p>
+  <div class="adm-form-grid">
+    <div>
+      <label class="la-field">พร้อมเพย์หลัก</label>
+      <input class="la-input" name="promptpay" value="{{ settings.promptpay or '' }}" placeholder="0812345678">
+    </div>
+    <div>
+      <label class="la-field">ทรูมันนี่หลัก</label>
+      <input class="la-input" name="truemoney" value="{{ settings.truemoney or '' }}">
+    </div>
+    <div>
+      <label class="la-field">ชื่อบน QR</label>
+      <input class="la-input" name="pay_merchant" value="{{ settings.pay_merchant or 'LIKES AUTO' }}">
+    </div>
+  </div>
+  <label class="adm-sw"><input type="checkbox" name="pay_unique_satang" value="1" {% if settings.get('pay_unique_satang','1') != '0' %}checked{% endif %}> สุ่มสตางค์บน QR ไม่ให้ยอดซ้ำ</label>
+  <label class="adm-sw"><input type="checkbox" name="auto_approve_slip" value="1" {% if settings.get('auto_approve_slip','1') != '0' %}checked{% endif %}> อนุมัติอัตโนมัติเมื่อลูกค้าแนบสลิปแล้วตรวจยอดผ่าน</label>
+  <label class="la-field">EasySlip API key</label>
+  <input class="la-input" type="password" name="easyslip_key" placeholder="{{ 'ตั้งค่าแล้ว — เว้นว่างถ้าไม่เปลี่ยน' if settings.easyslip_key else 'วางคีย์จาก developer.easyslip.com' }}" autocomplete="new-password">
+  <p class="adm-help">ลูกค้าสแกน QR แล้วแนบสลิปจากแอปธนาคาร ระบบอ่าน QR บนสลิป เทียบยอด แล้วเข้ากระเป๋าทันที</p>
+  <button class="la-btn" type="submit">บันทึกช่องทางหลัก</button>
+</form>
+<form method="post" class="adm-form" style="margin-bottom:18px">
+  <div class="adm-form-grid">
+    <div>
+      <label class="la-field">ชื่อช่องทาง</label>
+      <input class="la-input" name="name" required>
+    </div>
+    <div>
+      <label class="la-field">ประเภท</label>
+      <select class="la-input" name="kind">
+        <option value="promptpay">พร้อมเพย์ / QR</option>
+        <option value="truemoney">ทรูมันนี่วอลเล็ท</option>
+        <option value="bank">โอนธนาคาร</option>
+        <option value="wallet">วอลเล็ทอื่น</option>
+        <option value="crypto">คริปโต</option>
+        <option value="other">อื่น ๆ</option>
+      </select>
+    </div>
+  </div>
+  <label class="la-field">เลขพร้อมเพย์ / เบอร์วอลเล็ท / ที่อยู่กระเป๋า</label>
+  <input class="la-input" name="pay_to" placeholder="เว้นว่างถ้าใช้ค่าหลักด้านบน">
+  <label class="la-field">รายละเอียด</label>
+  <input class="la-input" name="detail">
+  <button class="la-btn" type="submit">เพิ่มช่องทาง</button>
+</form>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    <thead><tr><th>ช่องทาง</th><th>ประเภท</th><th>เลขรับเงิน</th><th>รายละเอียด</th><th>สถานะ</th><th></th></tr></thead>
+    <tbody>
+    {% for r in methods %}
+      <tr>
+        <td>{{ r.name }}</td>
+        <td>{{ r.kind or '-' }}</td>
+        <td>{{ r.pay_to or '-' }}</td>
+        <td class="wrap">{{ r.detail }}</td>
+        <td><span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span></td>
+        <td>
+          <form method="post" action="/admin/settings/payments/{{ r.id }}/toggle"><button class="la-btn la-btn-mini" type="submit">{{ 'ปิด' if r.status=='active' else 'เปิด' }}</button></form>
+          <form method="post" action="/admin/settings/payments/{{ r.id }}/edit" class="adm-inline" style="margin-top:6px">
+            <input class="la-input" name="pay_to" value="{{ r.pay_to or '' }}" placeholder="เลขรับเงิน" style="width:140px">
+            <button class="la-btn la-btn-mini la-btn-ghost" type="submit">แก้เลข</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6">ยังไม่มีช่องทาง</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% if tab=='bonuses' %}
+<form method="post" class="adm-form" style="margin-bottom:18px">
+  <div class="adm-form-grid">
+    <div>
+      <label class="la-field">ยอดขั้นต่ำ</label>
+      <input class="la-input" type="number" name="min_amount" required>
+    </div>
+    <div>
+      <label class="la-field">โบนัส %</label>
+      <input class="la-input" type="number" step="0.1" name="percent" required>
+    </div>
+  </div>
+  <button class="la-btn" type="submit">เพิ่มโบนัส</button>
+</form>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    {% for r in bonuses %}
+    <tr>
+      <td>เติมจาก {{ r.min_amount }}</td>
+      <td>+{{ r.percent }}%</td>
+      <td><form method="post" action="/admin/settings/bonuses/{{ r.id }}/delete"><button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button></form></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3">ยังไม่มีโบนัส</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if tab=='banks' %}
+<form method="post" class="adm-form" style="margin-bottom:18px">
+  <label class="la-field">ธนาคาร</label>
+  <input class="la-input" name="bank" required>
+  <label class="la-field">เลขบัญชี</label>
+  <input class="la-input" name="account" required>
+  <label class="la-field">ชื่อบัญชี</label>
+  <input class="la-input" name="holder" required>
+  <button class="la-btn" type="submit">เพิ่มบัญชี</button>
+</form>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    {% for r in banks %}
+    <tr>
+      <td>{{ r.bank }}</td><td>{{ r.account }}</td><td>{{ r.holder }}</td>
+      <td><form method="post" action="/admin/settings/banks/{{ r.id }}/delete"><button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button></form></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">ยังไม่มีบัญชีธนาคาร</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if tab=='modules' %}
+<form method="post" class="adm-form adm-form-wide">
+  <p class="adm-help">ติ๊กเพื่อเปิดเมนูให้ลูกค้าเห็น ถ้าปิดแล้วเข้าหน้านั้นไม่ได้</p>
+  <div class="adm-sw-box">
+    <p class="adm-sw-k">คำสั่งซื้อ</p>
+    <div class="adm-sw-row">
+        <label class="adm-sw"><input type="checkbox" name="mod_neworder" value="1" {% if settings.get('mod_neworder', '1') != '0' %}checked{% endif %}> สั่งซื้อใหม่</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_dripfeed" value="1" {% if settings.get('mod_dripfeed', '1') != '0' %}checked{% endif %}> ส่งทีละรอบ</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_services" value="1" {% if settings.get('mod_services', '1') != '0' %}checked{% endif %}> บริการ</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_orders" value="1" {% if settings.get('mod_orders', '1') != '0' %}checked{% endif %}> ประวัติ</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_subscription" value="1" {% if settings.get('mod_subscription', '1') != '0' %}checked{% endif %}> เติมอัตโนมัติ</label>
+    </div>
+    <p class="adm-sw-k">เงิน</p>
+    <div class="adm-sw-row">
+        <label class="adm-sw"><input type="checkbox" name="mod_addfunds" value="1" {% if settings.get('mod_addfunds', '1') != '0' %}checked{% endif %}> เติมเงิน</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_affiliate" value="1" {% if settings.get('mod_affiliate', '1') != '0' %}checked{% endif %}> เชิญเพื่อน</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_child" value="1" {% if settings.get('mod_child', '1') != '0' %}checked{% endif %}> แผงลูก</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_transfer" value="1" {% if settings.get('mod_transfer', '1') != '0' %}checked{% endif %}> โอนเงิน</label>
+    </div>
+    <p class="adm-sw-k">ช่วยเหลือ</p>
+    <div class="adm-sw-row">
+        <label class="adm-sw"><input type="checkbox" name="mod_tickets" value="1" {% if settings.get('mod_tickets', '1') != '0' %}checked{% endif %}> ซัพพอร์ต</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_faq" value="1" {% if settings.get('mod_faq', '1') != '0' %}checked{% endif %}> FAQ</label>
+    </div>
+    <p class="adm-sw-k">อื่นๆ</p>
+    <div class="adm-sw-row">
+        <label class="adm-sw"><input type="checkbox" name="mod_account" value="1" {% if settings.get('mod_account', '1') != '0' %}checked{% endif %}> บัญชี</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_api" value="1" {% if settings.get('mod_api', '1') != '0' %}checked{% endif %}> API</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_logout" value="1" {% if settings.get('mod_logout', '1') != '0' %}checked{% endif %}> ออก</label>
+    </div>
+  </div>
+  <button class="la-btn" type="submit">บันทึก</button>
+</form>
+{% endif %}
+
+{% if tab=='integrations' %}
+{% set gs = google_status if google_status is defined else {} %}
+<div class="g-setup">
+  {% if gs.ready %}
+  <div class="adm-ok">พร้อมใช้งานแล้ว ปุ่มเข้าสู่ระบบด้วย Google แสดงบนหน้าแรก หน้าเข้าสู่ระบบ และหน้าสมัคร</div>
+  {% else %}
+  <div class="adm-error">ยังไม่พร้อม — สร้าง OAuth Client ที่ Google แล้ววาง Client ID กับ Client Secret ด้านล่าง</div>
+  {% endif %}
+  <h2 class="g-setup-h">วิธีตั้งค่าเข้าสู่ระบบด้วย Google</h2>
+  <ol class="g-setup-steps">
+    <li>เปิด Google Cloud Console แล้วสร้างโปรเจกต์ใหม่ หรือเลือกโปรเจกต์ที่มีอยู่</li>
+    <li>ไปที่ APIs & Services → OAuth consent screen เลือก External แล้วกรอกชื่อแอป เช่น Likes Auto และอีเมลซัพพอร์ต</li>
+    <li>Scopes ไม่ต้องเพิ่มเอง ระบบขอแค่ openid email profile</li>
+    <li>ถ้าสถานะเป็น Testing ให้เพิ่มอีเมลที่ทดลองใน Test users ถ้าจะให้ลูกค้าทั่วไปใช้ได้ ให้กด Publish app</li>
+    <li>ไปที่ Credentials → Create credentials → OAuth client ID → Web application</li>
+    <li>วาง Authorized JavaScript origins และ Authorized redirect URIs ตามกล่องด้านล่าง แล้วกด Create</li>
+    <li>คัดลอก Client ID กับ Client Secret มาวางในฟอร์มนี้ ติ๊กเปิดใช้งาน แล้วกดบันทึก</li>
+  </ol>
+  <p class="adm-help">ต้องตรงทุกตัวอักษร รวม https และไม่มี / ท้าย origins</p>
+  <div class="g-uri-list">
+    <p class="la-field">Authorized JavaScript origins</p>
+    {% for u in gs.origins or [] %}
+    <div class="g-copyrow">
+      <code>{{ u }}</code>
+      <button class="la-btn la-btn-mini" type="button" onclick="admCopy('{{ u }}', this)">คัดลอก</button>
+    </div>
+    {% endfor %}
+    <p class="la-field" style="margin-top:12px">Authorized redirect URIs</p>
+    {% for u in gs.redirects or [] %}
+    <div class="g-copyrow">
+      <code>{{ u }}</code>
+      <button class="la-btn la-btn-mini" type="button" onclick="admCopy('{{ u }}', this)">คัดลอก</button>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+<form method="post" class="adm-form" style="margin-top:16px">
+  <label class="theme-switch-row">
+    <input type="checkbox" name="google_login" value="1" {% if settings.get('google_login', '1') != '0' %}checked{% endif %}>
+    <span>เปิดให้ลูกค้าเข้าสู่ระบบด้วย Google</span>
+  </label>
+  <label class="la-field">Google Client ID</label>
+  <input class="la-input" name="google_client_id" value="{{ settings.google_client_id or '' }}" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
+  <label class="la-field">Google Client Secret</label>
+  <input class="la-input" type="password" name="google_client_secret" placeholder="{{ 'ตั้งค่าแล้ว — เว้นว่างถ้าไม่เปลี่ยน' if gs.has_secret else 'เว้นว่างถ้าไม่เปลี่ยน' }}" autocomplete="new-password">
+  <p class="adm-help">อย่าแชร์ Client Secret กับใคร Secret ถูกเก็บในระบบและไม่แสดงกลับมา</p>
+  {% if gs.ready %}
+  <p><a class="la-btn la-btn-ghost" href="/google-login" target="_blank" rel="noopener">ลองเข้าสู่ระบบด้วย Google</a></p>
+  {% endif %}
+  <h3 class="g-setup-h" style="margin-top:22px">อีเมลและบริการอื่น</h3>
+  <label class="la-field">SMTP host</label>
+  <input class="la-input" name="smtp_host" value="{{ settings.smtp_host or '' }}">
+  <label class="la-field">SMTP user</label>
+  <input class="la-input" name="smtp_user" value="{{ settings.smtp_user or '' }}">
+  <label class="la-field">SMTP pass</label>
+  <input class="la-input" type="password" name="smtp_pass" placeholder="เว้นว่างถ้าไม่เปลี่ยน" autocomplete="new-password">
+  <label class="la-field">SMTP port</label>
+  <input class="la-input" name="smtp_port" value="{{ settings.smtp_port or '587' }}">
+  <label class="la-field">reCAPTCHA</label>
+  <input class="la-input" name="recaptcha_key" value="{{ settings.recaptcha_key or '' }}">
+  <label class="la-field">Analytics ID</label>
+  <input class="la-input" name="analytics_id" value="{{ settings.analytics_id or '' }}">
+  <button class="la-btn" type="submit">บันทึก</button>
+</form>
+<form method="post" action="/admin/settings/integrations/test-mail" class="adm-form" style="margin-top:12px">
+  <p class="adm-help">ส่งอีเมลทดสอบไปที่อีเมลซัพพอร์ตหรือ SMTP user ที่ตั้งไว้</p>
+  <button class="la-btn la-btn-ghost" type="submit">ทดสอบ SMTP</button>
+</form>
+{% endif %}
+
+{% if tab=='subjects' %}
+<form method="post" class="adm-form" style="margin-bottom:18px">
+  <label class="la-field">หัวข้อตั๋ว</label>
+  <input class="la-input" name="name" required>
+  <button class="la-btn" type="submit">เพิ่มหัวข้อ</button>
+</form>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    {% for r in subjects %}
+    <tr>
+      <td>{{ r.name }}</td>
+      <td><form method="post" action="/admin/settings/subjects/{{ r.id }}/delete"><button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button></form></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="2">ยังไม่มีหัวข้อ</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if tab=='alerts' %}
+<form method="post" class="adm-form">
+  <p class="adm-help">ใช้ตอนยอดผู้ให้บริการต่ำ และเป็นอีเมลติดต่อลูกค้า</p>
+  <label class="la-field">แจ้งเมื่อยอดผู้ให้บริการต่ำกว่า</label>
+  <input class="la-input" name="alert_balance" value="{{ settings.alert_balance or '10' }}">
+  <label class="la-field">อีเมลซัพพอร์ต</label>
+  <input class="la-input" name="support_email" value="{{ settings.support_email or '' }}">
+  <button class="la-btn" type="submit">บันทึกการแจ้งเตือน</button>
+</form>
+{% endif %}
+{% endblock %}

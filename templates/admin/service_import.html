@@ -1,0 +1,144 @@
+{% extends "admin/base.html" %}
+{% block title %}เลือกบริการจาก API{% endblock %}
+{% block subtitle %}<p class="adm-sub">เลือกหมวดจากรายการ แล้วค่อยติ๊กบริการที่จะเพิ่ม</p>{% endblock %}
+{% block content %}
+{% if error %}<div class="adm-error">ดึงรายการไม่สำเร็จ ตรวจ API URL และคีย์ที่ผู้ให้บริการ</div>{% endif %}
+{% if loaded %}<div class="adm-ok">โหลดจาก API แล้ว {{ loaded }} รายการ เลือกหมวดด้านล่างได้เลย</div>{% endif %}
+{% if added %}<div class="adm-ok">เพิ่มแล้ว {{ added }} รายการ</div>{% endif %}
+{% if not providers %}
+<p class="adm-help">ยังไม่มีผู้ให้บริการ ไปเพิ่ม API ก่อน</p>
+<p><a class="la-btn" href="/admin/providers">ไปผู้ให้บริการ</a></p>
+{% else %}
+<div class="adm-card" style="margin-bottom:16px">
+  <form method="get" action="/admin/services/import" class="adm-actions">
+    <select class="la-input" name="pid" onchange="this.form.submit()" style="max-width:280px">
+      {% for p in providers %}
+      <option value="{{ p.id }}" {% if pid==p.id %}selected{% endif %}>{{ p.name }}</option>
+      {% endfor %}
+    </select>
+    {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
+  </form>
+  <form method="post" action="/admin/services/import/fetch" class="adm-inline" style="margin-top:10px">
+    <input type="hidden" name="pid" value="{{ pid }}">
+    <button class="la-btn" type="submit">โหลดรายการจาก API</button>
+    <span class="la-muted">{{ currency }} · 1 USD = {{ usd_rate }} THB</span>
+  </form>
+</div>
+{% if not categories %}
+<p class="adm-help">กดโหลดรายการจาก API ก่อน แล้วเลือกหมวด</p>
+{% else %}
+<div class="adm-card" style="margin-bottom:18px;max-width:760px">
+  <h2 style="font-size:18px;margin:0 0 10px">1) เลือกหมวด</h2>
+  <input class="la-input" id="cat-q" type="search" placeholder="ค้นหาหมวด" style="margin-bottom:8px">
+  <form method="get" action="/admin/services/import" id="cat-form">
+    <input type="hidden" name="pid" value="{{ pid }}">
+    <select class="adm-cat-select" name="cat" id="cat-select" size="14" onchange="this.form.submit()">
+      {% for c in categories %}
+      <option value="{{ c.name }}" {% if cat==c.name %}selected{% endif %}>{{ c.name }} ({{ c.count }})</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+{% endif %}
+{% if cat %}
+<div class="adm-actions" style="margin-bottom:12px">
+  <form method="get" action="/admin/services/import" class="adm-actions">
+    <input type="hidden" name="pid" value="{{ pid }}">
+    <input type="hidden" name="cat" value="{{ cat }}">
+    <input class="la-input adm-search" type="search" name="q" value="{{ q }}" placeholder="ค้นหาบริการในหมวดนี้">
+    <button class="la-btn" type="submit">ค้นหา</button>
+  </form>
+</div>
+<form method="post" action="/admin/services/import/add" id="import-form" data-pid="{{ pid }}" data-main="{{ cat }}">
+  <input type="hidden" name="pid" value="{{ pid }}">
+  <input type="hidden" name="main" value="">
+  <input type="hidden" name="cat" value="{{ cat }}">
+  <input type="hidden" name="q" value="{{ q }}">
+  <input type="hidden" name="picks" id="picks" value="{}">
+  <input type="hidden" name="scope" id="scope" value="selected">
+  <h2 style="font-size:18px;margin:0 0 10px">2) ติ๊กบริการในหมวด {{ cat }}</h2>
+  <div class="adm-card adm-pricebar">
+    <div class="adm-form-grid">
+      <div>
+        <label class="la-field">1 USD = กี่บาท</label>
+        <input class="la-input" id="usd_rate" name="usd_rate" type="number" step="0.01" value="{{ usd_rate }}">
+      </div>
+      <div>
+        <label class="la-field">บวกกำไร %</label>
+        <input class="la-input" id="percent" name="percent" type="number" step="0.1" value="100">
+      </div>
+      <div>
+        <label class="la-field">บวกเพิ่ม (บาท)</label>
+        <input class="la-input" id="fixed" name="fixed" type="number" step="0.01" value="0">
+      </div>
+    </div>
+    <div class="adm-actions" style="margin-top:10px">
+      <button class="la-btn la-btn-ghost" type="button" id="recalc-btn">คำนวณราคาใหม่</button>
+      <span class="la-muted" id="pick-count">ยังไม่ได้เลือก</span>
+    </div>
+  </div>
+  <p class="la-muted">{{ total }} รายการ · หน้า {{ page_no }}/{{ pages }}</p>
+  <div class="adm-table-wrap">
+    <table class="adm-table" id="catalog-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="check-page"></th>
+          <th>ID</th>
+          <th>บริการ</th>
+          <th>ต้นทาง</th>
+          <th>ทุน (บาท)</th>
+          <th>ราคาขาย (บาท)</th>
+          <th>ช่วง</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in catalog %}
+        <tr data-id="{{ r.api_service }}" data-rate="{{ r.rate }}" data-cur="{{ r.currency or currency }}">
+          <td><input class="js-pick" type="checkbox" value="{{ r.api_service }}"></td>
+          <td>{{ r.api_service }}</td>
+          <td class="wrap">{{ r.name }}</td>
+          <td>{{ r.rate }} {{ r.currency or currency }}</td>
+          <td class="js-cost">{{ "%.2f"|format(r.cost_thb) }}</td>
+          <td><input class="la-input js-sell adm-num" type="number" step="0.01" value="{{ "%.2f"|format(r.sell_thb) }}"></td>
+          <td>{{ r.min_qty }}-{{ r.max_qty }}</td>
+          <td>{% if r.api_service|string in imported %}<span class="adm-badge active">มีแล้ว</span>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8">ไม่พบบริการในหมวดนี้</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pages > 1 %}
+  <p class="adm-actions" style="margin-top:12px">
+    {% if page_no > 1 %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services/import?pid={{ pid }}&amp;cat={{ cat|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no-1 }}">ก่อนหน้า</a>{% endif %}
+    {% if page_no < pages %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services/import?pid={{ pid }}&amp;cat={{ cat|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no+1 }}">ถัดไป</a>{% endif %}
+  </p>
+  {% endif %}
+  <div class="adm-sticky">
+    <button class="la-btn" type="submit" id="add-selected">เพิ่มที่ติ๊ก</button>
+    <button class="la-btn la-btn-ghost" type="submit" id="add-filtered">เพิ่มทั้งหมวดนี้</button>
+    <a class="la-btn la-btn-ghost" href="/admin/services">กลับหน้าร้าน</a>
+  </div>
+</form>
+<script src="/static/js/admin-import.js?v=4"></script>
+{% endif %}
+<script>
+(function(){
+  var q = document.getElementById('cat-q');
+  var sel = document.getElementById('cat-select');
+  if (!q || !sel) return;
+  q.addEventListener('input', function(){
+    var v = (q.value || '').toLowerCase();
+    Array.prototype.forEach.call(sel.options, function(opt){
+      opt.hidden = !!(v && opt.text.toLowerCase().indexOf(v) < 0);
+    });
+  });
+  if (sel.selectedIndex >= 0 && sel.options[sel.selectedIndex]) {
+    sel.options[sel.selectedIndex].scrollIntoView({ block: 'nearest' });
+  }
+})();
+</script>
+{% endif %}
+{% endblock %}

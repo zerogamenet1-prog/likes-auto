@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-page-head">
+      <h1><i class="ri-store-2-line"></i> {{ t.svc_title }}</h1>
+      <p class="sub">เลือกหมวดแล้วดูเรทต่อ 1,000 หน่วย</p>
+    </div>
+    <div class="la-plat-mini">
+      <a href="/services"><img class="la-platlogo" src="/static/assets/plats/app.svg" alt="บริการทั้งหมด" width="20" height="20"> ทั้งหมด</a>
+      {% for p in platforms[:8] %}
+      <a href="/services?cat={{ p.name|urlencode }}"{% if cat==p.name %} class="is-on"{% endif %}>
+        <img class="la-platlogo" src="{{ p.logo or '/static/assets/plats/app.svg' }}" alt="{{ p.name }}" width="20" height="20"> {{ p.name }}
+      </a>
+      {% endfor %}
+    </div>
+    <form method="get" action="/services" class="la-filter">
+      <select class="la-input" name="cat" onchange="this.form.submit()">
+        <option value="">ทุกหมวด</option>
+        {% for p in platforms %}
+        <option value="{{ p.name }}" {% if cat==p.name %}selected{% endif %}>{{ p.name }} ({{ p.count }})</option>
+        {% endfor %}
+      </select>
+      <input class="la-input" type="search" name="q" value="{{ q or '' }}" placeholder="ค้นหาบริการ">
+      <button class="la-btn" type="submit">ค้นหา</button>
+    </form>
+    <div class="la-table-wrap">
+    <table class="la-svc-table">
+      <thead><tr><th>ID</th><th>หมวด</th><th>บริการ</th><th>เรท</th><th>ช่วง</th><th></th></tr></thead>
+      <tbody>
+      {% for s in catalog %}
+        <tr>
+          <td data-label="ID">{{ s.id }}</td>
+          <td class="wrap" data-label="หมวด"><img class="la-platlogo" src="{{ s.logo or '/static/assets/plats/app.svg' }}" alt="{{ s.platform }}" width="20" height="20" loading="lazy"> {{ s.platform }}{% if s.category %}<br><small>{{ s.category }}</small>{% endif %}</td>
+          <td data-label="บริการ">{{ s.name }}</td>
+          <td data-label="เรท">{{ s.rate }}</td>
+          <td data-label="ช่วง">{{ s.min_qty }}-{{ s.max_qty }}</td>
+          <td><a class="la-btn la-btn-mini" href="{% if user %}/neworder?cat={{ s.platform|urlencode }}&amp;sid={{ s.id }}{% else %}/signup{% endif %}">สั่งซื้อ</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">ไม่พบบริการในหมวดนี้</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</main>
+{% endblock %}

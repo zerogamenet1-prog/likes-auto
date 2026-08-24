@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-page-head la-page-head-row">
+      <div>
+        <h1><i class="ri-file-list-3-line"></i> ประวัติออเดอร์</h1>
+        <p class="sub">ค้นหา ดูสถานะ ขอเติมยอด หรือขอยกเลิกงานที่ยังทำอยู่</p>
+      </div>
+      {% if mods.mod_neworder %}<a class="la-btn la-btn-mini" href="/neworder"><i class="ri-add-circle-line"></i> สั่งซื้อใหม่</a>{% endif %}
+    </div>
+    {% include "_panel_tabs.html" %}
+    {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+    {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
+
+    <div class="la-ostats">
+      <a class="la-ostat{% if not status %} is-on{% endif %}" href="/orders{% if q %}?q={{ q|urlencode }}{% endif %}">ทั้งหมด <b>{{ counts.all }}</b></a>
+      <a class="la-ostat{% if status=='pending' %} is-on{% endif %}" href="/orders?status=pending{% if q %}&amp;q={{ q|urlencode }}{% endif %}">รอส่ง <b>{{ counts.pending }}</b></a>
+      <a class="la-ostat{% if status=='processing' %} is-on{% endif %}" href="/orders?status=processing{% if q %}&amp;q={{ q|urlencode }}{% endif %}">กำลังทำ <b>{{ counts.processing }}</b></a>
+      <a class="la-ostat{% if status=='completed' %} is-on{% endif %}" href="/orders?status=completed{% if q %}&amp;q={{ q|urlencode }}{% endif %}">สำเร็จ <b>{{ counts.completed }}</b></a>
+      <a class="la-ostat{% if status=='partial' %} is-on{% endif %}" href="/orders?status=partial{% if q %}&amp;q={{ q|urlencode }}{% endif %}">บางส่วน <b>{{ counts.partial }}</b></a>
+      <a class="la-ostat{% if status=='canceled' %} is-on{% endif %}" href="/orders?status=canceled{% if q %}&amp;q={{ q|urlencode }}{% endif %}">ยกเลิก <b>{{ counts.canceled }}</b></a>
+    </div>
+
+    <form class="la-filter" method="get" action="/orders">
+      {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+      <input class="la-input" type="search" name="q" value="{{ q or '' }}" placeholder="ค้นหา ID, ลิงก์ หรือชื่อบริการ" id="ordSearch">
+      <button class="la-btn" type="submit">ค้นหา</button>
+    </form>
+
+    <div class="la-table-wrap">
+    <table class="la-svc-table la-ord-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>บริการ</th>
+          <th>ลิงก์</th>
+          <th>จำนวน</th>
+          <th>คงเหลือ</th>
+          <th>ยอด</th>
+          <th>สถานะ</th>
+          <th>เวลา</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in orders %}
+        <tr data-search="#{{ r.id }} {{ r.service }} {{ r.service | th }} {{ r.link }} {{ r.status }}">
+          <td data-label="ID">
+            <button class="la-id" type="button" data-copy="{{ r.id }}" title="คัดลอก ID">#{{ r.id }}</button>
+          </td>
+          <td class="wrap" data-label="บริการ">{{ r.service | th }}</td>
+          <td class="wrap" data-label="ลิงก์">
+            {% if r.link %}
+            <span class="la-linkcell">
+              <a href="{{ r.link }}" target="_blank" rel="noopener" title="{{ r.link }}">เปิดลิงก์</a>
+              <button type="button" class="la-copy-mini" data-copy="{{ r.link }}" title="คัดลอกลิงก์"><i class="ri-file-copy-line"></i></button>
+            </span>
+            {% else %}-{% endif %}
+          </td>
+          <td data-label="จำนวน">{{ "{:,}".format(r.quantity or 0) }}{% if r.start_count and r.start_count not in ['-', ''] %}<small class="la-muted"> เริ่ม {{ r.start_count }}</small>{% endif %}</td>
+          <td data-label="คงเหลือ">
+            {% if r.progress is not none %}
+            <div class="la-prog"><i style="width:{{ r.progress }}%"></i></div>
+            <small>{{ r.remains if r.remains not in [None, '', '-'] else '-' }} · {{ r.progress }}%</small>
+            {% else %}
+            {{ r.remains if r.remains not in [None, '', '-'] else '-' }}
+            {% endif %}
+          </td>
+          <td data-label="ยอด">{{ "%.2f"|format(r.charge or 0) }}</td>
+          <td data-label="สถานะ"><span class="la-badge-st is-{{ r.status }}">{{ st.get(r.status, r.status) }}</span></td>
+          <td data-label="เวลา">{{ r.created_at }}</td>
+          <td data-label="จัดการ">
+            <div class="la-ord-act">
+              {% if r.status in ['completed','partial'] %}
+              <form method="post" action="/orders/{{ r.id }}/refill"><button class="la-btn la-btn-mini" type="submit">ขอเติม</button></form>
+              {% endif %}
+              {% if r.status in ['pending','processing','inprogress'] %}
+              <form method="post" action="/orders/{{ r.id }}/cancel" data-confirm="ขอยกเลิกออเดอร์นี้?"><button class="la-btn la-btn-mini la-btn-ghost" type="submit">ขอยกเลิก</button></form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr class="la-empty-row"><td colspan="9">
+          <div class="la-empty">
+            <i class="ri-inbox-2-line"></i>
+            <b>ยังไม่มีออเดอร์{{ ' ในตัวกรองนี้' if status or q else '' }}</b>
+            <p class="la-muted">สั่งซื้อจากลิงก์สาธารณะได้เลย ไม่ต้องฝากรหัส</p>
+            <a class="la-btn" href="/neworder">ไปหน้าสั่งซื้อ</a>
+          </div>
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    {% if pages and pages > 1 %}
+    <nav class="la-pager" aria-label="หน้า">
+      {% if page_n > 1 %}<a href="/orders?p={{ page_n-1 }}{% if status %}&amp;status={{ status }}{% endif %}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">ก่อนหน้า</a>{% endif %}
+      <span>หน้า {{ page_n }} / {{ pages }}</span>
+      {% if page_n < pages %}<a href="/orders?p={{ page_n+1 }}{% if status %}&amp;status={{ status }}{% endif %}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">ถัดไป</a>{% endif %}
+    </nav>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

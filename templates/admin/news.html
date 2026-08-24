@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+{% block title %}ประกาศ{% endblock %}
+{% block subtitle %}<p class="adm-sub">ข้อความนี้จะแสดงให้ลูกค้าในแผง</p>{% endblock %}
+{% block content %}
+<form method="post" action="/admin/news" class="adm-form" style="margin-bottom:18px">
+  <label class="la-field">หัวข้อ</label>
+  <input class="la-input" name="title" required>
+  <label class="la-field">เนื้อหา</label>
+  <textarea class="la-input" name="body" style="min-height:90px;padding:12px" required></textarea>
+  <button class="la-btn" type="submit">เผยแพร่</button>
+</form>
+{% for r in rows %}
+<article class="adm-card" style="margin-bottom:12px">
+  <b>{{ r.title }}</b> · {{ r.created_at }}
+  <p>{{ r.body }}</p>
+  <form method="post" action="/admin/news/{{ r.id }}/delete" onsubmit="return confirm('ลบประกาศนี้?')">
+    <button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button>
+  </form>
+</article>
+{% else %}
+<p class="adm-empty">ยังไม่มีประกาศ</p>
+{% endfor %}
+{% endblock %}

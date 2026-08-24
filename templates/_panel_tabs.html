@@ -1,0 +1,14 @@
+<nav class="la-tabs" aria-label="เมนูออเดอร์">
+  {% if mods.mod_neworder %}
+  <a href="/neworder" class="{% if page == 'neworder' %}is-on{% endif %}"><i class="ri-add-circle-line"></i> สั่งซื้อใหม่</a>
+  {% endif %}
+  {% if mods.mod_orders %}
+  <a href="/orders" class="{% if page == 'orders' %}is-on{% endif %}"><i class="ri-file-list-3-line"></i> ประวัติออเดอร์</a>
+  {% endif %}
+  {% if mods.mod_dripfeed %}
+  <a href="/dripfeeds" class="{% if page == 'dripfeeds' %}is-on{% endif %}"><i class="ri-timer-flash-line"></i> ส่งทีละรอบ</a>
+  {% endif %}
+  {% if mods.mod_subscription %}
+  <a href="/subscriptions" class="{% if page == 'subscriptions' %}is-on{% endif %}"><i class="ri-refresh-line"></i> เติมอัตโนมัติ</a>
+  {% endif %}
+</nav>

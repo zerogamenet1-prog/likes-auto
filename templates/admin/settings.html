@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block title %}ตั้งค่า{% endblock %}
+{% block content %}
+{% if saved %}<div class="adm-ok">บันทึกแล้ว</div>{% endif %}
+<form method="post" action="/admin/settings" class="adm-form" style="max-width:640px">
+  <label class="la-field">ชื่อเว็บ</label>
+  <input class="la-input" type="text" name="site_name" value="{{ settings.site_name or '' }}">
+  <label class="la-field">สกุลเงิน</label>
+  <input class="la-input" type="text" name="currency" value="{{ settings.currency or '' }}">
+  <label class="la-field">อีเมลซัพพอร์ต</label>
+  <input class="la-input" type="email" name="support_email" value="{{ settings.support_email or '' }}">
+  <label class="la-field">ประกาศหน้าแรก</label>
+  <input class="la-input" type="text" name="announcement" value="{{ settings.announcement or '' }}">
+  <label class="la-field">% คอมมิชชันแนะนำ</label>
+  <input class="la-input" type="number" step="0.1" name="affiliate_percent" value="{{ settings.affiliate_percent or '5' }}">
+  <label class="la-field">ราคาแผงลูก (บาท)</label>
+  <input class="la-input" type="number" name="child_panel_price" value="{{ settings.child_panel_price or '500' }}">
+  <label class="la-field">ยอดเติมขั้นต่ำ</label>
+  <input class="la-input" type="number" name="min_deposit" value="{{ settings.min_deposit or '20' }}">
+  <label class="la-field">พร้อมเพย์</label>
+  <input class="la-input" type="text" name="promptpay" value="{{ settings.promptpay or '' }}">
+  <label class="la-field">ธนาคาร / เลขบัญชี / ชื่อบัญชี</label>
+  <input class="la-input" type="text" name="bank_name" placeholder="ธนาคาร" value="{{ settings.bank_name or '' }}">
+  <input class="la-input" type="text" name="bank_account" placeholder="เลขบัญชี" value="{{ settings.bank_account or '' }}">
+  <input class="la-input" type="text" name="bank_holder" placeholder="ชื่อบัญชี" value="{{ settings.bank_holder or '' }}">
+  <label class="la-field">ปิดปรับปรุง (0=เปิดเว็บ, 1=ปิด)</label>
+  <input class="la-input" type="text" name="maintenance" value="{{ settings.maintenance or '0' }}">
+  <button class="la-btn" type="submit">บันทึก</button>
+</form>
+{% endblock %}

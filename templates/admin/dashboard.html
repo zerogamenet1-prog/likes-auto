@@ -1,0 +1,134 @@
+{% extends "admin/base.html" %}
+{% block title %}ภาพรวม{% endblock %}
+{% block subtitle %}<p class="dash-sub">งานที่ต้องทำวันนี้ และตัวเลขสำคัญของร้าน</p>{% endblock %}
+{% block content %}
+<div class="kpi-grid">
+  <article class="kpi">
+    <div><span>ลูกค้า</span><b>{{ stats.clients }}</b></div>
+    <div class="kpi-ico blue"><i class="ri-group-line"></i></div>
+  </article>
+  <article class="kpi">
+    <div><span>ออเดอร์</span><b>{{ stats.orders }}</b></div>
+    <div class="kpi-ico violet"><i class="ri-shopping-bag-3-line"></i></div>
+  </article>
+  <article class="kpi">
+    <div><span>รายได้ (บาท)</span><b>{{ "%.0f"|format(stats.revenue) }}</b></div>
+    <div class="kpi-ico green"><i class="ri-wallet-3-line"></i></div>
+  </article>
+  <article class="kpi">
+    <div><span>เติมเงินรอตรวจ</span><b>{{ "%.0f"|format(report.pending_pay) }}</b></div>
+    <div class="kpi-ico amber"><i class="ri-time-line"></i></div>
+  </article>
+</div>
+
+<div class="dash-grid">
+  <article class="dash-card">
+    <div class="dash-card-head">
+      <h2>ออเดอร์ 14 วันล่าสุด</h2>
+      <a href="/admin/reports">ดูรายได้</a>
+    </div>
+    <canvas id="dashChart" height="120"></canvas>
+  </article>
+  <article class="dash-card">
+    <div class="dash-card-head">
+      <h2>เติมเงินรออนุมัติ</h2>
+      <a href="/admin/payments">ทั้งหมด</a>
+    </div>
+    {% for r in pending_pay %}
+    <div class="queue-item">
+      <span>#{{ r.id }} {{ r.client }} · {{ r.amount }} บาท</span>
+      {% if r.slip %}<a class="la-btn la-btn-mini la-btn-ghost" href="{{ r.slip }}" target="_blank" rel="noopener">สลิป</a>{% endif %}
+      <form method="post" action="/admin/payments/{{ r.id }}/approve">
+        <button class="la-btn la-btn-mini" type="submit">อนุมัติ</button>
+      </form>
+    </div>
+    {% else %}
+    <p class="adm-empty">ไม่มีรายการค้าง</p>
+    {% endfor %}
+  </article>
+</div>
+
+<div class="kpi-grid">
+  <article class="kpi"><a href="/admin/dripfeeds"><span>ส่งทีละรอบ</span><b>{{ report.active_drip }}</b></a><div class="kpi-ico cyan"><i class="ri-repeat-line"></i></div></article>
+  <article class="kpi"><a href="/admin/subscriptions"><span>เติมอัตโนมัติ</span><b>{{ report.active_sub }}</b></a><div class="kpi-ico violet"><i class="ri-refresh-line"></i></div></article>
+  <article class="kpi"><a href="/admin/tasks"><span>ขอเติม</span><b>{{ report.pending_tasks }}</b></a><div class="kpi-ico amber"><i class="ri-error-warning-line"></i></div></article>
+  <article class="kpi"><a href="/admin/panels"><span>แผงลูกรอ</span><b>{{ report.pending_panels }}</b></a><div class="kpi-ico blue"><i class="ri-window-line"></i></div></article>
+</div>
+
+<div class="dash-grid">
+  <article class="dash-card">
+    <div class="dash-card-head">
+      <h2>ออเดอร์ล่าสุด</h2>
+      <a href="/admin/orders">จัดการ</a>
+    </div>
+    <div class="adm-table-wrap" style="border:0;box-shadow:none">
+      <table class="adm-table">
+        <thead><tr><th>ID</th><th>ลูกค้า</th><th>บริการ</th><th>จำนวน</th><th>สถานะ</th></tr></thead>
+        <tbody>
+        {% for r in orders %}
+          <tr>
+            <td>{{ r.id }}</td><td>{{ r.client }}</td><td class="wrap">{{ r.service }}</td><td>{{ r.quantity }}</td>
+            <td><span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5">ยังไม่มีออเดอร์</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+  <article class="dash-card">
+    <div class="dash-card-head">
+      <h2>ตั๋วที่เปิดอยู่</h2>
+      <a href="/admin/tickets">ตอบตั๋ว</a>
+    </div>
+    {% for r in open_tickets %}
+    <div class="queue-item">
+      <span>#{{ r.id }} {{ r.subject }} · {{ r.client }}</span>
+      <a class="la-btn la-btn-mini" href="/admin/tickets">ตอบ</a>
+    </div>
+    {% else %}
+    <p class="adm-empty">ไม่มีตั๋วค้าง</p>
+    {% endfor %}
+  </article>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  var el = document.getElementById('dashChart');
+  if (!el || !window.Chart) return;
+  var data = {{ series|tojson }};
+  var css = getComputedStyle(document.documentElement);
+  var primary = css.getPropertyValue('--primary').trim() || '#2563eb';
+  var muted = css.getPropertyValue('--t-muted').trim() || '#64748b';
+  var chart = new Chart(el, {
+    type: 'line',
+    data: {
+      labels: data.labels || [],
+      datasets: [
+        { label: 'ออเดอร์', data: data.orders || [], borderColor: primary, backgroundColor: 'rgba(37,99,235,.12)', fill: true, tension: .35, yAxisID: 'y' },
+        { label: 'ยอดขาย', data: data.revenue || [], borderColor: '#059669', backgroundColor: 'transparent', tension: .35, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: muted } } },
+      scales: {
+        x: { ticks: { color: muted }, grid: { color: 'rgba(148,163,184,.15)' } },
+        y: { ticks: { color: muted }, grid: { color: 'rgba(148,163,184,.15)' } },
+        y1: { position: 'right', ticks: { color: muted }, grid: { display: false } }
+      }
+    }
+  });
+  var obs = new MutationObserver(function(){
+    var c = getComputedStyle(document.documentElement);
+    chart.options.plugins.legend.labels.color = c.getPropertyValue('--t-muted').trim();
+    chart.data.datasets[0].borderColor = c.getPropertyValue('--primary').trim();
+    chart.update();
+  });
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>
+{% endblock %}

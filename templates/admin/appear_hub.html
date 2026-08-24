@@ -1,0 +1,158 @@
+{% extends "admin/base.html" %}
+{% block title %}{% if tab=='themes' %}ธีมเว็บ{% else %}หน้าเว็บ{% endif %}{% endblock %}
+{% block subtitle %}<p class="adm-sub">{% if tab=='themes' %}เลือกโทนแล้วแก้สีได้ทั้งหน้าแรก{% else %}แก้หน้า ประกาศ บล็อก เมนู และไฟล์ที่ลูกค้าเห็น{% endif %}</p>{% endblock %}
+{% block content %}
+{% if tab=='themes' %}
+{% if saved %}<p class="adm-ok">บันทึกแล้ว</p>{% endif %}
+<form method="post" action="/admin/appearance/themes" class="theme-form">
+  <button class="la-btn" type="submit" name="action" value="save" style="margin-bottom:16px">บันทึกธีม</button>
+  <label class="theme-switch-row">
+    <input type="checkbox" name="theme_switch" value="1" {% if theme_switch %}checked{% endif %}>
+    <span>ให้ลูกค้าสลับธีมได้</span>
+  </label>
+  <div class="theme-packs">
+    {% for p in theme_packs|default([]) %}
+    <div class="theme-pack {% if theme_pack == p.id %}is-on{% endif %}" data-pack="{{ p.id }}">
+      <input type="radio" name="theme_pack" value="{{ p.id }}" {% if theme_pack == p.id %}checked{% endif %}>
+      <div class="theme-swatch" style="background:linear-gradient(135deg, {{ p.bg }} 0%, {{ p.accent }} 55%, {{ p.cyan }} 100%)"></div>
+      <b>{{ p.label }}</b>
+      <small>{{ p.hint }}</small>
+      <div class="theme-colors">
+        {% for key, label in theme_fields|default([]) %}
+        <label class="theme-color">
+          {{ label }}
+          <input type="color" value="{{ p[key] }}" oninput="this.nextElementSibling.value=this.value">
+          <input class="la-input" type="text" name="theme_{{ p.id }}_{{ key }}" value="{{ p[key] }}" maxlength="7" oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value)) this.previousElementSibling.value=this.value">
+        </label>
+        {% endfor %}
+      </div>
+      <div class="theme-pack-actions">
+        <button class="la-btn la-btn-mini la-btn-ghost" type="submit" name="action" value="reset:{{ p.id }}">รีเซ็ตสีชุดนี้</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div style="margin-top:16px">
+    <button class="la-btn" type="submit" name="action" value="save">บันทึกธีม</button>
+  </div>
+</form>
+<script>
+document.querySelectorAll('.theme-pack').forEach(function(card){
+  var radio = card.querySelector('input[type=radio]');
+  card.addEventListener('click', function(e){
+    if (e.target.closest('button, input[type=text], input[type=color]')) return;
+    radio.checked = true;
+    document.querySelectorAll('.theme-pack').forEach(function(c){ c.classList.toggle('is-on', c === card); });
+  });
+});
+</script>
+{% endif %}
+{% if tab=='pages' %}
+<form method="post" class="adm-form" style="margin-bottom:18px">
+  <input type="hidden" name="pid" value="{{ editing.id if editing else '' }}">
+  <label class="la-field">ลิงก์ย่อ (slug)</label>
+  <input class="la-input" name="slug" placeholder="เช่น faq" value="{{ editing.slug if editing else '' }}" required>
+  <label class="la-field">หัวข้อ</label>
+  <input class="la-input" name="title" value="{{ editing.title if editing else '' }}" required>
+  <label class="la-field">เนื้อหา</label>
+  <textarea class="la-input" name="body" style="min-height:120px;padding:12px">{{ editing.body if editing else '' }}</textarea>
+  <button class="la-btn" type="submit">{% if editing %}อัปเดตหน้า{% else %}บันทึกหน้า{% endif %}</button>
+  {% if editing %}<a class="la-btn la-btn-ghost" href="/admin/appearance/pages">ยกเลิก</a>{% endif %}
+</form>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    {% for r in pages %}
+    <tr>
+      <td>{{ r.slug }}</td>
+      <td>{{ r.title }}</td>
+      <td><a href="/p/{{ r.slug }}" target="_blank" rel="noopener">เปิด</a></td>
+      <td class="adm-actions">
+        <a class="la-btn la-btn-mini" href="/admin/appearance/pages?edit={{ r.id }}">แก้</a>
+        <form method="post" action="/admin/appearance/pages/{{ r.id }}/delete" onsubmit="return confirm('ลบหน้านี้?')">
+          <button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">ยังไม่มีหน้าเว็บ</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if tab=='blog' %}
+<form method="post" class="adm-form" style="margin-bottom:18px">
+  <label class="la-field">หัวข้อ</label>
+  <input class="la-input" name="title" required>
+  <label class="la-field">แท็ก (คั่นด้วยจุลภาค เช่น ปั้มไลค์, Instagram)</label>
+  <input class="la-input" name="tags" placeholder="ปั้มไลค์, ปั้มฟอล, Instagram">
+  <label class="la-field">สลัก URL (เว้นว่างได้)</label>
+  <input class="la-input" name="slug" placeholder="pump-likes-guide">
+  <label class="la-field">เนื้อหา</label>
+  <textarea class="la-input" name="body" style="min-height:120px;padding:12px" required></textarea>
+  <button class="la-btn" type="submit">เผยแพร่</button>
+</form>
+{% for r in posts %}
+<article class="adm-card" style="margin-bottom:10px">
+  <b>{{ r.title }}</b> · {{ r.created_at }}
+  {% if r.published == 0 %}<span class="la-muted">คิวรอเผยแพร่</span>{% else %}<span class="la-muted">เผยแพร่แล้ว</span>{% endif %}
+  {% if r.slug %}<div class="la-muted">/blog/{{ r.slug }}</div>{% endif %}
+  {% if r.tags %}<div class="la-muted">{{ r.tags }}</div>{% endif %}
+  <form method="post" action="/admin/appearance/blog/{{ r.id }}/delete" onsubmit="return confirm('ลบบทความนี้?')">
+    <button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button>
+  </form>
+</article>
+{% else %}
+<p class="adm-empty">ยังไม่มีบล็อก</p>
+{% endfor %}
+{% endif %}
+
+{% if tab=='menu' %}
+<form method="post" class="adm-form" style="margin-bottom:18px">
+  <label class="la-field">ชื่อเมนู</label>
+  <input class="la-input" name="label" required>
+  <label class="la-field">ลิงก์</label>
+  <input class="la-input" name="href" required>
+  <label class="la-field">ลำดับ</label>
+  <input class="la-input" type="number" name="sort" value="0">
+  <button class="la-btn" type="submit">เพิ่มเมนู</button>
+</form>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    {% for r in menus %}
+    <tr>
+      <td>{{ r.sort }}</td><td>{{ r.label }}</td><td>{{ r.href }}</td>
+      <td><form method="post" action="/admin/appearance/menu/{{ r.id }}/delete"><button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button></form></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">ยังไม่มีเมนู</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if tab=='files' %}
+<form method="post" enctype="multipart/form-data" class="adm-form" style="margin-bottom:18px">
+  <input class="la-input" type="file" name="upload" required>
+  <button class="la-btn" type="submit">อัปโหลด</button>
+</form>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    {% for r in files %}
+    <tr>
+      <td>{{ r.name }}</td>
+      <td><a href="{{ r.path }}">{{ r.path }}</a></td>
+      <td>{{ r.created_at }}</td>
+      <td>
+        <form method="post" action="/admin/appearance/files/{{ r.id }}/delete" onsubmit="return confirm('ลบไฟล์นี้?')">
+          <button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">ยังไม่มีไฟล์</td></tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% block title %}พนักงาน{% endblock %}
+{% block subtitle %}<p class="adm-sub">เพิ่มผู้ใช้ที่เข้าแผงแอดมินได้</p>{% endblock %}
+{% block content %}
+{% if saved %}<div class="adm-ok">เพิ่มแล้ว</div>{% endif %}
+{% if error %}<div class="adm-error">เพิ่มไม่สำเร็จ รหัสอย่างน้อย 8 ตัว หรือชื่อซ้ำ</div>{% endif %}
+<form method="post" class="adm-form" style="margin-bottom:18px">
+  <label class="la-field">ชื่อผู้ใช้</label>
+  <input class="la-input" name="username" required>
+  <label class="la-field">รหัสผ่าน</label>
+  <input class="la-input" type="password" name="password" required minlength="8">
+  <button class="la-btn" type="submit">เพิ่มพนักงาน</button>
+</form>
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    <thead><tr><th>ID</th><th>ชื่อผู้ใช้</th><th></th></tr></thead>
+    <tbody>
+    {% for r in staff %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.username }}</td>
+        <td>
+          {% if r.username != admin_name %}
+          <form method="post" action="/admin/staff/{{ r.id }}/delete" onsubmit="return confirm('ลบพนักงานคนนี้?')">
+            <button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3">ยังไม่มีพนักงาน</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

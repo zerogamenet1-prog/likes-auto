@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page la-dash-page la-order-page">
+  <div class="la-dash-stats la-order-stats">
+    <a class="la-statcard" href="{% if mods.mod_addfunds %}/addfunds{% else %}#{% endif %}">
+      <span class="la-stat-ico is-green"><i class="ri-wallet-3-line"></i></span>
+      <span>
+        <em>ยอดเงินคงเหลือ</em>
+        <strong>฿{{ "%.2f"|format(user.balance or 0) }}</strong>
+      </span>
+    </a>
+    <article class="la-statcard">
+      <span class="la-stat-ico is-blue"><i class="ri-money-dollar-circle-line"></i></span>
+      <span>
+        <em>ยอดใช้จ่ายทั้งหมด</em>
+        <strong>฿{{ "%.2f"|format(dash.spent or 0) }}</strong>
+      </span>
+    </article>
+    <a class="la-statcard" href="{% if mods.mod_orders %}/orders{% else %}#{% endif %}">
+      <span class="la-stat-ico is-orange"><i class="ri-shopping-cart-2-line"></i></span>
+      <span>
+        <em>ออเดอร์ทั้งหมด</em>
+        <strong>{{ dash.orders }}</strong>
+      </span>
+    </a>
+  </div>
+
+  <div class="la-platbar" id="platBar">
+    <button type="button" class="is-on" data-cat=""><i class="ri-apps-2-line"></i><span>ทั้งหมด</span></button>
+    {% for p in platforms %}
+    <button type="button" data-cat="{{ p.name }}"><img class="la-platlogo" src="{{ p.logo or '/static/assets/plats/app.svg' }}" alt=""><span>{{ p.name }}</span></button>
+    {% endfor %}
+  </div>
+
+  {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+  {% if ok %}<div class="adm-ok">{{ ok }} {% if oid %}<a href="/orders">ดูออเดอร์ #{{ oid }}</a>{% endif %}</div>{% endif %}
+
+  {% if not categories %}
+  <p class="la-muted">ยังไม่มีบริการในร้าน รอแอดมินเพิ่มจาก API</p>
+  {% else %}
+  <div class="la-order-grid">
+    <form method="post" action="/neworder" class="la-order-card la-dash-form">
+      <label class="la-field">หมวดหมู่</label>
+      <select class="la-input la-catpick" id="cat-pick" data-start="{{ cat or '' }}">
+        <option value="">เลือกหมวดหมู่</option>
+        {% for c in categories %}
+        <option value="{{ c.platform }}:::{{ c.category }}" data-plat="{{ c.platform }}">{{ c.label }} ({{ c.count }})</option>
+        {% endfor %}
+      </select>
+      <label class="la-field">บริการ</label>
+      <select class="la-input" id="svc-pick" name="service_id" required data-start="{{ sid or '' }}"></select>
+      <p class="la-muted" id="svc-meta" hidden></p>
+      <label class="la-field">คำอธิบาย</label>
+      <div class="la-explain" id="svc-explain">
+        <p class="la-muted">เลือกบริการเพื่อดูรายละเอียดจากผู้ให้บริการ</p>
+      </div>
+      <label class="la-field">ลิงก์</label>
+      <div class="la-linkrow">
+        <input class="la-input" type="url" name="link" id="link-pick" placeholder="https://" required>
+        <button class="la-paste" type="button" id="paste-link">วางลิงก์</button>
+      </div>
+      <div class="la-form-row la-qty-row la-metrics">
+        <div>
+          <label class="la-field">จำนวน</label>
+          <input class="la-input" id="qty-pick" type="number" name="quantity" min="10" required>
+        </div>
+        <div>
+          <label class="la-field">เวลาโดยประมาณ</label>
+          <input class="la-input" id="avg-time" type="text" value="-" readonly tabindex="-1">
+        </div>
+        <div>
+          <label class="la-field">ค่าบริการ</label>
+          <input class="la-input" id="charge-preview" type="text" value="-" readonly tabindex="-1">
+        </div>
+      </div>
+      <p class="la-qty-hint" id="qty-hint"></p>
+      <div class="la-chips" id="qty-chips"></div>
+      <button class="la-btn" type="submit" style="width:100%"><i class="ri-send-plane-2-line"></i> ส่งออเดอร์</button>
+    </form>
+
+    <aside class="la-order-side">
+      <div class="la-help-row">
+        {% if mods.mod_faq %}<a class="la-helpbtn is-purple" href="/faq"><i class="ri-play-circle-line"></i> วิธีสั่งซื้อ</a>{% endif %}
+        {% if mods.mod_tickets %}<a class="la-helpbtn is-red" href="/tickets"><i class="ri-customer-service-2-line"></i> ติดต่อซัพพอร์ต</a>{% endif %}
+      </div>
+      {% if settings and settings.announcement %}
+      <article class="la-svc-box la-announce">
+        <div class="la-kicker"><i class="ri-megaphone-line"></i> ประกาศแผง</div>
+        <p>{{ settings.announcement }}</p>
+      </article>
+      {% elif news %}
+      <article class="la-svc-box la-announce">
+        <div class="la-kicker"><i class="ri-megaphone-line"></i> ประกาศแผง</div>
+        {% for n in news[:2] %}<p><b>{{ n.title }}</b> {{ n.body }}</p>{% endfor %}
+      </article>
+      {% endif %}
+      {% if recent %}
+      <article class="la-svc-box">
+        <div class="la-kicker">ออเดอร์ล่าสุด</div>
+        {% for r in recent[:3] %}
+        <a class="la-recent" href="/orders">
+          <b>#{{ r.id }}</b>
+          <span class="la-badge-st is-{{ r.status }}">{{ st.get(r.status, r.status) }}</span>
+          <small>{{ r.service | th }}</small>
+        </a>
+        {% endfor %}
+      </article>
+      {% endif %}
+    </aside>
+  </div>
+  <script id="cat-data" type="application/json">{{ categories | tojson }}</script>
+  <script src="/static/js/order-form.js?v=pro34"></script>
+  {% endif %}
+</main>
+{% endblock %}

@@ -36,7 +36,7 @@
 ## โครงสร้างโฟลเดอร์
 
 ```
-py-app/
+likes-auto/
 ├── app.py                 # FastAPI
 ├── templates/             # หน้า HTML ลูกค้า
 │   ├── base.html
@@ -61,12 +61,11 @@ py-app/
 ต้องมี Python 3.11+
 
 ```bash
-cd py-app
-python -m venv .venv
-.venv\Scripts\activate
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env
-python -m uvicorn app:app --reload --port 8787
+cp -n .env.example .env            # Windows: copy .env.example .env
+python3 -m uvicorn app:app --reload --port 8787
 ```
 
 เปิด http://127.0.0.1:8787

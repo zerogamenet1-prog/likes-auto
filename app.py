@@ -1,5 +1,7 @@
 import hmac
+import json
 import os
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -12,27 +14,39 @@ from starlette.middleware.gzip import GZipMiddleware
 
 from admin import router as admin_router
 from api_v2 import router as api_router
-from content import COPY, FAQ, REVIEWS, SITE
+from content import COPY, FAQ, LIVE_TICKER, REVIEWS, SITE
 from seo import attach_seo, robots_txt, rss_xml, sitemap_xml, site_url
 from cron_jobs import run_all
 from google_oauth import google_on as _google_on, google_ready as _google_ready
-from db import client_dash, first_open_path, get_client, get_settings, init_db, mod_on, mods_map, plat_meta as _plat_meta, shop_nav, shop_services, stats
+from db import client_dash, first_open_path, get_client, get_settings, init_db, mod_on, mods_map, plat_meta as _plat_meta, public_stats, shop_nav, shop_services, stats
 from th_shop import th_text
 from more import router as more_router
 from hub import router as hub_router
 from panel import DASH_TITLES, router as panel_router
 from store import list_news
+from guard import GuardMiddleware, ensure_csrf
 
 ROOT = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(ROOT / "templates"))
 templates.env.filters["th"] = th_text
+# Faster Jinja on repeat renders (autoescape stays on)
+try:
+    templates.env.auto_reload = os.environ.get("LA_DEV") == "1"
+except Exception:
+    pass
+
+_HOME_BUNDLE = {"t": 0.0, "data": None}
+_HOME_BUNDLE_TTL = 45.0
+_TICKER_JSON = json.dumps(LIVE_TICKER, ensure_ascii=False, separators=(",", ":"))
 
 app = FastAPI(title="LIKES AUTO")
+app.add_middleware(GuardMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.environ.get("SESSION_SECRET", "likes-auto-session-change-me"),
     same_site="lax",
     https_only=False,
+    max_age=60 * 60 * 12,
 )
 app.add_middleware(GZipMiddleware, minimum_size=400)
 
@@ -115,12 +129,12 @@ def page(request: Request, template: str, name: str, extra=None, status_code=200
         "site": SITE,
         "t": COPY,
         "page": name,
-        "faq": FAQ,
+        "faq": FAQ if name == "faq" else [],
         "user": current_user(request),
         "catalog": [],
         "platforms": [],
         "categories": [],
-        "news": list_news(5),
+        "news": list_news(5) if name == "neworder" else [],
         "settings": get_settings(),
         "google_on": _google_on(),
         "google_ready": _google_ready(),
@@ -140,17 +154,18 @@ def page(request: Request, template: str, name: str, extra=None, status_code=200
         "dash_title": DASH_TITLES.get(name, SITE.get("name") or "Likes Auto"),
         "dash_mode": False,
         "reviews": REVIEWS,
+        "csrf": "",
     }
     if extra:
         data.update(extra)
+    try:
+        data["csrf"] = ensure_csrf(request)
+    except Exception:
+        data["csrf"] = ""
     if data.get("user") and name not in ("home", "signin", "signup", "blog", "terms"):
         data["dash_mode"] = True
         data["dash"] = client_dash(data["user"]["username"])
-    try:
-        from cms import q_all
-        data["menus"] = q_all("SELECT * FROM menus WHERE visible=1 ORDER BY sort, id")
-    except Exception:
-        data["menus"] = []
+    data["menus"] = []
     data["mods"] = mods_map(data.get("settings"))
     data["shop_home"] = first_open_path(data.get("settings"))
     data["google_on"] = _google_on(data.get("settings"))
@@ -173,6 +188,8 @@ def page(request: Request, template: str, name: str, extra=None, status_code=200
         resp.headers["X-Robots-Tag"] = robots + ", max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     if status_code >= 400 or name == "notfound" or data.get("user") or data.get("dash_mode"):
         resp.headers["Cache-Control"] = "no-store"
+    elif name == "home":
+        resp.headers["Cache-Control"] = "public, max-age=120, s-maxage=300, stale-while-revalidate=60"
     else:
         resp.headers["Cache-Control"] = "public, max-age=60, s-maxage=180"
     return resp
@@ -276,15 +293,37 @@ def _home_samples(plats):
     return samples
 
 
+def _home_bundle():
+    """Cached homepage data — avoids repeated SQLite work on hot path."""
+    now = time.monotonic()
+    hit = _HOME_BUNDLE["data"]
+    if hit is not None and (now - _HOME_BUNDLE["t"]) < _HOME_BUNDLE_TTL:
+        return hit
+    plats = _home_plats(shop_nav()["platforms"])
+    data = {
+        "shop_plats": plats,
+        "live_stats": public_stats(),
+        "home_samples": _home_samples(plats),
+    }
+    _HOME_BUNDLE["t"] = now
+    _HOME_BUNDLE["data"] = data
+    return data
+
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    extra = {"shop_plats": [], "live_stats": {"orders": 0, "clients": 0, "services": 0}, "home_samples": []}
+    extra = {
+        "shop_plats": [],
+        "live_stats": {"orders": 0, "clients": 0, "services": 0},
+        "home_samples": [],
+        "ticker_json": _TICKER_JSON,
+    }
     try:
-        extra["shop_plats"] = _home_plats(shop_nav()["platforms"])
-        extra["live_stats"] = stats()
-        extra["home_samples"] = _home_samples(extra["shop_plats"])
+        extra.update(_home_bundle())
+        extra["ticker_json"] = _TICKER_JSON
     except Exception:
         pass
+    # Full reviews — slider needs complete set
     extra["reviews"] = REVIEWS
     return page(request, "home.html", "home", extra)
 
@@ -475,7 +514,8 @@ async def http_error(request: Request, exc: StarletteHTTPException):
 @app.get("/internal/cron")
 async def internal_cron(token: str = ""):
     expected = os.environ.get("CRON_TOKEN", "")
-    if not expected or token != expected:
+    got = token or ""
+    if not expected or len(str(got)) != len(str(expected)) or not hmac.compare_digest(str(got), str(expected)):
         return HTMLResponse("forbidden", status_code=403)
     return {"ok": True, "detail": run_all()}
 

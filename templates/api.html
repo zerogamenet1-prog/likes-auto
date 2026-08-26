@@ -1,22 +1,398 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="la-page">
+<main class="la-page la-api-page">
   <div class="la-wrap">
-    <div class="la-page-head">
-      <div class="la-kicker">API</div>
-      <h1>{{ t.api_title }}</h1>
-      <p class="sub">{{ t.api_lead }}</p>
-    </div>
-    <p class="la-notice">{{ t.notice }}</p>
-    {% if user and user.api_key %}<p>API Key ของคุณ: <code data-copy="{{ user.api_key }}" title="แตะเพื่อคัดลอก">{{ user.api_key }}</code></p>{% endif %}
-    <pre class="la-code" data-copy title="แตะเพื่อคัดลอกตัวอย่าง">POST {{ site.url }}/api/v2
-{
-  "key": "YOUR_API_KEY",
-  "action": "add",
-  "service": 1,
-  "link": "https://instagram.com/p/xxxxx",
-  "quantity": 100
+    <header class="la-api-hero">
+      <div class="la-api-hero-copy">
+        <p class="la-api-eyebrow"><i class="ri-code-s-slash-line"></i> Developer API</p>
+        <h1>เชื่อมต่อ · สั่งงาน · สเกลธุรกิจด้วย API</h1>
+        <p class="sub">เชื่อมบริการ Likes Auto เข้าแผงหรือระบบของคุณ สั่งออเดอร์อัตโนมัติ ตรวจสถานะ และจัดการรีฟิลโดยไม่ต้องคลิกมือ</p>
+        <div class="la-api-badges">
+          <span><i class="ri-server-line"></i> REST API</span>
+          <span><i class="ri-braces-line"></i> JSON Response</span>
+          <span><i class="ri-shield-check-line"></i> ทำงาน 24 ชม.</span>
+        </div>
+        <div class="la-api-hero-act">
+          <a class="la-btn" href="#api-ref"><i class="ri-book-open-line"></i> ดูเอกสาร API</a>
+          {% if user %}
+          <a class="la-btn la-btn-ghost" href="/account"><i class="ri-key-2-line"></i> ดู API Key</a>
+          {% else %}
+          <a class="la-btn la-btn-ghost" href="/signin"><i class="ri-login-box-line"></i> เข้าสู่ระบบเพื่อรับคีย์</a>
+          {% endif %}
+        </div>
+      </div>
+      <aside class="la-api-hero-card">
+        <div class="la-api-card-top">
+          <b>request.sh</b>
+          <button type="button" class="la-api-copy" data-copy="curl -X POST {{ site.url }}/api/v2 -d &quot;key=YOUR_API_KEY&quot; -d &quot;action=services&quot;"><i class="ri-file-copy-line"></i></button>
+        </div>
+        <pre class="la-api-term" id="apiCurlDemo"><span class="c">curl</span> -X POST \
+  {{ site.url }}/api/v2 \
+  -d <span class="s">"key=YOUR_API_KEY"</span> \
+  -d <span class="s">"action=services"</span></pre>
+        {% if user and user.api_key %}
+        <p class="la-api-keyline">API Key ของคุณ: <code data-copy="{{ user.api_key }}" title="แตะเพื่อคัดลอก">{{ user.api_key }}</code></p>
+        {% else %}
+        <p class="la-api-keyline">รับ API Key ได้ที่หน้าบัญชีหลังเข้าสู่ระบบ</p>
+        {% endif %}
+      </aside>
+    </header>
+
+    <section class="la-api-quick" id="api-quick">
+      <h2><i class="ri-flashlight-line"></i> Quick Start</h2>
+      <p class="la-api-lead">มาตรฐานเดียวกับแผง SMM ทั่วไป (Perfect Panel / Followiz และแผงอื่น ๆ)</p>
+      <div class="la-api-table-wrap">
+        <table class="la-api-table">
+          <tbody>
+            <tr><th>API URL</th><td><code data-copy="{{ site.url }}/api/v2">{{ site.url }}/api/v2</code></td></tr>
+            <tr><th>HTTP Method</th><td>POST (form-urlencoded หรือ JSON)</td></tr>
+            <tr><th>Response Format</th><td>JSON</td></tr>
+            <tr><th>Currency</th><td>THB</td></tr>
+            <tr><th>Compatible</th><td>Perfect Panel · Followiz · Autolikes · แผง reseller อื่น ๆ · curl / PHP / Python / Node</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="la-api-connect" id="api-connect">
+      <h2><i class="ri-plug-line"></i> เชื่อมกับแผง SMM ของคุณ</h2>
+      <p class="la-api-lead">ตั้งเป็น Provider บนแผงใดก็ได้ที่รองรับ API แบบ Perfect Panel</p>
+      <div class="la-api-table-wrap">
+        <table class="la-api-table">
+          <thead><tr><th>ช่องบนแผงของคุณ</th><th>ใส่ค่านี้</th></tr></thead>
+          <tbody>
+            <tr><td>API URL</td><td><code>{{ site.url }}/api/v2</code></td></tr>
+            <tr><td>API Key</td><td>คีย์จากหน้า <a href="/account">บัญชี</a></td></tr>
+            <tr><td>Http method</td><td>POST</td></tr>
+            <tr><td>Format</td><td>JSON / Form (อัตโนมัติ)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ol class="la-api-steps">
+        <li>เข้าแผงของคุณ → Providers → Add provider</li>
+        <li>วาง API URL + API Key ด้านบน แล้วกด Sync / Import services</li>
+        <li>ระบบดึงบริการทั้งหมดจาก Likes Auto พร้อม type (Default / Custom Comments ฯลฯ)</li>
+        <li>ตั้งราคาขายบนแผงคุณ แล้วเปิดขายได้ทันที</li>
+      </ol>
+      <p class="la-api-note">รองรับทุกบริการที่เปิดขาย: ไลค์ ฟอล วิว คอมเมนต์ (ส่ง <code>comments</code>) รีฟิล ยกเลิก และ drip-feed (<code>runs</code> + <code>interval</code>)</p>
+    </section>
+
+    <section class="la-api-why">
+      <h2><i class="ri-rocket-line"></i> ทำไมต้องใช้ API</h2>
+      <p class="la-api-lead">ปลดล็อกระบบอัตโนมัติและขยายธุรกิจได้เร็วขึ้น</p>
+      <div class="la-api-why-grid">
+        <article>
+          <i class="ri-robot-2-line"></i>
+          <h3>สั่งงานอัตโนมัติ</h3>
+          <p>สร้างออเดอร์ ตรวจสถานะ และขอรีฟิลได้ตลอด 24 ชม. โดยไม่ต้องเข้าแผงทุกครั้ง</p>
+        </article>
+        <article>
+          <i class="ri-store-2-line"></i>
+          <h3>เปิดร้านต่อ / Reseller</h3>
+          <p>เชื่อมแผงของคุณเป็นผู้ให้บริการ ส่งออเดอร์ลูกค้ามาที่ Likes Auto อัตโนมัติ</p>
+        </article>
+        <article>
+          <i class="ri-stack-line"></i>
+          <h3>งานจำนวนมาก</h3>
+          <p>ตรวจสถานะหลายออเดอร์ในคำขอเดียว ลดเวลา sync และโหลดระบบ</p>
+        </article>
+        <article>
+          <i class="ri-puzzle-line"></i>
+          <h3>เชื่อมระบบเอง</h3>
+          <p>ทำแดชบอร์ด ปลั๊กอิน หรือ CRM ได้ด้วย HTTP มาตรฐานทุกภาษา</p>
+        </article>
+        <article>
+          <i class="ri-line-chart-line"></i>
+          <h3>ติดตามแบบเรียลไทม์</h3>
+          <p>ดูยอดเงิน ค่าบริการ และสถานะจัดส่ง เพื่อทำรายงานหรือแจ้งเตือนลูกค้า</p>
+        </article>
+        <article>
+          <i class="ri-expand-diagonal-line"></i>
+          <h3>สเกลได้ไม่ติดมือ</h3>
+          <p>ปริมาณงานโตขึ้นโดยไม่ต้องเพิ่มพนักงานคลิกสั่งทีละออเดอร์</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="la-api-ref" id="api-ref">
+      <h2><i class="ri-book-marked-line"></i> API Reference</h2>
+      <p class="la-api-lead">เอกสาร endpoint พร้อมพารามิเตอร์และตัวอย่างผลลัพธ์</p>
+
+      <div class="la-api-nav" id="apiNav" role="tablist">
+        <button type="button" class="is-on" data-api-tab="services">รายการบริการ</button>
+        <button type="button" data-api-tab="add">สั่งออเดอร์</button>
+        <button type="button" data-api-tab="status">สถานะออเดอร์</button>
+        <button type="button" data-api-tab="multi">สถานะหลายรายการ</button>
+        <button type="button" data-api-tab="refill">ขอเติมยอด</button>
+        <button type="button" data-api-tab="cancel">ขอยกเลิก</button>
+        <button type="button" data-api-tab="balance">ยอดเงิน</button>
+      </div>
+
+      <article class="la-api-panel is-on" data-api-panel="services">
+        <div class="la-api-panel-head"><span class="la-api-method">POST</span><h3>Service list</h3></div>
+        <h4>Parameters</h4>
+        <div class="la-api-table-wrap">
+          <table class="la-api-table">
+            <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td>API Key ของคุณ</td></tr>
+              <tr><td><code>action</code></td><td><code>services</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h4>Example Response</h4>
+        <pre class="la-code" data-copy>[
+  {
+    "service": 1,
+    "name": "Instagram Followers",
+    "type": "Default",
+    "category": "Instagram",
+    "rate": "12.50",
+    "min": "50",
+    "max": "100000",
+    "refill": true,
+    "cancel": true
+  }
+]</pre>
+      </article>
+
+      <article class="la-api-panel" data-api-panel="add">
+        <div class="la-api-panel-head"><span class="la-api-method">POST</span><h3>Add order</h3></div>
+        <div class="la-api-type-tabs" id="addTypeTabs">
+          <button type="button" class="is-on" data-add-type="default">Default</button>
+          <button type="button" data-add-type="comments">Custom Comments</button>
+        </div>
+        <div class="la-api-add-block is-on" data-add-block="default">
+          <h4>Parameters</h4>
+          <div class="la-api-table-wrap">
+            <table class="la-api-table">
+              <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>key</code></td><td>API Key ของคุณ</td></tr>
+                <tr><td><code>action</code></td><td><code>add</code></td></tr>
+                <tr><td><code>service</code></td><td>Service ID</td></tr>
+                <tr><td><code>link</code></td><td>ลิงก์สาธารณะ</td></tr>
+                <tr><td><code>quantity</code></td><td>จำนวนที่ต้องการ</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="la-api-add-block" data-add-block="comments">
+          <h4>Parameters</h4>
+          <div class="la-api-table-wrap">
+            <table class="la-api-table">
+              <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>key</code></td><td>API Key ของคุณ</td></tr>
+                <tr><td><code>action</code></td><td><code>add</code></td></tr>
+                <tr><td><code>service</code></td><td>Service ID</td></tr>
+                <tr><td><code>link</code></td><td>ลิงก์โพสต์</td></tr>
+                <tr><td><code>comments</code></td><td>รายการคอมเมนต์ แยกบรรทัดด้วย <code>\n</code> (1 บรรทัด = 1 คอมเมนต์)</td></tr>
+                <tr><td><code>quantity</code></td><td>จำนวน (ถ้าไม่ส่ง ระบบนับจากจำนวนบรรทัดคอมเมนต์)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <h4>Example Response</h4>
+        <pre class="la-code" data-copy>{
+  "order": 23501,
+  "charge": 12.5,
+  "currency": "THB"
 }</pre>
+      </article>
+
+      <article class="la-api-panel" data-api-panel="status">
+        <div class="la-api-panel-head"><span class="la-api-method">POST</span><h3>Order status</h3></div>
+        <h4>Parameters</h4>
+        <div class="la-api-table-wrap">
+          <table class="la-api-table">
+            <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td>API Key ของคุณ</td></tr>
+              <tr><td><code>action</code></td><td><code>status</code></td></tr>
+              <tr><td><code>order</code></td><td>Order ID</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h4>Example Response</h4>
+        <pre class="la-code" data-copy>{
+  "charge": "12.50",
+  "start_count": "3572",
+  "status": "Completed",
+  "remains": "0",
+  "currency": "THB"
+}</pre>
+      </article>
+
+      <article class="la-api-panel" data-api-panel="multi">
+        <div class="la-api-panel-head"><span class="la-api-method">POST</span><h3>Multiple orders status</h3></div>
+        <h4>Parameters</h4>
+        <div class="la-api-table-wrap">
+          <table class="la-api-table">
+            <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td>API Key ของคุณ</td></tr>
+              <tr><td><code>action</code></td><td><code>status</code></td></tr>
+              <tr><td><code>orders</code></td><td>Order IDs คั่นด้วยจุลภาค (สูงสุด 100 รายการ)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h4>Example Response</h4>
+        <pre class="la-code" data-copy>{
+  "1": {
+    "charge": "12.50",
+    "start_count": "3572",
+    "status": "Partial",
+    "remains": "157",
+    "currency": "THB"
+  },
+  "10": {
+    "error": "Incorrect order ID"
+  }
+}</pre>
+      </article>
+
+      <article class="la-api-panel" data-api-panel="refill">
+        <div class="la-api-panel-head"><span class="la-api-method">POST</span><h3>Create refill</h3></div>
+        <h4>Parameters</h4>
+        <div class="la-api-table-wrap">
+          <table class="la-api-table">
+            <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td>API Key ของคุณ</td></tr>
+              <tr><td><code>action</code></td><td><code>refill</code></td></tr>
+              <tr><td><code>order</code></td><td>Order ID (หรือใช้ <code>orders</code> หลายรายการคั่นจุลภาค)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h4>Example Response</h4>
+        <pre class="la-code" data-copy>{
+  "refill": "1"
+}</pre>
+        <p class="la-api-note">ขอเติมยอดได้เฉพาะบริการที่มีรับประกัน (refill) และออเดอร์สถานะสำเร็จ/บางส่วน</p>
+      </article>
+
+      <article class="la-api-panel" data-api-panel="cancel">
+        <div class="la-api-panel-head"><span class="la-api-method">POST</span><h3>Create cancel</h3></div>
+        <h4>Parameters</h4>
+        <div class="la-api-table-wrap">
+          <table class="la-api-table">
+            <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td>API Key ของคุณ</td></tr>
+              <tr><td><code>action</code></td><td><code>cancel</code></td></tr>
+              <tr><td><code>orders</code></td><td>Order IDs คั่นด้วยจุลภาค</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h4>Example Response</h4>
+        <pre class="la-code" data-copy>[
+  { "order": 2, "cancel": 1 },
+  { "order": 9, "cancel": { "error": "Incorrect order ID" } }
+]</pre>
+      </article>
+
+      <article class="la-api-panel" data-api-panel="balance">
+        <div class="la-api-panel-head"><span class="la-api-method">POST</span><h3>User balance</h3></div>
+        <h4>Parameters</h4>
+        <div class="la-api-table-wrap">
+          <table class="la-api-table">
+            <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>key</code></td><td>API Key ของคุณ</td></tr>
+              <tr><td><code>action</code></td><td><code>balance</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h4>Example Response</h4>
+        <pre class="la-code" data-copy>{
+  "balance": "100.50",
+  "currency": "THB"
+}</pre>
+      </article>
+    </section>
+
+    <section class="la-api-errors" id="api-errors">
+      <h2><i class="ri-error-warning-line"></i> Error Handling</h2>
+      <p class="la-api-lead">ข้อความ error ที่พบบ่อยและสาเหตุ</p>
+      <div class="la-api-table-wrap">
+        <table class="la-api-table">
+          <thead><tr><th>Error Message</th><th>Cause</th></tr></thead>
+          <tbody>
+            <tr><td><code>Incorrect API key</code></td><td>คีย์ไม่ถูกต้อง หรือถูกสร้างใหม่แล้ว</td></tr>
+            <tr><td><code>Incorrect request</code></td><td>พารามิเตอร์ไม่ครบหรือผิดรูปแบบ</td></tr>
+            <tr><td><code>Account inactive</code></td><td>บัญชีถูกระงับ</td></tr>
+            <tr><td><code>Incorrect order ID</code></td><td>ไม่พบออเดอร์ในบัญชีนี้</td></tr>
+            <tr><td>ยอดเงินไม่พอ / จำนวนไม่อยู่ในช่วง</td><td>เครดิตไม่พอ หรือ quantity นอกช่วง min–max</td></tr>
+            <tr><td>บริการนี้ไม่รองรับการเติมยอด</td><td>บริการไม่มีรับประกัน refill</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="la-api-faq" id="api-faq">
+      <h2><i class="ri-question-answer-line"></i> คำถามที่พบบ่อย</h2>
+      <details class="la-api-qa" open>
+        <summary>รับ API Key ได้ที่ไหน?</summary>
+        <p>เข้าสู่ระบบแล้วไปที่หน้า <a href="/account">บัญชี</a> จะเห็น API Key และสามารถสร้างใหม่ได้</p>
+      </details>
+      <details class="la-api-qa">
+        <summary>ใช้ภาษาโปรแกรมอะไรได้บ้าง?</summary>
+        <p>ทุกภาษาที่ส่ง HTTP POST ได้ เช่น PHP, Python, Node.js, Go, C# — ส่งเป็น form หรือ JSON แล้วรับ JSON กลับ</p>
+      </details>
+      <details class="la-api-qa">
+        <summary>เชื่อมกับแผง SMM ของตัวเองได้ไหม?</summary>
+        <p>ได้ ใส่ API URL <code>{{ site.url }}/api/v2</code> และ API Key เป็นผู้ให้บริการบนแผงของคุณ แล้วออเดอร์จะถูกส่งต่อมาอัตโนมัติ</p>
+      </details>
+      <details class="la-api-qa">
+        <summary>ตรวจหลายออเดอร์พร้อมกันได้ไหม?</summary>
+        <p>ได้ ส่ง <code>action=status</code> พร้อม <code>orders=1,2,3</code> (สูงสุด 100 ID ต่อคำขอ)</p>
+      </details>
+      <details class="la-api-qa">
+        <summary>สถานะออเดอร์มีอะไรบ้าง?</summary>
+        <p><b>Pending</b>, <b>Processing</b>, <b>In progress</b>, <b>Completed</b>, <b>Partial</b>, <b>Canceled</b></p>
+      </details>
+    </section>
+
+    <section class="la-api-cta">
+      <h2>พร้อมเชื่อมต่อแล้วหรือยัง?</h2>
+      <p>รับ API Key แล้วเริ่มสั่งงานอัตโนมัติได้ทันที</p>
+      <div class="la-api-hero-act">
+        {% if user %}
+        <a class="la-btn" href="/account"><i class="ri-key-2-line"></i> เปิด API Key</a>
+        <a class="la-btn la-btn-ghost" href="/neworder"><i class="ri-shopping-cart-line"></i> ไปหน้าสั่งซื้อ</a>
+        {% else %}
+        <a class="la-btn" href="/signup"><i class="ri-user-add-line"></i> สมัครฟรี</a>
+        <a class="la-btn la-btn-ghost" href="/signin"><i class="ri-login-box-line"></i> เข้าสู่ระบบ</a>
+        {% endif %}
+      </div>
+    </section>
   </div>
 </main>
+<script>
+(function () {
+  var nav = document.getElementById('apiNav');
+  if (!nav) return;
+  var panels = document.querySelectorAll('[data-api-panel]');
+  nav.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-api-tab]');
+    if (!btn) return;
+    var id = btn.getAttribute('data-api-tab');
+    nav.querySelectorAll('[data-api-tab]').forEach(function (b) { b.classList.toggle('is-on', b === btn); });
+    panels.forEach(function (p) { p.classList.toggle('is-on', p.getAttribute('data-api-panel') === id); });
+  });
+  var typeTabs = document.getElementById('addTypeTabs');
+  if (typeTabs) {
+    typeTabs.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-add-type]');
+      if (!btn) return;
+      var id = btn.getAttribute('data-add-type');
+      typeTabs.querySelectorAll('[data-add-type]').forEach(function (b) { b.classList.toggle('is-on', b === btn); });
+      document.querySelectorAll('[data-add-block]').forEach(function (p) {
+        p.classList.toggle('is-on', p.getAttribute('data-add-block') === id);
+      });
+    });
+  }
+})();
+</script>
 {% endblock %}

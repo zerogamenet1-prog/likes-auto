@@ -1,5 +1,6 @@
 /* Device-wide layout: phone, tablet, desktop, landscape */
 html { overflow-x: clip; }
+.la-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 body.la-theme, body.user, body.la-dash, body.dash-body { overflow-x: clip; min-width: 0; }
 img, video, canvas, svg, iframe { max-width: 100%; height: auto; }
 pre, .la-code { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -75,8 +76,49 @@ button, .la-btn, .la-iconbtn, .la-chip, .la-pend-btn { touch-action: manipulatio
   .la-nav.open { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .la-qr-dialog, .la-pay-sheet { animation: none !important; }
+}
+
+/* Phone / tablet pass: header, forms, tables, dashboard, admin */
+@media (max-width: 980px) {
+  .la-header .la-tools .la-pack-switch { display: none !important; }
+  .la-nav.open .la-pack-in-nav {
+    display: flex !important;
+    width: 100%;
+    margin: 4px 0 10px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    order: -1;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--la-nav-scrolled);
+  }
+  .la-nav.open .la-pack-in-nav .la-pack-label { flex: 1 1 100%; padding: 0; }
+  .la-nav.open .la-pack-switch button {
+    width: 36px; height: 36px;
+  }
+  .la-header-inner { gap: 8px; }
+  .la-header .la-tools { gap: 6px; }
+  .la-tabs {
+    display: flex; flex-wrap: nowrap; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    gap: 8px; padding-bottom: 4px;
+  }
+  .la-tabs::-webkit-scrollbar { display: none; }
+  .la-tabs a { flex: 0 0 auto; min-height: 44px; }
+  .la-page { padding-left: 0; padding-right: 0; }
+  .la-modal.open { padding: 10px; }
+  .la-signin, .la-signup, .la-form-shell { width: 100%; }
+  .la-blog-list, .la-related { min-width: 0; }
+}
+
 @media (max-width: 720px) {
-  .la-foot-grid { grid-template-columns: 1fr !important; gap: 20px; }
+  .la-foot-grid { grid-template-columns: 1fr !important; gap: 22px !important; }
   .la-svc-table td { align-items: flex-start; }
   .la-svc-table td:last-child { display: block; }
   .la-svc-table td:last-child .la-btn,
@@ -90,6 +132,22 @@ button, .la-btn, .la-iconbtn, .la-chip, .la-pend-btn { touch-action: manipulatio
   .la-form-photo { height: 140px; }
   .la-order-card { padding: 16px; }
   .la-tools { gap: 6px; }
+  .la-ord-table td { word-break: break-word; }
+  .la-page-head h1 { font-size: 1.35rem; }
+  .la-filter { width: 100%; }
+  .la-credit-brand { flex-wrap: wrap; }
+  .la-pay-amt, .la-credit-amt { width: 100%; }
+  .la-btn, .la-iconbtn { min-height: 44px; }
+  .la-tags {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 6px;
+    margin-right: -10px;
+  }
+  .la-tags::-webkit-scrollbar { display: none; }
+  .la-tag { flex: 0 0 auto; white-space: nowrap; min-height: 40px; align-items: center; }
 }
 
 @media (max-width: 560px) {
@@ -106,16 +164,45 @@ button, .la-btn, .la-iconbtn, .la-chip, .la-pend-btn { touch-action: manipulatio
   .la-rev-card.is-split .la-rev-side { min-height: 140px; max-height: 160px; }
   .la-rev-card.is-glow { padding-right: 16px; padding-top: 108px; }
   .la-rev-card.is-glow img { right: auto; left: 16px; }
+  .la-header .la-tools .la-lang { display: none; }
+  .la-dash-tools .la-pack-switch { display: none !important; }
+  .la-dash-bal { font-size: 12px; padding: 6px 10px; min-height: 36px; }
+  .la-dash-title { min-width: 0; max-width: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .la-prose { font-size: 15px; line-height: 1.7; }
+  .la-faq summary { min-height: 48px; }
+  .dash-content table, .adm-form, .g-card { max-width: 100%; }
 }
 
 @media (max-width: 420px) {
   .kpi-grid, .adm-cards { grid-template-columns: 1fr; }
-  .la-header .la-brand { font-size: 14px; }
+  .la-header .la-brand { font-size: 14px; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .la-header .la-mark { width: 22px; height: 22px; }
   .la-header .la-btn-mini { padding: 7px 10px; font-size: 12px; }
   .la-pend-acts { grid-template-columns: 1fr; }
-  .la-home-v2 .la-hero-benefits { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .la-home-v2 .la-hero-benefits span { font-size: 12px; }
+  .la-live-ticker { margin-top: 14px; padding: 11px 10px 9px; border-radius: 16px; }
+  .la-live-ticker-stage { height: 152px; }
+  .la-ticker-item { min-height: 48px; padding: 7px 8px; gap: 8px; grid-template-columns: 32px 1fr auto; }
+  .la-ticker-logo { width: 32px; height: 32px; border-radius: 10px; }
+  .la-ticker-logo img { width: 18px; height: 18px; }
+  .la-ticker-body strong { font-size: 12px; }
+  .la-ticker-body span { font-size: 10px; }
+  .la-hi-card b { font-size: 13px; }
+  .la-pay-brand { min-height: 36px; }
+  .la-brand-tm { font-size: 18px; }
+  .la-brand-pp { font-size: 13px; padding: 5px 10px; }
+}
+
+@media (max-width: 980px) {
+  .la-hi-band .la-wrap,
+  .la-pay-band .la-wrap { width: calc(100% - 24px); }
+  .la-pay-cards { width: 100%; }
+}
+
+@media (min-width: 721px) and (max-width: 980px) {
+  .la-hi-grid { grid-template-columns: 1fr 1fr; max-width: none; }
+}
+@media (min-width: 861px) and (max-width: 980px) {
+  .la-pay-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
@@ -130,12 +217,205 @@ button, .la-btn, .la-iconbtn, .la-chip, .la-pend-btn { touch-action: manipulatio
 }
 
 @media (pointer: coarse) {
-  .la-btn, .la-iconbtn, .la-menu-btn, .la-chip, .la-nav a, .la-tabs a, .la-ostat {
+  .la-btn, .la-iconbtn, .la-menu-btn, .la-chip, .la-nav a, .la-tabs a, .la-ostat,
+  .dash-iconbtn, .dash-menu-btn, .la-pay-card, .la-hi-card {
     min-height: 44px;
   }
+  .la-pay-card { min-height: 156px; }
   .la-drop-menu { max-height: min(50dvh, 360px); overflow: auto; }
+  .la-foot-social a { width: 44px; height: 44px; }
+
+  /* Smooth scroll + lighter paint on phones (keep features working) */
+  .la-home-page .la-hero-spark,
+  .la-home-page .la-hero-mesh { display: none !important; }
+
+  .la-home-page .la-header.is-scrolled,
+  body.la-home-page .la-header,
+  body.la-home-page .la-header.is-scrolled {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .la-home-page .la-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 480px;
+  }
+  .la-home-page .la-hero {
+    content-visibility: visible;
+  }
+  body.la-home-page {
+    overscroll-behavior-y: contain;
+  }
+}
+@media (pointer: coarse) and (max-width: 980px) {
+  .la-nav.open .la-pack-switch button {
+    min-width: 40px; min-height: 40px;
+  }
+  /* Keep dash top compact — do not inflate theme dots in header */
+  .la-dash-tools .la-pack-switch { display: none !important; }
+  .la-side-theme .la-pack-switch button {
+    min-width: 36px; min-height: 36px; width: 36px; height: 36px;
+  }
+  .la-home-page .la-wrap { width: min(1080px, calc(100% - 20px)); }
+  .la-home-page .la-bigstats {
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .la-home-page .la-bigstats::-webkit-scrollbar { display: none; }
+  .la-home-page .la-bigstat {
+    flex: 0 0 auto;
+    min-width: 118px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .la-qr-dialog, .la-pay-sheet { animation: none !important; }
+}
+
+
+/* Site-wide: compact mobile layout (tighter than desktop) */
+@media (max-width: 720px) {
+  .la-wrap { width: min(1080px, calc(100% - 18px)); }
+  .la-header > .la-wrap { width: calc(100% - 14px); }
+  .la-header-inner { min-height: 50px; }
+  .la-brand { font-size: 15px; gap: 6px; }
+  .la-mark { width: 24px; height: 24px; }
+
+  .la-page { padding: 14px 0 56px !important; }
+  .la-page-head { margin-bottom: 14px; }
+  .la-page-head h1 { font-size: 1.28rem; line-height: 1.25; margin: 4px 0 6px; }
+  .la-page-head .sub,
+  .la-section .sub,
+  .la-about-head .sub { font-size: 13px; line-height: 1.45; margin: 0 0 10px; }
+  .la-kicker { margin-bottom: 4px; font-size: 11px; }
+  .la-section { padding: 22px 0 !important; }
+  .la-section h2 { font-size: 1.28rem; line-height: 1.25; margin: 4px 0 6px; }
+
+  .la-card, .la-plat, .la-why, .la-svc, .la-stat,
+  .la-order-card, .la-form-shell, .la-cta-band {
+    border-radius: 16px;
+  }
+  .la-cta-band { padding: 18px 14px !important; }
+  .la-cta-band h2 { font-size: 1.2rem; max-width: none; }
+  .la-cta-band .sub { margin-top: 8px; font-size: 13px; }
+  .la-cta-band .la-cta { margin-top: 14px !important; gap: 8px; }
+  .la-cta { gap: 8px; }
+  .la-btn { min-height: 44px; font-size: 14px; padding: 10px 16px; }
+  .la-btn-mini { min-height: 38px; font-size: 13px; padding: 7px 12px; }
+
+  .la-filter { gap: 8px; margin-bottom: 12px; }
+  .la-svc-grid, .la-plats, .la-stats, .la-steps, .la-steps-4 { gap: 10px; }
+  .la-svc { border-radius: 14px; }
+  .la-svc-card, .la-plat-card, .la-step-card, .la-why-card { padding: 14px 12px; border-radius: 14px; }
+  .la-order-card { padding: 14px; margin-bottom: 10px; border-radius: 14px; }
+
+  .la-faq details { border-radius: 12px; margin-bottom: 8px; padding: 0 12px; }
+  .la-faq summary { padding: 12px 0; font-size: 14px; min-height: 44px; }
+  .la-faq p { font-size: 13px; line-height: 1.55; margin-bottom: 10px; }
+  .la-faq-page { padding: 14px 0 48px !important; }
+  .la-faq-head { margin-bottom: 14px; }
+  .la-faq-pro { margin-top: 2px; }
+  .la-faq-pro details { margin-bottom: 8px; padding: 0 12px; border-radius: 12px; }
+  .la-faq-cta { margin-top: 20px; padding: 16px 14px; border-radius: 16px; }
+  .la-faq-cta p { margin-bottom: 10px; font-size: 13px; }
+  .la-howto {
+    margin-bottom: 20px !important;
+    padding: 14px 10px 12px !important;
+    border-radius: 16px !important;
+  }
+  .la-howto-head { padding-bottom: 12px !important; }
+  .la-howto-head h2 { font-size: 1.16rem !important; line-height: 1.3; }
+  .la-howto-head p { font-size: 13px !important; }
+  .la-howto-step {
+    padding: 15px 0 !important;
+    gap: 10px !important;
+  }
+  .la-howto-copy p { font-size: 13px !important; line-height: 1.5; }
+  .la-howto-link { min-height: 40px; }
+  .la-howto-shot { border-radius: 12px !important; }
+  .la-howto-shot img {
+    max-height: 190px !important;
+    object-fit: cover;
+    object-position: top center;
+  }
+  .la-howto-tip { margin-top: 2px !important; padding: 11px 10px !important; }
+  .la-faq-sec-title { font-size: 1.05rem; margin: 6px 0 12px; }
+
+  .la-auth-page { padding: 12px 0 48px !important; }
+  .la-auth-wrap { width: calc(100% - 16px); }
+  .la-auth-shell { gap: 10px; }
+  .la-auth-card { padding: 16px 14px 14px !important; border-radius: 18px !important; }
+  .la-auth-promo { padding: 14px 12px 12px; border-radius: 18px; }
+  .la-auth-card-title { font-size: 1.25rem; margin: 4px 0 6px; }
+  .la-auth-card-lead, .la-auth-promo .sub { font-size: 13px; line-height: 1.45; }
+  .la-auth-form .la-field { font-size: 11px; margin-top: 2px; }
+  .la-auth-form .la-input { min-height: 44px; margin-bottom: 8px; }
+  .la-auth-submit { min-height: 46px; margin-top: 6px; }
+  .la-auth-perks { gap: 8px; }
+  .la-auth-perks li { font-size: 12px; padding: 8px 10px; }
+  .la-auth-visual .la-form-photo { height: 110px; }
+
+  .la-blog-card { padding: 14px 12px; border-radius: 14px; }
+  .la-blog-card h2, .la-blog-card h3 { font-size: 1.05rem; margin-bottom: 6px; }
+  .la-prose { font-size: 14px; line-height: 1.65; }
+  .la-prose h2 { font-size: 1.2rem; margin: 18px 0 8px; }
+  .la-prose h3 { font-size: 1.05rem; margin: 14px 0 6px; }
+  .la-tags { gap: 6px; margin-bottom: 12px; }
+  .la-tag { padding: 4px 9px; font-size: 11px; min-height: 32px; }
+
+  .la-crumbs-bar { padding: 8px 0 0; }
+  .la-crumbs { font-size: 12px; gap: 6px; }
+  .la-foot { padding-top: 18px; }
+  .la-foot-grid { gap: 14px 12px; }
+  .la-foot-col h5 { font-size: 13px; margin-bottom: 8px; }
+  .la-foot-col a { font-size: 13px; min-height: 36px; }
+
+  /* Home extras */
+  .la-statsbar { padding: 8px 0 4px; }
+  .la-bigstats { gap: 6px; }
+  .la-bigstat { padding: 10px 8px; border-radius: 14px; min-width: 104px; }
+  .la-bigstat strong { font-size: 1.2rem; }
+  .la-bigstat span { font-size: 11px; }
+  .la-marquee { margin: 4px 0 0; padding: 6px 0; }
+  .la-marquee-item { font-size: 12px; padding: 6px 10px; gap: 6px; }
+  .la-pop-grid { gap: 8px; }
+  .la-pop-card { padding: 12px; border-radius: 14px; gap: 10px; }
+  .la-pop-card h3 { font-size: 14px; margin: 0 0 2px; }
+  .la-pop-card p { font-size: 12px; }
+  .la-platlogo { width: 34px; height: 34px; }
+  .la-hi-band, .la-pay-band { padding-top: 4px; }
+  .la-hi-head, .la-pay-head { margin-bottom: 12px; }
+  .la-hi-grid { gap: 8px; }
+  .la-hi-card { padding: 12px; border-radius: 14px; }
+  .la-pay-cards { gap: 8px; }
+  .la-pay-card { min-height: 132px; border-radius: 14px; }
+  .la-cta-checks { margin: 12px 0 0; gap: 8px 12px; font-size: 12px; }
+  #reviews .sub { margin-bottom: 10px; }
+  .la-rev-track { gap: 10px; padding-bottom: 10px; }
+  .la-rev-card { border-radius: 16px; }
+  .la-rev-card p { font-size: 13px; line-height: 1.5; }
+}
+
+@media (max-width: 560px) {
+  .la-wrap { width: calc(100% - 16px); }
+  .la-page { padding: 10px 0 48px !important; }
+  .la-section { padding: 16px 0 !important; }
+  .la-section h2, .la-page-head h1 { font-size: 1.15rem; }
+  .la-hero-social b { font-size: 12px; }
+  .la-hero-social span { font-size: 11px; }
+  .la-login-hi h3, .la-auth-card-title { font-size: 1.05rem; margin: 0 0 4px; }
+  .la-login-hi p, .la-auth-card-lead { font-size: 12px; margin: 0 0 8px; }
+  .la-field { font-size: 11px; margin-top: 2px; }
+  .la-input, .la-input-ico .la-input { min-height: 42px; margin-bottom: 8px; font-size: 15px; }
+  .la-login-row { margin: 4px 0 8px; font-size: 12px; }
+  .la-google-btn { min-height: 42px; margin-bottom: 8px; font-size: 13px; }
+  .la-hi-card h3, .la-pay-card h3, .la-about-card h3, .la-why-card h3 { font-size: 14px; }
+  .la-hi-card p, .la-pay-card p, .la-about-card p, .la-why-card p { font-size: 12px; line-height: 1.5; }
+  .la-svc-table td { font-size: 13px; padding: 5px 0; }
+  .la-form-copy, .la-form-side { padding: 14px 12px !important; }
+  .adm-card { padding: 14px; border-radius: 14px; }
+  .la-modal-card { border-radius: 18px 18px 12px 12px; }
+  .la-modal-form { padding: 14px 12px calc(12px + env(safe-area-inset-bottom)); }
 }

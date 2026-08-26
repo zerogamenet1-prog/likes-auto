@@ -1,16 +1,149 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="la-page">
-  <div class="la-wrap">
-    <div class="la-page-head">
+<main class="la-page {% if user %}la-dash-page la-hub-page{% endif %} la-faq-page">
+  <div class="{% if user %}{% else %}la-wrap{% endif %}">
+    {% if user %}
+    <section class="la-hub-hero">
+      <div class="la-hub-hero-in">
+        <h1><i class="ri-question-line"></i> คำถามที่พบบ่อย</h1>
+        <p>วิธีใช้งานพร้อมภาพจริง — อ่านสั้นๆ ก่อนสั่งงาน</p>
+        <div class="la-hub-stats">
+          <article><em>ไม่ขอรหัส</em><strong>ปลอดภัย</strong></article>
+          <article><em>ระบบ</em><strong>24 ชม.</strong></article>
+          <article><em>ชำระเงิน</em><strong>พร้อมเพย์</strong></article>
+        </div>
+      </div>
+    </section>
+    {% else %}
+    <div class="la-page-head la-faq-head">
       <div class="la-kicker">FAQ</div>
       <h1>{{ t.faq_title }}</h1>
       <p class="sub">{{ t.faq_sub }}</p>
+      <div class="la-faq-trust" aria-hidden="true">
+        <span><i class="ri-shield-check-fill"></i> {{ t.trust_nopass }}</span>
+        <span><i class="ri-time-fill"></i> {{ t.trust_auto }}</span>
+        <span><i class="ri-wallet-3-fill"></i> {{ t.trust_pay }}</span>
+      </div>
     </div>
-    <div class="la-faq">
+    {% endif %}
+
+    <section class="la-howto {% if user %}la-hub-card{% endif %}" id="howto" aria-labelledby="howto-title">
+      <div class="la-howto-head">
+        <div class="la-kicker">วิธีใช้งาน</div>
+        <h2 id="howto-title">เริ่มสั่งงานใน 5 ขั้นตอน</h2>
+        <p>ภาพด้านล่างจับจากหน้าจริงของ Likes Auto — ไม่ขอรหัสผ่านโซเชียล ใช้แค่ลิงก์สาธารณะ</p>
+      </div>
+
+      <ol class="la-howto-steps">
+        <li class="la-howto-step">
+          <div class="la-howto-copy">
+            <span class="la-howto-num">1</span>
+            <div>
+              <h3>สมัครสมาชิกฟรี</h3>
+              <p>กด <strong>สมัครฟรี</strong> แล้วสร้างบัญชีด้วยชื่อผู้ใช้และรหัสผ่าน (หรือ Google) — ใช้เวลาไม่กี่นาที</p>
+              <a class="la-howto-link" href="/signup"><i class="ri-user-add-line"></i> ไปหน้าสมัคร</a>
+            </div>
+          </div>
+          <figure class="la-howto-shot">
+            <img src="/assets/howto/01-signup.png" alt="หน้าสมัครสมาชิก Likes Auto" width="1200" height="750" loading="lazy" decoding="async">
+            <figcaption>หน้าสมัครสมาชิก</figcaption>
+          </figure>
+        </li>
+
+        <li class="la-howto-step">
+          <div class="la-howto-copy">
+            <span class="la-howto-num">2</span>
+            <div>
+              <h3>เข้าสู่ระบบ</h3>
+              <p>ล็อกอินด้วยบัญชีที่สมัครไว้ เพื่อเปิดแผงสั่งซื้อ เติมเครดิต และดูประวัติออเดอร์</p>
+              <a class="la-howto-link" href="/signin"><i class="ri-login-box-line"></i> เข้าสู่ระบบ</a>
+            </div>
+          </div>
+          <figure class="la-howto-shot">
+            <img src="/assets/howto/04-signin.png" alt="หน้าเข้าสู่ระบบ Likes Auto" width="1200" height="750" loading="lazy" decoding="async">
+            <figcaption>หน้าเข้าสู่ระบบ</figcaption>
+          </figure>
+        </li>
+
+        <li class="la-howto-step">
+          <div class="la-howto-copy">
+            <span class="la-howto-num">3</span>
+            <div>
+              <h3>เติมเครดิต</h3>
+              <p>ไปที่หน้าเติมเงิน เลือก <strong>พร้อมเพย์</strong> <strong>ทรูมันนี่</strong> หรือโอนธนาคาร เมื่ออนุมัติแล้วเครดิตเข้าบัญชีอัตโนมัติ</p>
+              <a class="la-howto-link" href="{% if user %}/addfunds{% else %}/#pay{% endif %}"><i class="ri-wallet-3-line"></i> ดูช่องทางชำระเงิน</a>
+            </div>
+          </div>
+          <figure class="la-howto-shot">
+            <img src="/assets/howto/05-pay.png" alt="ช่องทางเติมเงินพร้อมเพย์ ทรูมันนี่ และโอนธนาคาร" width="1200" height="750" loading="lazy" decoding="async">
+            <figcaption>ช่องทางเติมเครดิต</figcaption>
+          </figure>
+        </li>
+
+        <li class="la-howto-step">
+          <div class="la-howto-copy">
+            <span class="la-howto-num">4</span>
+            <div>
+              <h3>เลือกบริการ</h3>
+              <p>เปิดรายการบริการ ค้นหาแพลตฟอร์มหรือชื่อบริการ ดูเรทขั้นต่ำ–สูงสุดและราคาต่อ 1,000 ก่อนตัดสินใจ</p>
+              <a class="la-howto-link" href="/services"><i class="ri-list-check-2"></i> ดูบริการทั้งหมด</a>
+            </div>
+          </div>
+          <figure class="la-howto-shot">
+            <img src="/assets/howto/02-services.png" alt="หน้ารายการบริการ Likes Auto พร้อมค้นหาและหมวดหมู่" width="1200" height="750" loading="lazy" decoding="async">
+            <figcaption>รายการบริการและค้นหา</figcaption>
+          </figure>
+        </li>
+
+        <li class="la-howto-step">
+          <div class="la-howto-copy">
+            <span class="la-howto-num">5</span>
+            <div>
+              <h3>สั่งซื้อด้วยลิงก์สาธารณะ</h3>
+              <p>กด <strong>สั่งซื้อ</strong> วางลิงก์โพสต์/โปรไฟล์ที่เปิดสาธารณะ ใส่จำนวนตามเรท แล้วยืนยัน — <em>ไม่ต้องใส่รหัสผ่านโซเชียล</em></p>
+              <a class="la-howto-link" href="{% if user %}/neworder{% else %}/services{% endif %}"><i class="ri-shopping-bag-3-line"></i> {% if user %}ไปหน้าสั่งซื้อ{% else %}เลือกบริการแล้วสั่ง{% endif %}</a>
+            </div>
+          </div>
+          <figure class="la-howto-shot">
+            <img src="/assets/howto/03-order.png" alt="ตารางบริการพร้อมปุ่มสั่งซื้อบน Likes Auto" width="1200" height="750" loading="lazy" decoding="async">
+            <figcaption>ตารางบริการและปุ่มสั่งซื้อ</figcaption>
+          </figure>
+        </li>
+      </ol>
+
+      <div class="la-howto-tip">
+        <i class="ri-information-line" aria-hidden="true"></i>
+        <div>
+          <strong>ติดตามสถานะงาน</strong>
+          <p>หลังสั่งแล้ว เปิดหน้า <a href="{% if user %}/orders{% else %}/signin{% endif %}">ออเดอร์</a> เพื่อดูประวัติ สถานะ และรายละเอียดงาน หากลิงก์ผิดหรืองานค้าง เปิดตั๋วซัพพอร์ตได้ทันที</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="la-faq la-faq-pro {% if user %}la-faq-dash{% endif %}">
+      <h2 class="la-faq-sec-title">คำถามที่พบบ่อย</h2>
       {% for item in faq %}
-      <details{% if loop.first %} open{% endif %}><summary>{{ item.q }}</summary><p>{{ item.a }}</p></details>
+      <details{% if loop.first %} open{% endif %}>
+        <summary><i class="ri-question-line"></i> <span>{{ item.q }}</span></summary>
+        <p>{{ item.a }}</p>
+      </details>
       {% endfor %}
+    </div>
+
+    <div class="la-faq-cta {% if user %}la-hub-card{% endif %}">
+      {% if user %}
+      <p>ยังสงสัยอยู่? เปิดตั๋วซัพพอร์ตหรือไปสั่งซื้อได้เลย</p>
+      <div class="la-cta">
+        {% if mods.mod_tickets %}<a class="la-btn" href="/tickets"><i class="ri-customer-service-2-line"></i> เปิดตั๋ว</a>{% endif %}
+        {% if mods.mod_neworder %}<a class="la-btn la-btn-ghost" href="/neworder"><i class="ri-shopping-bag-3-line"></i> สั่งซื้อ</a>{% endif %}
+      </div>
+      {% else %}
+      <p>ยังสงสัยอยู่? สมัครฟรีแล้วลองสั่งได้เลย</p>
+      <div class="la-cta">
+        <a class="la-btn" href="/signup">{{ t.cta_free }}</a>
+        <a class="la-btn la-btn-ghost" href="/services">{{ t.cta_prices }}</a>
+      </div>
+      {% endif %}
     </div>
   </div>
 </main>

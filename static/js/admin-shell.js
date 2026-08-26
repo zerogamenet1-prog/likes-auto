@@ -81,4 +81,18 @@
       });
     });
   });
+
+  var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  var csrfTok = csrfMeta ? csrfMeta.getAttribute('content') : '';
+  if (csrfTok) {
+    document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function (f) {
+      if (!f.querySelector('input[name="_csrf"]')) {
+        var i = document.createElement('input');
+        i.type = 'hidden';
+        i.name = '_csrf';
+        i.value = csrfTok;
+        f.appendChild(i);
+      }
+    });
+  }
 })();

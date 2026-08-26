@@ -1,40 +1,127 @@
 <!DOCTYPE html>
-<html lang="th" data-theme="light">
+<html lang="th" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
-  <title>เข้าสู่ระบบแอดมิน | LIKES AUTO</title>
+  <meta name="csrf-token" content="{{ csrf or '' }}">
+  <meta name="theme-color" content="#070b16">
+  <title>ศูนย์บัญชาการ | LIKES AUTO</title>
   <link rel="icon" href="/static/assets/admin-crest.png">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.2.0/fonts/remixicon.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/panel/ideacode/admin.css?v=dash11">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/panel/ideacode/admin-login.css?v=al3">
   <script>
     (function(){ try { var t=localStorage.getItem('la-dash-theme'); if(t) document.documentElement.setAttribute('data-theme', t); } catch(e){} })();
   </script>
 </head>
-<body class="dash-body">
-  <div class="auth-wrap">
-    <section class="auth-hero">
-      <div class="auth-crest"><img src="/static/assets/admin-crest.png" alt="LIKES AUTO"></div>
-      <p class="auth-kicker">LIKES AUTO ADMIN</p>
-      <h2>แผงควบคุมร้าน SMM</h2>
-      <p>จัดการออเดอร์ ลูกค้า เติมเงิน บริการจาก API และตั้งค่าร้านในที่เดียว</p>
+<body class="al-body{% if error %} is-error{% endif %}{% if locked %} is-locked{% endif %}" data-lock="{{ lock_left or 0 }}">
+  <canvas class="al-stars" id="alStars" aria-hidden="true"></canvas>
+  <div class="al-aurora" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+  <div class="al-grid" aria-hidden="true"></div>
+  <div class="al-spot" id="alSpot" aria-hidden="true"></div>
+
+  <header class="al-top">
+    <a class="al-brand" href="/">
+      <span class="al-crest"><img src="/static/assets/admin-crest.png" alt=""></span>
+      <span>
+        <strong>LIKES AUTO</strong>
+        <small>ADMIN VAULT</small>
+      </span>
+    </a>
+    <div class="al-top-meta">
+      <span class="al-chip al-live"><i></i> ระบบพร้อม</span>
+      <time class="al-clock" id="alClock" datetime="">--:--</time>
+      <button class="al-icon" type="button" id="alTheme" aria-label="สลับธีม">
+        <i class="ri-moon-clear-line al-moon"></i>
+        <i class="ri-sun-line al-sun"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="al-stage">
+    <section class="al-hero">
+      <p class="al-kicker" id="alHello">ศูนย์บัญชาการร้าน</p>
+      <h1>เข้าสู่ระบบ<br>แผงควบคุม</h1>
+      <p class="al-lead">จัดการออเดอร์ ลูกค้า เติมเงิน บริการ API และตั้งค่าร้านในที่เดียว เข้ารหัสตลอดเส้นทาง</p>
+      <ul class="al-feats">
+        <li><i class="ri-shopping-bag-3-line"></i> ออเดอร์</li>
+        <li><i class="ri-wallet-3-line"></i> เติมเงิน</li>
+        <li><i class="ri-group-line"></i> ลูกค้า</li>
+        <li><i class="ri-server-line"></i> API</li>
+      </ul>
+      <p class="al-type"><span id="alType"></span><b></b></p>
     </section>
-    <section class="auth-form">
-      <div class="auth-card">
-        <h1 style="margin:0 0 6px;font-size:24px">เข้าสู่ระบบ</h1>
-        <p class="la-muted" style="margin:0 0 18px">ใช้บัญชีแอดมินเพื่อเปิดแดชบอร์ด</p>
-        {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
-        <form method="post" action="/admin/login">
-          <label class="la-field">ชื่อผู้ใช้</label>
-          <input class="la-input" type="text" name="username" required autocomplete="username">
-          <label class="la-field">รหัสผ่าน</label>
-          <input class="la-input" type="password" name="password" required autocomplete="current-password">
-          <button class="la-btn" type="submit" style="width:100%;margin-top:8px">เข้าสู่ระบบ</button>
+
+    <section class="al-panel">
+      <div class="al-card" id="alCard">
+        <div class="al-card-shine" aria-hidden="true"></div>
+        <div class="al-card-head">
+          <span class="al-seal"><i class="ri-shield-keyhole-line"></i></span>
+          <div>
+            <h2>ยืนยันตัวตน</h2>
+            <p>ใช้บัญชีแอดมินเพื่อเปิดแดชบอร์ด</p>
+          </div>
+        </div>
+
+        {% if error %}
+        <div class="al-alert" role="alert">
+          <i class="ri-error-warning-line"></i>
+          <div>
+            <strong>{{ error }}</strong>
+            {% if locked %}<span id="alLockHint">ระบบจะปลดล็อกให้อัตโนมัติ</span>{% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <form class="al-form" method="post" action="/admin/login" id="alForm" {% if locked %}aria-disabled="true"{% endif %}>
+          {% include "_guard_fields.html" %}
+
+          <label class="al-field">
+            <span>ชื่อผู้ใช้</span>
+            <input class="al-input" type="text" name="username" id="alUser" required
+              autocomplete="username" autocapitalize="off" spellcheck="false"
+              value="{{ username or '' }}" {% if locked %}disabled{% endif %}>
+            <i class="ri-user-3-line"></i>
+          </label>
+
+          <label class="al-field">
+            <span>รหัสผ่าน</span>
+            <input class="al-input" type="password" name="password" id="alPass" required
+              autocomplete="current-password" {% if locked %}disabled{% endif %}>
+            <i class="ri-lock-2-line"></i>
+            <button class="al-eye" type="button" id="alEye" tabindex="-1" aria-label="แสดงรหัสผ่าน">
+              <i class="ri-eye-line"></i>
+            </button>
+          </label>
+          <p class="al-caps" id="alCaps" hidden>Caps Lock เปิดอยู่</p>
+
+          <label class="al-remember">
+            <input type="checkbox" id="alRemember" {% if locked %}disabled{% endif %}>
+            <span>จำชื่อผู้ใช้บนเครื่องนี้</span>
+          </label>
+
+          <button class="al-submit" type="submit" id="alGo" {% if locked %}disabled{% endif %}>
+            <span class="al-go-text">เข้าสู่ระบบ</span>
+            <span class="al-go-wait">กำลังเปิดแผงควบคุม</span>
+            <i class="ri-arrow-right-line"></i>
+          </button>
         </form>
+
+        <div class="al-secure">
+          <i class="ri-lock-password-line"></i>
+          <span>เซสชันเข้ารหัส · หมดอายุเมื่อไม่ได้ใช้งาน</span>
+        </div>
       </div>
     </section>
-  </div>
+  </main>
+
+  <footer class="al-foot">
+    <span>LIKES AUTO · COMMAND CENTER</span>
+    <a href="/">กลับหน้าเว็บ</a>
+  </footer>
+  <script src="/static/js/admin-login.js?v=al3"></script>
 </body>
 </html>

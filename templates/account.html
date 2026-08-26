@@ -1,34 +1,86 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="la-page">
-  <div class="la-wrap">
-    <div class="la-page-head"><h1>บัญชี</h1></div>
-    {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
-    {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
-    <div class="adm-cards" style="max-width:720px">
-      <article class="adm-card"><span>ชื่อผู้ใช้</span><b>{{ user.username }}</b></article>
-      <article class="adm-card"><span>ยอดเงิน</span><b>{{ "%.2f"|format(user.balance or 0) }}</b></article>
-      <article class="adm-card"><span>อีเมล</span><b style="font-size:16px">{{ user.email }}</b></article>
-      {% if mods.mod_api %}<article class="adm-card"><span>API Key</span><b style="font-size:14px"{% if user.api_key %} data-copy="{{ user.api_key }}" title="แตะเพื่อคัดลอก"{% endif %}>{{ user.api_key or "-" }}</b></article>{% endif %}
+<main class="la-page la-dash-page la-hub-page la-account-page">
+  {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+  {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
+
+  <section class="la-hub-hero">
+    <div class="la-hub-hero-in">
+      <h1><i class="ri-user-3-line"></i> บัญชีของฉัน</h1>
+      <p>จัดการโปรไฟล์ รหัสผ่าน{% if mods.mod_api %} API Key{% endif %}{% if mods.mod_transfer %} และการโอนเงิน{% endif %}</p>
+      <div class="la-hub-stats">
+        <article><em>ชื่อผู้ใช้</em><strong>{{ user.username }}</strong></article>
+        <article><em>ยอดคงเหลือ</em><strong>฿{{ "%.2f"|format(user.balance or 0) }}</strong></article>
+        <article><em>สถานะ</em><strong>{{ st.get(user.status, user.status or 'active') }}</strong></article>
+      </div>
     </div>
-    {% if mods.mod_api %}<form method="post" action="/account/apikey" style="margin:12px 0 22px"><button class="la-btn" type="submit">สร้าง API key ใหม่</button></form>{% endif %}
-    <form method="post" action="/account/password" class="la-order-card" style="margin-bottom:18px">
-      <h3>เปลี่ยนรหัสผ่าน</h3>
-      <label class="la-field">รหัสเดิม</label>
-      <input class="la-input" type="password" name="old_password" required>
-      <label class="la-field">รหัสใหม่</label>
-      <input class="la-input" type="password" name="new_password" required minlength="6">
-      <button class="la-btn" type="submit">บันทึก</button>
-    </form>
+  </section>
+
+  <div class="la-account-grid">
+    <section class="la-hub-card">
+      <div class="la-hub-card-h">
+        <h2>ข้อมูลบัญชี</h2>
+        <p>รายละเอียดหลักของบัญชีคุณ</p>
+      </div>
+      <ul class="la-account-facts">
+        <li><span>ชื่อผู้ใช้</span><b>{{ user.username }}</b></li>
+        <li><span>อีเมล</span><b>{{ user.email or '—' }}</b></li>
+        <li><span>ยอดเงิน</span><b>฿{{ "%.2f"|format(user.balance or 0) }}</b></li>
+        {% if user.ref_code %}<li><span>รหัสแนะนำ</span><b data-copy="{{ user.ref_code }}">{{ user.ref_code }}</b></li>{% endif %}
+      </ul>
+      <div class="la-account-links">
+        {% if mods.mod_addfunds %}<a class="la-btn la-btn-mini" href="/addfunds"><i class="ri-wallet-3-line"></i> เติมเงิน</a>{% endif %}
+        {% if mods.mod_orders %}<a class="la-btn la-btn-mini la-btn-ghost" href="/orders"><i class="ri-file-list-3-line"></i> ออเดอร์</a>{% endif %}
+      </div>
+    </section>
+
+    {% if mods.mod_api %}
+    <section class="la-hub-card">
+      <div class="la-hub-card-h">
+        <h2>API Key</h2>
+        <p>ใช้เชื่อมแผง SMM หรือระบบภายนอก — เก็บเป็นความลับ</p>
+      </div>
+      <div class="la-aff-linkbox">
+        <code data-copy="{{ user.api_key or '' }}">{{ user.api_key or 'ยังไม่มีคีย์' }}</code>
+        {% if user.api_key %}
+        <button class="la-btn" type="button" data-copy="{{ user.api_key }}"><i class="ri-file-copy-line"></i> คัดลอก</button>
+        {% endif %}
+      </div>
+      <form method="post" action="/account/apikey" class="la-hub-form" style="margin-top:12px" data-confirm="สร้าง API key ใหม่? คีย์เก่าจะใช้ไม่ได้">
+        <button class="la-btn la-btn-ghost" type="submit" style="width:100%"><i class="ri-refresh-line"></i> สร้าง API key ใหม่</button>
+      </form>
+      <p class="la-hub-note"><a href="/api">ดูเอกสาร API</a></p>
+    </section>
+    {% endif %}
+
+    <section class="la-hub-card">
+      <div class="la-hub-card-h">
+        <h2>เปลี่ยนรหัสผ่าน</h2>
+        <p>ใช้รหัสผ่านที่คาดเดายากอย่างน้อย 6 ตัวอักษร</p>
+      </div>
+      <form method="post" action="/account/password" class="la-hub-form">
+        <label class="la-field">รหัสเดิม</label>
+        <input class="la-input" type="password" name="old_password" required autocomplete="current-password">
+        <label class="la-field">รหัสใหม่</label>
+        <input class="la-input" type="password" name="new_password" required minlength="6" autocomplete="new-password">
+        <button class="la-btn" type="submit" style="width:100%">บันทึกรหัสผ่าน</button>
+      </form>
+    </section>
+
     {% if mods.mod_transfer and (not settings or settings.enable_transfer_funds != '0') %}
-    <form method="post" action="/account/transfer" class="la-order-card">
-      <h3>โอนเงินในระบบ</h3>
-      <label class="la-field">ยูสผู้รับ</label>
-      <input class="la-input" name="receiver" required>
-      <label class="la-field">จำนวน</label>
-      <input class="la-input" type="number" step="0.01" name="amount" required>
-      <button class="la-btn" type="submit">โอน</button>
-    </form>
+    <section class="la-hub-card">
+      <div class="la-hub-card-h">
+        <h2>โอนเงินในระบบ</h2>
+        <p>โอนเครดิตไปยังยูสเซอร์อื่นใน Likes Auto</p>
+      </div>
+      <form method="post" action="/account/transfer" class="la-hub-form">
+        <label class="la-field">ยูสผู้รับ</label>
+        <input class="la-input" name="receiver" required placeholder="username" autocomplete="off">
+        <label class="la-field">จำนวน (บาท)</label>
+        <input class="la-input" type="number" step="0.01" min="1" name="amount" required>
+        <button class="la-btn" type="submit" style="width:100%"><i class="ri-exchange-line"></i> โอนเงิน</button>
+      </form>
+    </section>
     {% endif %}
   </div>
 </main>

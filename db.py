@@ -1,6 +1,8 @@
 import hashlib
+import hmac
 import os
 import sqlite3
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -10,11 +12,23 @@ from th_shop import search_aliases, shop_card, shop_explain, th_label, th_text
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "data" / "app.db"
+_settings_lock = threading.Lock()
+_settings_cache = {"t": 0.0, "data": None}
 
 
 def _hash(password: str) -> str:
     salt = os.environ.get("ADMIN_SALT", "likes-auto-py")
     return hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
+
+
+def _hash_eq(stored, password: str) -> bool:
+    got = _hash(password)
+    saved = str(stored or "")
+    dummy = _hash("timing-dummy")
+    if len(saved) != len(got):
+        hmac.compare_digest(dummy, got)
+        return False
+    return hmac.compare_digest(saved, got)
 
 
 def connect():
@@ -101,49 +115,24 @@ def init_db():
             "INSERT INTO admins (username, password_hash) VALUES (?, ?)",
             (user, _hash(pw)),
         )
-    if cur.execute("SELECT COUNT(*) FROM services").fetchone()[0] == 0:
-        cur.executemany(
-            "INSERT INTO services (platform, name, rate, min_qty, max_qty, status) VALUES (?,?,?,?,?,?)",
-            [
-                ("Instagram", "ไลค์รูป", 8, 10, 10000, "active"),
-                ("Instagram", "เพิ่มผู้ติดตาม", 25, 10, 5000, "active"),
-                ("Facebook", "ไลค์เพจ", 12, 10, 20000, "active"),
-                ("TikTok", "วิวคลิป", 5, 100, 100000, "active"),
-                ("YouTube", "วิว", 18, 100, 50000, "active"),
-                ("LINE OA", "เพิ่มเพื่อน", 30, 10, 3000, "active"),
-            ],
-        )
-    now = datetime.now().strftime("%Y-%m-%d %H:%M")
-    if cur.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 0:
-        cur.executemany(
-            "INSERT INTO orders (client, service, link, quantity, charge, status, created_at) VALUES (?,?,?,?,?,?,?)",
-            [
-                ("demo01", "Instagram ไลค์รูป", "https://instagram.com/p/xxxxx", 1000, 8.0, "completed", now),
-                ("demo02", "TikTok วิวคลิป", "https://tiktok.com/@shop", 5000, 25.0, "processing", now),
-                ("demo03", "YouTube วิว", "https://youtube.com/watch?v=xx", 2000, 36.0, "pending", now),
-            ],
-        )
-    if cur.execute("SELECT COUNT(*) FROM clients").fetchone()[0] == 0:
-        cur.executemany(
-            "INSERT INTO clients (username, email, balance, status, created_at) VALUES (?,?,?,?,?)",
-            [
-                ("demo01", "demo01@likes-auto.com", 120.50, "active", now),
-                ("demo02", "demo02@likes-auto.com", 45.00, "active", now),
-                ("demo03", "demo03@likes-auto.com", 0, "paused", now),
-            ],
-        )
-    if cur.execute("SELECT COUNT(*) FROM payments").fetchone()[0] == 0:
-        cur.executemany(
-            "INSERT INTO payments (client, method, amount, status, created_at) VALUES (?,?,?,?,?)",
-            [
-                ("demo01", "PromptPay", 300, "paid", now),
-                ("demo02", "TrueMoney", 100, "pending", now),
-            ],
-        )
-    if cur.execute("SELECT COUNT(*) FROM tickets").fetchone()[0] == 0:
+    # Demo services are seeded at most once. Never re-insert after admin deletes them.
+    demo = cur.execute("SELECT value FROM settings WHERE key='demo_seeded'").fetchone()
+    if not demo:
+        if cur.execute("SELECT COUNT(*) FROM services").fetchone()[0] == 0:
+            if str(os.environ.get("ALLOW_DEMO_SEED", "0")).strip() in {"1", "true", "yes"}:
+                cur.executemany(
+                    "INSERT INTO services (platform, name, rate, min_qty, max_qty, status) VALUES (?,?,?,?,?,?)",
+                    [
+                        ("Instagram", "ไลค์รูป", 8, 10, 10000, "active"),
+                        ("Instagram", "เพิ่มผู้ติดตาม", 25, 10, 5000, "active"),
+                        ("Facebook", "ไลค์เพจ", 12, 10, 20000, "active"),
+                        ("TikTok", "วิวคลิป", 5, 100, 100000, "active"),
+                        ("YouTube", "วิว", 18, 100, 50000, "active"),
+                        ("LINE OA", "เพิ่มเพื่อน", 30, 10, 3000, "active"),
+                    ],
+                )
         cur.execute(
-            "INSERT INTO tickets (client, subject, status, created_at) VALUES (?,?,?,?)",
-            ("demo02", "สอบถามสถานะออเดอร์", "open", now),
+            "INSERT OR IGNORE INTO settings(key, value) VALUES('demo_seeded', '1')"
         )
     if cur.execute("SELECT COUNT(*) FROM settings").fetchone()[0] == 0:
         cur.executemany(
@@ -170,7 +159,8 @@ def check_admin(username: str, password: str) -> bool:
         "SELECT password_hash FROM admins WHERE username=?", (username,)
     ).fetchone()
     con.close()
-    return bool(row) and row["password_hash"] == _hash(password)
+    stored = row["password_hash"] if row else None
+    return bool(row) and _hash_eq(stored, password)
 
 
 def stats():
@@ -184,6 +174,32 @@ def stats():
     }
     con.close()
     return data
+
+
+_PUBLIC_STATS = {"t": 0.0, "data": None}
+_PUBLIC_STATS_TTL = 30.0
+
+
+def public_stats():
+    """Homepage display counts — boosted for social proof; admin keeps real stats()."""
+    now = time.monotonic()
+    hit = _PUBLIC_STATS["data"]
+    if hit is not None and (now - _PUBLIC_STATS["t"]) < _PUBLIC_STATS_TTL:
+        return dict(hit)
+    s = stats()
+    orders = int(s.get("orders") or 0)
+    clients = int(s.get("clients") or 0)
+    services = int(s.get("services") or 0)
+    out = {
+        "orders": 28467 + orders * 37,
+        "clients": 9684 + clients * 19,
+        "services": services,
+        "tickets": s.get("tickets") or 0,
+        "revenue": s.get("revenue") or 0,
+    }
+    _PUBLIC_STATS["t"] = now
+    _PUBLIC_STATS["data"] = out
+    return dict(out)
 
 
 def dashboard_series(days=14):
@@ -241,10 +257,19 @@ MOD_KEYS = [
 
 
 def get_settings():
+    now = time.monotonic()
+    with _settings_lock:
+        cached = _settings_cache["data"]
+        if cached is not None and (now - _settings_cache["t"]) < 8:
+            return dict(cached)
     con = connect()
     items = con.execute("SELECT key, value FROM settings").fetchall()
     con.close()
-    return {x["key"]: x["value"] for x in items}
+    data = {x["key"]: x["value"] for x in items}
+    with _settings_lock:
+        _settings_cache["t"] = time.monotonic()
+        _settings_cache["data"] = data
+    return dict(data)
 
 
 def mod_on(settings=None, key=""):
@@ -278,6 +303,8 @@ def save_settings(values: dict):
         con.execute("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (k, v))
     con.commit()
     con.close()
+    with _settings_lock:
+        _settings_cache["data"] = None
     if any(k in values for k in ("profit_percent", "usd_rate")):
         shop_cache_clear()
 
@@ -354,11 +381,10 @@ def create_client(username, email, password, referred_by=None):
 
 def check_client(username, password):
     row = get_client(username=username)
-    if not row or not row.get("password_hash"):
+    stored = (row or {}).get("password_hash") or ""
+    if not _hash_eq(stored, password):
         return None
-    if row["password_hash"] != _hash(password):
-        return None
-    if row.get("status") != "active":
+    if not row or row.get("status") != "active":
         return None
     return row
 
@@ -367,7 +393,8 @@ def list_services():
     con = connect()
     items = con.execute(
         """
-        SELECT s.*, c.rate AS catalog_rate, c.currency AS catalog_currency
+        SELECT s.*, c.rate AS catalog_rate, c.currency AS catalog_currency,
+               c.type AS catalog_type, c.refill AS catalog_refill, c.name AS catalog_name
         FROM services s
         LEFT JOIN provider_catalog c
           ON c.provider_id = s.provider_id AND c.api_service = s.api_service
@@ -453,6 +480,8 @@ def shop_cache_clear():
     _PRICE["t"] = 0.0
     _SHOP_NAV["platforms"] = []
     _SHOP_NAV["categories"] = []
+    _PUBLIC_STATS["t"] = 0.0
+    _PUBLIC_STATS["data"] = None
 
 
 def _cat_label(value):
@@ -460,12 +489,567 @@ def _cat_label(value):
     return text or "ทั่วไป"
 
 
-def _plat_rank(name):
+def _plat_rank_legacy(name):
     low = (name or "").lower()
     for i, key in enumerate(_PREFERRED_PLATS):
         if key in low:
             return i
     return 80
+
+
+def _plat_rank(name):
+    try:
+        con = connect()
+        row = con.execute(
+            "SELECT sort_order FROM shop_sort WHERE kind='main' AND name=? LIMIT 1",
+            (_norm_plat(name),),
+        ).fetchone()
+        con.close()
+        if row is not None:
+            return int(row["sort_order"])
+    except Exception:
+        pass
+    return _plat_rank_legacy(name)
+
+
+def _shop_order_map(kind, platform=""):
+    con = connect()
+    if kind == "main":
+        rows = con.execute(
+            "SELECT name, sort_order FROM shop_sort WHERE kind='main' ORDER BY sort_order, name"
+        ).fetchall()
+    else:
+        rows = con.execute(
+            "SELECT name, sort_order FROM shop_sort WHERE kind='sub' AND platform=? ORDER BY sort_order, name",
+            (platform or "",),
+        ).fetchall()
+    con.close()
+    return {r["name"]: int(r["sort_order"]) for r in rows}
+
+
+def _norm_plat(value):
+    return (value or "").strip() or "อื่น ๆ"
+
+
+def _norm_cat(value):
+    return (value or "").strip() or "ทั่วไป"
+
+
+def sync_shop_sort():
+    """Ensure every live platform/category has a sort row."""
+    con = connect()
+    try:
+        plats = [
+            _norm_plat(r["platform"])
+            for r in con.execute("SELECT DISTINCT platform FROM services").fetchall()
+        ]
+        plats = sorted(set(plats), key=lambda n: (_plat_rank_legacy(n), n.lower()))
+        existing = {
+            r["name"]: int(r["sort_order"])
+            for r in con.execute("SELECT name, sort_order FROM shop_sort WHERE kind='main'").fetchall()
+        }
+        next_ord = max(existing.values()) + 10 if existing else 10
+        for name in plats:
+            if name in existing:
+                continue
+            con.execute(
+                "INSERT OR IGNORE INTO shop_sort(kind, platform, name, sort_order) VALUES('main','',?,?)",
+                (name, next_ord),
+            )
+            existing[name] = next_ord
+            next_ord += 10
+
+        cat_rows = con.execute(
+            "SELECT platform, category FROM services GROUP BY platform, category"
+        ).fetchall()
+        by_plat = {}
+        for row in cat_rows:
+            plat = _norm_plat(row["platform"])
+            cat = _norm_cat(row["category"])
+            by_plat.setdefault(plat, set()).add(cat)
+        for plat, cats in by_plat.items():
+            existing_sub = {
+                r["name"]: int(r["sort_order"])
+                for r in con.execute(
+                    "SELECT name, sort_order FROM shop_sort WHERE kind='sub' AND platform=?",
+                    (plat,),
+                ).fetchall()
+            }
+            next_sub = max(existing_sub.values()) + 10 if existing_sub else 10
+            for cat in sorted(cats, key=lambda n: n.lower()):
+                if cat in existing_sub:
+                    continue
+                con.execute(
+                    "INSERT OR IGNORE INTO shop_sort(kind, platform, name, sort_order) VALUES('sub',?,?,?)",
+                    (plat, cat, next_sub),
+                )
+                existing_sub[cat] = next_sub
+                next_sub += 10
+        con.commit()
+    finally:
+        con.close()
+
+
+def list_shop_mains():
+    sync_shop_sort()
+    blocked = blocked_shop_mains()
+    con = connect()
+    counts = {
+        _norm_plat(r["platform"]): int(r["c"])
+        for r in con.execute(
+            "SELECT platform, COUNT(*) c FROM services GROUP BY platform"
+        ).fetchall()
+    }
+    rows = con.execute(
+        "SELECT name, sort_order FROM shop_sort WHERE kind='main' ORDER BY sort_order, name"
+    ).fetchall()
+    con.close()
+    items = []
+    for r in rows:
+        name = r["name"]
+        if name in blocked:
+            continue
+        items.append({
+            "name": name,
+            "count": int(counts.get(name) or 0),
+            "sort_order": int(r["sort_order"]),
+        })
+    return items
+
+
+def list_shop_subs(platform):
+    plat = _norm_plat(platform)
+    if not plat:
+        return []
+    if plat in blocked_shop_mains():
+        return []
+    sync_shop_sort()
+    blocked = blocked_shop_subs()
+    con = connect()
+    counts = {
+        _norm_cat(r["category"]): int(r["c"])
+        for r in con.execute(
+            "SELECT category, COUNT(*) c FROM services WHERE IFNULL(NULLIF(TRIM(platform),''),'อื่น ๆ')=? GROUP BY category",
+            (plat,),
+        ).fetchall()
+    }
+    rows = con.execute(
+        "SELECT name, sort_order FROM shop_sort WHERE kind='sub' AND platform=? ORDER BY sort_order, name",
+        (plat,),
+    ).fetchall()
+    con.close()
+    items = []
+    for r in rows:
+        name = r["name"]
+        if ("%s|%s" % (plat, name)) in blocked:
+            continue
+        items.append({
+            "name": name,
+            "count": int(counts.get(name) or 0),
+            "sort_order": int(r["sort_order"]),
+        })
+    return items
+
+
+def add_shop_main(name):
+    name = _norm_plat(name)
+    if not name:
+        return False
+    sync_shop_sort()
+    con = connect()
+    exists = con.execute(
+        "SELECT id FROM shop_sort WHERE kind='main' AND name=?", (name,)
+    ).fetchone()
+    if exists:
+        con.close()
+        unblock_shop_main(name)
+        return True
+    row = con.execute(
+        "SELECT MAX(sort_order) m FROM shop_sort WHERE kind='main'"
+    ).fetchone()
+    nxt = int(row["m"] or 0) + 10
+    con.execute(
+        "INSERT INTO shop_sort(kind, platform, name, sort_order) VALUES('main','',?,?)",
+        (name, nxt),
+    )
+    con.commit()
+    con.close()
+    unblock_shop_main(name)
+    shop_cache_clear()
+    return True
+
+
+def add_shop_sub(platform, name):
+    plat = _norm_plat(platform)
+    name = _norm_cat(name)
+    if not plat or not name:
+        return False
+    add_shop_main(plat)
+    con = connect()
+    exists = con.execute(
+        "SELECT id FROM shop_sort WHERE kind='sub' AND platform=? AND name=?",
+        (plat, name),
+    ).fetchone()
+    if exists:
+        con.close()
+        unblock_shop_sub(plat, name)
+        return True
+    row = con.execute(
+        "SELECT MAX(sort_order) m FROM shop_sort WHERE kind='sub' AND platform=?",
+        (plat,),
+    ).fetchone()
+    nxt = int(row["m"] or 0) + 10
+    con.execute(
+        "INSERT INTO shop_sort(kind, platform, name, sort_order) VALUES('sub',?,?,?)",
+        (plat, name, nxt),
+    )
+    con.commit()
+    con.close()
+    unblock_shop_sub(plat, name)
+    shop_cache_clear()
+    return True
+
+
+def _block_list(key):
+    import json
+    raw = (get_settings().get(key) or "").strip()
+    if not raw:
+        return []
+    try:
+        data = json.loads(raw)
+        if isinstance(data, list):
+            return [str(x) for x in data if str(x).strip()]
+    except Exception:
+        pass
+    return [x.strip() for x in raw.split("\n") if x.strip()]
+
+
+def _save_block_list(key, items):
+    import json
+    uniq = []
+    seen = set()
+    for item in items:
+        text = str(item or "").strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        uniq.append(text)
+    save_settings({key: json.dumps(uniq, ensure_ascii=False)})
+
+
+def blocked_shop_mains():
+    return set(_block_list("shop_blocked_mains"))
+
+
+def blocked_shop_subs():
+    return set(_block_list("shop_blocked_subs"))
+
+
+def block_shop_main(name):
+    name = _norm_plat(name)
+    items = _block_list("shop_blocked_mains")
+    if name not in items:
+        items.append(name)
+    _save_block_list("shop_blocked_mains", items)
+    # drop blocked subs under this main
+    prefix = name + "|"
+    subs = [x for x in _block_list("shop_blocked_subs") if not x.startswith(prefix)]
+    _save_block_list("shop_blocked_subs", subs)
+
+
+def unblock_shop_main(name):
+    name = _norm_plat(name)
+    items = [x for x in _block_list("shop_blocked_mains") if x != name]
+    _save_block_list("shop_blocked_mains", items)
+
+
+def block_shop_sub(platform, name):
+    plat = _norm_plat(platform)
+    name = _norm_cat(name)
+    key = "%s|%s" % (plat, name)
+    items = _block_list("shop_blocked_subs")
+    if key not in items:
+        items.append(key)
+    _save_block_list("shop_blocked_subs", items)
+
+
+def unblock_shop_sub(platform, name):
+    plat = _norm_plat(platform)
+    name = _norm_cat(name)
+    key = "%s|%s" % (plat, name)
+    items = [x for x in _block_list("shop_blocked_subs") if x != key]
+    _save_block_list("shop_blocked_subs", items)
+
+
+def shop_item_blocked(platform, category=""):
+    plat = _norm_plat(platform)
+    if plat in blocked_shop_mains():
+        return True
+    cat = _norm_cat(category)
+    return ("%s|%s" % (plat, cat)) in blocked_shop_subs()
+
+
+def set_shop_manual_lock(on=True):
+    save_settings({"shop_manual_lock": "1" if on else "0"})
+
+
+def shop_manual_locked():
+    return str(get_settings().get("shop_manual_lock") or "0") == "1"
+
+
+def clear_shop_blocks():
+    _save_block_list("shop_blocked_mains", [])
+    _save_block_list("shop_blocked_subs", [])
+    set_shop_manual_lock(False)
+
+
+def delete_shop_main(name):
+    name = _norm_plat(name)
+    if not name:
+        return 0
+    con = connect()
+    cur = con.execute(
+        "DELETE FROM services WHERE IFNULL(NULLIF(TRIM(platform),''),'อื่น ๆ')=?",
+        (name,),
+    )
+    n = cur.rowcount if cur.rowcount is not None else 0
+    con.execute("DELETE FROM shop_sort WHERE kind='main' AND name=?", (name,))
+    con.execute("DELETE FROM shop_sort WHERE kind='sub' AND platform=?", (name,))
+    con.commit()
+    con.close()
+    block_shop_main(name)
+    set_shop_manual_lock(True)
+    shop_cache_clear()
+    return int(n)
+
+
+def delete_shop_sub(platform, name):
+    plat = _norm_plat(platform)
+    name = _norm_cat(name)
+    if not plat or not name:
+        return 0
+    con = connect()
+    cur = con.execute(
+        """
+        DELETE FROM services
+        WHERE IFNULL(NULLIF(TRIM(platform),''),'อื่น ๆ')=?
+          AND IFNULL(NULLIF(TRIM(category),''),'ทั่วไป')=?
+        """,
+        (plat, name),
+    )
+    n = cur.rowcount if cur.rowcount is not None else 0
+    con.execute(
+        "DELETE FROM shop_sort WHERE kind='sub' AND platform=? AND name=?",
+        (plat, name),
+    )
+    con.commit()
+    con.close()
+    block_shop_sub(plat, name)
+    set_shop_manual_lock(True)
+    shop_cache_clear()
+    return int(n)
+
+
+def delete_all_shop_mains():
+    con = connect()
+    cur = con.execute("DELETE FROM services")
+    n = cur.rowcount if cur.rowcount is not None else 0
+    con.execute("DELETE FROM shop_sort")
+    con.commit()
+    con.close()
+    _save_block_list("shop_blocked_mains", [])
+    _save_block_list("shop_blocked_subs", [])
+    set_shop_manual_lock(True)
+    shop_cache_clear()
+    return int(n)
+
+
+def delete_all_shop_subs(platform):
+    plat = _norm_plat(platform)
+    if not plat:
+        return 0
+    con = connect()
+    cur = con.execute(
+        "DELETE FROM services WHERE IFNULL(NULLIF(TRIM(platform),''),'อื่น ๆ')=?",
+        (plat,),
+    )
+    n = cur.rowcount if cur.rowcount is not None else 0
+    con.execute("DELETE FROM shop_sort WHERE kind='sub' AND platform=?", (plat,))
+    con.commit()
+    con.close()
+    block_shop_main(plat)
+    set_shop_manual_lock(True)
+    shop_cache_clear()
+    return int(n)
+
+def rename_shop_main(old_name, new_name):
+    old = _norm_plat(old_name)
+    new = _norm_plat(new_name)
+    if not old or not new or old == new:
+        return False
+    con = connect()
+    taken = con.execute(
+        "SELECT 1 FROM services WHERE IFNULL(NULLIF(TRIM(platform),''),'อื่น ๆ')=? LIMIT 1",
+        (new,),
+    ).fetchone()
+    if taken and old != new:
+        # merging into existing name is allowed
+        pass
+    con.execute(
+        "UPDATE services SET platform=? WHERE IFNULL(NULLIF(TRIM(platform),''),'อื่น ๆ')=?",
+        (new, old),
+    )
+    row = con.execute(
+        "SELECT id, sort_order FROM shop_sort WHERE kind='main' AND name=?", (old,)
+    ).fetchone()
+    dest = con.execute(
+        "SELECT id FROM shop_sort WHERE kind='main' AND name=?", (new,)
+    ).fetchone()
+    if row and dest and row["id"] != dest["id"]:
+        con.execute("DELETE FROM shop_sort WHERE id=?", (row["id"],))
+    elif row:
+        con.execute("UPDATE shop_sort SET name=? WHERE id=?", (new, row["id"]))
+    elif not dest:
+        con.execute(
+            "INSERT INTO shop_sort(kind, platform, name, sort_order) VALUES('main','',?,1000)",
+            (new,),
+        )
+    con.execute("UPDATE shop_sort SET platform=? WHERE kind='sub' AND platform=?", (new, old))
+    con.commit()
+    con.close()
+    shop_cache_clear()
+    return True
+
+
+def rename_shop_sub(platform, old_name, new_name):
+    plat = _norm_plat(platform)
+    old = _norm_cat(old_name)
+    new = _norm_cat(new_name)
+    if not plat or not old or not new or old == new:
+        return False
+    con = connect()
+    con.execute(
+        """
+        UPDATE services SET category=?
+        WHERE IFNULL(NULLIF(TRIM(platform),''),'อื่น ๆ')=?
+          AND IFNULL(NULLIF(TRIM(category),''),'ทั่วไป')=?
+        """,
+        (new, plat, old),
+    )
+    row = con.execute(
+        "SELECT id FROM shop_sort WHERE kind='sub' AND platform=? AND name=?",
+        (plat, old),
+    ).fetchone()
+    dest = con.execute(
+        "SELECT id FROM shop_sort WHERE kind='sub' AND platform=? AND name=?",
+        (plat, new),
+    ).fetchone()
+    if row and dest and row["id"] != dest["id"]:
+        con.execute("DELETE FROM shop_sort WHERE id=?", (row["id"],))
+    elif row:
+        con.execute("UPDATE shop_sort SET name=? WHERE id=?", (new, row["id"]))
+    elif not dest:
+        con.execute(
+            "INSERT INTO shop_sort(kind, platform, name, sort_order) VALUES('sub',?,?,1000)",
+            (plat, new),
+        )
+    con.commit()
+    con.close()
+    shop_cache_clear()
+    return True
+
+
+def move_shop_sort(kind, name, direction, platform=""):
+    kind = "main" if kind == "main" else "sub"
+    name = _norm_plat(name) if kind == "main" else _norm_cat(name)
+    plat = _norm_plat(platform) if kind == "sub" else ""
+    direction = -1 if int(direction or 0) < 0 else 1
+    sync_shop_sort()
+    con = connect()
+    if kind == "main":
+        rows = con.execute(
+            "SELECT id, name, sort_order FROM shop_sort WHERE kind='main' ORDER BY sort_order, name"
+        ).fetchall()
+    else:
+        rows = con.execute(
+            "SELECT id, name, sort_order FROM shop_sort WHERE kind='sub' AND platform=? ORDER BY sort_order, name",
+            (plat,),
+        ).fetchall()
+    idx = next((i for i, r in enumerate(rows) if r["name"] == name), -1)
+    if idx < 0:
+        con.close()
+        return False
+    j = idx + direction
+    if j < 0 or j >= len(rows):
+        con.close()
+        return False
+    a, b = rows[idx], rows[j]
+    con.execute("UPDATE shop_sort SET sort_order=? WHERE id=?", (b["sort_order"], a["id"]))
+    con.execute("UPDATE shop_sort SET sort_order=? WHERE id=?", (a["sort_order"], b["id"]))
+    # if equal, force unique order
+    if a["sort_order"] == b["sort_order"]:
+        con.execute("UPDATE shop_sort SET sort_order=? WHERE id=?", (a["sort_order"] + direction, a["id"]))
+    con.commit()
+    con.close()
+    shop_cache_clear()
+    return True
+
+
+def reorder_shop_sort(kind, names, platform=""):
+    """Persist an explicit order list (drag-and-drop)."""
+    kind = "main" if kind == "main" else "sub"
+    plat = _norm_plat(platform) if kind == "sub" else ""
+    cleaned = []
+    seen = set()
+    for raw in names or []:
+        name = _norm_plat(raw) if kind == "main" else _norm_cat(raw)
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        cleaned.append(name)
+    if not cleaned:
+        return False
+    sync_shop_sort()
+    con = connect()
+    if kind == "main":
+        existing = {
+            r["name"]: r["id"]
+            for r in con.execute("SELECT id, name FROM shop_sort WHERE kind='main'").fetchall()
+        }
+    else:
+        existing = {
+            r["name"]: r["id"]
+            for r in con.execute(
+                "SELECT id, name FROM shop_sort WHERE kind='sub' AND platform=?",
+                (plat,),
+            ).fetchall()
+        }
+    order = 10
+    for name in cleaned:
+        sid = existing.get(name)
+        if sid:
+            con.execute("UPDATE shop_sort SET sort_order=? WHERE id=?", (order, sid))
+        elif kind == "main":
+            con.execute(
+                "INSERT INTO shop_sort(kind, platform, name, sort_order) VALUES('main','',?,?)",
+                (name, order),
+            )
+        else:
+            con.execute(
+                "INSERT INTO shop_sort(kind, platform, name, sort_order) VALUES('sub',?,?,?)",
+                (plat, name, order),
+            )
+        order += 10
+    # push any leftover names after the dragged set
+    for name, sid in existing.items():
+        if name in seen:
+            continue
+        con.execute("UPDATE shop_sort SET sort_order=? WHERE id=?", (order, sid))
+        order += 10
+    con.commit()
+    con.close()
+    shop_cache_clear()
+    return True
 
 
 def _shop_cat_sql(alias="s"):
@@ -480,6 +1064,10 @@ def shop_nav():
     now = time.monotonic()
     if _SHOP_NAV["platforms"] and now - _SHOP_NAV["t"] < _SHOP_NAV_TTL:
         return {"platforms": _SHOP_NAV["platforms"], "categories": _SHOP_NAV["categories"]}
+    try:
+        sync_shop_sort()
+    except Exception:
+        pass
     cat_sql = _shop_cat_sql("s")
     con = connect()
     plats = con.execute(
@@ -507,7 +1095,7 @@ def shop_nav():
             "color": color,
             "logo": plat_logo(name),
         })
-    platforms.sort(key=lambda x: (_plat_rank(x["name"]), -x["count"], x["name"].lower()))
+    platforms.sort(key=lambda x: (_plat_rank(x["name"]), x["name"].lower()))
     categories = []
     for row in cats:
         plat = (row["platform"] or "อื่น ๆ").strip() or "อื่น ๆ"
@@ -530,7 +1118,7 @@ def shop_nav():
         return any(key in text for key in ("like", "follow", "view", "subscriber", "ไลค์", "ผู้ติดตาม", "วิว"))
     for item in categories:
         plat = item["platform"]
-        if plat in featured or _plat_rank(plat) > 5:
+        if plat in featured or _plat_rank_legacy(plat) > 5:
             continue
         if not _pin_kind(item["category"]):
             continue
@@ -539,15 +1127,23 @@ def shop_nav():
         featured.add(plat)
     for item in categories:
         plat = item["platform"]
-        if plat in featured or _plat_rank(plat) > 5:
+        if plat in featured or _plat_rank_legacy(plat) > 5:
             continue
         item["label"] = th_label(plat, item["category"], featured=True)
         item["featured"] = 1
         featured.add(plat)
+    sub_maps = {}
+    def _sub_rank(plat, cat):
+        if plat not in sub_maps:
+            try:
+                sub_maps[plat] = _shop_order_map("sub", plat)
+            except Exception:
+                sub_maps[plat] = {}
+        return sub_maps[plat].get(cat, 9000)
     categories.sort(key=lambda x: (
         _plat_rank(x["platform"]),
+        _sub_rank(x["platform"], x["category"]),
         0 if x.get("featured") else 1,
-        -x["count"],
         x["label"].lower(),
     ))
     _SHOP_NAV["t"] = now
@@ -637,10 +1233,27 @@ def shop_services(platform="", category="", q="", limit=80, offset=0, sid=""):
         icon, color = plat_meta(plat_name)
         item["icon"] = icon
         item["color"] = color
-        item["desc"] = "บริการ%sบน %s · ใช้ลิงก์สาธารณะเท่านั้น ไม่ขอรหัสผ่าน" % (
-            ((" " + item["category_th"]) if item["category_th"] else " "),
-            plat_name,
-        )
+        from service_fields import order_fields
+
+        fields = order_fields(item)
+        item["needs_link"] = fields["needs_link"]
+        item["needs_comments"] = fields["needs_comments"]
+        item["sync_qty_comments"] = fields["sync_qty_comments"]
+        if fields["needs_comments"]:
+            item["desc"] = "บริการ%sบน %s · กรอกลิงก์โพสต์และคอมเมนต์ (แยกแต่ละบรรทัด)" % (
+                ((" " + item["category_th"]) if item["category_th"] else " "),
+                plat_name,
+            )
+        elif fields["needs_link"]:
+            item["desc"] = "บริการ%sบน %s · ใช้ลิงก์สาธารณะเท่านั้น ไม่ขอรหัสผ่าน" % (
+                ((" " + item["category_th"]) if item["category_th"] else " "),
+                plat_name,
+            )
+        else:
+            item["desc"] = "บริการ%sบน %s" % (
+                ((" " + item["category_th"]) if item["category_th"] else " "),
+                plat_name,
+            )
         out.append(item)
     if out:
         cheap = min(out, key=lambda row: float(row.get("rate") or 999999))
@@ -688,49 +1301,132 @@ def shop_groups(items=None):
     return slim, ranked
 
 
+_SYNC_DEAD_WORDS = (
+    "not working",
+    "disabled",
+    "do not order",
+    "dont order",
+    "don't order",
+    "out of stock",
+    "service closed",
+    "temporary off",
+    "temp off",
+)
+
+
+def _catalog_row_dead(name="", category=""):
+    text = ("%s %s" % (name or "", category or "")).lower()
+    return any(word in text for word in _SYNC_DEAD_WORDS)
+
+
 def sync_listed_from_catalog(provider_id):
+    """Keep listed shop rows aligned with upstream catalog: price, qty, status."""
     pid = int(provider_id)
     cfg = price_cfg(True)
     con = connect()
     rows = con.execute(
-        "SELECT api_service, category, rate, min_qty, max_qty, IFNULL(currency,'USD') AS currency FROM provider_catalog WHERE provider_id=?",
+        """
+        SELECT api_service, name, category, rate, min_qty, max_qty, IFNULL(currency,'USD') AS currency
+        FROM provider_catalog WHERE provider_id=?
+        """,
         (pid,),
     ).fetchall()
+    live_set = set()
+    good_ids = []
+    dead_ids = []
     payload = []
-    live_ids = []
     for row in rows:
-        sell = sell_thb(row["rate"], row["currency"] or "USD", cfg["usd"], cfg["pct"], 0)
+        api_sid = str(row["api_service"] or "")
+        if not api_sid:
+            continue
+        live_set.add(api_sid)
+        cur = row["currency"] or "USD"
+        try:
+            cost = float(row["rate"] or 0)
+        except (TypeError, ValueError):
+            cost = 0.0
+        sell = sell_thb(cost, cur, cfg["usd"], cfg["pct"], 0)
+        try:
+            min_qty = int(row["min_qty"] or 1)
+        except (TypeError, ValueError):
+            min_qty = 1
+        try:
+            max_qty = int(row["max_qty"] or 100000)
+        except (TypeError, ValueError):
+            max_qty = 100000
+        dead = _catalog_row_dead(row["name"], row["category"]) or cost <= 0
+        if dead:
+            dead_ids.append(api_sid)
+            status = "inactive"
+        else:
+            good_ids.append(api_sid)
+            status = "active"
         payload.append((
-            row["rate"],
-            row["currency"] or "USD",
-            row["min_qty"],
-            row["max_qty"],
+            cost,
+            cur,
+            min_qty,
+            max_qty,
             sell,
-            row["category"] or "",
+            str(row["category"] or ""),
+            status,
             pid,
-            row["api_service"],
+            api_sid,
         ))
-        live_ids.append(str(row["api_service"]))
+    listed = 0
     if payload:
         con.executemany(
             """
             UPDATE services
             SET cost_rate=?, currency=?, min_qty=?, max_qty=?, rate=?,
-                category=CASE WHEN IFNULL(TRIM(category),'')='' THEN ? ELSE category END
+                category=CASE WHEN IFNULL(TRIM(category),'')='' THEN ? ELSE category END,
+                status=?
             WHERE provider_id=? AND api_service=?
             """,
             payload,
         )
-    if live_ids:
-        marks = ",".join("?" * len(live_ids))
-        con.execute(
-            "UPDATE services SET status='inactive' WHERE provider_id=? AND IFNULL(api_service,'')!='' AND api_service NOT IN (%s)" % marks,
-            [pid] + live_ids,
+        listed = con.execute(
+            "SELECT COUNT(*) FROM services WHERE provider_id=? AND IFNULL(api_service,'')!=''",
+            (pid,),
+        ).fetchone()[0] or 0
+
+    removed = 0
+    shop_apis = [
+        str(r["api_service"])
+        for r in con.execute(
+            "SELECT api_service FROM services WHERE provider_id=? AND IFNULL(api_service,'')!=''",
+            (pid,),
         )
+    ]
+    missing = [sid for sid in shop_apis if sid not in live_set]
+    chunk = 400
+    for i in range(0, len(missing), chunk):
+        part = missing[i:i + chunk]
+        marks = ",".join("?" * len(part))
+        cur = con.execute(
+            "UPDATE services SET status='inactive' WHERE provider_id=? AND api_service IN (%s)" % marks,
+            [pid] + part,
+        )
+        removed += int(cur.rowcount or 0)
+
     con.commit()
+    active_n = con.execute(
+        "SELECT COUNT(*) FROM services WHERE provider_id=? AND status='active' AND IFNULL(api_service,'')!=''",
+        (pid,),
+    ).fetchone()[0] or 0
+    inactive_n = con.execute(
+        "SELECT COUNT(*) FROM services WHERE provider_id=? AND status!='active' AND IFNULL(api_service,'')!=''",
+        (pid,),
+    ).fetchone()[0] or 0
     con.close()
     shop_cache_clear()
-    return len(rows)
+    return {
+        "catalog": len(rows),
+        "listed": int(listed),
+        "active": int(active_n),
+        "inactive": int(inactive_n),
+        "dead_marked": len(dead_ids),
+        "removed": int(removed),
+    }
 
 
 def client_dash(username):
@@ -751,7 +1447,8 @@ def get_service(sid):
     con = connect()
     row = con.execute(
         """
-        SELECT s.*, c.rate AS catalog_rate, c.currency AS catalog_currency
+        SELECT s.*, c.rate AS catalog_rate, c.currency AS catalog_currency,
+               c.type AS catalog_type, c.refill AS catalog_refill, c.name AS catalog_name
         FROM services s
         LEFT JOIN provider_catalog c
           ON c.provider_id = s.provider_id AND c.api_service = s.api_service
@@ -774,11 +1471,25 @@ def calc_charge(rate, qty):
     return round((float(rate) * int(qty)) / 1000.0, 2)
 
 
-def create_order(client, service_id, link, quantity):
+def create_order(client, service_id, link, quantity, comments=None):
+    from service_fields import count_comment_lines, normalize_comments, order_fields
+
     svc = get_service(service_id)
     if not svc:
         return None, "ไม่พบบริการ"
-    qty = int(quantity)
+    fields = order_fields(svc)
+    link = (link or "").strip()
+    comments = normalize_comments(comments)
+    if fields["needs_link"] and not link:
+        return None, "กรุณากรอกลิงก์"
+    if fields["needs_comments"]:
+        if not comments:
+            return None, "กรุณากรอกคอมเมนต์ (แยกแต่ละบรรทัด)"
+        qty = count_comment_lines(comments)
+        if qty < 1:
+            return None, "กรุณากรอกคอมเมนต์อย่างน้อย 1 บรรทัด"
+    else:
+        qty = int(quantity)
     if qty < svc["min_qty"] or qty > svc["max_qty"]:
         return None, "จำนวนไม่อยู่ในช่วงที่กำหนด"
     charge = calc_charge(svc["rate"], qty)
@@ -790,8 +1501,8 @@ def create_order(client, service_id, link, quantity):
     con = connect()
     con.execute("UPDATE clients SET balance = balance - ? WHERE username=?", (charge, client))
     cur = con.execute(
-        "INSERT INTO orders (client,service,link,quantity,charge,status,created_at,provider_id,service_id) VALUES (?,?,?,?,?,?,?,?,?)",
-        (client, "%s %s" % (svc["platform"], svc["name"]), link, qty, charge, "pending", now(), svc.get("provider_id"), svc.get("id")),
+        "INSERT INTO orders (client,service,link,quantity,charge,status,created_at,provider_id,service_id,comments) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        (client, "%s %s" % (svc["platform"], svc["name"]), link, qty, charge, "pending", now(), svc.get("provider_id"), svc.get("id"), comments or None),
     )
     con.commit()
     oid = cur.lastrowid
@@ -969,6 +1680,16 @@ def provider_migrate():
             currency TEXT
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS shop_sort (
+            id INTEGER PRIMARY KEY,
+            kind TEXT NOT NULL,
+            platform TEXT NOT NULL DEFAULT '',
+            name TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 1000,
+            UNIQUE(kind, platform, name)
+        )
+    """)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_catalog_provider ON provider_catalog(provider_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_svc_status_plat ON services(status, platform)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_svc_status_cat ON services(status, platform, category)")
@@ -989,6 +1710,7 @@ def provider_migrate():
         ("orders", "start_count", "TEXT"),
         ("orders", "remains", "TEXT"),
         ("orders", "refunded", "INTEGER"),
+        ("orders", "comments", "TEXT"),
     ]:
         if not _has_col(cur, table, col):
             cur.execute("ALTER TABLE %s ADD COLUMN %s %s" % (table, col, spec))
@@ -1116,6 +1838,21 @@ def money(value):
     return round(amount + 1e-12, 4)
 
 
+def norm_currency(currency, default="USD"):
+    cur = str(currency or "").strip().upper().replace(" ", "").replace("฿", "THB")
+    if cur in {"THB", "BAHT", "BATH"}:
+        return "THB"
+    if cur in {"USD", "US$", "$", "DOLLAR", "DOLLARS"}:
+        return "USD"
+    if cur:
+        return cur
+    return str(default or "USD").strip().upper() or "USD"
+
+
+def is_thb_currency(currency):
+    return norm_currency(currency, "USD") == "THB"
+
+
 def to_thb(amount, currency, usd_rate=35):
     try:
         raw = float(amount or 0)
@@ -1125,8 +1862,8 @@ def to_thb(amount, currency, usd_rate=35):
         usd = float(usd_rate or 35)
     except (TypeError, ValueError):
         usd = 35.0
-    cur = str(currency or "USD").upper().replace(" ", "").replace("฿", "THB")
-    if cur in {"THB", "BAHT"}:
+    cur = norm_currency(currency, "USD")
+    if cur == "THB":
         return money(raw)
     usd_each = {
         "USD": 1.0, "US$": 1.0, "$": 1.0,
@@ -1191,43 +1928,91 @@ def attach_live_rate(svc):
 
 
 def import_provider_service(provider_id, platform, name, rate, min_qty, max_qty, api_service, cost_rate=None, category=None, currency=None):
+    rows = [{
+        "platform": platform,
+        "name": name,
+        "rate": rate,
+        "min_qty": min_qty,
+        "max_qty": max_qty,
+        "api_service": api_service,
+        "cost_rate": cost_rate,
+        "category": category,
+        "currency": currency,
+    }]
+    return import_shop_rows(provider_id, rows)
+
+
+def import_shop_rows(provider_id, rows):
+    """Bulk upsert shop services in one DB transaction (faster / safer for large imports)."""
+    if not rows:
+        return 0
+    pid = int(provider_id)
     con = connect()
-    existing = con.execute(
-        "SELECT id FROM services WHERE provider_id=? AND api_service=?",
-        (provider_id, str(api_service)),
-    ).fetchone()
-    cost = None if cost_rate is None else float(cost_rate)
-    cat = (category or "").strip()
-    cur = (currency or "USD").strip() or "USD"
-    old = con.execute("SELECT platform, category FROM services WHERE id=?", (existing["id"],)).fetchone() if existing else None
-    if existing:
-        keep_sub = (old["category"] or "").strip() if old else ""
-        keep_plat = (old["platform"] or "").strip() if old else ""
-        con.execute(
-            "UPDATE services SET platform=?, name=?, rate=?, min_qty=?, max_qty=?, cost_rate=?, category=?, currency=? WHERE id=?",
-            (
-                keep_plat or platform,
-                name,
-                float(rate or 0),
-                int(min_qty or 1),
-                int(max_qty or 100000),
-                cost,
-                keep_sub or cat,
-                cur,
-                existing["id"],
-            ),
+    existing = {
+        str(r["api_service"]): {
+            "id": int(r["id"]),
+            "platform": (r["platform"] or "").strip(),
+            "category": (r["category"] or "").strip(),
+        }
+        for r in con.execute(
+            "SELECT id, api_service, platform, category FROM services WHERE provider_id=? AND IFNULL(api_service,'')!=''",
+            (pid,),
         )
-        sid = existing["id"]
-    else:
-        cur_ins = con.execute(
-            "INSERT INTO services (platform, name, rate, min_qty, max_qty, status, provider_id, api_service, cost_rate, category, currency) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (platform, name, float(rate or 0), int(min_qty or 1), int(max_qty or 100000), "active", provider_id, str(api_service), cost, cat, cur),
-        )
-        sid = cur_ins.lastrowid
+    }
+    count = 0
+    for row in rows:
+        api_sid = str(row.get("api_service") or "")
+        if not api_sid:
+            continue
+        cost = row.get("cost_rate")
+        cost = None if cost is None else float(cost)
+        cat = (row.get("category") or "").strip()
+        cur = (row.get("currency") or "USD").strip() or "USD"
+        platform = (row.get("platform") or "อื่น ๆ").strip() or "อื่น ๆ"
+        name = str(row.get("name") or ("Service %s" % api_sid))[:180]
+        try:
+            rate = float(row.get("rate") or 0)
+        except (TypeError, ValueError):
+            rate = 0.0
+        try:
+            min_qty = int(row.get("min_qty") or 1)
+        except (TypeError, ValueError):
+            min_qty = 1
+        try:
+            max_qty = int(row.get("max_qty") or 100000)
+        except (TypeError, ValueError):
+            max_qty = 100000
+        old = existing.get(api_sid)
+        if old:
+            con.execute(
+                "UPDATE services SET platform=?, name=?, rate=?, min_qty=?, max_qty=?, cost_rate=?, category=?, currency=?, status='active' WHERE id=?",
+                (
+                    old["platform"] or platform,
+                    name,
+                    rate,
+                    min_qty,
+                    max_qty,
+                    cost,
+                    old["category"] or cat,
+                    cur,
+                    old["id"],
+                ),
+            )
+        else:
+            cur_ins = con.execute(
+                "INSERT INTO services (platform, name, rate, min_qty, max_qty, status, provider_id, api_service, cost_rate, category, currency) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (platform, name, rate, min_qty, max_qty, "active", pid, api_sid, cost, cat, cur),
+            )
+            existing[api_sid] = {
+                "id": int(cur_ins.lastrowid),
+                "platform": platform,
+                "category": cat,
+            }
+        count += 1
     con.commit()
     con.close()
     shop_cache_clear()
-    return sid
+    return count
 
 
 def import_provider_services(provider_id, items):
@@ -1262,7 +2047,7 @@ def import_provider_services(provider_id, items):
 
 def replace_provider_catalog(provider_id, items, currency):
     rows = []
-    cur = (currency or "USD").strip() or "USD"
+    fallback = norm_currency(currency, "USD")
     for item in items:
         if not isinstance(item, dict):
             continue
@@ -1288,6 +2073,7 @@ def replace_provider_catalog(provider_id, items, currency):
             refill = "1" if refill else "0"
         else:
             refill = "1" if str(refill or "").lower() in {"1", "true", "yes"} else "0"
+        row_cur = norm_currency(item.get("currency") or item.get("Currency") or fallback, fallback)
         rows.append((
             int(provider_id),
             str(api_sid),
@@ -1298,7 +2084,7 @@ def replace_provider_catalog(provider_id, items, currency):
             min_qty,
             max_qty,
             str(item.get("type") or "Default")[:40],
-            cur,
+            row_cur,
             refill,
         ))
     con = connect()
@@ -1312,40 +2098,59 @@ def replace_provider_catalog(provider_id, items, currency):
     return len(rows)
 
 
-def catalog_count(provider_id, q="", category="", main=""):
+def catalog_count(provider_id, q="", category="", main="", stype=""):
     sql = "SELECT COUNT(*) c FROM provider_catalog WHERE provider_id=?"
     args = [int(provider_id)]
-    sql, args = _catalog_filters(sql, args, q, category, main)
+    sql, args = _catalog_filters(sql, args, q, category, main, stype)
     con = connect()
     row = con.execute(sql, args).fetchone()
     con.close()
     return int(row["c"] if row else 0)
 
 
-def _catalog_filters(sql, args, q, category, main=""):
+def _catalog_filters(sql, args, q, category, main="", stype=""):
     if main:
         sql += " AND main_cat=?"
         args.append(main)
     if category:
         sql += " AND category=?"
         args.append(category)
+    if stype:
+        sql += " AND IFNULL(type,'')=?"
+        args.append(stype)
     if q:
         like = "%" + q.strip() + "%"
-        sql += " AND (name LIKE ? OR api_service LIKE ? OR category LIKE ?)"
-        args.extend([like, like, like])
+        sql += " AND (name LIKE ? OR api_service LIKE ? OR category LIKE ? OR IFNULL(type,'') LIKE ?)"
+        args.extend([like, like, like, like])
     return sql, args
 
 
-def list_provider_catalog(provider_id, q="", category="", limit=80, offset=0, main=""):
+def list_provider_catalog(provider_id, q="", category="", limit=80, offset=0, main="", stype=""):
     sql = "SELECT * FROM provider_catalog WHERE provider_id=?"
     args = [int(provider_id)]
-    sql, args = _catalog_filters(sql, args, q, category, main)
+    sql, args = _catalog_filters(sql, args, q, category, main, stype)
     sql += " ORDER BY category, name LIMIT ? OFFSET ?"
     args.extend([int(limit), int(offset)])
     con = connect()
     items = con.execute(sql, args).fetchall()
     con.close()
     return [dict(x) for x in items]
+
+
+def catalog_types(provider_id, category="", main=""):
+    sql = "SELECT IFNULL(type,'Default') AS type, COUNT(*) c FROM provider_catalog WHERE provider_id=?"
+    args = [int(provider_id)]
+    if main:
+        sql += " AND main_cat=?"
+        args.append(main)
+    if category:
+        sql += " AND category=?"
+        args.append(category)
+    sql += " GROUP BY IFNULL(type,'Default') ORDER BY c DESC, type"
+    con = connect()
+    items = con.execute(sql, args).fetchall()
+    con.close()
+    return [{"name": x["type"] or "Default", "count": x["c"]} for x in items]
 
 
 def catalog_categories(provider_id, main=""):
@@ -1398,10 +2203,10 @@ def catalog_by_ids(provider_id, api_ids):
     return [dict(x) for x in items]
 
 
-def catalog_all_filtered(provider_id, q="", category="", main=""):
+def catalog_all_filtered(provider_id, q="", category="", main="", stype=""):
     sql = "SELECT * FROM provider_catalog WHERE provider_id=?"
     args = [int(provider_id)]
-    sql, args = _catalog_filters(sql, args, q, category, main)
+    sql, args = _catalog_filters(sql, args, q, category, main, stype)
     con = connect()
     items = con.execute(sql, args).fetchall()
     con.close()
@@ -1487,6 +2292,61 @@ def bump_service_rates(ids, percent):
     return len(ids)
 
 
+def _service_cost_row(con, row, usd):
+    cost = row["cost_rate"]
+    cur = norm_currency(row["currency"] or "", "USD")
+    if cost is None and row["provider_id"] and row["api_service"]:
+        cat = con.execute(
+            "SELECT rate, currency FROM provider_catalog WHERE provider_id=? AND api_service=?",
+            (int(row["provider_id"]), str(row["api_service"])),
+        ).fetchone()
+        if cat:
+            cost = cat["rate"]
+            cur = norm_currency(cat["currency"] or cur, cur)
+    if cost is None:
+        return None, cur
+    try:
+        return float(cost), cur
+    except (TypeError, ValueError):
+        return None, cur
+
+
+def apply_rates_from_cost(percent, fixed=0, ids=None):
+    cfg = price_cfg(force=True)
+    usd = cfg["usd"]
+    try:
+        pct = float(percent or 0)
+    except (TypeError, ValueError):
+        pct = 0.0
+    try:
+        extra = float(fixed or 0)
+    except (TypeError, ValueError):
+        extra = 0.0
+    con = connect()
+    if ids:
+        placeholders = ",".join("?" for _ in ids)
+        rows = con.execute(
+            "SELECT id, cost_rate, currency, provider_id, api_service FROM services WHERE id IN (%s)" % placeholders,
+            [int(x) for x in ids],
+        ).fetchall()
+    else:
+        rows = con.execute(
+            "SELECT id, cost_rate, currency, provider_id, api_service FROM services"
+        ).fetchall()
+    updated = 0
+    for row in rows:
+        cost, cur = _service_cost_row(con, row, usd)
+        if cost is None:
+            continue
+        rate = sell_thb(cost, cur, usd, pct, extra)
+        con.execute("UPDATE services SET rate=? WHERE id=?", (rate, int(row["id"])))
+        updated += 1
+    con.commit()
+    con.close()
+    shop_cache_clear()
+    return updated
+
+
 def set_service_subcategory(ids, category):
     cat = (category or "").strip()
     con = connect()
@@ -1499,12 +2359,7 @@ def set_service_subcategory(ids, category):
 
 
 def shop_platforms():
-    con = connect()
-    items = con.execute(
-        "SELECT platform, COUNT(*) c FROM services GROUP BY platform ORDER BY platform"
-    ).fetchall()
-    con.close()
-    return [{"name": x["platform"] or "อื่น ๆ", "count": x["c"]} for x in items]
+    return list_shop_mains()
 
 
 def pending_send_orders(limit=15):
@@ -1565,8 +2420,32 @@ def add_cron_log(job, detail):
     con.close()
 
 
-def list_cron_logs(limit=40):
+def list_cron_logs(limit=40, job=""):
     con = connect()
-    items = con.execute("SELECT * FROM cron_logs ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+    job = (job or "").strip().lower()
+    if job and job != "all":
+        items = con.execute(
+            "SELECT * FROM cron_logs WHERE lower(job)=? ORDER BY id DESC LIMIT ?",
+            (job, int(limit)),
+        ).fetchall()
+    else:
+        items = con.execute(
+            "SELECT * FROM cron_logs ORDER BY id DESC LIMIT ?",
+            (int(limit),),
+        ).fetchall()
     con.close()
     return [dict(x) for x in items]
+
+
+def cron_log_job_counts(limit=200):
+    con = connect()
+    rows = con.execute(
+        """
+        SELECT job, COUNT(*) AS c FROM (
+          SELECT job FROM cron_logs ORDER BY id DESC LIMIT ?
+        ) t GROUP BY job ORDER BY c DESC
+        """,
+        (int(limit),),
+    ).fetchall()
+    con.close()
+    return [{"job": r["job"], "count": int(r["c"] or 0)} for r in rows]

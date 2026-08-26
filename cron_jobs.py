@@ -30,13 +30,17 @@ def send_order_row(order):
     if not provider:
         update_order(order["id"], api_error="no_provider")
         return False, "no_provider"
-    result = action(provider["api_url"], {
+    payload = {
         "key": provider["api_key"],
         "action": "add",
         "service": svc["api_service"],
-        "link": order["link"],
         "quantity": order["quantity"],
-    })
+    }
+    if order.get("link"):
+        payload["link"] = order["link"]
+    if order.get("comments"):
+        payload["comments"] = order["comments"]
+    result = action(provider["api_url"], payload)
     api_oid = None
     if isinstance(result, dict):
         api_oid = result.get("order")
@@ -153,20 +157,26 @@ def _parse_ts(value):
 
 
 def shop_rebuild_due(hours=SHOP_REBUILD_HOURS):
-    from db import connect, get_settings
+    from db import connect, get_settings, shop_manual_locked
+    # Admin emptied/customized shop — do not auto-rebuild from API
+    if shop_manual_locked():
+        return False
+    # Large curated shops (full catalog import) — sync prices only, never cull via pick_best
+    con = connect()
+    n = con.execute("SELECT COUNT(*) FROM services WHERE status='active'").fetchone()[0]
+    con.close()
+    if int(n or 0) >= 400:
+        return False
     last = _parse_ts(get_settings().get("shop_rebuild_at"))
     if not last:
         return True
     if (datetime.now() - last).total_seconds() >= hours * 3600:
         return True
-    con = connect()
-    n = con.execute("SELECT COUNT(*) FROM services WHERE status='active'").fetchone()[0]
-    con.close()
     return int(n or 0) == 0
 
 
 def refresh_catalogs(force_shop=False):
-    from db import get_settings, list_providers, replace_provider_catalog, save_settings, sync_listed_from_catalog
+    from db import get_settings, list_providers, replace_provider_catalog, save_settings, sync_listed_from_catalog, shop_manual_locked
     from db import now as db_now
     from smm_api import normalize_services
     from catalog_pick import rebuild_best_shop
@@ -193,29 +203,54 @@ def refresh_catalogs(force_shop=False):
         items, err = normalize_services(result)
         if err or not items:
             save_settings({"catalog_sync_pid": str(nxt["id"])})
+            add_cron_log("catalog", "pid=%s fetch_fail %s" % (nxt["id"], (err or "empty")[:160]))
             return 0
         currency = (full.get("currency") or "USD").strip() or "USD"
+        # Prefer currency from first service row when present
+        for it in items:
+            if isinstance(it, dict) and (it.get("currency") or it.get("Currency")):
+                currency = str(it.get("currency") or it.get("Currency") or currency).strip() or currency
+                break
         replace_provider_catalog(nxt["id"], items, currency)
-        if force_shop or shop_rebuild_due():
+        do_rebuild = (force_shop or shop_rebuild_due()) and not shop_manual_locked()
+        if do_rebuild:
             stats = rebuild_best_shop(nxt["id"], fetch=False) or {}
+            # Still align any remaining listed rows to live rates
+            sync_stats = sync_listed_from_catalog(nxt["id"]) or {}
             save_settings({
                 "catalog_sync_pid": str(nxt["id"]),
                 "catalog_synced_at": db_now(),
                 "shop_rebuild_at": db_now(),
+                "shop_synced_at": db_now(),
             })
-            add_cron_log("shop", "picked=%s added=%s updated=%s removed=%s cats=%s" % (
+            add_cron_log("shop", "picked=%s added=%s updated=%s removed=%s cats=%s sync_active=%s sync_inactive=%s" % (
                 stats.get("picked") or 0,
                 stats.get("added") or 0,
                 stats.get("updated") or 0,
                 stats.get("removed") or 0,
                 stats.get("cats") or 0,
+                sync_stats.get("active") or 0,
+                sync_stats.get("inactive") or 0,
             ))
         else:
-            sync_listed_from_catalog(nxt["id"])
+            sync_stats = sync_listed_from_catalog(nxt["id"]) or {}
             save_settings({
                 "catalog_sync_pid": str(nxt["id"]),
                 "catalog_synced_at": db_now(),
+                "shop_synced_at": db_now(),
             })
+            add_cron_log(
+                "sync",
+                "pid=%s catalog=%s listed=%s active=%s inactive=%s dead=%s removed=%s" % (
+                    nxt["id"],
+                    sync_stats.get("catalog") or 0,
+                    sync_stats.get("listed") or 0,
+                    sync_stats.get("active") or 0,
+                    sync_stats.get("inactive") or 0,
+                    sync_stats.get("dead_marked") or 0,
+                    sync_stats.get("removed") or 0,
+                ),
+            )
         return len(items)
     except Exception as exc:
         try:

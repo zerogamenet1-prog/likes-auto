@@ -52,6 +52,8 @@
         <label class="adm-sw"><input type="checkbox" name="auto_refill" value="1" {% if settings.get('auto_refill', '1') != '0' %}checked{% endif %}> ขอเติมยอด</label>
       </div>
     </div>
+    <label class="la-field">IP ที่เข้าแอดมินได้ (เว้นว่าง = ทุก IP, คั่นด้วยจุลภาค)</label>
+    <input class="la-input" name="admin_allow_ips" value="{{ settings.admin_allow_ips or '' }}" placeholder="เช่น 1.2.3.4, 5.6.7.8">
     <div class="adm-form-grid" style="margin-top:12px">
       <div>
         <label class="la-field">เรท USD</label>
@@ -76,6 +78,14 @@
       <div>
         <label class="la-field">ราคาแผงลูก</label>
         <input class="la-input" name="child_panel_price" value="{{ settings.child_panel_price or '500' }}">
+      </div>
+      <div>
+        <label class="la-field">Nameserver 1</label>
+        <input class="la-input" name="child_ns1" value="{{ settings.child_ns1 or 'ns1.likes-auto.com' }}" placeholder="ns1.likes-auto.com">
+      </div>
+      <div>
+        <label class="la-field">Nameserver 2</label>
+        <input class="la-input" name="child_ns2" value="{{ settings.child_ns2 or 'ns2.likes-auto.com' }}" placeholder="ns2.likes-auto.com">
       </div>
       <div>
         <label class="la-field">แจ้งเมื่อยอดผู้ให้บริการต่ำกว่า</label>

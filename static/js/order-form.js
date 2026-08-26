@@ -139,10 +139,10 @@
     }).join(' <span class="la-pipe">|</span> ');
     return platImg(s.logo)
       + '<em class="la-sid">' + esc(s.id) + '</em>'
+      + '<em class="la-pick-price">' + esc(fmtBaht(s.rate)) + '/1k</em>'
       + '<span class="la-pick-copy">'
       + '<b>' + esc(svcTitle(s)) + '</b>'
       + (bits ? ' <span class="la-pipe">|</span> ' + bits : '')
-      + ' <span class="la-pipe">-</span> <em class="la-pick-price">' + esc(fmtBaht(s.rate)) + ' ต่อ 1000</em>'
       + '</span>';
   }
   function compactHtml(s) {
@@ -437,6 +437,7 @@
       if (nameBlank) nameBlank.textContent = 'เลือกบริการทางซ้าย';
       setText('svc-desc', '');
       renderExplain(null);
+      syncOrderFields(null);
       return;
     }
     if (qty) {
@@ -480,6 +481,8 @@
     }
     renderChips(s);
     renderExplain(s);
+    syncOrderFields(s);
+    if (s.needs_comments) syncCommentsQty();
   }
   function load(keepId, useSid) {
     var parts = splitVal(cat.value);
@@ -559,8 +562,58 @@
       load('', false);
     });
   });
-  var pasteBtn = document.getElementById('paste-link');
   var linkEl = document.getElementById('link-pick');
+  var linkWrap = document.getElementById('link-wrap');
+  var commentsWrap = document.getElementById('comments-wrap');
+  var commentsEl = document.getElementById('comments-pick');
+  var commentsHint = document.getElementById('comments-hint');
+
+  function countCommentLines(text) {
+    return String(text || '').split(/\r?\n/).filter(function (ln) { return ln.trim(); }).length;
+  }
+  function syncOrderFields(s) {
+    var needsLink = !s || s.needs_link !== false;
+    var needsComments = !!(s && s.needs_comments);
+    if (linkWrap) linkWrap.hidden = !needsLink;
+    if (linkEl) {
+      linkEl.required = needsLink;
+      if (!needsLink) linkEl.value = '';
+    }
+    if (commentsWrap) commentsWrap.hidden = !needsComments;
+    if (commentsEl) {
+      commentsEl.required = needsComments;
+      if (!needsComments) commentsEl.value = '';
+    }
+    if (commentsHint) {
+      commentsHint.textContent = needsComments
+        ? 'จำนวนคอมเมนต์ = จำนวนบรรทัด (อัปเดตอัตโนมัติ)'
+        : '';
+    }
+    if (needsComments && qty) qty.readOnly = true;
+    else if (qty) qty.readOnly = false;
+  }
+  function syncCommentsQty() {
+    var s = current();
+    if (!s || !s.needs_comments || !qty || !commentsEl) return;
+    var n = countCommentLines(commentsEl.value);
+    if (n > 0) {
+      if (n < s.min_qty) n = s.min_qty;
+      if (n > s.max_qty) n = s.max_qty;
+      qty.value = n;
+    }
+    infoChargeOnly();
+  }
+  function infoChargeOnly() {
+    var s = current();
+    if (!s || !charge || !qty) return;
+    var qn = parseFloat(qty.value) || 0;
+    var c = Math.round((parseFloat(s.rate) * qn / 1000) * 100) / 100;
+    setCharge((charge.tagName === 'INPUT' ? '' : 'ค่าบริการ ') + c.toFixed(2) + ' บาท');
+    setText('svc-charge', c.toFixed(2) + ' บาท');
+    flash(charge);
+  }
+  if (commentsEl) commentsEl.addEventListener('input', syncCommentsQty);
+  var pasteBtn = document.getElementById('paste-link');
   if (pasteBtn && linkEl) {
     pasteBtn.addEventListener('click', function () {
       if (navigator.clipboard && navigator.clipboard.readText) {

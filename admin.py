@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 
-from urllib.parse import quote_plus
+from guard import ADMIN_FAILS, ADMIN_LOCK, admin_session_ok, client_ip, ensure_csrf, lock_left, login_block, mark_login
 
 from db import (
     add_log,
@@ -16,7 +16,10 @@ from db import (
     list_admin_services,
     count_admin_services,
     list_cron_logs,
+    cron_log_job_counts,
     list_providers,
+    list_shop_mains,
+    list_shop_subs,
     reject_payment,
     rows,
     connect,
@@ -25,7 +28,6 @@ from db import (
     save_provider,
     save_provider_balance,
     save_settings,
-    shop_platforms,
     stats,
     dashboard_series,
     update_order,
@@ -50,7 +52,7 @@ NAV_GROUPS = [
         ("providers", "/admin/providers", "ผู้ให้บริการ", "ri-server-line"),
     ]),
     ("ระบบ", [
-        ("crons", "/admin/crons", "ดึงงาน", "ri-refresh-line"),
+        ("crons", "/admin/crons", "บันทึกงาน", "ri-file-list-3-line"),
         ("reports", "/admin/reports", "รายได้", "ri-bar-chart-2-line"),
         ("news", "/admin/appearance/pages", "หน้าเว็บ", "ri-palette-line"),
         ("settings", "/admin/settings/general", "ตั้งค่า", "ri-settings-3-line"),
@@ -121,7 +123,7 @@ def logged_in(request: Request) -> bool:
 
 
 def require_admin(request: Request):
-    if not logged_in(request):
+    if not admin_session_ok(request):
         return RedirectResponse("/admin/login", status_code=303)
     return None
 
@@ -140,6 +142,7 @@ def render(request: Request, template: str, extra=None):
         "tab": extra.get("tab") or page,
         "admin_name": request.session.get("admin", "admin"),
         "alerts": extra.get("alerts"),
+        "csrf": "",
         "st": {
             "pending": "รอส่ง",
             "processing": "กำลังทำ",
@@ -169,7 +172,26 @@ def render(request: Request, template: str, extra=None):
         except Exception:
             ctx["alerts"] = {}
     ctx.setdefault("alerts", {})
+    try:
+        ctx["csrf"] = ensure_csrf(request)
+    except Exception:
+        ctx["csrf"] = ""
     return templates.TemplateResponse(request, template, ctx)
+
+
+def login_page(request: Request, error="", username=""):
+    left = 0
+    try:
+        left = lock_left("admin_login", client_ip(request))
+    except Exception:
+        left = 0
+    return render(request, "admin/login.html", {
+        "page": "login",
+        "error": error or "",
+        "username": username or "",
+        "lock_left": left,
+        "locked": left > 0,
+    })
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -177,27 +199,39 @@ async def login_get(request: Request):
     init_db()
     if logged_in(request):
         return RedirectResponse("/admin", status_code=303)
-    return render(request, "admin/login.html", {"page": "login", "error": ""})
+    return login_page(request)
 
 
 @router.post("/login")
-async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
+async def login_post(request: Request, username: str = Form(...), password: str = Form(...), la_hp_x9: str = Form("")):
     init_db()
-    if check_admin(username, password):
-        request.session["admin"] = username
-        add_log("เข้าสู่ระบบแอดมิน", request.client.host if request.client else "-")
+    name = (username or "").strip()[:80]
+    if (la_hp_x9 or "").strip():
+        return login_page(request, "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
+    blocked = login_block("admin_login", request, ADMIN_FAILS, ADMIN_LOCK)
+    if blocked:
+        return login_page(request, blocked, name)
+    ip = client_ip(request)
+    if check_admin(name, password):
+        request.session.clear()
+        request.session["admin"] = name
+        request.session["admin_at"] = __import__("time").time()
+        ensure_csrf(request)
+        mark_login("admin_login", request, True, ADMIN_FAILS, ADMIN_LOCK)
+        add_log("เข้าสู่ระบบแอดมิน", ip)
         try:
             from cms import add_guard
-            add_guard(username, request.client.host if request.client else "-", True)
+            add_guard(name, ip, True)
         except Exception:
             pass
         return RedirectResponse("/admin", status_code=303)
+    mark_login("admin_login", request, False, ADMIN_FAILS, ADMIN_LOCK)
     try:
         from cms import add_guard
-        add_guard(username, request.client.host if request.client else "-", False)
+        add_guard(name, ip, False)
     except Exception:
         pass
-    return render(request, "admin/login.html", {"page": "login", "error": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"})
+    return login_page(request, "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง", name)
 
 
 @router.get("/logout")
@@ -419,7 +453,7 @@ async def clients(request: Request, q: str = ""):
 
 
 @router.get("/services", response_class=HTMLResponse)
-async def services(request: Request, added: str = "", main: str = "", q: str = "", page: int = 1):
+async def services(request: Request, added: str = "", main: str = "", q: str = "", page: int = 1, ok: str = "", n: str = ""):
     gate = require_admin(request)
     if gate:
         return gate
@@ -427,23 +461,28 @@ async def services(request: Request, added: str = "", main: str = "", q: str = "
     settings = get_settings()
     page = max(int(page or 1), 1)
     per_page = 80
+    main = (main or "").strip()
     total = count_admin_services(q, main)
     pages = max((total + per_page - 1) // per_page, 1)
     if page > pages:
         page = pages
     rows_all = list_admin_services(q, main, per_page, (page - 1) * per_page)
+    mains = list_shop_mains()
     return render(request, "admin/services.html", {
         "page": "services",
         "rows": rows_all,
         "providers": list_providers(),
         "usd_rate": settings.get("usd_rate") or "35",
         "added": added,
+        "ok": ok,
+        "priced_n": n,
         "main": main,
         "q": q,
         "page_no": page,
         "pages": pages,
         "total": total,
-        "mains": shop_platforms(),
+        "mains": mains,
+        "subs": list_shop_subs(main) if main else [],
     })
 
 
@@ -681,15 +720,126 @@ async def providers_delete(request: Request, pid: int = Form(...)):
     return RedirectResponse("/admin/providers", status_code=303)
 
 
+CRON_JOB_META = {
+    "pull": {"label": "ดึงงานรอบหลัก", "tone": "pull", "icon": "ri-refresh-line", "hint": "ส่งออเดอร์ · เช็คสถานะ · ยอดเงิน · ซิงก์แคตตาล็อก"},
+    "sync": {"label": "ซิงก์บริการ", "tone": "sync", "icon": "ri-store-2-line", "hint": "อัปเดตราคาและเปิด/ปิดตามต้นทาง"},
+    "shop": {"label": "คัดร้าน", "tone": "shop", "icon": "ri-shopping-bag-3-line", "hint": "คัดบริการแนะนำเข้าหน้าร้าน"},
+    "catalog": {"label": "แคตตาล็อก", "tone": "catalog", "icon": "ri-database-2-line", "hint": "ดึงรายการจาก API ผู้ให้บริการ"},
+}
+
+CRON_FIELD_LABELS = {
+    "send": "ส่งออเดอร์",
+    "err": "ส่งไม่สำเร็จ",
+    "status": "อัปเดตสถานะ",
+    "balance": "เช็คยอด API",
+    "drip": "ดริปฟีด",
+    "sub": "สมาชิกภาพ",
+    "task": "งานคิว",
+    "catalog": "รายการต้นทาง",
+    "blog": "บทความ",
+    "pid": "ผู้ให้บริการ #",
+    "listed": "ในร้าน",
+    "active": "เปิดขาย",
+    "inactive": "ปิดแล้ว",
+    "dead": "ปิด (ต้นทางเสีย)",
+    "dead_marked": "ปิด (ต้นทางเสีย)",
+    "removed": "ปิดเพราะไม่มีต้นทาง",
+    "picked": "คัดแล้ว",
+    "added": "เพิ่มใหม่",
+    "updated": "อัปเดต",
+    "cats": "หมวด",
+    "sync_active": "ซิงก์เปิดขาย",
+    "sync_inactive": "ซิงก์ปิดแล้ว",
+}
+
+
+def _parse_cron_kv(detail):
+    out = []
+    text = str(detail or "").strip()
+    if not text:
+        return out
+    # key=value pairs
+    if "=" in text and " " in text.replace("=", " "):
+        for part in text.split():
+            if "=" not in part:
+                continue
+            key, val = part.split("=", 1)
+            key = key.strip().lower()
+            val = val.strip()
+            label = CRON_FIELD_LABELS.get(key, key)
+            out.append({"key": key, "label": label, "value": val})
+        if out:
+            return out
+    return [{"key": "msg", "label": "ข้อความ", "value": text}]
+
+
+def format_cron_logs(rows):
+    formatted = []
+    for row in rows:
+        job = str(row.get("job") or "").strip().lower() or "other"
+        meta = CRON_JOB_META.get(job, {
+            "label": job or "อื่นๆ",
+            "tone": "other",
+            "icon": "ri-file-list-line",
+            "hint": "",
+        })
+        fields = _parse_cron_kv(row.get("detail"))
+        summary = " · ".join("%s %s" % (f["label"], f["value"]) for f in fields[:6])
+        is_error = job == "catalog" and "error" in str(row.get("detail") or "").lower()
+        if not is_error:
+            for f in fields:
+                if f["key"] in ("err",) and str(f["value"]) not in ("0", "", "-"):
+                    try:
+                        if float(f["value"]) > 0:
+                            is_error = True
+                    except (TypeError, ValueError):
+                        is_error = True
+        formatted.append({
+            **row,
+            "job_key": job,
+            "job_label": meta["label"],
+            "job_tone": meta["tone"],
+            "job_icon": meta["icon"],
+            "job_hint": meta["hint"],
+            "fields": fields,
+            "summary": summary or str(row.get("detail") or "-"),
+            "is_error": is_error,
+            "raw": str(row.get("detail") or ""),
+        })
+    return formatted
+
+
 @router.get("/crons", response_class=HTMLResponse)
-async def crons_page(request: Request, ran: str = ""):
+async def crons_page(request: Request, ran: str = "", job: str = "all"):
     gate = require_admin(request)
     if gate:
         return gate
+    init_db()
+    job = (job or "all").strip().lower() or "all"
+    raw_logs = list_cron_logs(80, job if job != "all" else "")
+    logs = format_cron_logs(raw_logs)
+    settings = get_settings()
+    counts = cron_log_job_counts(300)
+    latest = format_cron_logs(list_cron_logs(8))
+    last_pull = next((x for x in latest if x["job_key"] == "pull"), None)
+    last_sync = next((x for x in latest if x["job_key"] == "sync"), None)
+    last_shop = next((x for x in latest if x["job_key"] == "shop"), None)
+    ran_text = ""
+    if ran:
+        ran_text = str(ran).replace("_", " ")
     return render(request, "admin/crons.html", {
         "page": "crons",
-        "logs": list_cron_logs(40),
-        "ran": ran,
+        "logs": logs,
+        "ran": ran_text,
+        "job": job,
+        "job_counts": counts,
+        "job_meta": CRON_JOB_META,
+        "last_pull": last_pull,
+        "last_sync": last_sync,
+        "last_shop": last_shop,
+        "shop_synced_at": settings.get("shop_synced_at") or settings.get("catalog_synced_at") or "-",
+        "catalog_synced_at": settings.get("catalog_synced_at") or "-",
+        "shop_rebuild_at": settings.get("shop_rebuild_at") or "-",
     })
 
 

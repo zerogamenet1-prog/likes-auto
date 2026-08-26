@@ -51,8 +51,14 @@
   <a href="/faq" class="{% if page == 'faq' %}is-on{% endif %}"><i class="ri-question-line"></i> คำถามที่พบบ่อย</a>
   {% endif %}
   {% endif %}
-  {% if mods.mod_account or mods.mod_api or mods.mod_logout %}
+  {% if mods.mod_account or mods.mod_api or mods.mod_logout or theme_switch %}
   <p class="la-side-h">อื่นๆ</p>
+  {% if theme_switch %}
+  <div class="la-side-theme">
+    <span class="la-side-theme-lab"><i class="ri-palette-line"></i> ธีมสี</span>
+    {% with extra_class='la-side-pack' %}{% include "_pack_switch.html" %}{% endwith %}
+  </div>
+  {% endif %}
   {% if mods.mod_account %}
   <a href="/account" class="{% if page == 'account' %}is-on{% endif %}"><i class="ri-user-3-line"></i> บัญชี</a>
   {% endif %}

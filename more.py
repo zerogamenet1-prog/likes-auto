@@ -5,11 +5,13 @@ from admin import render, require_admin
 from db import (
     add_log,
     bump_service_rates,
+    apply_rates_from_cost,
     catalog_all_filtered,
     catalog_by_ids,
     catalog_categories,
     catalog_count,
     catalog_mains,
+    catalog_types,
     get_provider,
     get_settings,
     import_provider_service,
@@ -27,6 +29,18 @@ from db import (
     split_category,
     stats,
     to_thb,
+    norm_currency,
+    is_thb_currency,
+    move_shop_sort,
+    rename_shop_main,
+    rename_shop_sub,
+    reorder_shop_sort,
+    add_shop_main,
+    add_shop_sub,
+    delete_shop_main,
+    delete_shop_sub,
+    delete_all_shop_mains,
+    delete_all_shop_subs,
     update_service_rate,
 )
 from store import (
@@ -315,14 +329,197 @@ async def service_save(
     return RedirectResponse("/admin/services", status_code=303)
 
 
-def _import_rows(provider_id, items, usd_rate, percent, fixed, picks=None, main="", cat=""):
-    count = 0
-    shop_cat = (cat or main or "").strip()
+def _services_back(main="", q="", ok="1"):
+    from urllib.parse import urlencode
+    params = {}
+    if main:
+        params["main"] = main
+    if q:
+        params["q"] = q
+    if ok:
+        params["ok"] = ok
+    return RedirectResponse("/admin/services" + (("?" + urlencode(params)) if params else ""), status_code=303)
+
+
+@router.post("/services/main/rename")
+async def services_main_rename(
+    request: Request,
+    old_name: str = Form(...),
+    new_name: str = Form(...),
+    q: str = Form(""),
+):
+    g = gate(request)
+    if g:
+        return g
+    ok = rename_shop_main(old_name, new_name)
+    target = (new_name or "").strip() if ok else (old_name or "").strip()
+    add_log("เปลี่ยนชื่อหมวดหลัก: %s → %s" % (old_name, new_name), request.client.host if request.client else "-")
+    return _services_back(target, q, "renamed" if ok else "1")
+
+
+@router.post("/services/main/move")
+async def services_main_move(
+    request: Request,
+    name: str = Form(...),
+    direction: int = Form(0),
+    main: str = Form(""),
+    q: str = Form(""),
+):
+    g = gate(request)
+    if g:
+        return g
+    move_shop_sort("main", name, direction)
+    return _services_back(main or "", q, "moved")
+
+
+@router.post("/services/sub/rename")
+async def services_sub_rename(
+    request: Request,
+    platform: str = Form(...),
+    old_name: str = Form(...),
+    new_name: str = Form(...),
+    q: str = Form(""),
+):
+    g = gate(request)
+    if g:
+        return g
+    rename_shop_sub(platform, old_name, new_name)
+    add_log(
+        "เปลี่ยนชื่อหมวดย่อย (%s): %s → %s" % (platform, old_name, new_name),
+        request.client.host if request.client else "-",
+    )
+    return _services_back(platform, q, "renamed")
+
+
+@router.post("/services/sub/move")
+async def services_sub_move(
+    request: Request,
+    platform: str = Form(...),
+    name: str = Form(...),
+    direction: int = Form(0),
+    q: str = Form(""),
+):
+    g = gate(request)
+    if g:
+        return g
+    move_shop_sort("sub", name, direction, platform)
+    return _services_back(platform, q, "moved")
+
+
+@router.post("/services/sort")
+async def services_sort(
+    request: Request,
+    kind: str = Form("main"),
+    order: str = Form(""),
+    platform: str = Form(""),
+):
+    from fastapi.responses import JSONResponse
+    g = gate(request)
+    if g:
+        return JSONResponse({"ok": False, "error": "auth"}, status_code=401)
+    names = []
+    raw = (order or "").strip()
+    if raw.startswith("["):
+        import json
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                names = [str(x) for x in parsed]
+        except Exception:
+            names = []
+    if not names:
+        names = [x.strip() for x in raw.replace("\n", ",").split(",") if x.strip()]
+    ok = reorder_shop_sort(kind, names, platform)
+    return JSONResponse({"ok": bool(ok)})
+
+
+@router.post("/services/main/add")
+async def services_main_add(request: Request, name: str = Form(...), q: str = Form("")):
+    g = gate(request)
+    if g:
+        return g
+    ok = add_shop_main(name)
+    if ok:
+        add_log("เพิ่มหมวดหลัก: %s" % name, request.client.host if request.client else "-")
+    return _services_back((name or "").strip(), q, "added" if ok else "1")
+
+
+@router.post("/services/main/delete")
+async def services_main_delete(request: Request, name: str = Form(...), q: str = Form("")):
+    g = gate(request)
+    if g:
+        return g
+    n = delete_shop_main(name)
+    add_log("ลบหมวดหลัก %s (%s บริการ)" % (name, n), request.client.host if request.client else "-")
+    return _services_back("", q, "deleted")
+
+
+@router.post("/services/main/delete-all")
+async def services_main_delete_all(request: Request, q: str = Form("")):
+    g = gate(request)
+    if g:
+        return g
+    n = delete_all_shop_mains()
+    add_log("ลบหมวดหลักทั้งหมด (%s บริการ)" % n, request.client.host if request.client else "-")
+    return _services_back("", q, "deleted")
+
+
+@router.post("/services/sub/add")
+async def services_sub_add(
+    request: Request,
+    platform: str = Form(...),
+    name: str = Form(...),
+    q: str = Form(""),
+):
+    g = gate(request)
+    if g:
+        return g
+    ok = add_shop_sub(platform, name)
+    if ok:
+        add_log("เพิ่มหมวดย่อย (%s): %s" % (platform, name), request.client.host if request.client else "-")
+    return _services_back(platform, q, "added" if ok else "1")
+
+
+@router.post("/services/sub/delete")
+async def services_sub_delete(
+    request: Request,
+    platform: str = Form(...),
+    name: str = Form(...),
+    q: str = Form(""),
+):
+    g = gate(request)
+    if g:
+        return g
+    n = delete_shop_sub(platform, name)
+    add_log("ลบหมวดย่อย (%s/%s) %s บริการ" % (platform, name, n), request.client.host if request.client else "-")
+    return _services_back(platform, q, "deleted")
+
+
+@router.post("/services/sub/delete-all")
+async def services_sub_delete_all(
+    request: Request,
+    platform: str = Form(...),
+    q: str = Form(""),
+):
+    g = gate(request)
+    if g:
+        return g
+    n = delete_all_shop_subs(platform)
+    add_log("ลบหมวดย่อยทั้งหมดใน %s (%s บริการ)" % (platform, n), request.client.host if request.client else "-")
+    return _services_back(platform, q, "deleted")
+
+
+def _import_rows(provider_id, items, usd_rate, percent, fixed, picks=None, main="", cat="", skip_existing=False, default_currency="USD"):
+    have = imported_api_ids(provider_id) if skip_existing else set()
+    fallback = norm_currency(default_currency, "USD")
+    rows = []
     for item in items:
         api_sid = str(item.get("api_service") or "")
         if not api_sid:
             continue
-        currency = item.get("currency") or "USD"
+        if skip_existing and api_sid in have:
+            continue
+        currency = norm_currency(item.get("currency") or fallback, fallback)
         cost = item.get("rate") or 0
         if picks and api_sid in picks:
             try:
@@ -331,21 +528,35 @@ def _import_rows(provider_id, items, usd_rate, percent, fixed, picks=None, main=
                 rate = sell_thb(item.get("rate") or 0, currency, usd_rate, percent, fixed)
         else:
             rate = sell_thb(item.get("rate") or 0, currency, usd_rate, percent, fixed)
-        plat = shop_cat or str(item.get("category") or "อื่น ๆ")
-        import_provider_service(
-            provider_id,
-            plat,
-            item.get("name") or ("Service %s" % api_sid),
-            rate,
-            item.get("min_qty") or 1,
-            item.get("max_qty") or 100000,
-            api_sid,
-            cost,
-            "",
-            currency,
-        )
-        count += 1
-    return count
+        raw_cat = str(item.get("category") or item.get("main_cat") or "").strip()
+        plat_guess, sub_guess = split_category(raw_cat or "อื่น ๆ")
+        plat = (main or item.get("main_cat") or plat_guess or "อื่น ๆ").strip() or "อื่น ๆ"
+        shop_sub = (cat or sub_guess or "").strip()
+        rows.append({
+            "platform": plat,
+            "name": item.get("name") or ("Service %s" % api_sid),
+            "rate": rate,
+            "min_qty": item.get("min_qty") or 1,
+            "max_qty": item.get("max_qty") or 100000,
+            "api_service": api_sid,
+            "cost_rate": cost,
+            "category": shop_sub,
+            "currency": currency,
+        })
+        if skip_existing:
+            have.add(api_sid)
+    from db import import_shop_rows
+    return import_shop_rows(provider_id, rows)
+
+
+def _import_scope_query(scope, q, cat, main, stype):
+    scope = (scope or "filtered").strip().lower()
+    skip_existing = scope in {"new", "all_new", "main_new", "filtered_new"}
+    if scope in {"all", "all_new"}:
+        return "", "", "", "", skip_existing
+    if scope in {"main", "main_new"}:
+        return "", "", main, "", skip_existing
+    return q, cat, main, stype, skip_existing
 
 
 @router.get("/services/import", response_class=HTMLResponse)
@@ -355,10 +566,15 @@ async def services_import(
     q: str = "",
     cat: str = "",
     main: str = "",
+    stype: str = "",
+    view: str = "",
+    per: int = 80,
     page: int = 1,
     loaded: str = "",
     added: str = "",
     error: str = "",
+    synced: str = "",
+    inactive: str = "",
 ):
     g = gate(request)
     if g:
@@ -369,26 +585,47 @@ async def services_import(
     pid = int(provider["id"]) if provider else 0
     settings = get_settings()
     usd_rate = settings.get("usd_rate") or "35"
-    per_page = 80
+    try:
+        per_page = int(per or 80)
+    except (TypeError, ValueError):
+        per_page = 80
+    if per_page not in (50, 80, 150, 300):
+        per_page = 80
     page = max(int(page or 1), 1)
-    cats = catalog_categories(pid) if pid else []
-    total = catalog_count(pid, q, cat) if pid and cat else 0
-    pages = max((total + per_page - 1) // per_page, 1)
+    q = (q or "").strip()
+    cat = (cat or "").strip()
+    main = (main or "").strip()
+    stype = (stype or "").strip()
+    show_all = str(view or "").strip().lower() in {"1", "true", "yes", "all"}
+    mains = catalog_mains(pid) if pid else []
+    cats = catalog_categories(pid, main) if pid else []
+    catalog_total = catalog_count(pid) if pid else 0
+    browse = bool(pid and (cat or (main and show_all) or q))
+    total = catalog_count(pid, q, cat, main, stype) if browse else 0
+    pages = max((total + per_page - 1) // per_page, 1) if browse else 1
     if page > pages:
         page = pages
-    catalog = list_provider_catalog(pid, q, cat, per_page, (page - 1) * per_page) if pid and cat else []
-    currency = (provider or {}).get("currency") or ""
+    catalog = (
+        list_provider_catalog(pid, q, cat, per_page, (page - 1) * per_page, main, stype)
+        if browse
+        else []
+    )
+    types = catalog_types(pid, cat, main) if pid and (cat or main or q) else []
+    currency = norm_currency((provider or {}).get("currency") or "", "")
     if pid and not currency:
         sample = list_provider_catalog(pid, limit=1)
         if sample:
-            currency = sample[0].get("currency") or ""
+            currency = norm_currency(sample[0].get("currency") or "", "USD")
     if catalog:
-        currency = catalog[0].get("currency") or currency
+        currency = norm_currency(catalog[0].get("currency") or currency, currency or "USD")
+    currency = currency or "USD"
     priced = []
     for item in catalog:
         row = dict(item)
-        row["cost_thb"] = to_thb(row.get("rate") or 0, row.get("currency") or currency or "USD", usd_rate)
-        row["sell_thb"] = sell_thb(row.get("rate") or 0, row.get("currency") or currency or "USD", usd_rate, 100, 0)
+        row_cur = norm_currency(row.get("currency") or currency, currency)
+        row["currency"] = row_cur
+        row["cost_thb"] = to_thb(row.get("rate") or 0, row_cur, usd_rate)
+        row["sell_thb"] = sell_thb(row.get("rate") or 0, row_cur, usd_rate, 100, 0)
         priced.append(row)
     return render(request, "admin/service_import.html", {
         "page": "services",
@@ -398,18 +635,29 @@ async def services_import(
         "q": q,
         "cat": cat,
         "main": main,
-        "mains": catalog_mains(pid) if pid else [],
+        "stype": stype,
+        "show_all": show_all,
+        "browse": browse,
+        "mains": mains,
         "catalog": priced,
         "categories": cats,
+        "types": types,
+        "catalog_total": catalog_total,
         "total": total,
         "page_no": page,
         "pages": pages,
+        "per_page": per_page,
         "usd_rate": usd_rate,
-        "currency": currency or "USD",
+        "currency": currency,
+        "is_thb": is_thb_currency(currency),
         "imported": imported_api_ids(pid) if pid else set(),
         "loaded": loaded,
         "added": added,
         "error": error,
+        "synced": synced,
+        "inactive_n": inactive,
+        "shop_synced_at": settings.get("shop_synced_at") or settings.get("catalog_synced_at") or "",
+        "catalog_synced_at": settings.get("catalog_synced_at") or "",
     })
 
 
@@ -425,17 +673,86 @@ async def services_import_fetch(request: Request, pid: int = Form(...)):
         return RedirectResponse("/admin/services/import?error=1", status_code=303)
     result = action(p["api_url"], {"key": p["api_key"], "action": "services"}, timeout=70)
     items, err = normalize_services(result)
-    currency = (p.get("currency") or "").strip()
+    currency = norm_currency(p.get("currency") or "", "")
     bal = action(p["api_url"], {"key": p["api_key"], "action": "balance"}, timeout=20)
-    if isinstance(bal, dict) and bal.get("currency"):
-        currency = str(bal.get("currency"))
-        save_provider_balance(pid, bal.get("balance"), currency)
+    bal_amt = p.get("balance")
+    if isinstance(bal, dict):
+        if bal.get("currency"):
+            currency = norm_currency(bal.get("currency"), currency or "USD")
+        if bal.get("balance") is not None:
+            bal_amt = bal.get("balance")
     if err:
         add_log("ดึงบริการไม่สำเร็จ: %s" % err, request.client.host if request.client else "-")
         return RedirectResponse("/admin/services/import?pid=%s&error=1" % pid, status_code=303)
-    count = replace_provider_catalog(pid, items, currency or "USD")
-    add_log("โหลดรายการบริการจาก API %s รายการ" % count, request.client.host if request.client else "-")
-    return RedirectResponse("/admin/services/import?pid=%s&loaded=%s" % (pid, count), status_code=303)
+    # If API items carry currency, prefer first non-empty; else balance / provider
+    for it in items:
+        if isinstance(it, dict) and (it.get("currency") or it.get("Currency")):
+            currency = norm_currency(it.get("currency") or it.get("Currency"), currency or "USD")
+            break
+    currency = currency or "USD"
+    count = replace_provider_catalog(pid, items, currency)
+    save_provider_balance(pid, bal_amt, currency)
+    from db import sync_listed_from_catalog, set_shop_manual_lock, now as db_now
+    sync_stats = sync_listed_from_catalog(pid) or {}
+    # Keep curated/imported shop — only price+status sync on cron
+    set_shop_manual_lock(True)
+    save_settings({
+        "catalog_synced_at": db_now(),
+        "shop_synced_at": db_now(),
+    })
+    add_log(
+        "โหลดรายการบริการจาก API %s รายการ · ซิงก์ร้าน active=%s inactive=%s removed=%s"
+        % (count, sync_stats.get("active") or 0, sync_stats.get("inactive") or 0, sync_stats.get("removed") or 0),
+        request.client.host if request.client else "-",
+    )
+    return RedirectResponse(
+        "/admin/services/import?pid=%s&loaded=%s&synced=%s&inactive=%s"
+        % (pid, count, sync_stats.get("active") or 0, sync_stats.get("inactive") or 0),
+        status_code=303,
+    )
+
+
+@router.post("/services/import/sync")
+async def services_import_sync(request: Request, pid: int = Form(...)):
+    g = gate(request)
+    if g:
+        return g
+    init_db()
+    from smm_api import action, normalize_services
+    from db import sync_listed_from_catalog, set_shop_manual_lock, now as db_now
+    p = get_provider(pid)
+    if not p:
+        return RedirectResponse("/admin/services/import?error=1", status_code=303)
+    result = action(p["api_url"], {"key": p["api_key"], "action": "services"}, timeout=90)
+    items, err = normalize_services(result)
+    if err or not items:
+        add_log("ซิงก์บริการไม่สำเร็จ: %s" % (err or "empty"), request.client.host if request.client else "-")
+        return RedirectResponse("/admin/services/import?pid=%s&error=1" % pid, status_code=303)
+    currency = norm_currency(p.get("currency") or "", "USD")
+    for it in items:
+        if isinstance(it, dict) and (it.get("currency") or it.get("Currency")):
+            currency = norm_currency(it.get("currency") or it.get("Currency"), currency)
+            break
+    count = replace_provider_catalog(pid, items, currency)
+    sync_stats = sync_listed_from_catalog(pid) or {}
+    set_shop_manual_lock(True)
+    save_settings({"catalog_synced_at": db_now(), "shop_synced_at": db_now()})
+    add_log(
+        "ซิงก์ตามต้นทาง catalog=%s active=%s inactive=%s dead=%s removed=%s"
+        % (
+            count,
+            sync_stats.get("active") or 0,
+            sync_stats.get("inactive") or 0,
+            sync_stats.get("dead_marked") or 0,
+            sync_stats.get("removed") or 0,
+        ),
+        request.client.host if request.client else "-",
+    )
+    return RedirectResponse(
+        "/admin/services/import?pid=%s&loaded=%s&synced=%s&inactive=%s"
+        % (pid, count, sync_stats.get("active") or 0, sync_stats.get("inactive") or 0),
+        status_code=303,
+    )
 
 
 @router.post("/services/import/add")
@@ -450,12 +767,14 @@ async def services_import_add(
     q: str = Form(""),
     cat: str = Form(""),
     main: str = Form(""),
+    stype: str = Form(""),
 ):
     g = gate(request)
     if g:
         return g
     import json
-    if not get_provider(pid):
+    provider = get_provider(pid)
+    if not provider:
         return RedirectResponse("/admin/services/import?error=1", status_code=303)
     try:
         usd = float(usd_rate or 35)
@@ -464,9 +783,16 @@ async def services_import_add(
     except (TypeError, ValueError):
         usd, pct, extra = 35.0, 20.0, 0.0
     save_settings({"usd_rate": str(usd)})
-    if scope == "filtered":
-        items = catalog_all_filtered(pid, q, cat)[:1000]
-        data = {}
+    scope = (scope or "selected").strip().lower()
+    max_n = 20000
+    skip_existing = scope in {"new", "all_new", "main_new", "filtered_new"}
+    data = {}
+    if scope in {"all", "all_new"}:
+        items = catalog_all_filtered(pid, "", "", "", "")[:max_n]
+    elif scope in {"main", "main_new"}:
+        items = catalog_all_filtered(pid, "", "", main, "")[:max_n]
+    elif scope in {"filtered", "filtered_new"}:
+        items = catalog_all_filtered(pid, q, cat, main, stype)[:max_n]
     else:
         try:
             data = json.loads(picks or "{}")
@@ -475,13 +801,106 @@ async def services_import_add(
         if not isinstance(data, dict):
             data = {}
         items = catalog_by_ids(pid, list(data.keys()))
-    count = _import_rows(pid, items, usd, pct, extra, {str(k): v for k, v in data.items()}, main, cat)
-    add_log("เพิ่มบริการจาก API %s รายการ" % count, request.client.host if request.client else "-")
+        skip_existing = False
+    default_cur = norm_currency(provider.get("currency") or "", "USD")
+    count = _import_rows(
+        pid,
+        items,
+        usd,
+        pct,
+        extra,
+        {str(k): v for k, v in data.items()},
+        main,
+        cat,
+        skip_existing=skip_existing,
+        default_currency=default_cur,
+    )
+    from db import clear_shop_blocks, unblock_shop_main, set_shop_manual_lock
+    if scope in {"all", "all_new"}:
+        clear_shop_blocks()
+    elif main:
+        unblock_shop_main(main)
+    # Imported/curated list — keep syncing prices/status, do not auto-rebuild cull
+    set_shop_manual_lock(True)
+    add_log("เพิ่มบริการจาก API %s รายการ (scope=%s)" % (count, scope), request.client.host if request.client else "-")
     return RedirectResponse("/admin/services?added=%s" % count, status_code=303)
 
 
+@router.post("/services/import/batch")
+async def services_import_batch(
+    request: Request,
+    pid: int = Form(...),
+    scope: str = Form("all_new"),
+    usd_rate: str = Form("35"),
+    percent: str = Form("100"),
+    fixed: str = Form("0"),
+    q: str = Form(""),
+    cat: str = Form(""),
+    main: str = Form(""),
+    stype: str = Form(""),
+    offset: int = Form(0),
+    batch: int = Form(120),
+):
+    from fastapi.responses import JSONResponse
+    g = gate(request)
+    if g:
+        return JSONResponse({"ok": False, "error": "auth"}, status_code=401)
+    if not get_provider(pid):
+        return JSONResponse({"ok": False, "error": "provider"}, status_code=400)
+    provider = get_provider(pid)
+    try:
+        usd = float(usd_rate or 35)
+        pct = float(percent or 0)
+        extra = float(fixed or 0)
+    except (TypeError, ValueError):
+        usd, pct, extra = 35.0, 20.0, 0.0
+    try:
+        offset = max(int(offset or 0), 0)
+    except (TypeError, ValueError):
+        offset = 0
+    try:
+        batch = int(batch or 120)
+    except (TypeError, ValueError):
+        batch = 120
+    batch = max(40, min(batch, 200))
+    save_settings({"usd_rate": str(usd)})
+    q2, cat2, main2, stype2, skip_existing = _import_scope_query(scope, q, cat, main, stype)
+    total = catalog_count(pid, q2, cat2, main2, stype2)
+    items = list_provider_catalog(pid, q2, cat2, batch, offset, main2, stype2) if total else []
+    default_cur = norm_currency((provider or {}).get("currency") or "", "USD")
+    added = _import_rows(
+        pid, items, usd, pct, extra, None, main2, cat2,
+        skip_existing=skip_existing, default_currency=default_cur,
+    )
+    processed = min(offset + batch, total)
+    done = processed >= total or total == 0
+    from db import clear_shop_blocks, unblock_shop_main, set_shop_manual_lock
+    if done:
+        if (scope or "").strip().lower() in {"all", "all_new"}:
+            clear_shop_blocks()
+        elif main2:
+            unblock_shop_main(main2)
+        set_shop_manual_lock(True)
+        add_log(
+            "นำเข้าแบบชุดเสร็จ %s/%s (เพิ่มจริงในรอบท้าย +%s, scope=%s)" % (processed, total, added, scope),
+            request.client.host if request.client else "-",
+        )
+    percent_done = int(round((processed * 100.0 / total), 0)) if total else 100
+    return JSONResponse({
+        "ok": True,
+        "added": int(added),
+        "offset": offset,
+        "next_offset": offset + batch,
+        "batch": batch,
+        "total": int(total),
+        "processed": int(processed),
+        "done": bool(done),
+        "percent": percent_done,
+    })
+
+
 @router.post("/services/bulk-rate")
-async def service_bulk_rate(request: Request, ids: str = Form(""), percent: float = Form(0)):
+async def service_bulk_rate(request: Request, ids: str = Form(""), percent: float = Form(0), fixed: float = Form(0)):
     g = gate(request)
     if g:
         return g
@@ -491,8 +910,20 @@ async def service_bulk_rate(request: Request, ids: str = Form(""), percent: floa
         if part.isdigit():
             sid_list.append(int(part))
     if sid_list:
-        bump_service_rates(sid_list, percent)
+        apply_rates_from_cost(percent, fixed, sid_list)
+        save_settings({"profit_percent": str(percent)})
     return RedirectResponse("/admin/services", status_code=303)
+
+
+@router.post("/services/bulk-rate-all")
+async def service_bulk_rate_all(request: Request, percent: float = Form(0), fixed: float = Form(0)):
+    g = gate(request)
+    if g:
+        return g
+    count = apply_rates_from_cost(percent, fixed, None)
+    save_settings({"profit_percent": str(percent)})
+    add_log("ปรับราคาจากต้นทุน %s%% ทั้งร้าน %s รายการ" % (percent, count), request.client.host if request.client else "-")
+    return RedirectResponse("/admin/services?ok=priced&n=%s" % count, status_code=303)
 
 
 @router.post("/services/bulk-category")

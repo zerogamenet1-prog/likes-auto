@@ -62,8 +62,8 @@
     document.body.classList.add('la-ready');
     if (window.laSyncPack) window.laSyncPack();
 
-    var nodes = document.querySelectorAll('.la-card,.la-plat,.la-why,.la-svc,.la-stat,.la-faq details,.la-page-head,.la-order-card,.la-form-shell,.la-cta-band,.la-section h2,.la-prose,.la-code,.la-table-wrap,.la-notice,.adm-card,.adm-ok,.adm-error,.la-filter,.la-review,.la-photo-card,.la-pay-card,.la-hero-login,.la-bigstat,.la-plat-pill,.la-pay-shot,.la-split-photo,.la-feat-list article,.la-about-card,.la-why-card,.la-step-card,.la-login-card,.la-sample-table,.la-pop-card,.la-marquee,.la-statsbar,.la-foot-cta,.la-foot-brand,.la-footer .la-foot-grid > div');
-    if (!reduce) {
+    var nodes = document.querySelectorAll('.la-card,.la-plat,.la-why,.la-svc,.la-stat,.la-faq details,.la-page-head,.la-order-card,.la-form-shell,.la-cta-band,.la-section h2,.la-prose,.la-code,.la-table-wrap,.la-notice,.adm-card,.adm-ok,.adm-error,.la-filter,.la-review,.la-photo-card,.la-pay-card,.la-hero-login,.la-bigstat,.la-plat-pill,.la-pay-shot,.la-split-photo,.la-feat-list article,.la-about-card,.la-why-card,.la-step-card,.la-login-card,.la-sample-table,.la-pop-card,.la-marquee,.la-statsbar,.la-rate-card,.la-hero-social');
+    if (!reduce && !coarse) {
       for (var i = 0; i < nodes.length; i++) {
         nodes[i].classList.add('la-reveal');
         nodes[i].style.setProperty('--d', ((i % 8) * 45) + 'ms');

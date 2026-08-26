@@ -44,8 +44,7 @@
 .la-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .la-code { transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease; }
 .la-code:hover { border-color: rgba(168,85,247,.5); box-shadow: 0 10px 28px rgba(0,0,0,.2); }
-.la-foot-grid a { position: relative; width: fit-content; transition: color .2s ease, transform .2s ease; }
-.la-foot-grid a:hover { transform: translateX(3px); color: #fff; }
+.la-foot-col a { position: relative; width: fit-content; }
 .la-theme-toggle { transition: transform .25s ease, background .25s ease; }
 .la-theme-toggle:hover { transform: scale(1.05); }
 .la-menu-btn { transition: transform .25s ease, background .25s ease; }

@@ -1,25 +1,332 @@
 {% extends "base.html" %}
+{% set price = (settings.child_panel_price or 500)|float %}
+{% set ns1 = settings.child_ns1 or 'ns1.likes-auto.com' %}
+{% set ns2 = settings.child_ns2 or 'ns2.likes-auto.com' %}
 {% block content %}
-<main class="la-page"><div class="la-wrap">
-  <div class="la-page-head"><h1>เปิดแผงลูก</h1><p class="sub">ส่งโดเมนให้แอดมินเปิดแผง คิด {{ settings.child_panel_price or 500 }} บาท</p></div>
+<main class="la-page la-dash-page la-hub-page la-child-page">
   {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
   {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
-  <form method="post" action="/panels" class="la-form-side" style="max-width:520px;background:var(--la-card);border:1px solid var(--la-stroke);border-radius:18px;margin-bottom:24px">
-    <label class="la-field">โดเมน</label>
-    <input class="la-input" name="domain" placeholder="shop.example.com" required>
-    <button class="la-btn" type="submit">ส่งคำขอ</button>
-  </form>
-  <div class="la-table-wrap">
-  <table class="la-svc-table">
-    <thead><tr><th>ID</th><th>โดเมน</th><th>ยอด</th><th>สถานะ</th></tr></thead>
-    <tbody>
-    {% for r in items %}
-      <tr><td data-label="ID">{{ r.id }}</td><td data-label="โดเมน">{{ r.domain }}</td><td data-label="ยอด">{{ r.charge }}</td><td data-label="สถานะ">{{ st.get(r.status, r.status) }}</td></tr>
-    {% else %}
-      <tr><td colspan="4">ยังไม่มีคำขอ</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+
+  <section class="la-hub-hero la-child-hero">
+    <div class="la-hub-hero-in">
+      <span class="la-child-badge"><i class="ri-flashlight-line"></i> เปิดได้ภายใน 2–24 ชม.</span>
+      <h1><i class="ri-window-line"></i> เปิดธุรกิจแผง SMM ของคุณเอง</h1>
+      <p>ได้แผงภายใต้แบรนด์คุณ — เลือกบริการจาก Likes Auto ตั้งราคาเอง ส่งงานอัตโนมัติ ไม่ต้องเขียนโค้ด</p>
+      <div class="la-hub-stats">
+        <article><em>ราคาเปิดแผง</em><strong>฿{{ "%.0f"|format(price) }}</strong></article>
+        <article><em>แผงของคุณ</em><strong>{{ panel_open or items|length }}</strong></article>
+        <article><em>เปิดใช้งานแล้ว</em><strong>{{ panel_active or 0 }}</strong></article>
+      </div>
+      <div class="la-child-hero-cta">
+        <a class="la-btn" href="#child-order"><i class="ri-rocket-line"></i> เริ่มเปิดแผง</a>
+        <a class="la-btn la-btn-ghost" href="#child-guide"><i class="ri-book-open-line"></i> อ่านคู่มือ</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="la-hub-steps la-child-steps">
+    <article>
+      <span>1</span>
+      <b>จดโดเมน</b>
+      <p>ซื้อโดเมนจากผู้ให้บริการใดก็ได้ เช่น Namecheap / GoDaddy / Cloudflare แล้วชี้ Nameserver มายังเรา</p>
+    </article>
+    <article>
+      <span>2</span>
+      <b>ส่งคำขอ + ตั้งค่า</b>
+      <p>กรอกโดเมน ชื่อแอดมิน รหัสผ่าน สกุลเงิน แล้วหักจากยอดในบัญชีอัตโนมัติ</p>
+    </article>
+    <article>
+      <span>3</span>
+      <b>เริ่มขาย</b>
+      <p>เมื่ออนุมัติแล้ว นำเข้าบริการ ตั้งมาร์จิ้น เปิดรับลูกค้า — กำไรเข้าบัญชีคุณโดยตรง</p>
+    </article>
+  </section>
+
+  <section class="la-child-feats">
+    <h2>สิ่งที่คุณได้</h2>
+    <p class="la-hub-note">แผงลูกครบชุดสำหรับรีเซลล์ โดยไม่ต้องดูแลเซิร์ฟเวอร์เอง</p>
+    <div class="la-child-featgrid">
+      <article><i class="ri-palette-line"></i><b>แบรนด์คุณเต็มใบ</b><p>โดเมน โลโก้ สี และชื่อร้านเป็นของคุณ ลูกค้าไม่เห็น Likes Auto</p></article>
+      <article><i class="ri-robot-line"></i><b>ส่งงานอัตโนมัติ</b><p>ออเดอร์วิ่งผ่านระบบอัตโนมัติ 24 ชม. ไม่ต้องกดส่งมือ</p></article>
+      <article><i class="ri-price-tag-3-line"></i><b>ตั้งราคาเอง</b><p>เลือกมาร์จิ้นกี่เปอร์เซ็นต์ก็ได้ ส่วนต่างคือกำไรของคุณ</p></article>
+      <article><i class="ri-bank-card-line"></i><b>รับเงินเข้าบัญชีคุณ</b><p>ตั้งช่องทางรับเงินบนแผงลูกเอง — เงินลูกค้าไม่ผ่านเรา</p></article>
+      <article><i class="ri-dashboard-line"></i><b>แดชบอร์ดแอดมิน</b><p>จัดการลูกค้า ออเดอร์ บริการ และตั๋วจากที่เดียว</p></article>
+      <article><i class="ri-shield-check-line"></i><b>โฮสติ้ง + SSL</b><p>รวมในแพ็กแล้ว ไม่ต้องเช่าเซิร์ฟเวอร์หรือติดตั้งเอง</p></article>
+    </div>
+  </section>
+
+  <section class="la-hub-card la-child-calc" id="child-calc">
+    <div class="la-hub-card-h">
+      <h2>คำนวณกำไรโดยประมาณ</h2>
+      <p>ปรับตัวเลขเพื่อดูรายได้คร่าวๆ ก่อนเปิดแผง</p>
+    </div>
+    <div class="la-child-calc-grid">
+      <label class="la-field">ออเดอร์ต่อวัน <b id="cpOrdersLab">25</b></label>
+      <input type="range" id="cpOrders" min="5" max="200" step="5" value="25">
+      <label class="la-field">มาร์จิ้นที่ตั้ง (%) <b id="cpMarkupLab">50</b></label>
+      <input type="range" id="cpMarkup" min="10" max="200" step="5" value="50">
+      <label class="la-field">ต้นทุนเฉลี่ยต่อออเดอร์ (บาท)</label>
+      <input class="la-input" type="number" id="cpCost" min="1" step="1" value="20">
+    </div>
+    <div class="la-child-calc-out">
+      <article><em>กำไรต่อวัน</em><strong id="cpDay">฿250</strong></article>
+      <article><em>กำไรต่อเดือน</em><strong id="cpMonth">฿7,500</strong></article>
+      <article><em>คืนทุนเปิดแผง</em><strong id="cpPayback">~2 วัน</strong></article>
+    </div>
+  </section>
+
+  <div class="la-child-ordergrid" id="child-order">
+    <section class="la-hub-card">
+      <div class="la-hub-card-h">
+        <h2>สั่งเปิดแผงลูก</h2>
+        <p>หัก ฿{{ "%.0f"|format(price) }} จากยอดคงเหลืออัตโนมัติ · ยอดปัจจุบัน ฿{{ "%.2f"|format(user.balance or 0) }}</p>
+      </div>
+      <form method="post" action="/panels" class="la-hub-form la-child-form">
+        <label class="la-field">โดเมน</label>
+        <input class="la-input" name="domain" required placeholder="เช่น mybrand.com" autocomplete="off" pattern="[A-Za-z0-9.-]+\.[A-Za-z]{2,}">
+        <p class="la-hub-note">อย่าใส่ https:// · ตั้ง Nameserver เป็น <b data-copy="{{ ns1 }}">{{ ns1 }}</b> และ <b data-copy="{{ ns2 }}">{{ ns2 }}</b></p>
+
+        <label class="la-field">สกุลเงินบนแผง</label>
+        <select class="la-input" name="currency">
+          <option value="THB" selected>บาทไทย (THB)</option>
+          <option value="USD">ดอลลาร์ (USD)</option>
+          <option value="USDT">USDT</option>
+        </select>
+
+        <label class="la-field">ชื่อผู้ใช้แอดมิน</label>
+        <input class="la-input" name="admin_user" required minlength="3" placeholder="Admin username" autocomplete="off">
+
+        <label class="la-field">รหัสผ่านแอดมิน</label>
+        <input class="la-input" type="password" name="admin_pass" required minlength="6" autocomplete="new-password">
+
+        <label class="la-field">ยืนยันรหัสผ่าน</label>
+        <input class="la-input" type="password" name="admin_pass2" required minlength="6" autocomplete="new-password">
+
+        <div class="la-child-pricebox">
+          <span>ราคาต่อเดือน / รอบเปิด</span>
+          <strong>฿{{ "%.2f"|format(price) }}</strong>
+        </div>
+        <button class="la-btn" type="submit" style="width:100%"><i class="ri-send-plane-2-line"></i> ส่งคำขอเปิดแผง</button>
+        {% if (user.balance or 0) < price %}
+        <p class="la-hub-note">ยอดไม่พอ — <a href="/addfunds">ไปเติมเงิน</a> ก่อนส่งคำขอ</p>
+        {% endif %}
+      </form>
+    </section>
+
+    <aside class="la-hub-card la-child-include">
+      <div class="la-hub-card-h">
+        <h2>รวมในแพ็กนี้</h2>
+        <p>ไม่คิดค่าเซิร์ฟเวอร์เพิ่ม</p>
+      </div>
+      <ul>
+        <li><i class="ri-check-line"></i> โฮสติ้ง + SSL + ป้องกันพื้นฐาน</li>
+        <li><i class="ri-check-line"></i> นำเข้าบริการจาก Likes Auto ได้</li>
+        <li><i class="ri-check-line"></i> ไม่จำกัดจำนวนออเดอร์</li>
+        <li><i class="ri-check-line"></i> ควบคุมแบรนด์และราคาเองทั้งหมด</li>
+        <li><i class="ri-check-line"></i> ไม่ผูกสัญญายาว — ยกเลิกได้เมื่อสถานะรออนุมัติ</li>
+        <li><i class="ri-check-line"></i> ทีมช่วยตั้ง DNS / เปิดแผงหลังส่งคำขอ</li>
+      </ul>
+      <p class="la-hub-note">อ้างอิงแนวทางแผงลูกแบบรีเซลล์ที่ <a href="https://followiz.com/child-panel" target="_blank" rel="noopener">Followiz Child Panel</a></p>
+    </aside>
   </div>
-</div></main>
+
+  <section class="la-hub-card" id="child-list">
+    <div class="la-hub-card-h">
+      <h2>แผงของฉัน</h2>
+      <p>ติดตามสถานะคำขอและการเปิดใช้งาน</p>
+    </div>
+    <div class="la-table-wrap">
+      <table class="la-svc-table la-child-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>โดเมน</th>
+            <th>แอดมิน</th>
+            <th>สกุลเงิน</th>
+            <th>ยอดหัก</th>
+            <th>สถานะ</th>
+            <th>วันที่</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in items %}
+          <tr>
+            <td data-label="ID">#{{ r.id }}</td>
+            <td data-label="โดเมน"><b>{{ r.domain }}</b></td>
+            <td data-label="แอดมิน">{{ r.admin_user or '—' }}</td>
+            <td data-label="สกุลเงิน">{{ r.currency or 'THB' }}</td>
+            <td data-label="ยอดหัก">฿{{ "%.2f"|format(r.charge or 0) }}</td>
+            <td data-label="สถานะ"><span class="la-badge-st is-{{ r.status }}">{{ (panel_st or {}).get(r.status, st.get(r.status, r.status)) }}</span></td>
+            <td data-label="วันที่">{{ r.created_at }}</td>
+          </tr>
+        {% else %}
+          <tr class="la-empty-row"><td colspan="7">ยังไม่มีคำขอ — กรอกฟอร์มด้านบนเพื่อเปิดแผงแรก</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="la-hub-card la-child-guide" id="child-guide">
+    <div class="la-hub-card-h">
+      <h2>คู่มือใช้งานแผงลูกแบบละเอียด</h2>
+      <p>ทำตามทีละขั้น — จากซื้อโดเมนจนถึงเริ่มรับออเดอร์</p>
+    </div>
+
+    <details open>
+      <summary><span>1</span> แผงลูกคืออะไร?</summary>
+      <div>
+        <p>แผงลูก (Child Panel) คือแผง SMM ภายใต้โดเมนและแบรนด์ของคุณ โดยดึงบริการจาก Likes Auto เป็นต้นทาง คุณตั้งราคาสูงขึ้น ส่วนต่างคือกำไร ลูกค้าเห็นแค่ร้านคุณ ไม่เห็นว่าเชื่อมกับเรา</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span>2</span> เตรียมยอดเงินในบัญชี</summary>
+      <div>
+        <ol>
+          <li>เข้า <a href="/addfunds">เติมเงิน</a> ด้วยพร้อมเพย์ / ทรูมันนี่ / โอนธนาคาร</li>
+          <li>ตรวจสอบว่ายอดคงเหลืออย่างน้อย <b>฿{{ "%.0f"|format(price) }}</b></li>
+          <li>กลับมาหน้านี้แล้วค่อยส่งคำขอ</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary><span>3</span> ซื้อโดเมนและตั้ง Nameserver</summary>
+      <div>
+        <ol>
+          <li>ซื้อโดเมนจากผู้ให้บริการใดก็ได้ (เช่น Namecheap, GoDaddy, Cloudflare, Hostinger)</li>
+          <li>เข้าเมนู DNS / Nameservers ของโดเมนนั้น</li>
+          <li>เปลี่ยนเป็นแบบ Custom Nameservers แล้วใส่:</li>
+        </ol>
+        <div class="la-aff-linkbox" style="margin:10px 0">
+          <code data-copy="{{ ns1 }}">{{ ns1 }}</code>
+          <button class="la-btn la-btn-mini" type="button" data-copy="{{ ns1 }}">คัดลอก</button>
+        </div>
+        <div class="la-aff-linkbox" style="margin:0 0 10px">
+          <code data-copy="{{ ns2 }}">{{ ns2 }}</code>
+          <button class="la-btn la-btn-mini" type="button" data-copy="{{ ns2 }}">คัดลอก</button>
+        </div>
+        <p>การกระจาย DNS ใช้เวลาประมาณ 5 นาทีถึง 24 ชม. ระหว่างรอสามารถส่งคำขอได้เลย</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span>4</span> กรอกฟอร์มสั่งเปิดแผง</summary>
+      <div>
+        <ol>
+          <li>ใส่โดเมน เช่น <b>mybrand.com</b> (ไม่ต้องใส่ https://)</li>
+          <li>เลือกสกุลเงินที่อยากให้ลูกค้าเห็นบนแผง</li>
+          <li>ตั้งชื่อผู้ใช้และรหัสผ่านแอดมิน (เก็บไว้ให้ดี — ใช้เข้าหลังบ้านแผงลูก)</li>
+          <li>กด <b>ส่งคำขอเปิดแผง</b> — ระบบหักเงินทันที และสถานะเป็น “รออนุมัติ”</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary><span>5</span> รอทีมเปิดแผง</summary>
+      <div>
+        <ol>
+          <li>ทีมตรวจ DNS + ติดตั้งแผง โดยปกติ <b>2–24 ชม.</b></li>
+          <li>เมื่อพร้อม สถานะจะเปลี่ยนเป็น <b>เปิดใช้งานแล้ว</b></li>
+          <li>ถ้าโดเมนยังไม่ชี้ NS ถูกต้อง อาจล่าช้า — เช็คอีกครั้งที่ผู้ขายโดเมน</li>
+          <li>หากยกเลิกตอนสถานะรออนุมัติ ระบบคืนเงินเข้าบัญชีอัตโนมัติ (ผ่านแอดมิน)</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary><span>6</span> เข้าแผงลูกครั้งแรก</summary>
+      <div>
+        <ol>
+          <li>เปิดโดเมนของคุณในเบราว์เซอร์</li>
+          <li>เข้าหลังบ้านแอดมินด้วยชื่อผู้ใช้/รหัสที่กรอกตอนสั่ง</li>
+          <li>ตั้งโลโก้ ชื่อร้าน สี และข้อความประกาศ</li>
+          <li>เชื่อม API / นำเข้าบริการจาก Likes Auto แล้วตั้งมาร์จิ้น</li>
+          <li>เปิดช่องทางรับเงินของร้านคุณ (พร้อมเพย์ ธนาคาร คริปโต ฯลฯ ตามที่แผงรองรับ)</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary><span>7</span> วิธีทำกำไร</summary>
+      <div>
+        <p>ซื้อบริการในต้นทุนของ Likes Auto แล้วขายบนแผงลูกในราคาที่สูงกว่า ส่วนต่างคือกำไร</p>
+        <p>ตัวอย่าง: ต้นทุน ฿20 / 1,000 · คุณตั้งขาย ฿40 / 1,000 · กำไร ฿20 ต่อออเดอร์นั้น</p>
+        <p>ใช้ตัวคำนวณด้านบนประมาณรายได้ต่อวัน/เดือน และระยะคืนทุนค่าเปิดแผง</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span>8</span> ติดปัญหาอะไร</summary>
+      <div>
+        <ul>
+          <li>ยอดไม่พอ → <a href="/addfunds">เติมเงิน</a></li>
+          <li>โดเมนซ้ำ / รูปแบบผิด → ใช้โดเมนอื่นหรือตรวจสะกด</li>
+          <li>DNS ยังไม่ชี้ → รอ propagation หรือติดต่อผู้ขายโดเมน</li>
+          <li>อื่นๆ → เปิดตั๋วที่ <a href="/tickets">ซัพพอร์ต</a> แจ้งเลขคำขอแผงลูก</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <section class="la-hub-card la-child-faq">
+    <div class="la-hub-card-h">
+      <h2>คำถามที่พบบ่อย</h2>
+      <p>สรุปสั้นๆ ก่อนตัดสินใจเปิดแผง</p>
+    </div>
+    <div class="la-faq la-faq-dash">
+      <details open>
+        <summary><i class="ri-question-line"></i> ต้องมีความรู้เทคนิคไหม?</summary>
+        <p>ไม่ต้องเขียนโค้ด แค่จดโดเมน ตั้ง Nameserver ตามที่ให้ และกรอกฟอร์ม ทีมช่วยเปิดแผงให้</p>
+      </details>
+      <details>
+        <summary><i class="ri-question-line"></i> ลูกค้าจะรู้ว่ามาจาก Likes Auto ไหม?</summary>
+        <p>ไม่รู้ แผงเป็นแบบ white-label แสดงแค่แบรนด์และโดเมนของคุณ</p>
+      </details>
+      <details>
+        <summary><i class="ri-question-line"></i> ต้องเช่าเซิร์ฟเวอร์เองไหม?</summary>
+        <p>ไม่ต้อง โฮสติ้ง SSL และการดูแลพื้นฐานรวมในค่าเปิดแผงแล้ว คุณจ่ายเฉพาะโดเมนกับค่าเปิดแผง</p>
+      </details>
+      <details>
+        <summary><i class="ri-question-line"></i> จำกัดจำนวนออเดอร์ไหม?</summary>
+        <p>ไม่จำกัดปริมาณออเดอร์บนแผงลูก ระบบขยายตามการใช้งาน</p>
+      </details>
+      <details>
+        <summary><i class="ri-question-line"></i> เงินลูกค้าเข้าใคร?</summary>
+        <p>เข้าบัญชีชำระเงินที่คุณตั้งบนแผงลูกเอง Likes Auto ไม่รับเงินจากลูกค้าของคุณ</p>
+      </details>
+      <details>
+        <summary><i class="ri-question-line"></i> ใช้เวลานานแค่ไหนถึงเปิดได้?</summary>
+        <p>หลัง DNS พร้อม โดยปกติ 2–24 ชม. ขึ้นกับความเร็ว Nameserver ของโดเมน</p>
+      </details>
+    </div>
+  </section>
+</main>
+<script>
+(function(){
+  var o=document.getElementById('cpOrders');
+  var m=document.getElementById('cpMarkup');
+  var c=document.getElementById('cpCost');
+  var price={{ price }};
+  function fmt(n){ try{ return '฿'+Math.round(n).toLocaleString('th-TH'); }catch(e){ return '฿'+Math.round(n); } }
+  function run(){
+    if(!o||!m||!c) return;
+    var orders=parseInt(o.value,10)||0;
+    var markup=parseInt(m.value,10)||0;
+    var cost=parseFloat(c.value)||0;
+    var profit=cost*(markup/100);
+    var day=profit*orders;
+    var month=day*30;
+    var pay=day>0? Math.max(1, Math.ceil(price/day)) : 0;
+    document.getElementById('cpOrdersLab').textContent=orders;
+    document.getElementById('cpMarkupLab').textContent=markup;
+    document.getElementById('cpDay').textContent=fmt(day);
+    document.getElementById('cpMonth').textContent=fmt(month);
+    document.getElementById('cpPayback').textContent=pay? ('~'+pay+' วัน') : '—';
+  }
+  [o,m,c].forEach(function(el){ if(el){ el.addEventListener('input', run); el.addEventListener('change', run); } });
+  run();
+})();
+</script>
 {% endblock %}

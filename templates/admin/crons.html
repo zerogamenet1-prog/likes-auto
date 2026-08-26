@@ -1,26 +1,96 @@
 {% extends "admin/base.html" %}
-{% block title %}ดึงงาน{% endblock %}
-{% block subtitle %}<p class="adm-sub">ส่งออเดอร์ทุก 2 นาที · อัปเดทร้านอัตโนมัติทุกวัน 04:15 ไม่ต้องเพิ่มบริการเอง</p>{% endblock %}
+{% block title %}บันทึกงาน{% endblock %}
+{% block subtitle %}<p class="adm-sub">ไฟล์ log การทำงานอัตโนมัติ — อ่านสถานะล่าสุดและประวัติทีละบรรทัด</p>{% endblock %}
 {% block content %}
-{% if ran %}<div class="adm-ok">รันแล้ว {{ ran }}</div>{% endif %}
-<div style="display:flex; gap:10px; flex-wrap:wrap; margin:0 0 18px">
-  <form method="post" action="/admin/crons/run" style="margin:0">
-    <button class="la-btn" type="submit">ดึงออเดอร์ตอนนี้</button>
-  </form>
-  <form method="post" action="/admin/crons/shop" style="margin:0">
-    <button class="la-btn la-btn-ghost" type="submit">อัปเดทร้านตอนนี้</button>
-  </form>
-</div>
-<div class="adm-table-wrap">
-  <table class="adm-table">
-    <thead><tr><th>ID</th><th>งาน</th><th>รายละเอียด</th><th>เวลา</th></tr></thead>
-    <tbody>
+{% if ran %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> รันแล้ว: {{ ran }}</div>{% endif %}
+
+<section class="adm-card cron-guide">
+  <div class="cron-guide-head">
+    <h2><i class="ri-information-line"></i> อ่าน log ยังไง</h2>
+    <p class="la-muted">ระบบรันเองประมาณทุก 2 นาที หน้านี้คือประวัติล่าสุด ไม่ต้องกดทุกครั้ง</p>
+  </div>
+  <div class="cron-legend">
+    <div class="cron-legend-item"><span class="cron-badge is-pull">ดึงงานรอบหลัก</span><span>ส่งออเดอร์ · เช็คสถานะ · ยอดเงิน · ดึงแคตตาล็อก</span></div>
+    <div class="cron-legend-item"><span class="cron-badge is-sync">ซิงก์บริการ</span><span>อัปเดตราคา · เปิดของที่ใช้ได้ · ปิดของที่ต้นทางไม่มี</span></div>
+    <div class="cron-legend-item"><span class="cron-badge is-shop">คัดร้าน</span><span>คัดบริการแนะนำ (ใช้เมื่อร้านยังไม่ล็อก / ไม่ใช่ร้านใหญ่)</span></div>
+    <div class="cron-legend-item"><span class="cron-badge is-catalog">แคตตาล็อก</span><span>ดึงรายการจาก API หรือแจ้ง error</span></div>
+  </div>
+</section>
+
+<section class="cron-kpis">
+  <article class="adm-card cron-kpi">
+    <em>ดึงงานล่าสุด</em>
+    <strong>{{ last_pull.created_at if last_pull else '-' }}</strong>
+    <p>{{ last_pull.summary if last_pull else 'ยังไม่มีบันทึก' }}</p>
+  </article>
+  <article class="adm-card cron-kpi">
+    <em>ซิงก์บริการล่าสุด</em>
+    <strong>{{ last_sync.created_at if last_sync else shop_synced_at }}</strong>
+    <p>{{ last_sync.summary if last_sync else ('บันทึกระบบ: ' ~ shop_synced_at) }}</p>
+  </article>
+  <article class="adm-card cron-kpi">
+    <em>คัดร้านล่าสุด</em>
+    <strong>{{ last_shop.created_at if last_shop else shop_rebuild_at }}</strong>
+    <p>{{ last_shop.summary if last_shop else ('บันทึกระบบ: ' ~ shop_rebuild_at) }}</p>
+  </article>
+</section>
+
+<section class="adm-card cron-actions">
+  <div>
+    <h2><i class="ri-play-circle-line"></i> รันด้วยมือ</h2>
+    <p class="la-muted">ใช้เมื่อต้องการดึงทันที ไม่ต้องรอรอบอัตโนมัติ</p>
+  </div>
+  <div class="cron-action-btns">
+    <form method="post" action="/admin/crons/run">
+      <button class="la-btn" type="submit"><i class="ri-refresh-line"></i> ดึงงานรอบหลักตอนนี้</button>
+    </form>
+    <form method="post" action="/admin/crons/shop">
+      <button class="la-btn la-btn-ghost" type="submit"><i class="ri-store-2-line"></i> ซิงก์/อัปเดทร้านตอนนี้</button>
+    </form>
+  </div>
+</section>
+
+<section class="adm-card cron-log-card">
+  <div class="cron-log-head">
+    <div>
+      <h2><i class="ri-file-list-3-line"></i> บันทึก log</h2>
+      <p class="la-muted">แสดง {{ logs|length }} รายการล่าสุด{% if job and job != 'all' %} · กรอง: {{ job }}{% endif %}</p>
+    </div>
+    <nav class="cron-filters" aria-label="กรองประเภท log">
+      <a class="cron-filter{% if job=='all' %} is-on{% endif %}" href="/admin/crons">ทั้งหมด</a>
+      {% for key, meta in job_meta.items() %}
+      <a class="cron-filter{% if job==key %} is-on{% endif %}" href="/admin/crons?job={{ key }}">{{ meta.label }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+
+  <div class="cron-log-list" role="log">
     {% for r in logs %}
-      <tr><td>{{ r.id }}</td><td>{{ r.job }}</td><td class="wrap">{{ r.detail }}</td><td>{{ r.created_at }}</td></tr>
+    <article class="cron-log-row{% if r.is_error %} is-error{% endif %}">
+      <div class="cron-log-meta">
+        <span class="cron-badge is-{{ r.job_tone }}"><i class="{{ r.job_icon }}"></i> {{ r.job_label }}</span>
+        <time datetime="{{ r.created_at }}">{{ r.created_at }}</time>
+        <span class="cron-log-id">#{{ r.id }}</span>
+      </div>
+      <p class="cron-log-summary">{{ r.summary }}</p>
+      {% if r.fields %}
+      <div class="cron-chips">
+        {% for f in r.fields %}
+        <span class="cron-chip"><b>{{ f.label }}</b> {{ f.value }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <details class="cron-raw">
+        <summary>ดูข้อความดิบ</summary>
+        <code>{{ r.raw }}</code>
+      </details>
+    </article>
     {% else %}
-      <tr><td colspan="4">ยังไม่มีบันทึกการดึง</td></tr>
+    <div class="cron-empty">
+      <i class="ri-inbox-line"></i>
+      <p>ยังไม่มีบันทึกในตัวกรองนี้</p>
+    </div>
     {% endfor %}
-    </tbody>
-  </table>
-</div>
+  </div>
+</section>
 {% endblock %}

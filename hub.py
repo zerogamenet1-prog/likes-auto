@@ -57,9 +57,9 @@ async def general_post(request: Request):
     keys = [
         "site_name", "currency", "usd_rate", "profit_percent", "support_email", "timezone", "announcement",
         "fundstransfer_fees", "max_ticket", "google_client_id",
-        "affiliate_percent", "child_panel_price", "min_deposit",
+        "affiliate_percent", "child_panel_price", "child_ns1", "child_ns2", "min_deposit",
         "promptpay", "truemoney", "alert_balance", "custom_header", "custom_footer",
-        "pay_merchant",
+        "pay_merchant", "admin_allow_ips",
     ]
     values = {k: str(form.get(k) or "") for k in keys}
     for flag in (

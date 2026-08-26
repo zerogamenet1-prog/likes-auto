@@ -499,5 +499,12 @@ def shop_explain(item):
     kind = th_text(item.get("catalog_type") or "")
     if kind and kind.lower() not in {"default", "เริ่มต้น"}:
         notes.insert(0, {"label": "ประเภท", "value": kind})
+    try:
+        from service_fields import order_fields
+        fld = order_fields(item)
+        if fld.get("needs_comments"):
+            notes.insert(0, {"label": "คอมเมนต์", "value": "กรอกทีละบรรทัด 1 บรรทัด = 1 คอมเมนต์"})
+    except Exception:
+        pass
     return notes
 

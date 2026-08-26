@@ -1,0 +1,8 @@
+{% if theme_switch %}
+<div class="la-pack-switch {{ extra_class|default('') }}" role="group" aria-label="{{ t.theme }}">
+  {% if extra_class %}<span class="la-pack-label">{{ t.theme }}</span>{% endif %}
+  {% for p in theme_packs|default([]) %}
+  <button type="button" data-pack="{{ p.id }}" onclick="laSetPack('{{ p.id }}')" title="{{ p.label }}" aria-label="{{ p.label }}" aria-pressed="false" style="--sw:{{ p.bg }};--sw2:{{ p.accent }}"></button>
+  {% endfor %}
+</div>
+{% endif %}

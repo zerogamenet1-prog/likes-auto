@@ -52,6 +52,7 @@ from store import (
     reply_ticket,
     transfer_funds,
 )
+from guard import USER_FAILS, USER_LOCK, client_ip, ensure_csrf, login_block, mark_login
 
 ROOT = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(ROOT / "templates"))
@@ -87,14 +88,14 @@ def ctx(request: Request, page: str, extra=None):
         "site": SITE,
         "t": COPY,
         "page": page,
-        "faq": FAQ,
+        "faq": FAQ if page == "faq" else [],
         "user": current_user(request),
         "error": "",
         "ok": "",
         "catalog": [],
         "platforms": [],
         "categories": [],
-        "news": list_news(5),
+        "news": list_news(5) if page == "neworder" else [],
         "settings": get_settings(),
         "google_on": google_on(),
         "google_ready": google_ready(),
@@ -119,6 +120,7 @@ def ctx(request: Request, page: str, extra=None):
         "dash": {"orders": 0, "spent": 0},
         "dash_title": DASH_TITLES.get(page, SITE.get("name") or "Likes Auto"),
         "dash_mode": False,
+        "csrf": "",
     }
     if data["user"] and page not in ("signin", "signup"):
         data["dash_mode"] = True
@@ -131,11 +133,16 @@ def ctx(request: Request, page: str, extra=None):
         data.update(extra)
     try:
         from cms import q_all
-        data["menus"] = q_all("SELECT * FROM menus WHERE visible=1 ORDER BY sort, id")
-        data["methods"] = q_all("SELECT * FROM methods WHERE status='active'")
-        data["banks"] = q_all("SELECT * FROM banks WHERE status='active'")
-        data["subjects"] = q_all("SELECT * FROM subjects ORDER BY id")
-        data["bonuses"] = q_all("SELECT * FROM bonuses WHERE status='active' ORDER BY min_amount")
+        data["menus"] = []
+        if page == "addfunds":
+            data["methods"] = q_all("SELECT * FROM methods WHERE status='active'")
+            data["banks"] = q_all("SELECT * FROM banks WHERE status='active'")
+            data["bonuses"] = q_all("SELECT * FROM bonuses WHERE status='active' ORDER BY min_amount")
+        else:
+            data["methods"] = []
+            data["banks"] = []
+            data["bonuses"] = []
+        data["subjects"] = q_all("SELECT * FROM subjects ORDER BY id") if page == "tickets" else []
     except Exception:
         data.setdefault("menus", [])
         data.setdefault("methods", [])
@@ -152,6 +159,10 @@ def ctx(request: Request, page: str, extra=None):
         data.setdefault("theme_switch", True)
         data.setdefault("theme_css", "")
         data.setdefault("theme_packs", [])
+    try:
+        data["csrf"] = ensure_csrf(request)
+    except Exception:
+        data["csrf"] = ""
     return data
 
 
@@ -186,6 +197,10 @@ def _norm_status(value):
 
 
 def enrich_orders(items):
+    from db import get_service
+    from service_fields import service_refill_ok
+
+    svc_cache = {}
     out = []
     for item in items:
         row = dict(item)
@@ -211,6 +226,19 @@ def enrich_orders(items):
         else:
             row["progress"] = None
             row["done"] = 0
+        sid = row.get("service_id")
+        svc = None
+        if sid:
+            try:
+                sid_n = int(sid)
+            except (TypeError, ValueError):
+                sid_n = 0
+            if sid_n:
+                if sid_n not in svc_cache:
+                    svc_cache[sid_n] = get_service(sid_n)
+                svc = svc_cache[sid_n]
+        row["can_refill"] = service_refill_ok(svc, row.get("service") or "")
+        row["service_plat"] = (svc or {}).get("platform") or ""
         out.append(row)
     return out
 
@@ -257,15 +285,20 @@ async def signup_get(request: Request):
 @router.post("/signup")
 async def signup_post(request: Request, username: str = Form(...), email: str = Form(...), password: str = Form(...), confirm: str = Form(...), ref: str = Form("")):
     init_db()
+    blocked = login_block("signup", request, 6, 3600)
+    if blocked:
+        return render(request, "signup.html", "signup", {"error": blocked, "ref": ref})
     if password != confirm:
         return render(request, "signup.html", "signup", {"error": "รหัสผ่านไม่ตรงกัน", "ref": ref})
     if len(password) < 6:
         return render(request, "signup.html", "signup", {"error": "รหัสผ่านอย่างน้อย 6 ตัว", "ref": ref})
     user, err = create_client(username.strip(), email.strip(), password, referred_by=ref.strip() or None)
     if err:
+        mark_login("signup", request, False, 6, 3600)
         return render(request, "signup.html", "signup", {"error": err, "ref": ref})
     request.session["user_id"] = user["id"]
-    add_log("สมัครสมาชิก %s" % user["username"], request.client.host if request.client else "-")
+    mark_login("signup", request, True, 6, 3600)
+    add_log("สมัครสมาชิก %s" % user["username"], client_ip(request))
     return RedirectResponse("/neworder", status_code=303)
 
 
@@ -323,10 +356,16 @@ async def google_login(request: Request):
 
 @router.post("/signin")
 async def signin_post(request: Request, username: str = Form(...), password: str = Form(...)):
+    blocked = login_block("user_login", request, USER_FAILS, USER_LOCK)
+    if blocked:
+        return render(request, "signin.html", "signin", {"error": blocked})
     user = check_client(username.strip(), password)
     if not user:
+        mark_login("user_login", request, False, USER_FAILS, USER_LOCK)
         return render(request, "signin.html", "signin", {"error": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"})
+    mark_login("user_login", request, True, USER_FAILS, USER_LOCK)
     request.session["user_id"] = user["id"]
+    add_log("เข้าสู่ระบบ %s" % user["username"], client_ip(request))
     return RedirectResponse("/neworder", status_code=303)
 
 
@@ -354,8 +393,6 @@ async def forgot_post(request: Request, email: str = Form(...)):
         token = new_reset_token(user["email"])
         link = "%s/reset?token=%s" % (SITE.get("url") or "https://likes-auto.com", token)
         send_mail(user["email"], "รีเซ็ตรหัสผ่าน Likes Auto", "กดลิงก์นี้ภายใน 6 ชั่วโมง:\n%s\n" % link, s)
-    elif user and not smtp_ready(s):
-        msg = "ระบบอีเมลยังไม่พร้อม กรุณาติดต่อแอดมินทางตั๋วเพื่อตั้งรหัสใหม่"
     return render(request, "forgot.html", "signin", {"ok": msg})
 
 
@@ -415,12 +452,18 @@ async def neworder_get(request: Request, cat: str = "", sid: str = ""):
 
 
 @router.post("/neworder")
-async def neworder_post(request: Request, service_id: int = Form(...), link: str = Form(...), quantity: int = Form(...)):
+async def neworder_post(
+    request: Request,
+    service_id: int = Form(...),
+    link: str = Form(""),
+    quantity: int = Form(...),
+    comments: str = Form(""),
+):
     gate = need_mod(request, "mod_neworder")
     if gate:
         return gate
     user = current_user(request)
-    oid, err = create_order(user["username"], service_id, link.strip(), quantity)
+    oid, err = create_order(user["username"], service_id, link.strip(), quantity, comments.strip())
     extra = {"recent": enrich_orders(client_orders(user["username"])[:5])}
     if err:
         extra["error"] = err
@@ -451,6 +494,7 @@ async def orders(request: Request, q: str = "", status: str = "", p: int = 1):
         "q": q,
         "status": _norm_status(status),
         "counts": counts,
+        "total": total,
         "page_n": page_n,
         "pages": pages if total > per else 1,
     })
@@ -735,9 +779,12 @@ async def tickets_get(request: Request):
     if gate:
         return gate
     user = current_user(request)
+    tickets = client_tickets(user["username"])
     return render(request, "tickets.html", "tickets", {
-        "tickets": client_tickets(user["username"]),
+        "tickets": tickets,
         "replies": all_ticket_replies(),
+        "ticket_open": sum(1 for t in tickets if (t.get("status") or "") in {"open", "answered"}),
+        "ticket_closed": sum(1 for t in tickets if (t.get("status") or "") == "closed"),
     })
 
 
@@ -748,10 +795,13 @@ async def tickets_post(request: Request, subject: str = Form(...), message: str 
         return gate
     user = current_user(request)
     create_ticket(user["username"], subject.strip(), message.strip())
+    tickets = client_tickets(user["username"])
     return render(request, "tickets.html", "tickets", {
         "ok": "เปิดตั๋วแล้ว",
-        "tickets": client_tickets(user["username"]),
+        "tickets": tickets,
         "replies": all_ticket_replies(),
+        "ticket_open": sum(1 for t in tickets if (t.get("status") or "") in {"open", "answered"}),
+        "ticket_closed": sum(1 for t in tickets if (t.get("status") or "") == "closed"),
     })
 
 
@@ -766,6 +816,8 @@ async def tickets_user_reply(request: Request, tid: int, message: str = Form(...
         "tickets": client_tickets(user["username"]),
         "replies": all_ticket_replies(),
     }
+    extra["ticket_open"] = sum(1 for t in extra["tickets"] if (t.get("status") or "") in {"open", "answered"})
+    extra["ticket_closed"] = sum(1 for t in extra["tickets"] if (t.get("status") or "") == "closed")
     if not row or row.get("status") == "closed":
         extra["error"] = "ตอบตั๋วนี้ไม่ได้"
         return render(request, "tickets.html", "tickets", extra)
@@ -773,6 +825,8 @@ async def tickets_user_reply(request: Request, tid: int, message: str = Form(...
     extra["ok"] = "ส่งข้อความแล้ว"
     extra["tickets"] = client_tickets(user["username"])
     extra["replies"] = all_ticket_replies()
+    extra["ticket_open"] = sum(1 for t in extra["tickets"] if (t.get("status") or "") in {"open", "answered"})
+    extra["ticket_closed"] = sum(1 for t in extra["tickets"] if (t.get("status") or "") == "closed")
     return render(request, "tickets.html", "tickets", extra)
 
 
@@ -831,7 +885,15 @@ async def aff_get(request: Request):
     gate = need_mod(request, "mod_affiliate")
     if gate:
         return gate
-    return render(request, "affiliates.html", "affiliates")
+    user = current_user(request)
+    ref_count = 0
+    if user:
+        row = fetch_one(
+            "SELECT COUNT(*) c FROM clients WHERE referred_by=? OR referred_by=?",
+            (user.get("username"), user.get("ref_code")),
+        )
+        ref_count = int((row or {}).get("c") or 0)
+    return render(request, "affiliates.html", "affiliates", {"ref_count": ref_count})
 
 
 @router.get("/panels", response_class=HTMLResponse)
@@ -840,22 +902,68 @@ async def panels_get(request: Request):
     if gate:
         return gate
     user = current_user(request)
-    return render(request, "panels.html", "panels", {"items": fetch_all("SELECT * FROM child_panels WHERE client=? ORDER BY id DESC", (user["username"],))})
+    items = fetch_all("SELECT * FROM child_panels WHERE client=? ORDER BY id DESC", (user["username"],))
+    return render(request, "panels.html", "panels", {
+        "items": items,
+        "panel_open": sum(1 for x in items if (x.get("status") or "") in {"pending", "active"}),
+        "panel_active": sum(1 for x in items if (x.get("status") or "") == "active"),
+        "panel_st": {
+            "pending": "รออนุมัติ",
+            "active": "เปิดใช้งานแล้ว",
+            "canceled": "ยกเลิก/คืนเงิน",
+        },
+    })
 
 
 @router.post("/panels")
-async def panels_post(request: Request, domain: str = Form(...)):
+async def panels_post(
+    request: Request,
+    domain: str = Form(...),
+    admin_user: str = Form(...),
+    admin_pass: str = Form(...),
+    admin_pass2: str = Form(...),
+    currency: str = Form("THB"),
+):
     gate = need_mod(request, "mod_child")
     if gate:
         return gate
     user = current_user(request)
-    pid, err = create_child_panel(user["username"], domain.strip().lower())
+    extra = {
+        "panel_st": {
+            "pending": "รออนุมัติ",
+            "active": "เปิดใช้งานแล้ว",
+            "canceled": "ยกเลิก/คืนเงิน",
+        },
+    }
+    if (admin_pass or "").strip() != (admin_pass2 or "").strip():
+        items = fetch_all("SELECT * FROM child_panels WHERE client=? ORDER BY id DESC", (user["username"],))
+        extra.update({
+            "error": "รหัสผ่านยืนยันไม่ตรงกัน",
+            "items": items,
+            "panel_open": sum(1 for x in items if (x.get("status") or "") in {"pending", "active"}),
+            "panel_active": sum(1 for x in items if (x.get("status") or "") == "active"),
+            "user": get_client(client_id=user["id"]),
+        })
+        return render(request, "panels.html", "panels", extra)
+    pid, err = create_child_panel(
+        user["username"],
+        domain.strip().lower(),
+        admin_user=admin_user,
+        admin_pass=admin_pass,
+        currency=currency,
+    )
     items = fetch_all("SELECT * FROM child_panels WHERE client=? ORDER BY id DESC", (user["username"],))
-    extra = {"items": items, "user": get_client(client_id=user["id"])}
+    extra.update({
+        "items": items,
+        "user": get_client(client_id=user["id"]),
+        "panel_open": sum(1 for x in items if (x.get("status") or "") in {"pending", "active"}),
+        "panel_active": sum(1 for x in items if (x.get("status") or "") == "active"),
+    })
     if err:
         extra["error"] = err
     else:
-        extra["ok"] = "ส่งคำขอแผงลูก #%s แล้ว" % pid
+        extra["ok"] = "ส่งคำขอแผงลูก #%s แล้ว — ตั้ง Nameserver ตามคู่มือด้านล่าง แล้วรอทีมเปิดภายใน 2–24 ชม." % pid
+        extra["focus_form"] = False
     return render(request, "panels.html", "panels", extra)
 
 
@@ -912,12 +1020,26 @@ async def order_refill(request: Request, oid: int):
             break
     if not order:
         return RedirectResponse("/orders", status_code=303)
+    enriched = enrich_orders([order])[0]
+    if not enriched.get("can_refill"):
+        extra = {
+            "orders": enrich_orders(client_orders(user["username"]))[:20],
+            "counts": order_counts(enrich_orders(client_orders(user["username"]))),
+            "q": "",
+            "status": "",
+            "total": len(client_orders(user["username"])),
+            "page_n": 1,
+            "pages": 1,
+            "error": "บริการนี้ไม่รองรับการเติมยอด (ไม่มีรับประกัน)",
+        }
+        return render(request, "orders.html", "orders", extra)
     _, err = create_task(oid, user["username"], "refill")
     extra = {
         "orders": enrich_orders(client_orders(user["username"]))[:20],
         "counts": order_counts(enrich_orders(client_orders(user["username"]))),
         "q": "",
         "status": "",
+        "total": len(client_orders(user["username"])),
         "page_n": 1,
         "pages": 1,
     }
@@ -937,6 +1059,7 @@ async def order_cancel(request: Request, oid: int):
         "counts": order_counts(items),
         "q": "",
         "status": "",
+        "total": len(items),
         "page_n": 1,
         "pages": 1,
     }

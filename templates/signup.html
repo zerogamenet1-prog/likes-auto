@@ -1,37 +1,91 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="la-page">
-  <div class="la-wrap">
-    <div class="la-form-shell">
-      <div class="la-form-copy">
-        <h1>{{ t.signup_title }}</h1>
-        <p>{{ t.signup_lead }}</p>
-        <img class="la-form-photo" src="/static/assets/support-team.jpg" alt="ทีมซัพพอร์ต Likes Auto" width="480" height="320" loading="lazy" decoding="async">
-        <ul class="la-trust la-trust-col">
-          <li><i class="ri-user-add-fill"></i> สมัครฟรี ใช้ได้ทันที</li>
-          <li><i class="ri-shield-check-fill"></i> {{ t.trust_nopass }}</li>
-          <li><i class="ri-time-fill"></i> {{ t.trust_auto }}</li>
-        </ul>
-      </div>
-      <div class="la-form-side">
+<main class="la-page la-auth-page">
+  <div class="la-auth-orbs" aria-hidden="true"><span class="a"></span><span class="b"></span><span class="c"></span></div>
+  <div class="la-wrap la-auth-wrap">
+    <div class="la-auth-shell">
+      <div class="la-auth-card la-login-card">
+        <div class="la-login-hi">
+          <span class="la-login-live"><i></i> {{ t.ssl }}</span>
+          <h1 class="la-auth-card-title">{{ t.signup_title }}</h1>
+          <p class="la-auth-card-lead">{{ t.signup_lead }}</p>
+          <p class="la-auth-switch">{{ t.have_account }} <a href="/signin">{{ t.nav_login }}</a></p>
+        </div>
         {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
         {% include "_google_btn.html" %}
-        <form method="post" action="/signup">
-          <label class="la-field">{{ t.label_user }}</label>
-          <input class="la-input" type="text" name="username" required>
-          <label class="la-field">{{ t.label_email }}</label>
-          <input class="la-input" type="email" name="email" required>
-          <label class="la-field">{{ t.label_pass }}</label>
-          <input class="la-input" type="password" name="password" required>
-          <label class="la-field">{{ t.label_confirm }}</label>
-          <input class="la-input" type="password" name="confirm" required>
-          <label class="la-field">โค้ดแนะนำ (ถ้ามี)</label>
-          <input class="la-input" type="text" name="ref" value="{{ ref or '' }}">
-          <button class="la-btn" type="submit" style="width:100%">{{ t.nav_signup }}</button>
+        <form method="post" action="/signup" id="laSignupForm" class="la-auth-form">
+          {% include "_guard_fields.html" %}
+          <label class="la-field" for="suUser">{{ t.label_user }}</label>
+          <div class="la-input-ico">
+            <i class="ri-user-3-line"></i>
+            <input class="la-input" id="suUser" type="text" name="username" required autocomplete="username" placeholder="{{ t.label_user }}" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+          </div>
+          <label class="la-field" for="suEmail">{{ t.label_email }}</label>
+          <div class="la-input-ico">
+            <i class="ri-mail-line"></i>
+            <input class="la-input" id="suEmail" type="email" name="email" required autocomplete="email" placeholder="{{ t.label_email }}" enterkeyhint="next" inputmode="email">
+          </div>
+          <label class="la-field" for="suPass">{{ t.label_pass }}</label>
+          <div class="la-input-ico">
+            <i class="ri-lock-2-line"></i>
+            <input class="la-input" id="suPass" type="password" name="password" required autocomplete="new-password" placeholder="{{ t.label_pass }}" minlength="6" enterkeyhint="next">
+            <button class="la-pass-eye" type="button" data-eye="suPass" aria-label="แสดงรหัสผ่าน"><i class="ri-eye-line"></i></button>
+          </div>
+          <label class="la-field" for="suConfirm">{{ t.label_confirm }}</label>
+          <div class="la-input-ico">
+            <i class="ri-lock-password-line"></i>
+            <input class="la-input" id="suConfirm" type="password" name="confirm" required autocomplete="new-password" placeholder="{{ t.label_confirm }}" minlength="6" enterkeyhint="next">
+            <button class="la-pass-eye" type="button" data-eye="suConfirm" aria-label="แสดงรหัสผ่าน"><i class="ri-eye-line"></i></button>
+          </div>
+          <label class="la-field" for="suRef">โค้ดแนะนำ (ถ้ามี)</label>
+          <div class="la-input-ico">
+            <i class="ri-gift-line"></i>
+            <input class="la-input" id="suRef" type="text" name="ref" value="{{ ref or '' }}" autocomplete="off" placeholder="โค้ดแนะนำ (ถ้ามี)" enterkeyhint="done">
+          </div>
+          <button class="la-btn la-auth-submit" type="submit"><i class="ri-user-add-line"></i> {{ t.nav_signup }}</button>
         </form>
-        <p style="margin-top:14px">{{ t.have_account }} <a href="/signin">{{ t.nav_login }}</a></p>
+        <p class="la-auth-foot">{{ t.have_account }} <a href="/signin">{{ t.nav_login }}</a></p>
       </div>
+
+      <aside class="la-auth-promo">
+        <p class="la-kicker"><i class="ri-sparkling-2-line"></i> {{ t.badge }}</p>
+        <h2 class="la-auth-promo-title">{{ t.cta_band_h }}</h2>
+        <p class="sub">{{ t.signup_lead }}</p>
+        <div class="la-auth-visual">
+          <img class="la-form-photo" src="/static/assets/support-team.jpg" alt="ทีมซัพพอร์ต Likes Auto" width="480" height="320" loading="lazy" decoding="async">
+          <span class="la-auth-badge"><i class="ri-customer-service-2-fill"></i> {{ t.trust_th }}</span>
+        </div>
+        <ul class="la-auth-perks">
+          <li><i class="ri-user-add-fill"></i><span>สมัครฟรี ใช้ได้ทันที</span></li>
+          <li><i class="ri-shield-check-fill"></i><span>{{ t.trust_nopass }}</span></li>
+          <li><i class="ri-time-fill"></i><span>{{ t.trust_auto }}</span></li>
+          <li><i class="ri-wallet-3-fill"></i><span>{{ t.trust_pay }}</span></li>
+        </ul>
+        <div class="la-auth-plats" aria-hidden="true">
+          <img src="/static/assets/plats/instagram.svg" alt="" width="22" height="22">
+          <img src="/static/assets/plats/tiktok.svg" alt="" width="22" height="22">
+          <img src="/static/assets/plats/youtube.svg" alt="" width="22" height="22">
+          <img src="/static/assets/plats/facebook.svg" alt="" width="22" height="22">
+          <img src="/static/assets/plats/telegram.svg" alt="" width="22" height="22">
+          <img src="/static/assets/plats/x.svg" alt="" width="22" height="22">
+        </div>
+      </aside>
     </div>
   </div>
 </main>
+<script>
+(function(){
+  document.querySelectorAll('.la-auth-page .la-pass-eye').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.getAttribute('data-eye');
+      var input = document.getElementById(id);
+      if (!input) return;
+      var show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      var icon = btn.querySelector('i');
+      if (icon) icon.className = show ? 'ri-eye-off-line' : 'ri-eye-line';
+    });
+  });
+})();
+</script>
 {% endblock %}

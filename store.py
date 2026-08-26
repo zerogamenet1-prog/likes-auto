@@ -4,6 +4,7 @@ import random
 
 from db import (
     _hash,
+    _hash_eq,
     add_log,
     calc_charge,
     connect,
@@ -112,6 +113,9 @@ def extra_migrate():
         ("tickets", "reply", "TEXT"),
         ("orders", "parent_drip", "INTEGER"),
         ("orders", "parent_sub", "INTEGER"),
+        ("child_panels", "admin_user", "TEXT"),
+        ("child_panels", "admin_pass", "TEXT"),
+        ("child_panels", "currency", "TEXT"),
     ]:
         cols = [r[1] for r in cur.execute("PRAGMA table_info(%s)" % table)]
         if col not in cols:
@@ -138,6 +142,8 @@ def extra_migrate():
     defaults = {
         "affiliate_percent": "5",
         "child_panel_price": "500",
+        "child_ns1": "ns1.likes-auto.com",
+        "child_ns2": "ns2.likes-auto.com",
         "announcement": "",
         "maintenance": "0",
         "min_deposit": "20",
@@ -449,7 +455,8 @@ def list_news(limit=20):
     return fetch_all("SELECT * FROM news ORDER BY id DESC LIMIT ?", (limit,))
 
 
-def create_child_panel(client, domain):
+def create_child_panel(client, domain, admin_user="", admin_pass="", currency="THB"):
+    import re
     from db import get_settings
 
     settings = get_settings()
@@ -457,15 +464,34 @@ def create_child_panel(client, domain):
     user = get_client(username=client)
     if not user:
         return None, "ไม่พบบัญชี"
+    domain = (domain or "").strip().lower().lstrip("https://").lstrip("http://").split("/")[0].strip(".")
+    if domain.startswith("www."):
+        domain = domain[4:]
+    if not re.fullmatch(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+", domain or ""):
+        return None, "รูปแบบโดเมนไม่ถูกต้อง เช่น mybrand.com"
+    admin_user = (admin_user or "").strip()
+    admin_pass = (admin_pass or "").strip()
+    currency = (currency or "THB").strip().upper() or "THB"
+    if len(admin_user) < 3:
+        return None, "ชื่อแอดมินอย่างน้อย 3 ตัวอักษร"
+    if len(admin_pass) < 6:
+        return None, "รหัสผ่านอย่างน้อย 6 ตัวอักษร"
     if float(user["balance"] or 0) < price:
-        return None, "ยอดเงินไม่พอ"
+        return None, "ยอดเงินไม่พอ กรุณาเติมเงินก่อน"
     if fetch_one("SELECT id FROM child_panels WHERE domain=?", (domain,)):
         return None, "โดเมนนี้ถูกใช้แล้ว"
+    pending = fetch_one(
+        "SELECT COUNT(*) c FROM child_panels WHERE client=? AND status IN ('pending','active')",
+        (client,),
+    )
+    if int((pending or {}).get("c") or 0) >= 5:
+        return None, "เปิดแผงได้สูงสุด 5 โดเมนต่อบัญชี"
     execute("UPDATE clients SET balance = balance - ? WHERE username=?", (price, client))
     pid = execute(
-        "INSERT INTO child_panels (client, domain, charge, status, note, created_at) VALUES (?,?,?,?,?,?)",
-        (client, domain, price, "pending", "", now()),
+        "INSERT INTO child_panels (client, domain, charge, status, note, created_at, admin_user, admin_pass, currency) VALUES (?,?,?,?,?,?,?,?,?)",
+        (client, domain, price, "pending", "", now(), admin_user, admin_pass, currency),
     )
+    add_log("คำขอแผงลูก #%s โดเมน %s โดย %s" % (pid, domain, client), "-")
     return pid, None
 
 
@@ -537,7 +563,7 @@ def report_data():
 
 def change_client_password(username, old_password, new_password):
     user = get_client(username=username)
-    if not user or user.get("password_hash") != _hash(old_password):
+    if not user or not _hash_eq(user.get("password_hash"), old_password):
         return False, "รหัสผ่านเดิมไม่ถูกต้อง"
     execute("UPDATE clients SET password_hash=? WHERE username=?", (_hash(new_password), username))
     return True, None

@@ -1,47 +1,88 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="la-page">
-  <div class="la-wrap">
+<main class="la-page {% if user %}la-dash-page la-hub-page{% endif %} la-services-page">
+  <div class="{% if user %}{% else %}la-wrap{% endif %}">
+    {% if user %}
+    <section class="la-hub-hero">
+      <div class="la-hub-hero-in">
+        <h1><i class="ri-store-2-line"></i> รายการบริการ</h1>
+        <p>เลือกแพลตฟอร์มแล้วดูเรทต่อ 1,000 หน่วย · กดสั่งซื้อเพื่อเปิดฟอร์ม</p>
+        <div class="la-hub-stats">
+          <article><em>แสดงผล</em><strong>{{ catalog|length }}</strong></article>
+          <article><em>แพลตฟอร์ม</em><strong>{{ platforms|length }}</strong></article>
+          <article><em>หมวดที่เลือก</em><strong>{{ cat or 'ทั้งหมด' }}</strong></article>
+        </div>
+      </div>
+    </section>
+    {% else %}
     <div class="la-page-head">
       <h1><i class="ri-store-2-line"></i> {{ t.svc_title }}</h1>
       <p class="sub">เลือกหมวดแล้วดูเรทต่อ 1,000 หน่วย</p>
     </div>
-    <div class="la-plat-mini">
-      <a href="/services"><img class="la-platlogo" src="/static/assets/plats/app.svg" alt="บริการทั้งหมด" width="20" height="20"> ทั้งหมด</a>
-      {% for p in platforms[:8] %}
-      <a href="/services?cat={{ p.name|urlencode }}"{% if cat==p.name %} class="is-on"{% endif %}>
-        <img class="la-platlogo" src="{{ p.logo or '/static/assets/plats/app.svg' }}" alt="{{ p.name }}" width="20" height="20"> {{ p.name }}
+    {% endif %}
+
+    <div class="la-plat-mini la-svc-plats">
+      <a href="/services" class="{% if not cat %}is-on{% endif %}"><img class="la-platlogo" src="/static/assets/plats/app.svg" alt="" width="20" height="20"> ทั้งหมด</a>
+      {% for p in platforms[:12] %}
+      <a href="/services?cat={{ p.name|urlencode }}" class="{% if cat==p.name %}is-on{% endif %}">
+        <img class="la-platlogo" src="{{ p.logo or '/static/assets/plats/app.svg' }}" alt="" width="20" height="20"> {{ p.name }}
       </a>
       {% endfor %}
     </div>
-    <form method="get" action="/services" class="la-filter">
-      <select class="la-input" name="cat" onchange="this.form.submit()">
-        <option value="">ทุกหมวด</option>
+
+    <form method="get" action="/services" class="la-svc-search">
+      <select class="la-input" name="cat" aria-label="แพลตฟอร์ม">
+        <option value="">ทุกแพลตฟอร์ม</option>
         {% for p in platforms %}
         <option value="{{ p.name }}" {% if cat==p.name %}selected{% endif %}>{{ p.name }} ({{ p.count }})</option>
         {% endfor %}
       </select>
-      <input class="la-input" type="search" name="q" value="{{ q or '' }}" placeholder="ค้นหาบริการ">
+      <div class="la-svc-search-in">
+        <i class="ri-search-line"></i>
+        <input class="la-input" type="search" name="q" value="{{ q or '' }}" placeholder="ค้นหาชื่อบริการ หรือ ID" enterkeyhint="search">
+      </div>
       <button class="la-btn" type="submit">ค้นหา</button>
     </form>
-    <div class="la-table-wrap">
-    <table class="la-svc-table">
-      <thead><tr><th>ID</th><th>หมวด</th><th>บริการ</th><th>เรท</th><th>ช่วง</th><th></th></tr></thead>
-      <tbody>
-      {% for s in catalog %}
-        <tr>
-          <td data-label="ID">{{ s.id }}</td>
-          <td class="wrap" data-label="หมวด"><img class="la-platlogo" src="{{ s.logo or '/static/assets/plats/app.svg' }}" alt="{{ s.platform }}" width="20" height="20" loading="lazy"> {{ s.platform }}{% if s.category %}<br><small>{{ s.category }}</small>{% endif %}</td>
-          <td data-label="บริการ">{{ s.name }}</td>
-          <td data-label="เรท">{{ s.rate }}</td>
-          <td data-label="ช่วง">{{ s.min_qty }}-{{ s.max_qty }}</td>
-          <td><a class="la-btn la-btn-mini" href="{% if user %}/neworder?cat={{ s.platform|urlencode }}&amp;sid={{ s.id }}{% else %}/signup{% endif %}">สั่งซื้อ</a></td>
-        </tr>
-      {% else %}
-        <tr><td colspan="6">ไม่พบบริการในหมวดนี้</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+
+    <p class="la-ord-meta">พบ {{ catalog|length }} บริการ{% if q %} · ค้นหา “{{ q }}”{% endif %}</p>
+
+    <div class="la-table-wrap la-svc-wrap">
+      <table class="la-svc-table la-svc-table-pro">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>แพลตฟอร์ม</th>
+            <th>บริการ</th>
+            <th>เรท / 1k</th>
+            <th>ช่วง</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for s in catalog %}
+          <tr>
+            <td data-label="ID"><button type="button" class="la-id" data-copy="{{ s.id }}">{{ s.id }}</button></td>
+            <td class="wrap" data-label="แพลตฟอร์ม">
+              <span class="la-svc-plat">
+                <img class="la-platlogo" src="{{ s.logo or '/static/assets/plats/app.svg' }}" alt="" width="20" height="20" loading="lazy">
+                <span>{{ s.platform }}{% if s.category_th or s.category %}<small>{{ s.category_th or s.category }}</small>{% endif %}</span>
+              </span>
+            </td>
+            <td data-label="บริการ" class="la-svc-namecell">
+              <b>{{ s.title or s.name_short or s.name }}</b>
+              {% if s.bits %}<small class="la-svc-bits">{{ s.bits|join(' · ') }}</small>{% endif %}
+            </td>
+            <td data-label="เรท"><b class="la-svc-rate">฿{{ "%.2f"|format(s.rate or 0) }}</b></td>
+            <td data-label="ช่วง">{{ "{:,}".format(s.min_qty or 0) }}–{{ "{:,}".format(s.max_qty or 0) }}</td>
+            <td data-label="">
+              <a class="la-btn la-btn-mini" href="{% if user %}/neworder?cat={{ s.platform|urlencode }}&amp;sid={{ s.id }}{% else %}/signup{% endif %}">สั่งซื้อ</a>
+            </td>
+          </tr>
+        {% else %}
+          <tr class="la-empty-row"><td colspan="6">ไม่พบบริการในตัวกรองนี้</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </main>

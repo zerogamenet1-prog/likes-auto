@@ -1,22 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="la-page">
-  <div class="la-wrap">
-    <div class="la-form-shell">
-      <div class="la-form-copy">
-        <h2>ลืมรหัสผ่าน</h2>
-        <p>กรอกอีเมลบัญชี ระบบจะส่งลิงก์ตั้งรหัสใหม่ถ้าเปิด SMTP ไว้</p>
-      </div>
-      <div class="la-form-side">
+<main class="la-page la-auth-page">
+  <div class="la-auth-orbs" aria-hidden="true"><span class="a"></span><span class="b"></span><span class="c"></span></div>
+  <div class="la-wrap la-auth-wrap">
+    <div class="la-auth-shell">
+      <div class="la-auth-card la-login-card">
+        <div class="la-login-hi">
+          <span class="la-login-live"><i></i> {{ t.ssl }}</span>
+          <h1 class="la-auth-card-title">ลืมรหัสผ่าน</h1>
+          <p class="la-auth-card-lead">กรอกอีเมลบัญชี ระบบจะส่งลิงก์ตั้งรหัสใหม่ให้ (ถ้าเปิด SMTP ไว้)</p>
+          <p class="la-auth-switch">จำรหัสได้แล้ว? <a href="/signin">{{ t.nav_login }}</a></p>
+        </div>
         {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
         {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
-        <form method="post" action="/forgot">
-          <label class="la-field">อีเมล</label>
-          <input class="la-input" type="email" name="email" required>
-          <button class="la-btn" type="submit" style="width:100%">ส่งลิงก์รีเซ็ต</button>
+        <form method="post" action="/forgot" class="la-auth-form">
+          {% include "_guard_fields.html" %}
+          <label class="la-field" for="fgEmail">{{ t.label_email }}</label>
+          <div class="la-input-ico">
+            <i class="ri-mail-line"></i>
+            <input class="la-input" id="fgEmail" type="email" name="email" required autocomplete="email" placeholder="{{ t.label_email }}" inputmode="email" enterkeyhint="done">
+          </div>
+          <button class="la-btn la-auth-submit" type="submit"><i class="ri-mail-send-line"></i> ส่งลิงก์รีเซ็ต</button>
         </form>
-        <p style="margin-top:14px"><a href="/signin">กลับเข้าสู่ระบบ</a></p>
+        <p class="la-auth-foot"><a href="/signin">{{ t.nav_login }}</a> · <a href="/signup">{{ t.nav_signup }}</a></p>
       </div>
+
+      <aside class="la-auth-promo">
+        <p class="la-kicker"><i class="ri-lock-password-line"></i> รีเซ็ตรหัสผ่าน</p>
+        <h2 class="la-auth-promo-title">ตั้งรหัสใหม่ได้ในไม่กี่นาที</h2>
+        <p class="sub">ใช้ได้ทันทีหลังรีเซ็ต สำเร็จแล้วเข้าแผงสั่งซื้อได้เลย</p>
+        <div class="la-auth-visual">
+          <img class="la-form-photo" src="/static/assets/secure-pay.jpg" alt="ระบบปลอดภัย Likes Auto" width="480" height="320" loading="lazy" decoding="async">
+          <span class="la-auth-badge"><i class="ri-shield-check-fill"></i> {{ t.trust_ssl }}</span>
+        </div>
+        <ul class="la-auth-perks">
+          <li><i class="ri-mail-check-fill"></i><span>ส่งลิงก์ทางอีเมล</span></li>
+          <li><i class="ri-shield-check-fill"></i><span>{{ t.trust_nopass }}</span></li>
+          <li><i class="ri-lock-2-fill"></i><span>{{ t.ssl }}</span></li>
+          <li><i class="ri-customer-service-2-fill"></i><span>{{ t.trust_th }}</span></li>
+        </ul>
+      </aside>
     </div>
   </div>
 </main>

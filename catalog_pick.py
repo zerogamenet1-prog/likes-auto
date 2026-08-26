@@ -353,6 +353,7 @@ def pick_best(items, usd_rate=35):
 
 
 def apply_picked_services(pid, picked, cfg):
+    from db import shop_item_blocked
     rows = []
     keep = []
     for item in picked:
@@ -361,6 +362,9 @@ def apply_picked_services(pid, picked, cfg):
             continue
         api_sid = str(api_sid)
         plat = item.get("_plat") or split_category(item.get("category") or "")[0]
+        shop_cat = item.get("_shop_cat") or kind_label(item.get("_kind"))
+        if shop_item_blocked(plat, shop_cat):
+            continue
         sell = sell_thb(item.get("rate") or 0, item.get("currency") or "USD", cfg["usd"], cfg["pct"], 0)
         try:
             min_qty = int(item.get("min_qty") or 1)
@@ -379,7 +383,7 @@ def apply_picked_services(pid, picked, cfg):
             "max_qty": max_qty,
             "api_service": api_sid,
             "cost_rate": float(item.get("rate") or 0),
-            "category": item.get("_shop_cat") or kind_label(item.get("_kind")),
+            "category": shop_cat,
             "currency": item.get("currency") or "USD",
         })
     con = connect()

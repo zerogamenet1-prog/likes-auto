@@ -1,0 +1,316 @@
+:root {
+  --al-gold: #f5b74d;
+  --al-gold-2: #ffd789;
+  --al-ink: #e8eefc;
+  --al-mute: #9aa6b8;
+  --al-line: rgba(245, 183, 77, .22);
+  --al-card: rgba(12, 18, 34, .72);
+  --al-field: rgba(7, 11, 22, .72);
+  --al-ok: #34d399;
+  --al-bad: #fb7185;
+}
+html[data-theme="light"] {
+  --al-ink: #1e293b;
+  --al-mute: #64748b;
+  --al-line: rgba(180, 120, 20, .22);
+  --al-card: rgba(255, 255, 255, .86);
+  --al-field: #fff;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+body.al-body {
+  font-family: Sarabun, Inter, "Segoe UI", sans-serif;
+  color: var(--al-ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #070b16;
+  isolation: isolate;
+}
+html[data-theme="light"] body.al-body {
+  background: #efe7d6;
+}
+
+.al-stars, .al-aurora, .al-grid, .al-spot {
+  position: fixed; inset: 0; pointer-events: none;
+}
+.al-stars { z-index: 0; }
+.al-aurora { z-index: 1; overflow: hidden; }
+.al-aurora span {
+  position: absolute; width: 52vw; height: 52vw; border-radius: 50%;
+  filter: blur(70px); opacity: .42;
+  animation: alOrb 18s ease-in-out infinite;
+}
+.al-aurora span:nth-child(1) {
+  background: #1d4ed8; top: -18%; left: -10%;
+}
+.al-aurora span:nth-child(2) {
+  background: #f5b74d; top: 12%; right: -18%; animation-delay: -6s; opacity: .28;
+}
+.al-aurora span:nth-child(3) {
+  background: #7c3aed; bottom: -22%; left: 28%; animation-delay: -11s; opacity: .22;
+}
+html[data-theme="light"] .al-aurora span:nth-child(1) { opacity: .18; }
+html[data-theme="light"] .al-aurora span:nth-child(2) { opacity: .22; }
+html[data-theme="light"] .al-aurora span:nth-child(3) { opacity: .12; }
+.al-grid {
+  z-index: 1;
+  background-image:
+    linear-gradient(rgba(245,183,77,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,183,77,.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 40%, #000 30%, transparent 78%);
+  transform: perspective(700px) rotateX(62deg) scale(1.6);
+  transform-origin: center 80%;
+  opacity: .55;
+}
+.al-spot {
+  z-index: 2;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 30%), rgba(245,183,77,.14), transparent 42%);
+}
+.al-top, .al-stage, .al-foot { position: relative; z-index: 3; }
+
+.al-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 28px 0;
+}
+.al-brand {
+  display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none;
+}
+.al-crest {
+  width: 46px; height: 46px; border-radius: 50%; overflow: hidden;
+  box-shadow: 0 0 0 2px rgba(245,183,77,.55), 0 0 22px rgba(245,183,77,.35);
+  animation: alPulse 3.6s ease-in-out infinite;
+}
+.al-crest img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.al-brand strong {
+  display: block; font-family: Inter, sans-serif; letter-spacing: .16em; font-size: 13px;
+}
+.al-brand small {
+  display: block; margin-top: 3px; color: var(--al-gold); letter-spacing: .28em;
+  font-size: 9px; font-weight: 800;
+}
+.al-top-meta { display: flex; align-items: center; gap: 10px; }
+.al-chip, .al-clock, .al-icon {
+  min-height: 38px; border-radius: 999px;
+  border: 1px solid var(--al-line);
+  background: rgba(7,11,22,.45);
+  color: var(--al-ink);
+  backdrop-filter: blur(12px);
+}
+html[data-theme="light"] .al-chip,
+html[data-theme="light"] .al-clock,
+html[data-theme="light"] .al-icon { background: rgba(255,255,255,.7); }
+.al-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 0 12px; font-size: 12px; font-weight: 700;
+}
+.al-live i {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--al-ok);
+  box-shadow: 0 0 0 0 rgba(52,211,153,.7);
+  animation: alPing 1.8s ease-out infinite;
+}
+.al-clock {
+  display: inline-flex; align-items: center; padding: 0 12px;
+  font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px;
+  font-family: Inter, sans-serif;
+}
+.al-icon {
+  width: 38px; display: grid; place-items: center; cursor: pointer;
+}
+.al-icon .al-sun { display: none; }
+html[data-theme="light"] .al-icon .al-sun { display: block; }
+html[data-theme="light"] .al-icon .al-moon { display: none; }
+
+.al-stage {
+  display: grid; grid-template-columns: 1.05fr .95fr; gap: 28px;
+  align-items: center; min-height: calc(100vh - 130px);
+  padding: 28px 7vw 24px;
+}
+.al-kicker {
+  margin: 0 0 10px; color: var(--al-gold); font-weight: 800;
+  letter-spacing: .22em; font-size: 12px; text-transform: uppercase;
+}
+.al-hero h1 {
+  margin: 0 0 14px; font-size: clamp(34px, 5vw, 58px); line-height: 1.08;
+  letter-spacing: -.03em; font-weight: 800;
+}
+.al-lead { margin: 0 0 22px; max-width: 460px; color: var(--al-mute); line-height: 1.75; font-size: 16px; }
+.al-feats {
+  display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0 0 22px;
+}
+.al-feats li {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border-radius: 999px;
+  border: 1px solid var(--al-line); background: rgba(255,255,255,.04);
+  font-size: 13px; font-weight: 700;
+}
+.al-feats i { color: var(--al-gold); }
+.al-type {
+  min-height: 28px; margin: 0; color: var(--al-mute); font-size: 14px;
+}
+.al-type b {
+  display: inline-block; width: 8px; height: 14px; margin-left: 2px;
+  background: var(--al-gold); vertical-align: -2px;
+  animation: alBlink 1s step-end infinite;
+}
+
+.al-panel { display: grid; place-items: center; }
+.al-card {
+  width: min(440px, 100%);
+  position: relative;
+  padding: 26px 24px 20px;
+  border-radius: 24px;
+  background: var(--al-card);
+  border: 1px solid var(--al-line);
+  box-shadow: 0 30px 80px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter: blur(22px);
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .18s ease, opacity .7s ease;
+  animation: alRise .7s ease;
+}
+.al-card-shine {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.08) 48%, transparent 66%);
+  background-size: 220% 100%;
+  animation: alShine 5.5s ease-in-out infinite;
+}
+.al-card-head { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; }
+.al-seal {
+  width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
+  background: linear-gradient(160deg, rgba(245,183,77,.28), rgba(29,78,216,.18));
+  color: var(--al-gold); font-size: 22px;
+  box-shadow: inset 0 0 0 1px rgba(245,183,77,.28);
+}
+.al-card-head h2 { margin: 0; font-size: 22px; }
+.al-card-head p { margin: 4px 0 0; color: var(--al-mute); font-size: 13px; }
+
+.al-alert {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px; border-radius: 14px; margin-bottom: 14px;
+  background: rgba(251,113,133,.12); color: var(--al-bad);
+  border: 1px solid rgba(251,113,133,.28);
+  animation: alShake .46s ease;
+}
+.al-alert i { font-size: 20px; margin-top: 1px; }
+.al-alert strong { display: block; font-size: 14px; }
+.al-alert span { display: block; margin-top: 3px; font-size: 12px; opacity: .9; }
+
+.al-field { display: block; position: relative; margin: 0 0 12px; }
+.al-field > span {
+  display: block; margin: 0 0 6px; color: var(--al-mute); font-size: 12px; font-weight: 700;
+}
+.al-field > i {
+  position: absolute; left: 14px; bottom: 13px; color: var(--al-mute); font-size: 18px; pointer-events: none;
+}
+.al-input {
+  width: 100%; min-height: 48px; border-radius: 14px;
+  border: 1px solid rgba(148,163,184,.22);
+  background: var(--al-field); color: var(--al-ink);
+  padding: 0 44px 0 42px; font: inherit; font-size: 16px;
+  outline: none; transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.al-input:focus {
+  border-color: var(--al-gold);
+  box-shadow: 0 0 0 4px rgba(245,183,77,.16);
+}
+.al-eye {
+  position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px;
+  border: 0; border-radius: 10px; background: transparent; color: var(--al-mute); cursor: pointer;
+}
+.al-eye:hover { color: var(--al-gold); background: rgba(245,183,77,.1); }
+.al-caps {
+  margin: -4px 0 10px; color: var(--al-gold); font-size: 12px; font-weight: 700;
+}
+.al-remember {
+  display: flex; align-items: center; gap: 8px; margin: 2px 0 16px;
+  color: var(--al-mute); font-size: 13px; cursor: pointer; user-select: none;
+}
+.al-remember input { accent-color: var(--al-gold); }
+.al-submit {
+  width: 100%; min-height: 50px; border: 0; border-radius: 14px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  color: #1a0a08; font: inherit; font-weight: 800; font-size: 15px;
+  background: linear-gradient(90deg, #f5b74d, #ffd789 45%, #f5b74d);
+  background-size: 160% 100%;
+  box-shadow: 0 10px 28px rgba(245,183,77,.28);
+  position: relative; overflow: hidden;
+  transition: transform .18s, filter .18s;
+}
+.al-submit:hover { filter: brightness(1.05); background-position: 100% 0; }
+.al-submit:active { transform: translateY(1px); }
+.al-submit:disabled { opacity: .55; cursor: not-allowed; filter: none; }
+.al-go-wait { display: none; }
+.al-form.is-busy .al-go-text { display: none; }
+.al-form.is-busy .al-go-wait { display: inline; }
+.al-form.is-busy .al-submit i { animation: alSpin .8s linear infinite; }
+.al-secure {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 14px; color: var(--al-mute); font-size: 12px;
+}
+.al-secure i { color: var(--al-ok); }
+
+.al-foot {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 0 28px max(18px, env(safe-area-inset-bottom));
+  color: var(--al-mute); font-size: 12px; letter-spacing: .08em;
+}
+.al-foot a { color: var(--al-gold); text-decoration: none; font-weight: 700; }
+
+.la-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+
+body.is-locked .al-submit { background: #334155; color: #cbd5e1; box-shadow: none; }
+
+@keyframes alOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.12); }
+}
+@keyframes alPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(245,183,77,.55), 0 0 18px rgba(245,183,77,.28); }
+  50% { box-shadow: 0 0 0 3px rgba(245,183,77,.8), 0 0 32px rgba(245,183,77,.5); }
+}
+@keyframes alPing {
+  0% { box-shadow: 0 0 0 0 rgba(52,211,153,.65); }
+  100% { box-shadow: 0 0 0 8px rgba(52,211,153,0); }
+}
+@keyframes alBlink { 50% { opacity: 0; } }
+@keyframes alRise {
+  from { opacity: 0; transform: translateY(22px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes alShine {
+  0%, 30% { background-position: 120% 0; }
+  55%, 100% { background-position: -20% 0; }
+}
+@keyframes alShake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-6px); }
+  40%, 60% { transform: translateX(6px); }
+}
+@keyframes alSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 980px) {
+  .al-stage { grid-template-columns: 1fr; min-height: auto; padding: 18px 16px 12px; gap: 10px; }
+  .al-hero h1 { font-size: 32px; }
+  .al-lead { margin-bottom: 12px; }
+  .al-feats { display: none; }
+  .al-type { display: none; }
+  .al-top { padding-left: 16px; padding-right: 16px; }
+  .al-clock { display: none; }
+  .al-foot { padding-left: 16px; padding-right: 16px; }
+}
+@media (max-width: 560px) {
+  .al-chip { display: none; }
+  .al-brand small { display: none; }
+  .al-card { padding: 22px 16px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .al-aurora span, .al-crest, .al-live i, .al-type b, .al-card, .al-card-shine, .al-alert,
+  .al-form.is-busy .al-submit i {
+    animation: none !important;
+  }
+  .al-card { transform: none !important; }
+}

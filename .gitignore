@@ -26,6 +26,9 @@ static/uploads/
 # One-off local scripts
 _typo.py
 _split_mods_tab.py
+_deploy*.py
+_vps_*.py
+_ai_settings_backup.json
 
 # OS / editor
 Thumbs.db

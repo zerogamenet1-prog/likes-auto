@@ -1,13 +1,51 @@
 {% extends "base.html" %}
+{% set ref_link = site.url ~ '/signup?ref=' ~ (user.ref_code or '') %}
+{% set pct = settings.affiliate_percent or 5 %}
 {% block content %}
-<main class="la-page"><div class="la-wrap">
-  <div class="la-page-head"><h1>แนะนำเพื่อน</h1></div>
-  <article class="adm-card" style="max-width:640px">
-    <span>ลิงก์แนะนำ</span>
-    <b style="font-size:16px" data-copy="{{ site.url }}/signup?ref={{ user.ref_code }}">{{ site.url }}/signup?ref={{ user.ref_code }}</b>
-    <p class="la-muted">ได้ {{ settings.affiliate_percent or 5 }}% เมื่อเพื่อนเติมเงินสำเร็จ</p>
-    <p>รายได้สะสม {{ "%.2f"|format(user.ref_earn or 0) }} บาท</p>
-    <button class="la-btn la-btn-mini" type="button" data-copy="{{ site.url }}/signup?ref={{ user.ref_code }}">คัดลอกลิงก์</button>
-  </article>
-</div></main>
+<main class="la-page la-dash-page la-hub-page la-aff-page">
+  {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+  {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
+
+  <section class="la-hub-hero">
+    <div class="la-hub-hero-in">
+      <h1><i class="ri-share-forward-line"></i> เชิญเพื่อน</h1>
+      <p>แชร์ลิงก์สมัคร — เมื่อเพื่อนเติมเงินสำเร็จ คุณได้คอมมิชชัน {{ pct }}%</p>
+      <div class="la-hub-stats">
+        <article><em>รายได้สะสม</em><strong>฿{{ "%.2f"|format(user.ref_earn or 0) }}</strong></article>
+        <article><em>คอมมิชชัน</em><strong>{{ pct }}%</strong></article>
+        <article><em>เพื่อนที่ชวน</em><strong>{{ ref_count or 0 }}</strong></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="la-hub-card">
+    <div class="la-hub-card-h">
+      <h2>ลิงก์แนะนำของคุณ</h2>
+      <p>ส่งให้เพื่อนสมัครผ่านลิงก์นี้เท่านั้น ระบบจะผูกผู้แนะนำให้อัตโนมัติ</p>
+    </div>
+    <div class="la-aff-linkbox">
+      <code id="affLink" data-copy="{{ ref_link }}">{{ ref_link }}</code>
+      <button class="la-btn" type="button" data-copy="{{ ref_link }}"><i class="ri-file-copy-line"></i> คัดลอก</button>
+    </div>
+    <p class="la-hub-note">รหัสแนะนำ: <b data-copy="{{ user.ref_code }}">{{ user.ref_code }}</b></p>
+  </section>
+
+  <section class="la-hub-steps">
+    <article>
+      <span>1</span>
+      <b>แชร์ลิงก์</b>
+      <p>ส่งลิงก์สมัครให้เพื่อนทางแชท โซเชียล หรือเว็บของคุณ</p>
+    </article>
+    <article>
+      <span>2</span>
+      <b>เพื่อนสมัคร + เติมเงิน</b>
+      <p>เมื่อเพื่อนเติมเงินสำเร็จ ระบบคำนวณคอมมิชชันให้อัตโนมัติ</p>
+    </article>
+    <article>
+      <span>3</span>
+      <b>รับเครดิต</b>
+      <p>คอมมิชชันเข้ายอดเงินในบัญชีทันที พร้อมนับรายได้สะสม</p>
+    </article>
+  </section>
+</main>
 {% endblock %}

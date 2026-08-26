@@ -1,12 +1,150 @@
 {% extends "admin/base.html" %}
 {% block title %}บริการ{% endblock %}
-{% block subtitle %}<p class="adm-sub">กรองตามหมวดจาก API แล้วค่อยติ๊กปรับราคา หมวดย่อย หรือพักขาย</p>{% endblock %}
+{% block subtitle %}<p class="adm-sub">จัดหมวดหลัก/ย่อย เพิ่ม-ลบ-ลากเรียง แล้วค่อยติ๊กปรับราคาหรือพักขาย</p>{% endblock %}
 {% block content %}
 {% if added %}<div class="adm-ok">เพิ่ม/อัปเดตแล้ว {{ added }} รายการ</div>{% endif %}
+{% if ok == 'renamed' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> บันทึกชื่อหมวดแล้ว</div>{% endif %}
+{% if ok == 'moved' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> ปรับลำดับหมวดแล้ว</div>{% endif %}
+{% if ok == 'added' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> เพิ่มหมวดแล้ว</div>{% endif %}
+{% if ok == 'deleted' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> ลบหมวดแล้ว (ระบบจะไม่สร้างหมวดนี้กลับจาก API อัตโนมัติ)</div>{% endif %}
+{% if ok == 'priced' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> ปรับราคาจากต้นทุนแล้ว {{ priced_n }} รายการ</div>{% endif %}
 <div class="adm-actions" style="margin-bottom:16px">
   <a class="la-btn" href="/admin/services/import">เลือกบริการจาก API</a>
   <a class="la-btn la-btn-ghost" href="/admin/providers">ผู้ให้บริการ</a>
 </div>
+
+<section class="adm-card svc-cat-card">
+  <div class="svc-cat-head">
+    <div>
+      <h2><i class="ri-folder-settings-line"></i> จัดการหมวดหมู่</h2>
+      <p class="la-muted">เพิ่ม / ลบ / แก้ชื่อ · ลากแถวเพื่อเรียง · ลบแล้วจะไม่ถูก cron สร้างกลับอัตโนมัติ</p>
+    </div>
+  </div>
+
+  <div class="svc-cat-toolbar">
+    <h3 class="svc-cat-title">หมวดหลัก</h3>
+    <form method="post" action="/admin/services/main/delete-all" class="svc-cat-delall"
+          onsubmit="return confirm('ลบหมวดหลักทั้งหมด และบริการทุกรายการในร้าน? การกระทำนี้ย้อนกลับไม่ได้')">
+      <input type="hidden" name="q" value="{{ q }}">
+      <button class="la-btn la-btn-mini la-btn-danger" type="submit" {% if not mains %}disabled{% endif %}>
+        <i class="ri-delete-bin-line"></i> ลบทั้งหมด
+      </button>
+    </form>
+  </div>
+  <form method="post" action="/admin/services/main/add" class="svc-cat-add">
+    <input type="hidden" name="q" value="{{ q }}">
+    <input class="la-input" name="name" placeholder="ชื่อหมวดหลักใหม่ เช่น Instagram" required>
+    <button class="la-btn la-btn-mini" type="submit"><i class="ri-add-line"></i> เพิ่มหมวดหลัก</button>
+  </form>
+  <div class="svc-cat-list" id="svc-mains-list" data-kind="main" data-platform="">
+    {% for m in mains %}
+    <div class="svc-cat-row{% if main==m.name %} is-on{% endif %}" data-name="{{ m.name }}" draggable="false">
+      <span class="svc-drag" role="button" tabindex="0" title="ลากเพื่อเรียง" aria-label="ลากเรียง"><i class="ri-drag-move-2-line"></i></span>
+      <a class="svc-cat-link" href="/admin/services?main={{ m.name|urlencode }}&amp;q={{ q|urlencode }}" title="กรองบริการในหมวดนี้">
+        <span class="svc-cat-name">{{ m.name }}</span>
+        <span class="svc-cat-count">{{ m.count }}</span>
+      </a>
+      <form method="post" action="/admin/services/main/rename" class="svc-cat-rename">
+        <input type="hidden" name="old_name" value="{{ m.name }}">
+        <input type="hidden" name="q" value="{{ q }}">
+        <input class="la-input" name="new_name" value="{{ m.name }}" required aria-label="ชื่อหมวดหลัก">
+        <button class="la-btn la-btn-mini" type="submit" title="บันทึกชื่อ">บันทึก</button>
+      </form>
+      <div class="svc-cat-acts">
+        <form method="post" action="/admin/services/main/move">
+          <input type="hidden" name="name" value="{{ m.name }}">
+          <input type="hidden" name="direction" value="-1">
+          <input type="hidden" name="main" value="{{ main }}">
+          <input type="hidden" name="q" value="{{ q }}">
+          <button class="la-btn la-btn-mini la-btn-ghost" type="submit" title="ขึ้นบน" {% if loop.first %}disabled{% endif %}><i class="ri-arrow-up-s-line"></i></button>
+        </form>
+        <form method="post" action="/admin/services/main/move">
+          <input type="hidden" name="name" value="{{ m.name }}">
+          <input type="hidden" name="direction" value="1">
+          <input type="hidden" name="main" value="{{ main }}">
+          <input type="hidden" name="q" value="{{ q }}">
+          <button class="la-btn la-btn-mini la-btn-ghost" type="submit" title="ลงล่าง" {% if loop.last %}disabled{% endif %}><i class="ri-arrow-down-s-line"></i></button>
+        </form>
+        <form method="post" action="/admin/services/main/delete"
+              onsubmit="return confirm('ลบหมวดหลัก และบริการในหมวดนี้ทั้งหมด?')">
+          <input type="hidden" name="name" value="{{ m.name }}">
+          <input type="hidden" name="q" value="{{ q }}">
+          <button class="la-btn la-btn-mini la-btn-danger" type="submit" title="ลบหมวด"><i class="ri-delete-bin-line"></i></button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <p class="la-muted">ยังไม่มีหมวดหลัก — เพิ่มด้านบน หรือนำเข้าจาก API</p>
+    {% endfor %}
+  </div>
+
+  {% if main %}
+  <div class="svc-cat-toolbar">
+    <h3 class="svc-cat-title">หมวดย่อยใน <b>{{ main }}</b></h3>
+    <form method="post" action="/admin/services/sub/delete-all" class="svc-cat-delall"
+          onsubmit="return confirm('ลบหมวดย่อยทั้งหมดในหมวดนี้ และบริการทุกรายการภายใต้หมวดนี้?')">
+      <input type="hidden" name="platform" value="{{ main }}">
+      <input type="hidden" name="q" value="{{ q }}">
+      <button class="la-btn la-btn-mini la-btn-danger" type="submit" {% if not subs %}disabled{% endif %}>
+        <i class="ri-delete-bin-line"></i> ลบย่อยทั้งหมด
+      </button>
+    </form>
+  </div>
+  <form method="post" action="/admin/services/sub/add" class="svc-cat-add">
+    <input type="hidden" name="platform" value="{{ main }}">
+    <input type="hidden" name="q" value="{{ q }}">
+    <input class="la-input" name="name" placeholder="ชื่อหมวดย่อยใหม่ เช่น Followers" required>
+    <button class="la-btn la-btn-mini" type="submit"><i class="ri-add-line"></i> เพิ่มหมวดย่อย</button>
+  </form>
+  <div class="svc-cat-list" id="svc-subs-list" data-kind="sub" data-platform="{{ main }}">
+    {% for s in subs %}
+    <div class="svc-cat-row" data-name="{{ s.name }}" draggable="false">
+      <span class="svc-drag" role="button" tabindex="0" title="ลากเพื่อเรียง" aria-label="ลากเรียง"><i class="ri-drag-move-2-line"></i></span>
+      <div class="svc-cat-link is-static">
+        <span class="svc-cat-name">{{ s.name }}</span>
+        <span class="svc-cat-count">{{ s.count }}</span>
+      </div>
+      <form method="post" action="/admin/services/sub/rename" class="svc-cat-rename">
+        <input type="hidden" name="platform" value="{{ main }}">
+        <input type="hidden" name="old_name" value="{{ s.name }}">
+        <input type="hidden" name="q" value="{{ q }}">
+        <input class="la-input" name="new_name" value="{{ s.name }}" required aria-label="ชื่อหมวดย่อย">
+        <button class="la-btn la-btn-mini" type="submit" title="บันทึกชื่อ">บันทึก</button>
+      </form>
+      <div class="svc-cat-acts">
+        <form method="post" action="/admin/services/sub/move">
+          <input type="hidden" name="platform" value="{{ main }}">
+          <input type="hidden" name="name" value="{{ s.name }}">
+          <input type="hidden" name="direction" value="-1">
+          <input type="hidden" name="q" value="{{ q }}">
+          <button class="la-btn la-btn-mini la-btn-ghost" type="submit" title="ขึ้นบน" {% if loop.first %}disabled{% endif %}><i class="ri-arrow-up-s-line"></i></button>
+        </form>
+        <form method="post" action="/admin/services/sub/move">
+          <input type="hidden" name="platform" value="{{ main }}">
+          <input type="hidden" name="name" value="{{ s.name }}">
+          <input type="hidden" name="direction" value="1">
+          <input type="hidden" name="q" value="{{ q }}">
+          <button class="la-btn la-btn-mini la-btn-ghost" type="submit" title="ลงล่าง" {% if loop.last %}disabled{% endif %}><i class="ri-arrow-down-s-line"></i></button>
+        </form>
+        <form method="post" action="/admin/services/sub/delete"
+              onsubmit="return confirm('ลบหมวดย่อยนี้ และบริการในหมวดย่อยทั้งหมด?')">
+          <input type="hidden" name="platform" value="{{ main }}">
+          <input type="hidden" name="name" value="{{ s.name }}">
+          <input type="hidden" name="q" value="{{ q }}">
+          <button class="la-btn la-btn-mini la-btn-danger" type="submit" title="ลบหมวด"><i class="ri-delete-bin-line"></i></button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <p class="la-muted">ยังไม่มีหมวดย่อยในหมวดนี้ — เพิ่มด้านบนได้เลย</p>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="adm-help svc-cat-hint"><i class="ri-information-line"></i> คลิกชื่อหมวดหลักเพื่อจัดการหมวดย่อย เพิ่ม/ลบ และเรียงลำดับย่อย</p>
+  {% endif %}
+</section>
+<script src="/static/js/admin-svc-cats.js?v=2"></script>
+
 <form method="get" class="adm-filter">
   <select class="la-input adm-select" name="main" onchange="this.form.submit()" style="max-width:360px">
     <option value="">ทุกหมวด</option>
@@ -56,11 +194,37 @@
     <button class="la-btn" type="submit">เพิ่มบริการ</button>
   </form>
 </details>
-<form method="post" action="/admin/services/bulk-rate" class="adm-actions" style="margin-bottom:8px" onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
-  <input type="hidden" name="ids" value="">
-  <input class="la-input adm-num" type="number" step="0.1" name="percent" value="10" title="เปอร์เซ็นต์">
-  <button class="la-btn la-btn-mini" type="submit">ปรับราคาที่เลือก +%</button>
-</form>
+<section class="adm-card svc-rate-card">
+  <h3><i class="ri-percent-line"></i> ปรับราคาจากต้นทุนจริง</h3>
+  <p class="la-muted">คำนวณจากต้นทุน (แปลงเป็นบาทตามเรท USD) แล้วบวกกำไร % · 1 USD = {{ usd_rate }} บาท</p>
+  <div class="svc-rate-forms">
+    <form method="post" action="/admin/services/bulk-rate-all" class="adm-actions svc-rate-all"
+          onsubmit="return confirm('ปรับราคาขายทุกบริการในร้านจากต้นทุน + กำไร % ที่ตั้ง?')">
+      <div>
+        <label class="la-field" for="profit-all">กำไรจากต้นทุน %</label>
+        <input class="la-input adm-num" id="profit-all" type="number" step="0.1" name="percent" value="100" required>
+      </div>
+      <div>
+        <label class="la-field" for="fixed-all">บวกเพิ่ม (บาท)</label>
+        <input class="la-input adm-num" id="fixed-all" type="number" step="0.01" name="fixed" value="0">
+      </div>
+      <button class="la-btn" type="submit"><i class="ri-price-tag-3-line"></i> ปรับทุกบริการ</button>
+    </form>
+    <form method="post" action="/admin/services/bulk-rate" class="adm-actions svc-rate-sel"
+          onsubmit="this.ids.value=selectedIds(); if(!this.ids.value){alert('ติ๊กบริการในตารางก่อน');return false;} return confirm('ปรับราคาที่เลือกจากต้นทุน?')">
+      <input type="hidden" name="ids" value="">
+      <div>
+        <label class="la-field" for="profit-sel">กำไร %</label>
+        <input class="la-input adm-num" id="profit-sel" type="number" step="0.1" name="percent" value="100" required>
+      </div>
+      <div>
+        <label class="la-field" for="fixed-sel">บวกเพิ่ม (บาท)</label>
+        <input class="la-input adm-num" id="fixed-sel" type="number" step="0.01" name="fixed" value="0">
+      </div>
+      <button class="la-btn la-btn-ghost" type="submit"><i class="ri-checkbox-multiple-line"></i> ปรับที่เลือก</button>
+    </form>
+  </div>
+</section>
 <form method="post" action="/admin/services/bulk-category" class="adm-actions" style="margin-bottom:8px" onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
   <input type="hidden" name="ids" value="">
   <input class="la-input" name="category" placeholder="หมวดย่อย เช่น ผู้ติดตาม" style="max-width:220px">

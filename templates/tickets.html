@@ -1,41 +1,83 @@
 {% extends "base.html" %}
 {% block content %}
-<main class="la-page">
-  <div class="la-wrap">
-    <div class="la-page-head"><h1>แจ้งปัญหา</h1><p class="sub">เปิดตั๋วแล้วรอแอดมินตอบ สามารถพิมพ์ต่อในตั๋วเดิมได้</p></div>
-    {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
-    {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
-    <form method="post" action="/tickets" class="la-order-card" style="margin-bottom:24px">
-      <label class="la-field">หัวข้อ</label>
-      {% if subjects %}
-      <select class="la-input" name="subject">{% for s in subjects %}<option>{{ s.name }}</option>{% endfor %}</select>
-      {% else %}
-      <input class="la-input" type="text" name="subject" required>
-      {% endif %}
-      <label class="la-field">รายละเอียด</label>
-      <textarea class="la-input" name="message" style="min-height:120px;padding:12px" required></textarea>
-      <button class="la-btn" type="submit">ส่งตั๋ว</button>
-    </form>
-    {% for r in tickets %}
-    <article class="la-order-card" style="margin-bottom:12px">
-      <b>#{{ r.id }} {{ r.subject }}</b>
-      <span class="la-muted"> · {{ st.get(r.status, r.status) }} · {{ r.created_at }}</span>
-      <p>{{ r.message }}</p>
-      {% for m in (replies or {}).get(r.id, []) %}
-      <p class="la-muted"><b>{{ m.author }}:</b> {{ m.message }}</p>
-      {% else %}
-        {% if r.reply %}<p class="la-muted"><b>แอดมิน:</b> {{ r.reply }}</p>{% endif %}
-      {% endfor %}
-      {% if r.status != 'closed' %}
-      <form method="post" action="/tickets/{{ r.id }}/reply" class="la-filter">
-        <input class="la-input" name="message" placeholder="พิมพ์ข้อความต่อ" required>
-        <button class="la-btn la-btn-mini" type="submit">ส่ง</button>
+<main class="la-page la-dash-page la-hub-page la-tickets-page">
+  {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+  {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
+
+  <section class="la-hub-hero">
+    <div class="la-hub-hero-in">
+      <h1><i class="ri-customer-service-2-line"></i> ซัพพอร์ต</h1>
+      <p>เปิดตั๋วแจ้งปัญหา ถามงาน หรือขอความช่วยเหลือ — ทีมตอบในตั๋วเดิมได้</p>
+      <div class="la-hub-stats">
+        <article><em>ตั๋วทั้งหมด</em><strong>{{ tickets|length }}</strong></article>
+        <article><em>เปิดอยู่</em><strong>{{ ticket_open or 0 }}</strong></article>
+        <article><em>ปิดแล้ว</em><strong>{{ ticket_closed or 0 }}</strong></article>
+      </div>
+    </div>
+  </section>
+
+  <div class="la-tickets-grid">
+    <section class="la-hub-card">
+      <div class="la-hub-card-h">
+        <h2>เปิดตั๋วใหม่</h2>
+        <p>อธิบายปัญหาให้ชัด พร้อมเลขออเดอร์ถ้ามี</p>
+      </div>
+      <form method="post" action="/tickets" class="la-hub-form">
+        <label class="la-field">หัวข้อ</label>
+        {% if subjects %}
+        <select class="la-input" name="subject" required>
+          {% for s in subjects %}<option value="{{ s.name }}">{{ s.name }}</option>{% endfor %}
+        </select>
+        {% else %}
+        <input class="la-input" type="text" name="subject" required placeholder="เช่น ออเดอร์ไม่เข้า / เติมเงิน">
+        {% endif %}
+        <label class="la-field">รายละเอียด</label>
+        <textarea class="la-input la-hub-area" name="message" required placeholder="เลขที่ออเดอร์ ลิงก์ และสิ่งที่เกิดปัญหา"></textarea>
+        <button class="la-btn" type="submit" style="width:100%"><i class="ri-send-plane-2-line"></i> ส่งตั๋ว</button>
       </form>
-      {% endif %}
-    </article>
-    {% else %}
-    <p class="la-muted">ยังไม่มีตั๋ว</p>
-    {% endfor %}
+    </section>
+
+    <section class="la-tickets-list">
+      {% for r in tickets %}
+      <article class="la-ticket-card is-{{ r.status }}">
+        <header>
+          <div>
+            <b>#{{ r.id }} {{ r.subject }}</b>
+            <small>{{ r.created_at }}</small>
+          </div>
+          <span class="la-badge-st is-{{ r.status }}">{{ st.get(r.status, r.status) }}</span>
+        </header>
+        <p class="la-ticket-msg">{{ r.message }}</p>
+        <div class="la-ticket-thread">
+          {% for m in (replies or {}).get(r.id, []) %}
+          <div class="la-ticket-bubble {% if m.author == user.username %}is-me{% else %}is-staff{% endif %}">
+            <em>{{ 'คุณ' if m.author == user.username else 'แอดมิน' }}</em>
+            <p>{{ m.message }}</p>
+          </div>
+          {% else %}
+            {% if r.reply %}
+            <div class="la-ticket-bubble is-staff">
+              <em>แอดมิน</em>
+              <p>{{ r.reply }}</p>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% if r.status != 'closed' %}
+        <form method="post" action="/tickets/{{ r.id }}/reply" class="la-ticket-reply">
+          <input class="la-input" name="message" placeholder="พิมพ์ข้อความต่อ..." required autocomplete="off">
+          <button class="la-btn la-btn-mini" type="submit">ส่ง</button>
+        </form>
+        {% endif %}
+      </article>
+      {% else %}
+      <div class="la-empty la-hub-empty">
+        <i class="ri-chat-smile-2-line"></i>
+        <b>ยังไม่มีตั๋ว</b>
+        <p class="la-muted">เปิดตั๋วด้านซ้ายเมื่อต้องการความช่วยเหลือ</p>
+      </div>
+      {% endfor %}
+    </section>
   </div>
 </main>
 {% endblock %}

@@ -1,143 +1,371 @@
 {% extends "admin/base.html" %}
 {% block title %}เลือกบริการจาก API{% endblock %}
-{% block subtitle %}<p class="adm-sub">เลือกหมวดจากรายการ แล้วค่อยติ๊กบริการที่จะเพิ่ม</p>{% endblock %}
+{% block subtitle %}<p class="adm-sub">โหลดจากผู้ให้บริการ → หมวดหลัก → หมวดย่อย → ติ๊กบริการ · ค้นหาได้ทั้งแคตตาล็อก</p>{% endblock %}
 {% block content %}
-{% if error %}<div class="adm-error">ดึงรายการไม่สำเร็จ ตรวจ API URL และคีย์ที่ผู้ให้บริการ</div>{% endif %}
-{% if loaded %}<div class="adm-ok">โหลดจาก API แล้ว {{ loaded }} รายการ เลือกหมวดด้านล่างได้เลย</div>{% endif %}
-{% if added %}<div class="adm-ok">เพิ่มแล้ว {{ added }} รายการ</div>{% endif %}
+{% if error %}<div class="adm-error"><i class="ri-error-warning-line"></i> ดึงรายการไม่สำเร็จ ตรวจ API URL และคีย์ที่ผู้ให้บริการ</div>{% endif %}
+{% if loaded %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> โหลดจาก API แล้ว {{ loaded }} รายการ{% if synced %} · ซิงก์ร้านแล้ว เปิดขาย {{ synced }}{% if inactive_n %} · ปิด/ไม่มีต้นทาง {{ inactive_n }}{% endif %}{% endif %} · เลือกหมวดหลัก / หมวดย่อยด้านล่างได้เลย</div>{% endif %}
+{% if added %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> เพิ่มแล้ว {{ added }} รายการ</div>{% endif %}
+
 {% if not providers %}
-<p class="adm-help">ยังไม่มีผู้ให้บริการ ไปเพิ่ม API ก่อน</p>
-<p><a class="la-btn" href="/admin/providers">ไปผู้ให้บริการ</a></p>
+<div class="adm-card imp-empty">
+  <i class="ri-plug-line"></i>
+  <h2>ยังไม่มีผู้ให้บริการ</h2>
+  <p class="adm-help">เพิ่ม API ผู้ให้บริการก่อน แล้วกลับมาโหลดรายการบริการ</p>
+  <a class="la-btn" href="/admin/providers"><i class="ri-add-line"></i> ไปผู้ให้บริการ</a>
+</div>
 {% else %}
-<div class="adm-card" style="margin-bottom:16px">
-  <form method="get" action="/admin/services/import" class="adm-actions">
-    <select class="la-input" name="pid" onchange="this.form.submit()" style="max-width:280px">
-      {% for p in providers %}
-      <option value="{{ p.id }}" {% if pid==p.id %}selected{% endif %}>{{ p.name }}</option>
-      {% endfor %}
-    </select>
-    {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
-  </form>
-  <form method="post" action="/admin/services/import/fetch" class="adm-inline" style="margin-top:10px">
-    <input type="hidden" name="pid" value="{{ pid }}">
-    <button class="la-btn" type="submit">โหลดรายการจาก API</button>
-    <span class="la-muted">{{ currency }} · 1 USD = {{ usd_rate }} THB</span>
-  </form>
-</div>
-{% if not categories %}
-<p class="adm-help">กดโหลดรายการจาก API ก่อน แล้วเลือกหมวด</p>
-{% else %}
-<div class="adm-card" style="margin-bottom:18px;max-width:760px">
-  <h2 style="font-size:18px;margin:0 0 10px">1) เลือกหมวด</h2>
-  <input class="la-input" id="cat-q" type="search" placeholder="ค้นหาหมวด" style="margin-bottom:8px">
-  <form method="get" action="/admin/services/import" id="cat-form">
-    <input type="hidden" name="pid" value="{{ pid }}">
-    <select class="adm-cat-select" name="cat" id="cat-select" size="14" onchange="this.form.submit()">
-      {% for c in categories %}
-      <option value="{{ c.name }}" {% if cat==c.name %}selected{% endif %}>{{ c.name }} ({{ c.count }})</option>
-      {% endfor %}
-    </select>
-  </form>
-</div>
-{% endif %}
-{% if cat %}
-<div class="adm-actions" style="margin-bottom:12px">
-  <form method="get" action="/admin/services/import" class="adm-actions">
-    <input type="hidden" name="pid" value="{{ pid }}">
-    <input type="hidden" name="cat" value="{{ cat }}">
-    <input class="la-input adm-search" type="search" name="q" value="{{ q }}" placeholder="ค้นหาบริการในหมวดนี้">
-    <button class="la-btn" type="submit">ค้นหา</button>
-  </form>
-</div>
-<form method="post" action="/admin/services/import/add" id="import-form" data-pid="{{ pid }}" data-main="{{ cat }}">
-  <input type="hidden" name="pid" value="{{ pid }}">
-  <input type="hidden" name="main" value="">
-  <input type="hidden" name="cat" value="{{ cat }}">
-  <input type="hidden" name="q" value="{{ q }}">
-  <input type="hidden" name="picks" id="picks" value="{}">
-  <input type="hidden" name="scope" id="scope" value="selected">
-  <h2 style="font-size:18px;margin:0 0 10px">2) ติ๊กบริการในหมวด {{ cat }}</h2>
-  <div class="adm-card adm-pricebar">
-    <div class="adm-form-grid">
-      <div>
-        <label class="la-field">1 USD = กี่บาท</label>
-        <input class="la-input" id="usd_rate" name="usd_rate" type="number" step="0.01" value="{{ usd_rate }}">
-      </div>
-      <div>
-        <label class="la-field">บวกกำไร %</label>
-        <input class="la-input" id="percent" name="percent" type="number" step="0.1" value="100">
-      </div>
-      <div>
-        <label class="la-field">บวกเพิ่ม (บาท)</label>
-        <input class="la-input" id="fixed" name="fixed" type="number" step="0.01" value="0">
-      </div>
+
+{% macro qs(extra={}) -%}
+{%- set _pid = extra.get('pid', pid) -%}
+{%- set _main = extra.get('main', main) -%}
+{%- set _cat = extra.get('cat', cat) -%}
+{%- set _q = extra.get('q', q) -%}
+{%- set _stype = extra.get('stype', stype) -%}
+{%- set _all = extra.get('view', 'all' if show_all else '') -%}
+{%- set _per = extra.get('per', per_page) -%}
+{%- set _page = extra.get('page', none) -%}
+pid={{ _pid }}{% if _main %}&amp;main={{ _main|urlencode }}{% endif %}{% if _cat %}&amp;cat={{ _cat|urlencode }}{% endif %}{% if _q %}&amp;q={{ _q|urlencode }}{% endif %}{% if _stype %}&amp;stype={{ _stype|urlencode }}{% endif %}{% if _all %}&amp;view=all{% endif %}{% if _per %}&amp;per={{ _per }}{% endif %}{% if _page %}&amp;page={{ _page }}{% endif %}
+{%- endmacro %}
+
+<nav class="imp-steps" aria-label="ขั้นตอนนำเข้า">
+  <span class="imp-step is-done"><b>1</b> ผู้ให้บริการ</span>
+  <i class="ri-arrow-right-s-line"></i>
+  <span class="imp-step{% if main or cat or q %} is-done{% else %} is-on{% endif %}"><b>2</b> หมวดหลัก</span>
+  <i class="ri-arrow-right-s-line"></i>
+  <span class="imp-step{% if cat or show_all or q %} is-done{% elif main %} is-on{% endif %}"><b>3</b> หมวดย่อย</span>
+  <i class="ri-arrow-right-s-line"></i>
+  <span class="imp-step{% if browse %} is-on{% endif %}"><b>4</b> บริการ</span>
+</nav>
+
+<section class="adm-card imp-card">
+  <div class="imp-card-head">
+    <div>
+      <h2><i class="ri-server-line"></i> ผู้ให้บริการ</h2>
+      <p class="la-muted">เลือกแหล่ง API แล้วโหลดรายการล่าสุด{% if catalog_total %} · ในแคช {{ catalog_total }} รายการ{% endif %}{% if shop_synced_at %} · ซิงก์ร้านล่าสุด {{ shop_synced_at }}{% endif %}</p>
     </div>
-    <div class="adm-actions" style="margin-top:10px">
-      <button class="la-btn la-btn-ghost" type="button" id="recalc-btn">คำนวณราคาใหม่</button>
-      <span class="la-muted" id="pick-count">ยังไม่ได้เลือก</span>
-    </div>
-  </div>
-  <p class="la-muted">{{ total }} รายการ · หน้า {{ page_no }}/{{ pages }}</p>
-  <div class="adm-table-wrap">
-    <table class="adm-table" id="catalog-table">
-      <thead>
-        <tr>
-          <th><input type="checkbox" id="check-page"></th>
-          <th>ID</th>
-          <th>บริการ</th>
-          <th>ต้นทาง</th>
-          <th>ทุน (บาท)</th>
-          <th>ราคาขาย (บาท)</th>
-          <th>ช่วง</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for r in catalog %}
-        <tr data-id="{{ r.api_service }}" data-rate="{{ r.rate }}" data-cur="{{ r.currency or currency }}">
-          <td><input class="js-pick" type="checkbox" value="{{ r.api_service }}"></td>
-          <td>{{ r.api_service }}</td>
-          <td class="wrap">{{ r.name }}</td>
-          <td>{{ r.rate }} {{ r.currency or currency }}</td>
-          <td class="js-cost">{{ "%.2f"|format(r.cost_thb) }}</td>
-          <td><input class="la-input js-sell adm-num" type="number" step="0.01" value="{{ "%.2f"|format(r.sell_thb) }}"></td>
-          <td>{{ r.min_qty }}-{{ r.max_qty }}</td>
-          <td>{% if r.api_service|string in imported %}<span class="adm-badge active">มีแล้ว</span>{% endif %}</td>
-        </tr>
+    <span class="imp-chip" id="imp-currency-chip" data-currency="{{ currency }}">
+      {% if is_thb %}
+      ต้นทาง {{ currency }} · ราคาเป็นบาทแล้ว (ไม่คูณเรท USD)
       {% else %}
-        <tr><td colspan="8">ไม่พบบริการในหมวดนี้</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+      ต้นทาง {{ currency }} · 1 USD = {{ usd_rate }} THB
+      {% endif %}
+    </span>
   </div>
-  {% if pages > 1 %}
-  <p class="adm-actions" style="margin-top:12px">
-    {% if page_no > 1 %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services/import?pid={{ pid }}&amp;cat={{ cat|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no-1 }}">ก่อนหน้า</a>{% endif %}
-    {% if page_no < pages %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services/import?pid={{ pid }}&amp;cat={{ cat|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no+1 }}">ถัดไป</a>{% endif %}
-  </p>
+  <div class="imp-toolbar">
+    <form method="get" action="/admin/services/import" class="imp-provider-form">
+      <label class="la-field" for="imp-pid">ผู้ให้บริการ</label>
+      <select class="la-input" id="imp-pid" name="pid" onchange="this.form.submit()">
+        {% for p in providers %}
+        <option value="{{ p.id }}" {% if pid==p.id %}selected{% endif %}>{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <form method="post" action="/admin/services/import/fetch" class="imp-fetch-form" id="imp-fetch-form">
+      <input type="hidden" name="pid" value="{{ pid }}">
+      <button class="la-btn" type="submit" id="imp-fetch-btn">
+        <i class="ri-download-cloud-2-line"></i>
+        <span class="imp-fetch-label">โหลดรายการจาก API</span>
+        <span class="imp-fetch-busy" hidden><i class="ri-loader-4-line imp-spin"></i> กำลังโหลด…</span>
+      </button>
+    </form>
+    <form method="post" action="/admin/services/import/sync" class="imp-fetch-form" id="imp-sync-form">
+      <input type="hidden" name="pid" value="{{ pid }}">
+      <button class="la-btn la-btn-ghost" type="submit" id="imp-sync-btn" title="ดึงต้นทางแล้วอัปเดตราคา/ปิดบริการที่ไม่มีแล้ว">
+        <i class="ri-refresh-line"></i>
+        <span class="imp-fetch-label">ซิงก์ราคาและสถานะ</span>
+        <span class="imp-fetch-busy" hidden><i class="ri-loader-4-line imp-spin"></i> กำลังซิงก์…</span>
+      </button>
+    </form>
+  </div>
+  <p class="adm-help" style="margin:10px 0 0">ระบบซิงก์อัตโนมัติทุก ~2 นาที: อัปเดตราคาตามต้นทาง · ปิดบริการที่ต้นทางไม่มีหรือติด Not Working · เปิดกลับเมื่อมีอีกครั้ง</p>
+  {% if catalog_total %}
+  <form method="get" action="/admin/services/import" class="imp-global-search">
+    <input type="hidden" name="pid" value="{{ pid }}">
+    {% if main %}<input type="hidden" name="main" value="{{ main }}">{% endif %}
+    <label class="la-field" for="imp-q-global">ค้นหาทั้งแคตตาล็อก</label>
+    <div class="imp-search-row">
+      <input class="la-input" id="imp-q-global" type="search" name="q" value="{{ q }}" placeholder="ชื่อบริการ / ID / หมวด / ประเภท…" autocomplete="off">
+      <button class="la-btn" type="submit"><i class="ri-search-line"></i> ค้นหา</button>
+      {% if q %}<a class="la-btn la-btn-ghost" href="/admin/services/import?{{ qs({'q': '', 'cat': '', 'view': '', 'page': none}) }}">ล้างค้นหา</a>{% endif %}
+    </div>
+  </form>
+
+  <form class="imp-bulk-bar" id="imp-bulk-top" onsubmit="return false" data-currency="{{ currency }}" data-is-thb="{{ 1 if is_thb else 0 }}">
+    <input type="hidden" name="pid" value="{{ pid }}">
+    <div class="imp-bulk-prices">
+      <div class="imp-rate-field{% if is_thb %} is-optional{% endif %}">
+        <label class="la-field" for="bulk_usd">{% if is_thb %}เรท USD→บาท (ถ้ามีรายการ USD){% else %}1 USD = บาท{% endif %}</label>
+        <input class="la-input js-usd-rate" id="bulk_usd" name="usd_rate" type="number" step="0.01" value="{{ usd_rate }}" {% if is_thb %}title="แคตตาล็อกเป็นบาท — ใช้เรทนี้เฉพาะรายการที่เป็น USD"{% endif %}>
+        {% if is_thb %}<p class="imp-rate-hint">ผู้ให้บริการนี้เป็นเรทบาท · ช่องนี้ไม่กระทบรายการ THB</p>{% else %}<p class="imp-rate-hint">แปลงต้นทาง USD เป็นบาทก่อนบวกกำไร</p>{% endif %}
+      </div>
+      <div>
+        <label class="la-field" for="bulk_pct">กำไร %</label>
+        <input class="la-input js-pct" id="bulk_pct" name="percent" type="number" step="0.1" value="100">
+      </div>
+      <div>
+        <label class="la-field" for="bulk_fix">บวกเพิ่ม (บาท)</label>
+        <input class="la-input js-fixed" id="bulk_fix" name="fixed" type="number" step="0.01" value="0">
+      </div>
+    </div>
+    <div class="imp-bulk-acts">
+      <button class="la-btn js-imp-batch" type="button" data-scope="all_new" data-total="{{ catalog_total }}">
+        <i class="ri-flashlight-line"></i> เพิ่มทั้งหมดที่ยังไม่มี
+      </button>
+      <button class="la-btn la-btn-ghost js-imp-batch" type="button" data-scope="all" data-total="{{ catalog_total }}">
+        <i class="ri-add-box-line"></i> เพิ่มทั้งหมด
+      </button>
+      <a class="la-btn la-btn-ghost" href="/admin/services"><i class="ri-store-2-line"></i> ไปหน้าร้าน</a>
+    </div>
+    <p class="la-muted imp-bulk-note">แคตตาล็อก {{ catalog_total }} รายการ · มีในร้านแล้ว {{ imported|length }} · นำเข้าทีละชุดพร้อมแถบ % (ไม่ล่มเซิร์ฟเวอร์)</p>
+  </form>
   {% endif %}
-  <div class="adm-sticky">
-    <button class="la-btn" type="submit" id="add-selected">เพิ่มที่ติ๊ก</button>
-    <button class="la-btn la-btn-ghost" type="submit" id="add-filtered">เพิ่มทั้งหมวดนี้</button>
-    <a class="la-btn la-btn-ghost" href="/admin/services">กลับหน้าร้าน</a>
+</section>
+
+{% if not categories and not mains %}
+<section class="adm-card imp-card imp-hint">
+  <i class="ri-information-line"></i>
+  <div>
+    <h2>ยังไม่มีหมวดในแคตตาล็อก</h2>
+    <p class="adm-help">กด <b>โหลดรายการจาก API</b> ด้านบนก่อน แล้วระบบจะแสดงหมวดหลักและหมวดย่อยให้เลือก</p>
   </div>
-</form>
-<script src="/static/js/admin-import.js?v=4"></script>
+</section>
+{% else %}
+
+{% if mains %}
+<section class="adm-card imp-card" id="imp-mains-card">
+  <div class="imp-card-head">
+    <div>
+      <h2><i class="ri-apps-2-line"></i> หมวดหลัก</h2>
+      <p class="la-muted">{{ mains|length }} แพลตฟอร์ม · เลือกก่อนแล้วค่อยเลือกหมวดย่อย</p>
+    </div>
+    {% if main %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services/import?pid={{ pid }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">ดูทุกหมวดหลัก</a>{% endif %}
+  </div>
+  {% if main %}
+  <div class="imp-main-bulk">
+    <button class="la-btn js-imp-batch" type="button" data-scope="main_new" data-main="{{ main }}">
+      <i class="ri-add-circle-line"></i> เพิ่มทั้งหมวดหลัก «{{ main }}» (เฉพาะที่ยังไม่มี)
+    </button>
+    <button class="la-btn la-btn-ghost js-imp-batch" type="button" data-scope="main" data-main="{{ main }}">
+      <i class="ri-folder-add-line"></i> เพิ่มทั้งหมวดหลัก (รวมที่มีแล้ว)
+    </button>
+  </div>
+  {% endif %}
+  <div class="imp-mains" id="imp-mains">
+    {% for m in mains %}
+    <a class="imp-main{% if main==m.name %} is-on{% endif %}"
+       href="/admin/services/import?pid={{ pid }}&amp;main={{ m.name|urlencode }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">
+      <span class="imp-main-name">{{ m.name }}</span>
+      <span class="imp-cat-count">{{ m.count }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
 {% endif %}
+
+<section class="adm-card imp-card" id="imp-cats-card">
+  <div class="imp-card-head">
+    <div>
+      <h2><i class="ri-folder-2-line"></i> หมวดย่อย</h2>
+      <p class="la-muted">
+        {% if main %}ภายใต้ <b>{{ main }}</b> · {% endif %}{{ categories|length }} หมวดย่อย
+        {% if not main %} · หรือเลือกหมวดหลักด้านบนเพื่อกรอง{% endif %}
+      </p>
+    </div>
+    {% if main %}
+    <a class="la-btn la-btn-mini{% if show_all and not cat %} is-active{% endif %}"
+       href="/admin/services/import?pid={{ pid }}&amp;main={{ main|urlencode }}&amp;view=all{% if q %}&amp;q={{ q|urlencode }}{% endif %}&amp;per={{ per_page }}">
+      <i class="ri-list-check"></i> ดูทั้งหมดในหมวดหลัก
+    </a>
+    {% endif %}
+  </div>
+  <input class="la-input imp-cat-search" id="cat-q" type="search" placeholder="ค้นหาหมวดย่อย…" autocomplete="off">
+  <div class="imp-cats" id="imp-cats">
+    {% for c in categories %}
+    <a class="imp-cat{% if cat==c.name %} is-on{% endif %}"
+       href="/admin/services/import?pid={{ pid }}&amp;cat={{ c.name|urlencode }}{% if main %}&amp;main={{ main|urlencode }}{% endif %}{% if q %}&amp;q={{ q|urlencode }}{% endif %}&amp;per={{ per_page }}"
+       data-name="{{ c.name|lower }}">
+      <span class="imp-cat-name">{{ c.name }}</span>
+      <span class="imp-cat-count">{{ c.count }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  <p class="imp-cat-empty" id="imp-cat-empty" hidden>ไม่พบหมวดย่อยที่ตรงคำค้น</p>
+</section>
+{% endif %}
+
+{% if browse %}
+<section class="imp-services">
+  <div class="imp-card-head imp-services-head">
+    <div>
+      <h2><i class="ri-list-check-2"></i> บริการ</h2>
+      <p class="la-muted">
+        {% if cat %}<b>{{ cat }}</b>{% elif main and show_all %}ทั้งหมดใน <b>{{ main }}</b>{% elif q %}ผลค้นหา “{{ q }}”{% else %}รายการ{% endif %}
+        · {{ total }} รายการ · หน้า {{ page_no }}/{{ pages }}
+      </p>
+    </div>
+  </div>
+
+  <form method="get" action="/admin/services/import" class="imp-filterbar">
+    <input type="hidden" name="pid" value="{{ pid }}">
+    {% if main %}<input type="hidden" name="main" value="{{ main }}">{% endif %}
+    {% if cat %}<input type="hidden" name="cat" value="{{ cat }}">{% endif %}
+    {% if show_all and not cat %}<input type="hidden" name="view" value="all">{% endif %}
+    <input class="la-input" type="search" name="q" value="{{ q }}" placeholder="กรองในรายการนี้…">
+    <select class="la-input imp-per" name="per" title="ต่อหน้า">
+      {% for n in [50, 80, 150, 300] %}
+      <option value="{{ n }}" {% if per_page==n %}selected{% endif %}>{{ n }}/หน้า</option>
+      {% endfor %}
+    </select>
+    <button class="la-btn" type="submit"><i class="ri-filter-3-line"></i> กรอง</button>
+  </form>
+
+  {% if types %}
+  <div class="imp-type-chips" role="list">
+    <a class="imp-chip-link{% if not stype %} is-on{% endif %}" href="/admin/services/import?{{ qs({'stype': '', 'page': none}) }}">ทุกประเภท</a>
+    {% for t in types %}
+    <a class="imp-chip-link{% if stype==t.name %} is-on{% endif %}" href="/admin/services/import?{{ qs({'stype': t.name, 'page': none}) }}">{{ t.name }} <small>{{ t.count }}</small></a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" action="/admin/services/import/add" id="import-form" data-pid="{{ pid }}" data-scope-key="{{ main or '' }}|{{ cat or '' }}|{{ q or '' }}">
+    <input type="hidden" name="pid" value="{{ pid }}">
+    <input type="hidden" name="main" value="{{ main }}">
+    <input type="hidden" name="cat" value="{{ cat }}">
+    <input type="hidden" name="q" value="{{ q }}">
+    <input type="hidden" name="stype" value="{{ stype }}">
+    <input type="hidden" name="picks" id="picks" value="{}">
+    <input type="hidden" name="scope" id="scope" value="selected">
+
+    <div class="adm-card imp-pricebar" data-currency="{{ currency }}" data-is-thb="{{ 1 if is_thb else 0 }}">
+      <div class="adm-form-grid">
+        <div class="imp-rate-field{% if is_thb %} is-optional{% endif %}">
+          <label class="la-field" for="usd_rate">{% if is_thb %}เรท USD→บาท (ถ้ามีรายการ USD){% else %}1 USD = กี่บาท{% endif %}</label>
+          <input class="la-input js-usd-rate" id="usd_rate" name="usd_rate" type="number" step="0.01" value="{{ usd_rate }}">
+          {% if is_thb %}<p class="imp-rate-hint">ต้นทาง THB ใช้ราคาเดิม · เรทนี้ใช้เฉพาะแถวที่เป็น USD</p>{% endif %}
+        </div>
+        <div>
+          <label class="la-field" for="percent">บวกกำไร %</label>
+          <input class="la-input js-pct" id="percent" name="percent" type="number" step="0.1" value="100">
+        </div>
+        <div>
+          <label class="la-field" for="fixed">บวกเพิ่ม (บาท)</label>
+          <input class="la-input js-fixed" id="fixed" name="fixed" type="number" step="0.01" value="0">
+        </div>
+      </div>
+      <div class="imp-price-actions">
+        <button class="la-btn la-btn-ghost" type="button" id="recalc-btn"><i class="ri-calculator-line"></i> คำนวณราคาใหม่</button>
+        <button class="la-btn la-btn-ghost" type="button" id="pick-page"><i class="ri-checkbox-line"></i> เลือกทั้งหน้า</button>
+        <button class="la-btn la-btn-ghost" type="button" id="pick-new"><i class="ri-checkbox-multiple-line"></i> เลือกเฉพาะที่ยังไม่มี</button>
+        <button class="la-btn la-btn-ghost" type="button" id="pick-clear"><i class="ri-close-circle-line"></i> ล้างที่เลือก</button>
+        <label class="imp-toggle"><input type="checkbox" id="hide-imported"> ซ่อนที่มีแล้ว</label>
+        <span class="imp-pick-pill" id="pick-count">ยังไม่ได้เลือก</span>
+      </div>
+    </div>
+
+    <div class="imp-quick-add">
+      <button class="la-btn" type="submit" id="add-selected"><i class="ri-add-circle-line"></i> เพิ่มที่ติ๊ก</button>
+      <button class="la-btn js-imp-batch" type="button" id="add-filtered-new" data-scope="filtered_new" data-from-form="1"><i class="ri-flashlight-line"></i> เพิ่มที่กรอง (เฉพาะที่ยังไม่มี)</button>
+      <button class="la-btn la-btn-ghost js-imp-batch" type="button" id="add-filtered" data-scope="filtered" data-from-form="1"><i class="ri-folder-add-line"></i> เพิ่มทั้งที่กรอง</button>
+      {% if main and not cat %}
+      <button class="la-btn la-btn-ghost js-imp-batch" type="button" id="add-main-new" data-scope="main_new" data-main="{{ main }}"><i class="ri-apps-2-add-line"></i> เพิ่มทั้งหมวดหลัก</button>
+      {% endif %}
+    </div>
+
+    <div class="adm-table-wrap imp-table-wrap">
+      <table class="adm-table imp-table" id="catalog-table">
+        <thead>
+          <tr>
+            <th class="imp-col-check"><input type="checkbox" id="check-page" title="เลือกทั้งหน้า" aria-label="เลือกทั้งหน้า"></th>
+            <th class="imp-col-id">ID</th>
+            <th>บริการ</th>
+            <th>ประเภท</th>
+            <th class="imp-num">ต้นทาง</th>
+            <th class="imp-num">ทุน (บาท)</th>
+            <th class="imp-num">ราคาขาย</th>
+            <th class="imp-num">ช่วง</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in catalog %}
+          <tr data-id="{{ r.api_service }}" data-rate="{{ r.rate }}" data-cur="{{ r.currency or currency }}" data-type="{{ (r.type or 'Default')|lower }}"{% if r.api_service|string in imported %} class="is-imported"{% endif %}>
+            <td data-label="เลือก"><input class="js-pick" type="checkbox" value="{{ r.api_service }}" aria-label="เลือก {{ r.name }}"></td>
+            <td data-label="ID">{{ r.api_service }}</td>
+            <td class="wrap" data-label="บริการ">
+              <div class="imp-svc-name">{{ r.name }}</div>
+              {% if not cat %}<div class="imp-svc-cat la-muted">{{ r.category }}</div>{% endif %}
+            </td>
+            <td data-label="ประเภท"><span class="imp-type">{{ r.type or 'Default' }}</span>{% if r.refill == '1' %} <span class="imp-refill" title="Refill">R</span>{% endif %}</td>
+            <td class="imp-num" data-label="ต้นทาง">{{ r.rate }} {{ r.currency or currency }}</td>
+            <td class="js-cost imp-num" data-label="ทุน">{{ "%.2f"|format(r.cost_thb) }}</td>
+            <td data-label="ราคาขาย"><input class="la-input js-sell adm-num" type="number" step="0.01" value="{{ "%.2f"|format(r.sell_thb) }}"></td>
+            <td class="imp-num" data-label="ช่วง">{{ r.min_qty }}-{{ r.max_qty }}</td>
+            <td data-label="สถานะ">{% if r.api_service|string in imported %}<span class="adm-badge active">มีแล้ว</span>{% else %}<span class="la-muted">—</span>{% endif %}</td>
+          </tr>
+        {% else %}
+          <tr class="imp-empty-row"><td colspan="9">ไม่พบบริการตามเงื่อนไขนี้</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if pages > 1 %}
+    <div class="adm-pager imp-pager">
+      {% if page_no > 1 %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services/import?{{ qs({'page': page_no-1}) }}"><i class="ri-arrow-left-s-line"></i> ก่อนหน้า</a>{% endif %}
+      <span class="la-muted">หน้า {{ page_no }} / {{ pages }}</span>
+      {% if page_no < pages %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services/import?{{ qs({'page': page_no+1}) }}">ถัดไป <i class="ri-arrow-right-s-line"></i></a>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="adm-sticky imp-sticky">
+      <div class="imp-sticky-meta">
+        <strong id="pick-count-sticky">ยังไม่ได้เลือก</strong>
+        <span class="la-muted">{% if cat %}หมวดย่อย {{ cat }}{% elif main %}หมวดหลัก {{ main }}{% else %}ผลค้นหา{% endif %}</span>
+      </div>
+      <div class="imp-sticky-acts">
+        <button class="la-btn" type="submit" id="add-selected-sticky"><i class="ri-add-circle-line"></i> เพิ่มที่ติ๊ก</button>
+        <button class="la-btn js-imp-batch" type="button" data-scope="filtered_new" data-from-form="1"><i class="ri-flashlight-line"></i> เพิ่มที่ยังไม่มี</button>
+        <button class="la-btn la-btn-ghost js-imp-batch" type="button" data-scope="filtered" data-from-form="1"><i class="ri-folder-add-line"></i> เพิ่มทั้งที่กรอง</button>
+        <a class="la-btn la-btn-ghost" href="/admin/services"><i class="ri-arrow-go-back-line"></i> กลับหน้าร้าน</a>
+      </div>
+    </div>
+  </form>
+</section>
+<script src="/static/js/admin-import.js?v=9"></script>
+{% endif %}
+
+<div class="imp-progress" id="imp-progress" hidden>
+  <div class="imp-progress-card">
+    <h3><i class="ri-loader-4-line imp-spin"></i> กำลังนำเข้าบริการ</h3>
+    <p class="la-muted" id="imp-progress-text">เตรียมนำเข้า…</p>
+    <div class="imp-progress-track"><div class="imp-progress-bar" id="imp-progress-bar"></div></div>
+    <strong id="imp-progress-pct">0%</strong>
+    <p class="la-muted" id="imp-progress-sub">0 / 0</p>
+    <button class="la-btn la-btn-ghost" type="button" id="imp-progress-cancel">ยกเลิก</button>
+  </div>
+</div>
+<script src="/static/js/admin-import-batch.js?v=5"></script>
+
 <script>
 (function(){
   var q = document.getElementById('cat-q');
-  var sel = document.getElementById('cat-select');
-  if (!q || !sel) return;
+  var box = document.getElementById('imp-cats');
+  var empty = document.getElementById('imp-cat-empty');
+  if (!q || !box) return;
+  var items = box.querySelectorAll('.imp-cat');
   q.addEventListener('input', function(){
-    var v = (q.value || '').toLowerCase();
-    Array.prototype.forEach.call(sel.options, function(opt){
-      opt.hidden = !!(v && opt.text.toLowerCase().indexOf(v) < 0);
+    var v = (q.value || '').toLowerCase().trim();
+    var shown = 0;
+    Array.prototype.forEach.call(items, function(el){
+      var ok = !v || (el.getAttribute('data-name') || '').indexOf(v) >= 0;
+      el.hidden = !ok;
+      if (ok) shown++;
     });
+    if (empty) empty.hidden = shown > 0;
   });
-  if (sel.selectedIndex >= 0 && sel.options[sel.selectedIndex]) {
-    sel.options[sel.selectedIndex].scrollIntoView({ block: 'nearest' });
-  }
+  var on = box.querySelector('.imp-cat.is-on');
+  if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 })();
 </script>
 {% endif %}

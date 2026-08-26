@@ -3,33 +3,33 @@ import re
 PACKS = {
     "violet": {
         "label": "Night Violet",
-        "hint": "\u0e42\u0e17\u0e19\u0e21\u0e48\u0e27\u0e07\u0e01\u0e25\u0e32\u0e07\u0e04\u0e37\u0e19 \u2014 \u0e41\u0e19\u0e30\u0e19\u0e33\u0e40\u0e1b\u0e47\u0e19\u0e04\u0e48\u0e32\u0e40\u0e23\u0e34\u0e48\u0e21",
-        "bg": "#070512",
-        "text": "#f4f0ff",
-        "muted": "#c9bddf",
+        "hint": "\u0e42\u0e17\u0e19\u0e21\u0e37\u0e14\u0e04\u0e37\u0e19 \u0e21\u0e48\u0e27\u0e07\u0e2a\u0e49\u0e21 \u2014 \u0e42\u0e17\u0e19\u0e2b\u0e25\u0e31\u0e01\u0e02\u0e2d\u0e07\u0e40\u0e27\u0e47\u0e1a",
+        "bg": "#080614",
+        "text": "#f6f2ff",
+        "muted": "#b9adce",
         "accent": "#a855f7",
-        "accent2": "#ec4899",
-        "cyan": "#38bdf8",
+        "accent2": "#c026d3",
+        "cyan": "#67e8f9",
     },
     "navy": {
         "label": "Midnight Navy",
-        "hint": "\u0e42\u0e17\u0e19\u0e01\u0e23\u0e21\u0e40\u0e02\u0e49\u0e21 \u0e1b\u0e38\u0e48\u0e21\u0e1f\u0e49\u0e32 \u2014 \u0e14\u0e39\u0e40\u0e1b\u0e47\u0e19\u0e0b\u0e2d\u0e1f\u0e15\u0e4c\u0e41\u0e27\u0e23\u0e4c",
-        "bg": "#0a1220",
-        "text": "#eef4ff",
-        "muted": "#9eb0c9",
-        "accent": "#3b82f6",
+        "hint": "\u0e42\u0e17\u0e19\u0e01\u0e25\u0e32\u0e07\u0e04\u0e37\u0e19\u0e40\u0e22\u0e47\u0e19 \u0e04\u0e23\u0e32\u0e21\u0e21\u0e48\u0e27\u0e07 \u2014 \u0e04\u0e39\u0e48\u0e42\u0e17\u0e19\u0e40\u0e14\u0e35\u0e22\u0e27\u0e01\u0e31\u0e19",
+        "bg": "#0b1020",
+        "text": "#eef2ff",
+        "muted": "#a8b4cc",
+        "accent": "#7c6cf0",
         "accent2": "#6366f1",
-        "cyan": "#22d3ee",
+        "cyan": "#38bdf8",
     },
     "light": {
         "label": "Soft Light",
-        "hint": "\u0e1e\u0e37\u0e49\u0e19\u0e2d\u0e48\u0e2d\u0e19 \u0e2d\u0e48\u0e32\u0e19\u0e07\u0e48\u0e32\u0e22\u0e15\u0e2d\u0e19\u0e01\u0e25\u0e32\u0e07\u0e27\u0e31\u0e19",
-        "bg": "#f4f1fb",
-        "text": "#1e1233",
-        "muted": "#6b5d80",
+        "hint": "\u0e1e\u0e37\u0e49\u0e19\u0e2a\u0e27\u0e48\u0e32\u0e07 \u0e21\u0e48\u0e27\u0e07\u0e14\u0e35\u0e22\u0e27 \u2014 \u0e2d\u0e48\u0e32\u0e19\u0e07\u0e48\u0e32\u0e22\u0e15\u0e2d\u0e19\u0e01\u0e25\u0e32\u0e07\u0e27\u0e31\u0e19",
+        "bg": "#f5f2fb",
+        "text": "#1a1430",
+        "muted": "#564c68",
         "accent": "#7c3aed",
-        "accent2": "#db2777",
-        "cyan": "#0284c7",
+        "accent2": "#9333ea",
+        "cyan": "#0e7490",
     },
 }
 
@@ -108,36 +108,41 @@ def css_for_pack(settings, pack):
     cyan = c["cyan"]
     if pack == "light":
         card = "#ffffff"
-        surface = "#ffffff"
-        stroke = _rgba(accent, 0.16)
-        soft = _mix("#ffffff", accent, 0.08)
-        glow = _rgba(accent, 0.18)
-        glow2 = _rgba(accent2, 0.14)
-        glow3 = _rgba(cyan, 0.12)
-        nav = "rgba(255,255,255,.78)"
-        nav_scrolled = "rgba(255,255,255,.94)"
+        surface = "#fbf9ff"
+        stroke = _rgba("#1a1430", 0.12)
+        soft = _mix("#ffffff", accent, 0.10)
+        glow = _rgba(accent, 0.16)
+        glow2 = _rgba(accent2, 0.12)
+        glow3 = _rgba(cyan, 0.10)
+        nav = "rgba(255,255,255,.88)"
+        nav_scrolled = "rgba(255,255,255,.96)"
         ink = text
         ink_dim = muted
         foot = "#ffffff"
+        btn_text = "#ffffff"
+        grad_text = "linear-gradient(90deg,%s 0%%,%s 55%%,%s 100%%)" % (accent, accent2, cyan)
     else:
-        card = _mix(bg, "#ffffff", 0.07)
-        surface = _mix(bg, "#ffffff", 0.04)
-        stroke = _rgba(accent, 0.22)
-        soft = _mix(bg, accent, 0.16)
-        glow = _rgba(accent, 0.55)
-        glow2 = _rgba(accent2, 0.32)
-        glow3 = _rgba(cyan, 0.22)
-        nav = _rgba(bg, 0.42)
-        nav_scrolled = _rgba(_mix(bg, "#000000", 0.28), 0.88)
+        card = _mix(bg, "#ffffff", 0.08)
+        surface = _mix(bg, "#ffffff", 0.05)
+        stroke = _rgba("#ffffff", 0.12)
+        soft = _mix(bg, accent, 0.18)
+        glow = _rgba(accent, 0.42)
+        glow2 = _rgba(accent2, 0.28)
+        glow3 = _rgba(cyan, 0.18)
+        nav = _rgba(bg, 0.48)
+        nav_scrolled = _rgba(_mix(bg, "#000000", 0.22), 0.90)
         ink = "#ffffff"
-        ink_dim = "rgba(255,255,255,.72)"
-        foot = _mix(bg, "#000000", 0.22)
+        ink_dim = _rgba("#ffffff", 0.72)
+        foot = _mix(bg, "#000000", 0.18)
+        btn_text = "#ffffff"
+        grad_text = "linear-gradient(90deg,%s 0%%,%s 52%%,%s 100%%)" % (accent2, accent, cyan)
     grad = "linear-gradient(135deg,%s 0%%,%s 52%%,%s 100%%)" % (accent, accent2, cyan)
     return {
         "bg": bg, "text": text, "muted": muted, "accent": accent, "accent2": accent2, "cyan": cyan,
         "card": card, "surface": surface, "stroke": stroke, "soft": soft,
-        "glow": glow, "glow2": glow2, "glow3": glow3, "grad": grad,
+        "glow": glow, "glow2": glow2, "glow3": glow3, "grad": grad, "grad_text": grad_text,
         "nav": nav, "nav_scrolled": nav_scrolled, "ink": ink, "ink_dim": ink_dim, "foot": foot,
+        "btn_text": btn_text,
     }
 
 
@@ -150,10 +155,10 @@ def theme_css(settings):
             "%s {\n"
             "  --la-bg:%s; --la-text:%s; --la-muted:%s; --la-accent:%s; --la-accent2:%s; --la-cyan:%s;\n"
             "  --la-card:%s; --la-surface:%s; --la-stroke:%s; --la-soft:%s;\n"
-            "  --la-glow:%s; --la-glow2:%s; --la-glow3:%s; --la-grad:%s;\n"
+            "  --la-glow:%s; --la-glow2:%s; --la-glow3:%s; --la-grad:%s; --la-grad-text:%s;\n"
             "  --la-nav:%s; --la-nav-scrolled:%s; --la-ink:%s; --la-ink-dim:%s; --la-foot:%s;\n"
             "  --la-pink:%s; --la-purple:%s; --la-violet:%s; --la-link:%s;\n"
-            "  --la-btn:%s; --la-shadow:0 16px 40px %s;\n"
+            "  --la-btn:%s; --la-btn-text:%s; --la-shadow:0 16px 40px %s;\n"
             "  --bg:%s; --bg-2:%s; --card:%s; --line:%s; --text:%s; --muted:%s;\n"
             "  --violet:%s; --pink:%s; --cyan:%s; --grad:%s;\n"
             "  --primary-color:%s; --primary-color-dark:%s; --primary-gradient:%s;\n"
@@ -162,10 +167,10 @@ def theme_css(settings):
                 sel,
                 v["bg"], v["text"], v["muted"], v["accent"], v["accent2"], v["cyan"],
                 v["card"], v["surface"], v["stroke"], v["soft"],
-                v["glow"], v["glow2"], v["glow3"], v["grad"],
+                v["glow"], v["glow2"], v["glow3"], v["grad"], v["grad_text"],
                 v["nav"], v["nav_scrolled"], v["ink"], v["ink_dim"], v["foot"],
                 v["accent2"], v["accent"], v["accent"], v["cyan"],
-                v["grad"], v["glow"],
+                v["grad"], v["btn_text"], v["glow"],
                 v["bg"], v["surface"], v["card"], v["stroke"], v["text"], v["muted"],
                 v["accent"], v["accent2"], v["cyan"], v["grad"],
                 v["accent"], v["accent2"], v["grad"],

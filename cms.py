@@ -33,6 +33,7 @@ DEFAULTS = {
     "smtp_pass": "",
     "smtp_port": "587",
     "recaptcha_key": "",
+    "admin_allow_ips": "",
     "analytics_id": "",
     "custom_header": "",
     "custom_footer": "",

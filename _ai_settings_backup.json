@@ -1,0 +1,326 @@
+{
+  "modelConfig": {
+    "cmd-k": {
+      "modelName": "default",
+      "maxMode": false,
+      "selectedModels": [
+        {
+          "modelId": "default",
+          "parameters": []
+        }
+      ]
+    },
+    "composer": {
+      "modelName": "grok-4.6",
+      "maxMode": false,
+      "selectedModels": [
+        {
+          "modelId": "grok-4.6",
+          "parameters": [
+            {
+              "id": "effort",
+              "value": "medium"
+            },
+            {
+              "id": "fast",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    },
+    "background-composer": {
+      "modelName": "default",
+      "maxMode": true,
+      "selectedModels": [
+        {
+          "modelId": "default",
+          "parameters": []
+        }
+      ]
+    },
+    "plan-execution": {
+      "modelName": "default",
+      "maxMode": true,
+      "selectedModels": [
+        {
+          "modelId": "default",
+          "parameters": []
+        }
+      ]
+    },
+    "spec": {
+      "modelName": "default",
+      "maxMode": false,
+      "selectedModels": [
+        {
+          "modelId": "default",
+          "parameters": []
+        }
+      ]
+    },
+    "deep-search": {
+      "modelName": "default",
+      "maxMode": false,
+      "selectedModels": [
+        {
+          "modelId": "default",
+          "parameters": []
+        }
+      ]
+    },
+    "quick-agent": {
+      "modelName": "default",
+      "maxMode": false,
+      "selectedModels": [
+        {
+          "modelId": "default",
+          "parameters": []
+        }
+      ]
+    },
+    "composer-ensemble": {
+      "modelName": "default",
+      "maxMode": false,
+      "selectedModels": [
+        {
+          "modelId": "default",
+          "parameters": []
+        }
+      ]
+    }
+  },
+  "modelConfigMigrated": true,
+  "cmdKModel": "claude-4-sonnet",
+  "composerModel": "default",
+  "backgroundComposerModel": "claude-4-sonnet",
+  "modelsWithNoDefaultSwitch": [
+    "code-supernova-1-million",
+    "grok-code-fast-1",
+    "claude-4-5-sonnet-20250929-thinking",
+    "claude-4.5-sonnet-thinking",
+    "claude-4.5-sonnet",
+    "claude-4-5-sonnet-20250929",
+    "gpt-5",
+    "gpt-5-high",
+    "gpt-5-low",
+    "gpt-5-fast",
+    "gpt-5-high-fast",
+    "gpt-5-low-fast",
+    "gpt-5-codex",
+    "gemini-2-5-pro",
+    "gpt-5-mini",
+    "gpt-5-nano"
+  ],
+  "modelDefaultSwitchOnNewChat": false,
+  "completedModelMigrations": [
+    "sonnet-4-to-4-5-2025-01-composer-claude-4-sonnet",
+    "sonnet-4-to-4-5-2025-01-background-composer-claude-4-sonnet",
+    "sonnet-4-to-4-5-2025-01-plan-execution-claude-4-sonnet",
+    "sonnet-4-thinking-to-4-5-thinking-2025-01-composer-claude-4-sonnet-thinking",
+    "sonnet-4-thinking-to-4-5-thinking-2025-01-background-composer-claude-4-sonnet-thinking",
+    "sonnet-4-thinking-to-4-5-thinking-2025-01-plan-execution-claude-4-sonnet-thinking",
+    "sonnet-4-to-4-5-2025-nov-8-composer-claude-4-sonnet",
+    "sonnet-4-to-4-5-2025-nov-8-background-composer-claude-4-sonnet",
+    "sonnet-4-to-4-5-2025-nov-8-plan-execution-claude-4-sonnet",
+    "sonnet-4-thinking-to-4-5-thinking-2025-nov-8-composer-claude-4-sonnet-thinking",
+    "sonnet-4-thinking-to-4-5-thinking-2025-nov-8-background-composer-claude-4-sonnet-thinking",
+    "sonnet-4-thinking-to-4-5-thinking-2025-nov-8-plan-execution-claude-4-sonnet-thinking",
+    "codex-max-2025-12-05-composer-gpt-5.1-codex",
+    "codex-max-2025-12-05-background-composer-gpt-5.1-codex",
+    "codex-max-2025-12-05-plan-execution-gpt-5.1-codex",
+    "codex-max-low-2025-12-05-composer-gpt-5.1-codex-low",
+    "codex-max-low-2025-12-05-background-composer-gpt-5.1-codex-low",
+    "codex-max-low-2025-12-05-plan-execution-gpt-5.1-codex-low",
+    "codex-max-high-2025-12-05-composer-gpt-5.1-codex-high",
+    "codex-max-high-2025-12-05-background-composer-gpt-5.1-codex-high",
+    "codex-max-high-2025-12-05-plan-execution-gpt-5.1-codex-high",
+    "codex-max-fast-2025-12-05-composer-gpt-5.1-codex-fast",
+    "codex-max-fast-2025-12-05-background-composer-gpt-5.1-codex-fast",
+    "codex-max-fast-2025-12-05-plan-execution-gpt-5.1-codex-fast",
+    "codex-max-high-fast-2025-12-05-composer-gpt-5.1-codex-high-fast",
+    "codex-max-high-fast-2025-12-05-background-composer-gpt-5.1-codex-high-fast",
+    "codex-max-high-fast-2025-12-05-plan-execution-gpt-5.1-codex-high-fast",
+    "codex-max-low-fast-2025-12-05-composer-gpt-5.1-codex-low-fast",
+    "codex-max-low-fast-2025-12-05-background-composer-gpt-5.1-codex-low-fast",
+    "codex-max-low-fast-2025-12-05-plan-execution-gpt-5.1-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5-codex",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5-codex-low",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5-codex-high",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-low",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-high",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-max",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-max-low",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-max-high",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-max-medium",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-max-low-fast",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-mini",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-mini-low",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.1-codex-mini-high",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.2-codex",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.2-codex-low",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.2-codex-high",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.2-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-composer-gpt-5.2-codex-high-grind",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5-codex",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5-codex-low",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5-codex-high",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-low",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-high",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-max",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-max-low",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-max-high",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-max-medium",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-max-low-fast",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-mini",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-mini-low",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.1-codex-mini-high",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.2-codex",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.2-codex-low",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.2-codex-high",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.2-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-cmd-k-gpt-5.2-codex-high-grind",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5-codex",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5-codex-low",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5-codex-high",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-low",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-high",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-max",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-max-low",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-max-high",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-max-medium",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-max-low-fast",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-mini",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-mini-low",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.1-codex-mini-high",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.2-codex",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.2-codex-low",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.2-codex-high",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.2-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-background-composer-gpt-5.2-codex-high-grind",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5-codex",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5-codex-low",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5-codex-high",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-low",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-high",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-max",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-max-low",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-max-high",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-max-medium",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-max-low-fast",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-mini",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-mini-low",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.1-codex-mini-high",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.2-codex",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.2-codex-low",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.2-codex-high",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.2-codex-low-fast",
+    "oai-codex-to-53-high-2026-07-plan-execution-gpt-5.2-codex-high-grind",
+    "oai-codex-to-53-high-fast-2026-07-composer-gpt-5-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-composer-gpt-5-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-composer-gpt-5.1-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-composer-gpt-5.1-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-composer-gpt-5.1-codex-max-medium-fast",
+    "oai-codex-to-53-high-fast-2026-07-composer-gpt-5.1-codex-max-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-composer-gpt-5.2-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-composer-gpt-5.2-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-cmd-k-gpt-5-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-cmd-k-gpt-5-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-cmd-k-gpt-5.1-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-cmd-k-gpt-5.1-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-cmd-k-gpt-5.1-codex-max-medium-fast",
+    "oai-codex-to-53-high-fast-2026-07-cmd-k-gpt-5.1-codex-max-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-cmd-k-gpt-5.2-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-cmd-k-gpt-5.2-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-background-composer-gpt-5-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-background-composer-gpt-5-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-background-composer-gpt-5.1-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-background-composer-gpt-5.1-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-background-composer-gpt-5.1-codex-max-medium-fast",
+    "oai-codex-to-53-high-fast-2026-07-background-composer-gpt-5.1-codex-max-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-background-composer-gpt-5.2-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-background-composer-gpt-5.2-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-plan-execution-gpt-5-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-plan-execution-gpt-5-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-plan-execution-gpt-5.1-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-plan-execution-gpt-5.1-codex-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-plan-execution-gpt-5.1-codex-max-medium-fast",
+    "oai-codex-to-53-high-fast-2026-07-plan-execution-gpt-5.1-codex-max-high-fast",
+    "oai-codex-to-53-high-fast-2026-07-plan-execution-gpt-5.2-codex-fast",
+    "oai-codex-to-53-high-fast-2026-07-plan-execution-gpt-5.2-codex-high-fast",
+    "oai-codex-to-53-xhigh-fast-2026-07-composer-gpt-5.1-codex-max-xhigh",
+    "oai-codex-to-53-xhigh-fast-2026-07-composer-gpt-5.1-codex-max-xhigh-fast",
+    "oai-codex-to-53-xhigh-fast-2026-07-composer-gpt-5.2-codex-xhigh",
+    "oai-codex-to-53-xhigh-fast-2026-07-composer-gpt-5.2-codex-xhigh-fast",
+    "oai-codex-to-53-xhigh-fast-2026-07-cmd-k-gpt-5.1-codex-max-xhigh",
+    "oai-codex-to-53-xhigh-fast-2026-07-cmd-k-gpt-5.1-codex-max-xhigh-fast",
+    "oai-codex-to-53-xhigh-fast-2026-07-cmd-k-gpt-5.2-codex-xhigh",
+    "oai-codex-to-53-xhigh-fast-2026-07-cmd-k-gpt-5.2-codex-xhigh-fast",
+    "oai-codex-to-53-xhigh-fast-2026-07-background-composer-gpt-5.1-codex-max-xhigh",
+    "oai-codex-to-53-xhigh-fast-2026-07-background-composer-gpt-5.1-codex-max-xhigh-fast",
+    "oai-codex-to-53-xhigh-fast-2026-07-background-composer-gpt-5.2-codex-xhigh",
+    "oai-codex-to-53-xhigh-fast-2026-07-background-composer-gpt-5.2-codex-xhigh-fast",
+    "oai-codex-to-53-xhigh-fast-2026-07-plan-execution-gpt-5.1-codex-max-xhigh",
+    "oai-codex-to-53-xhigh-fast-2026-07-plan-execution-gpt-5.1-codex-max-xhigh-fast",
+    "oai-codex-to-53-xhigh-fast-2026-07-plan-execution-gpt-5.2-codex-xhigh",
+    "oai-codex-to-53-xhigh-fast-2026-07-plan-execution-gpt-5.2-codex-xhigh-fast"
+  ],
+  "modelSettingToMaxMode": {
+    "background-composer": true
+  },
+  "modelOverrideEnabled": [
+    "claude-sonnet-4-5",
+    "gpt-5.2",
+    "claude-opus-4-5",
+    "claude-opus-4-6",
+    "default"
+  ],
+  "modelOverrideDisabled": [],
+  "teamIds": [],
+  "usageHardLimit": 50,
+  "isUsagePricingEnabled": true,
+  "previousModelBeforeDefault": {
+    "composer": "composer-1.5",
+    "background-composer": "claude-4.5-opus-high"
+  },
+  "modelVisibilityMigrated": true,
+  "modelLastUsedAt": {
+    "composer-2.5": "2026-08-06T03:24:31.639Z",
+    "claude-opus-4-6": "2026-06-21T15:13:40.043Z",
+    "claude-opus-4-5": "2026-06-21T15:13:40.043Z",
+    "gpt-5.2": "2026-06-21T15:13:40.043Z",
+    "claude-sonnet-4-5": "2026-06-21T15:13:40.043Z",
+    "grok-4.5": "2026-08-14T03:29:52.251Z",
+    "gpt-5.6-sol": "2026-07-10T04:59:39.287Z",
+    "claude-opus-5": "2026-07-28T02:20:16.411Z",
+    "grok-4.6": "2026-08-24T16:34:16.772Z"
+  },
+  "modelParameterPreferences": {
+    "grok-4.6": {
+      "modelId": "grok-4.6",
+      "parameters": [
+        {
+          "id": "effort",
+          "value": "medium"
+        },
+        {
+          "id": "fast",
+          "value": "false"
+        }
+      ],
+      "updatedAt": "2026-08-24T15:47:28.333Z"
+    }
+  }
+}

@@ -23,15 +23,12 @@ dist/
 # User uploads (keep built-in blog art)
 static/uploads/
 
-# One-off local scripts
-_typo.py
-_split_mods_tab.py
-_deploy*.py
-_vps_*.py
-_ai_settings_backup.json
+# One-off local scripts helpers kept in repo for deploy ops
+# (_deploy*.py / _vps_*.py are committed intentionally)
 
 # OS / editor
 Thumbs.db
 .DS_Store
 .vscode/
 .idea/
+_scan_secrets.py

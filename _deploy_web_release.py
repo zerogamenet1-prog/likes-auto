@@ -1,4 +1,4 @@
-"""Upload current SEO/UI release to production VPS. Requires VPS_PW env."""
+"""Upload release files to production via SFTP/SSH. Credentials via env only."""
 import json
 import os
 import posixpath
@@ -7,12 +7,18 @@ from pathlib import Path
 
 import paramiko
 
-pw = os.environ.get("VPS_PW")
+pw = os.environ.get("VPS_PW") or os.environ.get("DEPLOY_PW")
 if not pw:
-    raise SystemExit("missing VPS_PW")
+    raise SystemExit("missing VPS_PW or DEPLOY_PW")
+
+host = os.environ.get("DEPLOY_HOST", "103.91.205.39")
+user = os.environ.get("DEPLOY_USER", "root")
+port = int(os.environ.get("DEPLOY_PORT", "22"))
+remote = os.environ.get("DEPLOY_PATH", "/var/www/likes-auto").rstrip("/")
+chown_user = os.environ.get("DEPLOY_CHOWN", "www-data:www-data")
+restart_cmd = os.environ.get("DEPLOY_RESTART", "systemctl restart likes-auto")
 
 local = Path(__file__).resolve().parent
-remote = "/var/www/likes-auto"
 
 FILES = [
     "app.py",
@@ -69,11 +75,13 @@ def payload(src: Path) -> bytes:
 
 
 def main():
+    print("connect", user + "@" + host + ":" + str(port), "->", remote)
     c = paramiko.SSHClient()
     c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     c.connect(
-        "103.91.205.39",
-        username="root",
+        host,
+        port=port,
+        username=user,
         password=pw,
         timeout=30,
         allow_agent=False,
@@ -86,11 +94,6 @@ def main():
         if not src.is_file():
             raise SystemExit("missing local file: %s" % rel)
         dst = posixpath.join(remote, rel.replace("\\", "/"))
-        parent = posixpath.dirname(dst)
-        try:
-            sftp.stat(parent)
-        except OSError:
-            pass
         data = payload(src)
         with sftp.open(dst, "wb") as out:
             out.write(data)
@@ -98,20 +101,21 @@ def main():
     sftp.close()
 
     paths = " ".join(posixpath.join(remote, f.replace("\\", "/")) for f in FILES)
-    cmd = (
-        "chown www-data:www-data %s; "
-        "systemctl restart likes-auto; sleep 3; systemctl is-active likes-auto; "
-        "curl -s -o /dev/null -w 'home %%{http_code}\\n' https://likes-auto.com/; "
-        "curl -s -o /dev/null -w 'pum-like %%{http_code}\\n' https://likes-auto.com/pum-like; "
-        "curl -s -o /dev/null -w 'site-map %%{http_code}\\n' https://likes-auto.com/site-map; "
-        "curl -s -o /dev/null -w 'llms %%{http_code}\\n' https://likes-auto.com/llms.txt; "
-        "curl -s https://likes-auto.com/sitemap-pages.xml | grep -c '<url>'"
-    ) % paths
-    _, o, e = c.exec_command(cmd, timeout=120)
-    print(o.read().decode("utf-8", "replace"))
-    err = e.read().decode("utf-8", "replace")
-    if err.strip():
-        print("ERR", err)
+    post = []
+    if chown_user.strip():
+        post.append("chown %s %s" % (chown_user, paths))
+    if restart_cmd.strip():
+        post.append(restart_cmd.strip() + "; sleep 3; systemctl is-active likes-auto 2>/dev/null || true")
+    post.append(
+        "curl -s -o /dev/null -w 'home %%{http_code}\\n' https://likes-auto.com/ 2>/dev/null || true"
+    )
+    cmd = "; ".join(post)
+    if cmd.strip():
+        _, o, e = c.exec_command(cmd, timeout=120)
+        print(o.read().decode("utf-8", "replace"))
+        err = e.read().decode("utf-8", "replace")
+        if err.strip():
+            print("ERR", err)
     c.close()
 
     import sys

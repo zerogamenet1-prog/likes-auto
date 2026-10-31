@@ -1,8 +1,8 @@
 # Deploy Likes Auto
 
-เซิร์ฟเวอร์รันแอปที่ `/var/www/likes-auto`  
-Nginx เป็น reverse proxy ไป Gunicorn (`likes-auto.service`)  
-ผู้ใช้โปรเซส: `www-data`
+เซิร์ฟเวอร์เดิม (VPS): `/var/www/likes-auto` + Gunicorn (`likes-auto.service`)  
+
+โฮสต์ Visperhost / DirectAdmin: ดู [hosting-visperhost.md](hosting-visperhost.md)
 
 ## สิ่งที่ห้ามทับบนเซิร์ฟเวอร์
 

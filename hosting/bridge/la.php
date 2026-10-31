@@ -54,7 +54,13 @@ if ($base === '') {
     exit;
 }
 
-$url = $base . $uri;
+$path = parse_url($uri, PHP_URL_PATH) ?: '/';
+$query = parse_url($uri, PHP_URL_QUERY);
+if ($path !== '/' && substr($path, -1) === '/') {
+    $path = rtrim($path, '/');
+}
+$forwardUri = $path . ($query !== null && $query !== '' ? ('?' . $query) : '');
+$url = $base . $forwardUri;
 $headers = [];
 $skip = ['host', 'connection', 'content-length', 'accept-encoding'];
 foreach ($_SERVER as $key => $value) {

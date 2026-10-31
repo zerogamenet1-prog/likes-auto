@@ -325,14 +325,20 @@ def _has_col(cur, table, col):
 def migrate():
     con = connect()
     cur = con.cursor()
-    if not _has_col(cur, "clients", "password_hash"):
-        cur.execute("ALTER TABLE clients ADD COLUMN password_hash TEXT")
-    if not _has_col(cur, "clients", "api_key"):
-        cur.execute("ALTER TABLE clients ADD COLUMN api_key TEXT")
-    if not _has_col(cur, "tickets", "message"):
-        cur.execute("ALTER TABLE tickets ADD COLUMN message TEXT")
-    if not _has_col(cur, "clients", "google_id"):
-        cur.execute("ALTER TABLE clients ADD COLUMN google_id TEXT")
+    for table, col, spec in (
+        ("clients", "password_hash", "TEXT"),
+        ("clients", "api_key", "TEXT"),
+        ("tickets", "message", "TEXT"),
+        ("clients", "google_id", "TEXT"),
+    ):
+        if _has_col(cur, table, col):
+            continue
+        try:
+            cur.execute("ALTER TABLE %s ADD COLUMN %s %s" % (table, col, spec))
+        except sqlite3.OperationalError as ex:
+            # Parallel gunicorn workers may race on first boot.
+            if "duplicate column" not in str(ex).lower():
+                raise
     cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS clients_google_id ON clients(google_id) WHERE google_id IS NOT NULL AND google_id != ''")
     con.commit()
     con.close()

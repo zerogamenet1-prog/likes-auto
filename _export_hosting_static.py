@@ -36,12 +36,14 @@ RewriteRule ^ https://likes-auto.com%{REQUEST_URI} [L,R=301]
   Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 </IfModule>
 
-# POST always hits bridge (paths without trailing slash must not fall through to static dirs)
-RewriteCond %{REQUEST_METHOD} POST [NC]
+# Auth/admin/panel must hit bridge (even if static HTML exists) so CSRF/session match
+RewriteCond %{REQUEST_URI} ^/(admin|signin|signup|forgot|reset|neworder|orders|addfunds|account|tickets|dripfeeds|subscriptions|affiliates|panels|google-login|shop|v2|api|logout|internal)(/|$) [NC]
+RewriteRule ^ la.php [L,QSA]
+
+# POST always hits bridge
+RewriteCond %{REQUEST_METHOD} !^(GET|HEAD)$ [NC]
 RewriteCond %{REQUEST_URI} !^/(css|assets|static)/ [NC]
 RewriteRule ^ la.php [L,QSA]
-RewriteCond %{REQUEST_METHOD} POST [NC]
-RewriteRule ^(signin|signup|forgot|reset|admin/login)$ la.php [L,QSA]
 
 # Serve existing files/dirs
 RewriteCond %{REQUEST_FILENAME} -f [OR]

@@ -19,11 +19,16 @@ AddType application/x-httpd-php .php
 RewriteEngine On
 RewriteBase /
 
+# Allow Let's Encrypt HTTP-01 challenges (must not redirect)
+RewriteRule ^\\.well-known/acme-challenge/ - [L]
+
 # Canonical host: apex (likes-auto.com)
+RewriteCond %{REQUEST_URI} !^/\\.well-known/acme-challenge/ [NC]
 RewriteCond %{HTTP_HOST} ^www\\.likes-auto\\.com$ [NC]
 RewriteRule ^ https://likes-auto.com%{REQUEST_URI} [L,R=301]
 
 # HTTPS (Let's Encrypt on origin, or Cloudflare Flexible when proxied)
+RewriteCond %{REQUEST_URI} !^/\\.well-known/acme-challenge/ [NC]
 RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
 RewriteCond %{HTTP:CF-Visitor} !'"scheme":"https"' [NC]

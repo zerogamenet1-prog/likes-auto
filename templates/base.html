@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ t.html_lang }}" data-la-pack="{{ theme_pack|default('violet') }}" data-la-switch="{{ '1' if theme_switch|default(true) else '0' }}">
+<html lang="{{ t.html_lang }}" data-la-pack="{{ theme_pack|default('peak') }}" data-la-switch="{{ '1' if theme_switch|default(true) else '0' }}">
 {% if mods is not defined %}{% set mods = {} %}{% endif %}
 {% if shop_home is not defined %}{% set shop_home = '/neworder' %}{% endif %}
 <head>
@@ -21,10 +21,14 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   {% if google_ready %}<link rel="dns-prefetch" href="https://accounts.google.com">{% endif %}
   <meta name="theme-color" content="#070512">
+  {% if seo and seo.gsc %}<meta name="google-site-verification" content="{{ seo.gsc }}">{% endif %}
+  {% if seo and seo.bing %}<meta name="msvalidate.01" content="{{ seo.bing }}">{% endif %}
   <meta name="csrf-token" content="{{ csrf or '' }}">
-  <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/favicon.png">
-  <link rel="apple-touch-icon" href="/static/assets/apple-touch.png">
+  <link rel="icon" type="image/svg+xml" href="/static/assets/favicon.svg?v=peak1">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/favicon.png?v=peak1">
+  <link rel="apple-touch-icon" href="/static/assets/apple-touch.png?v=peak1">
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM site summary">
   <meta property="og:locale" content="th_TH">
   <meta property="og:site_name" content="Likes Auto">
   <meta property="og:type" content="{{ seo.og_type if seo and seo.og_type else 'website' }}">
@@ -36,25 +40,25 @@
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="{{ seo.canonical if seo and seo.canonical else site.url }}">
   {% if seo and seo.published %}<meta property="article:published_time" content="{{ seo.published }}">{% endif %}
+  {% if seo and seo.modified %}<meta property="article:modified_time" content="{{ seo.modified }}">{% endif %}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ seo.title if seo and seo.title else t.meta_title }}">
   <meta name="twitter:description" content="{{ seo.desc if seo and seo.desc else t.meta_desc }}">
   <meta name="twitter:image" content="{{ seo.og_image if seo and seo.og_image else site.url + '/static/assets/og-cover.jpg' }}">
-  <link rel="preload" href="/css/panel/ideacode/style.css?v=pro18" as="style">
+  <link rel="preload" href="/css/panel/ideacode/style.css?v=pro19" as="style">
   {% if page == 'home' %}
-  <link rel="preload" href="/css/panel/ideacode/pages.css?v=pro96" as="style">
-  <link rel="preload" href="/static/js/home.js?v=pro3" as="script">
+  <link rel="preload" href="/css/panel/ideacode/pages.css?v=pro114" as="style">
   {% endif %}
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.2.0/fonts/remixicon.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.2.0/fonts/remixicon.css"></noscript>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap"></noscript>
-  <link rel="stylesheet" href="/css/panel/ideacode/style.css?v=pro18">
-  <link rel="stylesheet" href="/css/panel/ideacode/pages.css?v=pro96">
-  <link rel="stylesheet" href="/css/panel/ideacode/themes.css?v=pro8">
-    {% if user and dash_mode %}<link rel="stylesheet" href="/css/panel/ideacode/dash.css?v=pro48">{% endif %}
-  <link rel="stylesheet" href="/css/panel/ideacode/responsive.css?v=r17">
+  <link rel="stylesheet" href="/css/panel/ideacode/style.css?v=pro19">
+  <link rel="stylesheet" href="/css/panel/ideacode/pages.css?v=pro114">
+  <link rel="stylesheet" href="/css/panel/ideacode/themes.css?v=pro14">
+    {% if user and dash_mode %}<link rel="stylesheet" href="/css/panel/ideacode/dash.css?v=pro50">{% endif %}
+  <link rel="stylesheet" href="/css/panel/ideacode/responsive.css?v=r18">
   {% if theme_css %}<style id="laThemeVars">{{ theme_css|safe }}</style>{% endif %}
   {% if seo and seo.json_ld %}<script type="application/ld+json">{{ seo.json_ld|safe }}</script>{% endif %}
   {% if settings and settings.analytics_id %}
@@ -66,13 +70,13 @@
   <script>
     (function(){
       var root = document.documentElement;
-      var def = root.getAttribute('data-la-pack') || 'violet';
+      var def = root.getAttribute('data-la-pack') || 'peak';
       var can = root.getAttribute('data-la-switch') !== '0';
       var pack = def;
       try {
         var saved = localStorage.getItem('la-pack');
         if (!saved && localStorage.getItem('la-theme') === 'light') saved = 'light';
-        if (can && saved && /^(violet|navy|light)$/.test(saved)) pack = saved;
+        if (can && saved && /^(peak|violet|navy|light)$/.test(saved)) pack = saved;
       } catch (e) {}
       root.setAttribute('data-la-pack', pack);
       root.classList.toggle('la-light', pack === 'light');
@@ -102,97 +106,139 @@
     </header>
     <div class="la-dash-body">
   {% else %}
-  <header class="la-header">
+  <header class="la-header la-header--fz">
     <div class="la-progress" id="laProgress"></div>
-    <div class="la-wrap">
     <div class="la-header-inner">
-      <a class="la-brand" href="/"><img class="la-mark" src="/static/assets/brand.svg" width="28" height="28" alt="Likes Auto">Likes Auto</a>
+      <div class="la-header-left">
+        <button class="la-iconbtn la-menu-btn" type="button" onclick="laToggleNav()" aria-label="{{ t.menu }}" aria-expanded="false" aria-controls="laNav"><i class="ri-menu-line"></i></button>
+        <a class="la-brand" href="/">
+          <span class="la-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
+          <span class="la-brand-text">Likes<em>Auto</em></span>
+        </a>
+      </div>
       {% if user %}
-      <nav class="la-nav" id="laNav">
-        {% if mods.mod_neworder %}<a href="/neworder" class="{% if page == 'neworder' %}active{% endif %}"><i class="ri-add-circle-line"></i>สั่งซื้อ</a>{% endif %}
-        {% if mods.mod_orders %}<a href="/orders" class="{% if page == 'orders' %}active{% endif %}"><i class="ri-file-list-3-line"></i>ออเดอร์</a>{% endif %}
-        {% if mods.mod_addfunds %}<a href="/addfunds" class="{% if page == 'addfunds' %}active{% endif %}"><i class="ri-wallet-3-line"></i>เติมเงิน</a>{% endif %}
-        {% if mods.mod_services %}<a href="/services" class="{% if page == 'services' %}active{% endif %}"><i class="ri-store-2-line"></i>บริการ</a>{% endif %}
-        {% if mods.mod_tickets %}<a href="/tickets" class="{% if page == 'tickets' %}active{% endif %}"><i class="ri-customer-service-2-line"></i>ช่วยเหลือ</a>{% endif %}
-        {% if mods.mod_account %}<a href="/account" class="{% if page == 'account' %}active{% endif %}"><i class="ri-user-3-line"></i>บัญชี</a>{% endif %}
-        {% if mods.mod_dripfeed %}<a href="/dripfeeds" class="{% if page == 'dripfeeds' %}active{% endif %}"><i class="ri-timer-flash-line"></i>ส่งทีละรอบ</a>{% endif %}
-        {% if mods.mod_subscription %}<a href="/subscriptions" class="{% if page == 'subscriptions' %}active{% endif %}"><i class="ri-refresh-line"></i>เติมอัตโนมัติ</a>{% endif %}
-        {% if mods.mod_affiliate %}<a href="/affiliates" class="{% if page == 'affiliates' %}active{% endif %}"><i class="ri-share-forward-line"></i>แนะนำเพื่อน</a>{% endif %}
-        {% if mods.mod_child %}<a href="/panels" class="{% if page == 'panels' %}active{% endif %}"><i class="ri-window-line"></i>แผงลูก</a>{% endif %}
+      <nav class="la-nav" id="laNav" aria-label="{{ t.menu }}">
+        {% if mods.mod_neworder %}<a href="/neworder" class="{% if page == 'neworder' %}active{% endif %}"><i class="ri-add-circle-line"></i><span>สั่งซื้อ</span></a>{% endif %}
+        {% if mods.mod_orders %}<a href="/orders" class="{% if page == 'orders' %}active{% endif %}"><i class="ri-file-list-3-line"></i><span>ออเดอร์</span></a>{% endif %}
+        {% if mods.mod_addfunds %}<a href="/addfunds" class="{% if page == 'addfunds' %}active{% endif %}"><i class="ri-wallet-3-line"></i><span>เติมเงิน</span></a>{% endif %}
+        {% if mods.mod_services %}<a href="/services" class="{% if page == 'services' %}active{% endif %}"><i class="ri-store-2-line"></i><span>{{ t.nav_services }}</span></a>{% endif %}
+        {% if mods.mod_tickets %}<a href="/tickets" class="{% if page == 'tickets' %}active{% endif %}"><i class="ri-customer-service-2-line"></i><span>{{ t.nav_support }}</span></a>{% endif %}
+        {% if mods.mod_account %}<a href="/account" class="{% if page == 'account' %}active{% endif %}"><i class="ri-user-3-line"></i><span>บัญชี</span></a>{% endif %}
+        {% if mods.mod_dripfeed %}<a href="/dripfeeds" class="{% if page == 'dripfeeds' %}active{% endif %}"><i class="ri-timer-flash-line"></i><span>ส่งทีละรอบ</span></a>{% endif %}
+        {% if mods.mod_subscription %}<a href="/subscriptions" class="{% if page == 'subscriptions' %}active{% endif %}"><i class="ri-refresh-line"></i><span>เติมอัตโนมัติ</span></a>{% endif %}
+        {% if mods.mod_affiliate %}<a href="/affiliates" class="{% if page == 'affiliates' %}active{% endif %}"><i class="ri-share-forward-line"></i><span>แนะนำเพื่อน</span></a>{% endif %}
+        {% if mods.mod_child %}<a href="/panels" class="{% if page == 'panels' %}active{% endif %}"><i class="ri-window-line"></i><span>แผงลูก</span></a>{% endif %}
         {% with extra_class='la-pack-in-nav' %}{% include "_pack_switch.html" %}{% endwith %}
-        {% if mods.mod_logout %}<a class="la-nav-mobile" href="/logout"><i class="ri-logout-box-r-line"></i>ออกจากระบบ</a>{% endif %}
+        {% if mods.mod_logout %}<a href="/logout"><i class="ri-logout-box-r-line"></i><span>ออกจากระบบ</span></a>{% endif %}
       </nav>
       <div class="la-tools">
         <span class="la-lang">{{ "%.2f"|format(user.balance or 0) }} บาท</span>
         {% include "_pack_switch.html" %}
-        {% if mods.mod_logout %}<a class="la-nav-login la-desk-only" href="/logout">ออก</a>{% endif %}
+        {% if mods.mod_logout %}<a class="la-nav-login" href="/logout">ออก</a>{% endif %}
       </div>
       {% else %}
-      <nav class="la-nav" id="laNav">
-        <a href="/" class="{% if page == 'home' %}active{% endif %}"><i class="ri-home-5-line"></i>{{ t.nav_home }}</a>
-        <a href="/#about"><i class="ri-building-4-line"></i>{{ t.nav_about }}</a>
+      <nav class="la-nav" id="laNav" aria-label="{{ t.menu }}">
+        <a href="/signin" onclick="laOpenLogin(event)" class="{% if page == 'signin' %}active{% endif %}"><i class="ri-login-box-line"></i><span>{{ t.nav_login }}</span></a>
         {% if mods.mod_services %}
-        <div class="la-drop">
-          <a class="la-drop-toggle {% if page == 'services' %}active{% endif %}" href="/services"><i class="ri-store-2-line"></i>{{ t.nav_services }} <i class="ri-arrow-down-s-line la-drop-caret"></i></a>
-          <div class="la-drop-menu">
-            <a href="/services?cat=Instagram">Instagram</a>
-            <a href="/services?cat=Tiktok">TikTok</a>
-            <a href="/services?cat=Youtube">YouTube</a>
-            <a href="/services?cat=Facebook">Facebook</a>
-            <a href="/services?cat=Telegram">Telegram</a>
-            <a href="/services">{{ t.nav_svc_all }}</a>
+        <details class="la-nav-acc">
+          <summary><i class="ri-store-2-line"></i><span>{{ t.nav_services }}</span><i class="ri-arrow-down-s-line la-nav-caret"></i></summary>
+          <div class="la-nav-acc-list">
+            <a href="/instagram"><i class="ri-instagram-line"></i><span>Instagram</span></a>
+            <a href="/tiktok"><i class="ri-tiktok-line"></i><span>TikTok</span></a>
+            <a href="/youtube"><i class="ri-youtube-line"></i><span>YouTube</span></a>
+            <a href="/facebook"><i class="ri-facebook-circle-line"></i><span>Facebook</span></a>
+            <a href="/telegram"><i class="ri-telegram-line"></i><span>Telegram</span></a>
+            <a href="/services"><i class="ri-list-check"></i><span>{{ t.nav_svc_all }}</span></a>
           </div>
-        </div>
+        </details>
         {% endif %}
-        <a href="/blog" class="{% if page == 'blog' %}active{% endif %}"><i class="ri-article-line"></i>บล็อก</a>
-        {% if mods.mod_faq %}<a href="/faq" class="{% if page == 'faq' %}active{% endif %}"><i class="ri-question-line"></i>{{ t.nav_ask }}</a>{% endif %}
-        {% if mods.mod_api %}<a href="/api" class="{% if page == 'api' %}active{% endif %}"><i class="ri-code-s-slash-line"></i>{{ t.nav_api }}</a>{% endif %}
-        <a href="/#contact"><i class="ri-mail-send-line"></i>{{ t.nav_contact }}</a>
-        <a class="la-nav-mobile" href="/signin" onclick="laOpenLogin(event)"><i class="ri-login-box-line"></i>{{ t.nav_login }}</a>
-        <a class="la-nav-mobile" href="/signup"><i class="ri-user-add-line"></i>{{ t.nav_signup }}</a>
+        <details class="la-nav-acc">
+          <summary><i class="ri-customer-service-2-line"></i><span>{{ t.nav_support }}</span><i class="ri-arrow-down-s-line la-nav-caret"></i></summary>
+          <div class="la-nav-acc-list">
+            {% if mods.mod_faq %}<a href="/faq"><i class="ri-question-line"></i><span>{{ t.nav_faq }}</span></a>{% endif %}
+            {% if mods.mod_tickets %}
+            <a href="/tickets"><i class="ri-chat-3-line"></i><span>{{ t.nav_chat }}</span></a>
+            {% else %}
+            <a href="/#contact"><i class="ri-chat-3-line"></i><span>{{ t.nav_chat }}</span></a>
+            {% endif %}
+          </div>
+        </details>
+        <a href="/signup" class="{% if page == 'signup' %}active{% endif %}"><i class="ri-user-add-line"></i><span>{{ t.nav_signup }}</span></a>
         {% with extra_class='la-pack-in-nav' %}{% include "_pack_switch.html" %}{% endwith %}
       </nav>
       <div class="la-tools">
         {% include "_pack_switch.html" %}
-        <a class="la-nav-login la-desk-only" href="/signin" onclick="laOpenLogin(event)">{{ t.nav_login }}</a>
+        <a class="la-nav-login" href="/signin" onclick="laOpenLogin(event)">{{ t.nav_login }}</a>
         <a class="la-btn la-btn-mini" href="/signup">{{ t.nav_signup }}</a>
       </div>
       {% endif %}
-      <button class="la-iconbtn la-menu-btn" type="button" onclick="laToggleNav()" aria-label="{{ t.menu }}"><i class="ri-menu-line"></i></button>
     </div>
-    </div>
+    <div class="la-nav-scrim" id="laNavScrim" onclick="laCloseNav()"></div>
   </header>
 
   {% if not user %}
   <div class="la-modal" id="laLogin" onclick="if(event.target.id==='laLogin') laCloseLogin()">
-    <div class="la-modal-card">
-      <div class="la-modal-side">
-        <img src="/static/assets/secure-pay.jpg" alt="ช่องทางเติมเงินพร้อมเพย์ ทรูมันนี่ และโอนธนาคาร" width="420" height="280" loading="lazy">
+    <div class="la-modal-card la-modal-card--fz" role="dialog" aria-modal="true" aria-labelledby="laLoginTitle">
+      <aside class="la-modal-side">
+        <img src="/static/assets/secure-pay.jpg" alt="ช่องทางเติมเงินพร้อมเพย์ ทรูมันนี่ และโอนธนาคาร" width="420" height="280" loading="lazy" decoding="async">
         <h3>{{ t.modal_hi }}</h3>
         <p>{{ t.modal_lead }}</p>
-        <ul class="la-trust la-trust-col">
-          <li><i class="ri-lock-2-fill"></i> {{ t.ssl }}</li>
-          <li><i class="ri-shield-check-fill"></i> {{ t.trust_nopass }}</li>
-          <li><i class="ri-customer-service-2-fill"></i> {{ t.trust_th }}</li>
+        <ul class="la-modal-perks">
+          <li><i class="ri-lock-2-fill"></i><span>{{ t.ssl }}</span></li>
+          <li><i class="ri-shield-check-fill"></i><span>{{ t.trust_nopass }}</span></li>
+          <li><i class="ri-customer-service-2-fill"></i><span>{{ t.trust_th }}</span></li>
         </ul>
-      </div>
-      <div class="la-modal-form">
-        <button type="button" class="la-iconbtn" style="float:right" onclick="laCloseLogin()" aria-label="{{ t.close }}">✕</button>
-        <h3>{{ t.modal_title }}</h3>
-        {% include "_google_btn.html" %}
-        <form method="post" action="/signin">
+      </aside>
+      <div class="la-modal-form la-login-fz">
+        <button type="button" class="la-modal-close" onclick="laCloseLogin()" aria-label="{{ t.close }}"><i class="ri-close-line"></i></button>
+        <div class="la-login-hi">
+          <h3 id="laLoginTitle">{{ t.welcome_back }}</h3>
+          <p>{{ t.signin_dash }}</p>
+        </div>
+        <form method="post" action="/signin" class="la-login-fz-form" id="laModalLogin">
           {% include "_guard_fields.html" %}
-          <label>{{ t.label_user }}</label>
-          <input type="text" name="username" required autocomplete="username">
-          <label>{{ t.label_pass }}</label>
-          <input type="password" name="password" required autocomplete="current-password">
-          <button class="la-btn" type="submit" style="width:100%">{{ t.nav_login }}</button>
+          <label class="la-field" for="laModalUser">{{ t.label_user }}</label>
+          <input class="la-input" id="laModalUser" type="text" name="username" required autocomplete="username" placeholder="{{ t.label_user }}" autocapitalize="off" spellcheck="false">
+          <label class="la-field" for="laModalPass">{{ t.label_pass }}</label>
+          <div class="la-input-ico la-input-ico-end">
+            <input class="la-input" type="password" name="password" required autocomplete="current-password" placeholder="{{ t.label_pass }}" id="laModalPass">
+            <button class="la-pass-eye" type="button" id="laModalEye" aria-label="แสดงรหัสผ่าน"><i class="ri-eye-line"></i></button>
+          </div>
+          <div class="la-login-row">
+            <label><input type="checkbox" name="remember" value="1"> {{ t.remember }}</label>
+            <a href="/forgot">{{ t.forgot }}</a>
+          </div>
+          <button class="la-btn la-login-submit" type="submit">{{ t.nav_login }}</button>
         </form>
-        <p style="margin-top:16px">{{ t.no_account }} <a href="/signup">{{ t.nav_signup }}</a></p>
-        <p style="margin-top:8px"><a href="/forgot">{{ t.forgot }}</a></p>
+        <div class="la-or"><span>{{ t.or }}</span></div>
+        {% if google_ready %}
+        <a class="la-google-btn" href="/google-login">
+          <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.8-6.7 7.3l6.3 5.2C37.5 38.4 44 33 44 24c0-1.3-.1-2.3-.4-3.5z"/>
+          </svg>
+          {{ t.google }}
+        </a>
+        {% endif %}
+        <p class="la-login-foot">{{ t.no_account }} <a href="/signup">{{ t.nav_signup }}</a></p>
       </div>
     </div>
   </div>
+  <script>
+  (function(){
+    var eye = document.getElementById('laModalEye');
+    var pass = document.getElementById('laModalPass');
+    if (!eye || !pass) return;
+    eye.addEventListener('click', function(){
+      var show = pass.type === 'password';
+      pass.type = show ? 'text' : 'password';
+      eye.innerHTML = show ? '<i class="ri-eye-off-line"></i>' : '<i class="ri-eye-line"></i>';
+      eye.setAttribute('aria-label', show ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน');
+    });
+  })();
+  </script>
   {% endif %}
   {% endif %}
 
@@ -227,7 +273,10 @@
     </div>
     <div class="la-wrap la-foot-shell">
       <div class="la-foot-brand">
-        <a class="la-brand" href="/"><img class="la-mark" src="/static/assets/brand.svg" width="28" height="28" alt="Likes Auto">Likes Auto</a>
+        <a class="la-brand" href="/">
+          <span class="la-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
+          <span class="la-brand-text">Likes<em>Auto</em></span>
+        </a>
         <p class="la-foot-lead">{{ t.foot_lead }}</p>
         <p class="la-foot-live"><i></i> {{ t.foot_live }}</p>
       </div>
@@ -235,10 +284,20 @@
         <nav class="la-foot-col" aria-label="{{ t.foot_svc }}">
           <h5>{{ t.foot_svc }}</h5>
           {% if mods.mod_services %}<a href="/services">{{ t.foot_all }}</a>{% endif %}
-          {% if mods.mod_services %}<a href="/services?cat=Instagram">ปั้มไลค์ Instagram</a>{% endif %}
-          {% if mods.mod_services %}<a href="/services?cat=Tiktok">ปั้มวิว TikTok</a>{% endif %}
-          {% if mods.mod_services %}<a href="/services?cat=Youtube">ปั้มวิว YouTube</a>{% endif %}
-          {% if mods.mod_services %}<a href="/services?cat=Facebook">ปั้มไลค์ Facebook</a>{% endif %}
+          {% if mods.mod_services %}<a href="/pum-like">เว็บปั้มไลค์</a>{% endif %}
+          {% if mods.mod_services %}<a href="/pum-follow">ปั้มฟอล</a>{% endif %}
+          {% if mods.mod_services %}<a href="/pum-view">ปั้มวิว</a>{% endif %}
+          {% if mods.mod_services %}<a href="/smm-panel">SMM Panel</a>{% endif %}
+          {% if mods.mod_services %}<a href="/add-followers">เพิ่มผู้ติดตาม</a>{% endif %}
+          {% if mods.mod_services %}<a href="/thai-likes">ปั้มไลค์คนไทย</a>{% endif %}
+          {% if mods.mod_services %}<a href="/instagram">ปั้มไลค์ Instagram</a>{% endif %}
+          {% if mods.mod_services %}<a href="/tiktok">ปั้มวิว TikTok</a>{% endif %}
+          {% if mods.mod_services %}<a href="/youtube">ปั้มวิว YouTube</a>{% endif %}
+          {% if mods.mod_services %}<a href="/facebook">ปั้มไลค์ Facebook</a>{% endif %}
+          {% if mods.mod_services %}<a href="/telegram">Telegram</a>{% endif %}
+          {% if mods.mod_services %}<a href="/spotify">Spotify</a>{% endif %}
+          {% if mods.mod_services %}<a href="/shopee">Shopee</a>{% endif %}
+          {% if mods.mod_services %}<a href="/twitter">X (Twitter)</a>{% endif %}
           {% if mods.mod_api %}<a href="/api">API</a>{% endif %}
         </nav>
         <nav class="la-foot-col" aria-label="{{ t.foot_help }}">
@@ -247,6 +306,7 @@
           <a href="/faq#howto">{{ t.foot_howto }}</a>
           {% if mods.mod_faq %}<a href="/faq">{{ t.nav_faq }}</a>{% endif %}
           <a href="/blog">บล็อก</a>
+          <a href="/site-map">แผนผังเว็บ</a>
           <a href="/terms">{{ t.foot_terms }}</a>
         </nav>
         <nav class="la-foot-col" aria-label="{{ t.foot_account }}">
@@ -311,14 +371,17 @@
     var on = document.body.classList.contains('la-side-open') || (document.getElementById('laNav') && document.getElementById('laNav').classList.contains('open'));
     document.querySelectorAll('.la-menu-btn, .la-dash-menu').forEach(function(b){
       b.classList.toggle('is-open', !!on);
+      b.setAttribute('aria-expanded', on ? 'true' : 'false');
       var i=b.querySelector('i');
       if (i) i.className = on ? 'ri-close-line' : 'ri-menu-line';
     });
+    var scrim = document.getElementById('laNavScrim');
+    if (scrim) scrim.classList.toggle('is-on', document.body.classList.contains('la-nav-open'));
   }
   function laOpenLogin(e){ if (e) e.preventDefault(); laCloseNav(); var m=document.getElementById('laLogin'); if(m) m.classList.add('open'); }
   function laCloseLogin(){ var m=document.getElementById('laLogin'); if(m) m.classList.remove('open'); }
   function laSyncPack(){
-    var pack = document.documentElement.getAttribute('data-la-pack') || 'violet';
+    var pack = document.documentElement.getAttribute('data-la-pack') || 'peak';
     document.querySelectorAll('.la-pack-switch [data-pack]').forEach(function(b){
       var on = b.getAttribute('data-pack') === pack;
       b.classList.toggle('is-on', on);
@@ -326,8 +389,8 @@
     });
   }
   function laSetPack(pack){
-    var allowed = {violet:1, navy:1, light:1};
-    if (!allowed[pack]) pack = 'violet';
+    var allowed = {peak:1, violet:1, navy:1, light:1};
+    if (!allowed[pack]) pack = 'peak';
     var root = document.documentElement;
     if (root.getAttribute('data-la-switch') === '0') return;
     root.setAttribute('data-la-pack', pack);
@@ -339,8 +402,8 @@
     laSyncPack();
   }
   function laToggleTheme(){
-    var order = ['violet','navy','light'];
-    var cur = document.documentElement.getAttribute('data-la-pack') || 'violet';
+    var order = ['peak','violet','navy','light'];
+    var cur = document.documentElement.getAttribute('data-la-pack') || 'peak';
     var i = order.indexOf(cur);
     laSetPack(order[(i + 1) % order.length]);
   }
@@ -349,6 +412,7 @@
   document.addEventListener('click', function(e){
     var n=document.getElementById('laNav'); if(!n || !n.classList.contains('open')) return;
     if (e.target.closest('.la-menu-btn')) return;
+    if (e.target.closest('#laNavScrim')) return;
     if (!e.target.closest('#laNav')) laCloseNav();
   });
   var nav=document.getElementById('laNav');
@@ -368,7 +432,7 @@
     });
   })();
   </script>
-  <script src="/static/js/fx.js?v=pro15" defer></script>
+  <script src="/static/js/fx.js?v=pro16" defer></script>
   <div class="la-toast" id="laToast" role="status" aria-live="polite"></div>
   {% if settings and settings.custom_footer %}{{ settings.custom_footer | safe }}{% endif %}
 </body>

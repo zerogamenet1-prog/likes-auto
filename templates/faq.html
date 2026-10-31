@@ -130,6 +130,18 @@
       {% endfor %}
     </div>
 
+    {% if not user %}
+    <nav class="la-plat-seo-related" aria-label="อ่านต่อ" style="margin:28px 0">
+      <a href="/pum-like">เว็บปั้มไลค์</a>
+      <a href="/pum-follow">ปั้มฟอล</a>
+      <a href="/pum-view">ปั้มวิว</a>
+      <a href="/smm-panel">SMM Panel</a>
+      <a href="/instagram">Instagram</a>
+      <a href="/tiktok">TikTok</a>
+      <a href="/blog">บทความ</a>
+    </nav>
+    {% endif %}
+
     <div class="la-faq-cta {% if user %}la-hub-card{% endif %}">
       {% if user %}
       <p>ยังสงสัยอยู่? เปิดตั๋วซัพพอร์ตหรือไปสั่งซื้อได้เลย</p>

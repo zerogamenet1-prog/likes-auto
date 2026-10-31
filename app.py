@@ -15,7 +15,9 @@ from starlette.middleware.gzip import GZipMiddleware
 from admin import router as admin_router
 from api_v2 import router as api_router
 from content import COPY, FAQ, LIVE_TICKER, REVIEWS, SITE
-from seo import attach_seo, robots_txt, rss_xml, sitemap_xml, site_url
+from seo import INDEXNOW_KEY, attach_seo, robots_txt, rss_xml, sitemap_index_xml, sitemap_xml, site_url
+from seo_hubs import HUB_SLUGS, hub_for
+from seo_landings import SLUGS, match_shop_name, page_for, plat_href
 from cron_jobs import run_all
 from google_oauth import google_on as _google_on, google_ready as _google_ready
 from db import client_dash, first_open_path, get_client, get_settings, init_db, mod_on, mods_map, plat_meta as _plat_meta, public_stats, shop_nav, shop_services, stats
@@ -29,6 +31,7 @@ from guard import GuardMiddleware, ensure_csrf
 ROOT = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(ROOT / "templates"))
 templates.env.filters["th"] = th_text
+templates.env.filters["plat_href"] = plat_href
 # Faster Jinja on repeat renders (autoescape stays on)
 try:
     templates.env.auto_reload = os.environ.get("LA_DEV") == "1"
@@ -162,7 +165,7 @@ def page(request: Request, template: str, name: str, extra=None, status_code=200
         data["csrf"] = ensure_csrf(request)
     except Exception:
         data["csrf"] = ""
-    if data.get("user") and name not in ("home", "signin", "signup", "blog", "terms"):
+    if data.get("user") and name not in ("home", "signin", "signup", "blog", "terms", "platform"):
         data["dash_mode"] = True
         data["dash"] = client_dash(data["user"]["username"])
     data["menus"] = []
@@ -174,7 +177,7 @@ def page(request: Request, template: str, name: str, extra=None, status_code=200
         from theme import public_theme_ctx
         data.update(public_theme_ctx(data.get("settings")))
     except Exception:
-        data.setdefault("theme_pack", "violet")
+        data.setdefault("theme_pack", "peak")
         data.setdefault("theme_switch", True)
         data.setdefault("theme_css", "")
         data.setdefault("theme_packs", [])
@@ -227,6 +230,7 @@ def _home_plats(plats):
                 "icon": row.get("icon"),
                 "color": row.get("color"),
                 "logo": row.get("logo"),
+                "href": plat_href(name),
             }
     preferred_keys = (
         "instagram", "facebook", "tiktok", "youtube", "line", "twitter", "telegram", "threads", "spotify"
@@ -255,6 +259,7 @@ def _home_plats(plats):
             "icon": icon,
             "color": color,
             "logo": item.get("logo") or "/static/assets/plats/app.svg",
+            "href": item.get("href") or plat_href(item["name"]),
             "blurb": _plat_blurb(item["name"]),
         })
     return out
@@ -333,6 +338,9 @@ async def services(request: Request, cat: str = "", q: str = ""):
     blocked = _mod_gate(request, "mod_services")
     if blocked:
         return blocked
+    pretty = plat_href(cat, "")
+    if pretty and not (q or "").strip():
+        return RedirectResponse(pretty, status_code=301)
     nav = shop_nav()
     items = shop_services(platform=cat, q=q, limit=80)
     return page(request, "services.html", "services", {
@@ -342,6 +350,157 @@ async def services(request: Request, cat: str = "", q: str = ""):
         "cat": cat,
         "q": q,
     })
+
+
+def _platform_page(request: Request, slug: str):
+    blocked = _mod_gate(request, "mod_services")
+    if blocked:
+        return blocked
+    plat = page_for(slug)
+    if not plat:
+        return page(request, "notfound.html", "notfound", status_code=404)
+    nav = shop_nav()
+    shop_name = match_shop_name(slug, nav["platforms"])
+    items = shop_services(platform=shop_name, limit=24) if shop_name else []
+    from_rate = None
+    for row in items:
+        rate = row.get("rate")
+        if rate is None:
+            continue
+        if from_rate is None or float(rate) < float(from_rate):
+            from_rate = rate
+    return page(request, "platform.html", "platform", {
+        "plat": plat,
+        "catalog": items,
+        "platforms": nav["platforms"],
+        "cat": shop_name,
+        "from_rate": from_rate,
+        "shop_name": shop_name,
+    })
+
+
+@app.get("/instagram", response_class=HTMLResponse)
+async def seo_instagram(request: Request):
+    return _platform_page(request, "instagram")
+
+
+@app.get("/tiktok", response_class=HTMLResponse)
+async def seo_tiktok(request: Request):
+    return _platform_page(request, "tiktok")
+
+
+@app.get("/youtube", response_class=HTMLResponse)
+async def seo_youtube(request: Request):
+    return _platform_page(request, "youtube")
+
+
+@app.get("/facebook", response_class=HTMLResponse)
+async def seo_facebook(request: Request):
+    return _platform_page(request, "facebook")
+
+
+@app.get("/telegram", response_class=HTMLResponse)
+async def seo_telegram(request: Request):
+    return _platform_page(request, "telegram")
+
+
+@app.get("/spotify", response_class=HTMLResponse)
+async def seo_spotify(request: Request):
+    return _platform_page(request, "spotify")
+
+
+@app.get("/shopee", response_class=HTMLResponse)
+async def seo_shopee(request: Request):
+    return _platform_page(request, "shopee")
+
+
+@app.get("/twitter", response_class=HTMLResponse)
+async def seo_twitter(request: Request):
+    return _platform_page(request, "twitter")
+
+
+def _hub_page(request: Request, slug: str):
+    hub = hub_for(slug)
+    if not hub:
+        return page(request, "notfound.html", "notfound", status_code=404)
+    return page(request, "seo_hub.html", "seo_hub", {"hub": hub})
+
+
+@app.get("/pum-like", response_class=HTMLResponse)
+async def seo_pum_like(request: Request):
+    return _hub_page(request, "pum-like")
+
+
+@app.get("/pum-follow", response_class=HTMLResponse)
+async def seo_pum_follow(request: Request):
+    return _hub_page(request, "pum-follow")
+
+
+@app.get("/pum-view", response_class=HTMLResponse)
+async def seo_pum_view(request: Request):
+    return _hub_page(request, "pum-view")
+
+
+@app.get("/smm-panel", response_class=HTMLResponse)
+async def seo_smm_panel(request: Request):
+    return _hub_page(request, "smm-panel")
+
+
+@app.get("/add-followers", response_class=HTMLResponse)
+async def seo_add_followers(request: Request):
+    return _hub_page(request, "add-followers")
+
+
+@app.get("/thai-likes", response_class=HTMLResponse)
+async def seo_thai_likes(request: Request):
+    return _hub_page(request, "thai-likes")
+
+
+# Common Thai keyword aliases -> canonical hubs
+@app.get("/web-pump-like", response_class=HTMLResponse)
+@app.get("/web-pum-like", response_class=HTMLResponse)
+async def alias_web_pum_like(request: Request):
+    return RedirectResponse("/pum-like", status_code=301)
+
+
+@app.get("/pump-like", response_class=HTMLResponse)
+@app.get("/pumlike", response_class=HTMLResponse)
+async def alias_pum_like(request: Request):
+    return RedirectResponse("/pum-like", status_code=301)
+
+
+@app.get("/pump-follow", response_class=HTMLResponse)
+@app.get("/pumfollow", response_class=HTMLResponse)
+async def alias_pum_follow(request: Request):
+    return RedirectResponse("/pum-follow", status_code=301)
+
+
+@app.get("/pump-view", response_class=HTMLResponse)
+@app.get("/pumview", response_class=HTMLResponse)
+async def alias_pum_view(request: Request):
+    return RedirectResponse("/pum-view", status_code=301)
+
+
+@app.get("/smmpanel", response_class=HTMLResponse)
+@app.get("/smm-panel-thai", response_class=HTMLResponse)
+@app.get("/thai-smm", response_class=HTMLResponse)
+@app.get("/thai-smm-panel", response_class=HTMLResponse)
+async def alias_smm_panel(request: Request):
+    return RedirectResponse("/smm-panel", status_code=301)
+
+
+@app.get("/add-follower", response_class=HTMLResponse)
+@app.get("/followers", response_class=HTMLResponse)
+@app.get("/เพิ่มผู้ติดตาม", response_class=HTMLResponse)
+async def alias_add_followers(request: Request):
+    return RedirectResponse("/add-followers", status_code=301)
+
+
+@app.get("/pum-like-thai", response_class=HTMLResponse)
+@app.get("/thai-like", response_class=HTMLResponse)
+@app.get("/pump-like-thai", response_class=HTMLResponse)
+async def alias_thai_likes(request: Request):
+    return RedirectResponse("/thai-likes", status_code=301)
 
 
 @app.get("/faq", response_class=HTMLResponse)
@@ -429,8 +588,15 @@ async def blog_one(request: Request, slug: str):
     return page(request, "blog_post.html", "blog", {"post": decorate([post])[0], "related": decorate(picked)})
 
 
+_CMS_REDIRECT = {"faq": "/faq", "terms": "/terms"}
+_SKIP_SITEMAP_SLUGS = {"faq", "terms"}
+
+
 @app.get("/p/{slug}", response_class=HTMLResponse)
 async def custom_page(request: Request, slug: str):
+    dest = _CMS_REDIRECT.get((slug or "").strip().lower())
+    if dest:
+        return RedirectResponse(dest, status_code=301)
     from cms import q_one
     item = q_one("SELECT * FROM pages WHERE slug=?", (slug,))
     if not item:
@@ -438,37 +604,102 @@ async def custom_page(request: Request, slug: str):
     return page(request, "page.html", "page", {"item": item})
 
 
+@app.get("/site-map", response_class=HTMLResponse)
+async def site_map_page(request: Request):
+    from blog_content import FEATURED_TAGS
+    from cms import q_all
+    from blog_content import decorate
+    posts = []
+    try:
+        posts = decorate(q_all("SELECT id, title, slug, created_at FROM blog WHERE COALESCE(published,1)=1 ORDER BY id DESC LIMIT 30"))
+    except Exception:
+        pass
+    extras = []
+    try:
+        for item in q_all("SELECT slug, title FROM pages"):
+            slug = (item.get("slug") or "").strip().lower()
+            if slug and slug not in _SKIP_SITEMAP_SLUGS:
+                extras.append({"title": item.get("title") or slug, "href": "/p/%s" % slug})
+    except Exception:
+        pass
+    return page(request, "site_map.html", "site_map", {
+        "plat_slugs": SLUGS,
+        "hub_pages": [{"slug": s, "title": (hub_for(s) or {}).get("h1") or s} for s in HUB_SLUGS],
+        "blog_tags": FEATURED_TAGS,
+        "blog_posts": posts,
+        "extra_pages": extras,
+    })
+
+
 @app.get("/robots.txt")
 async def robots():
     return PlainTextResponse(robots_txt(), media_type="text/plain; charset=utf-8")
 
 
-@app.get("/sitemap.xml")
-async def sitemap():
+@app.get("/llms.txt")
+async def llms_txt():
+    path = ROOT / "static" / "llms.txt"
+    if path.exists():
+        return PlainTextResponse(path.read_text(encoding="utf-8"), media_type="text/plain; charset=utf-8")
+    return PlainTextResponse("Likes Auto\n", media_type="text/plain; charset=utf-8")
+
+
+@app.get("/%s.txt" % INDEXNOW_KEY)
+async def indexnow_key_file():
+    return PlainTextResponse(INDEXNOW_KEY, media_type="text/plain; charset=utf-8")
+
+
+def _xml_resp(xml):
+    return Response(xml, media_type="application/xml; charset=utf-8", headers={"Cache-Control": "public, max-age=300"})
+
+
+def _sitemap_pages():
+    from urllib.parse import quote
+    from blog_content import FEATURED_TAGS
+
     urls = [
         {"loc": site_url() + "/", "priority": "1.0", "changefreq": "daily"},
+    ]
+    for slug in HUB_SLUGS:
+        hub = hub_for(slug)
+        if not hub:
+            continue
+        pri = "0.95" if slug == "pum-like" else "0.9"
+        urls.append({"loc": site_url() + "/" + slug, "priority": pri, "changefreq": "daily"})
+    urls.extend([
         {"loc": site_url() + "/services", "priority": "0.9", "changefreq": "daily"},
         {"loc": site_url() + "/faq", "priority": "0.8", "changefreq": "weekly"},
         {"loc": site_url() + "/terms", "priority": "0.4", "changefreq": "monthly"},
         {"loc": site_url() + "/api", "priority": "0.6", "changefreq": "weekly"},
         {"loc": site_url() + "/blog", "priority": "0.8", "changefreq": "daily"},
         {"loc": site_url() + "/signup", "priority": "0.7", "changefreq": "monthly"},
-        {"loc": site_url() + "/rss.xml", "priority": "0.4", "changefreq": "weekly"},
-    ]
+        {"loc": site_url() + "/site-map", "priority": "0.5", "changefreq": "weekly"},
+    ])
+    for tag in FEATURED_TAGS:
+        urls.append({
+            "loc": site_url() + "/blog?tag=" + quote(tag, safe=""),
+            "priority": "0.55",
+            "changefreq": "weekly",
+        })
     try:
-        nav = shop_nav()
-        seen = set()
-        for row in nav.get("platforms") or []:
-            name = (row.get("name") or "").strip()
-            if not name or name.lower() in seen:
-                continue
-            seen.add(name.lower())
-            from urllib.parse import urlencode
-            urls.append({
-                "loc": site_url() + "/services?" + urlencode({"cat": name}),
-                "priority": "0.8",
-                "changefreq": "daily",
-            })
+        from cms import q_all
+        for item in q_all("SELECT slug FROM pages"):
+            slug = (item.get("slug") or "").strip().lower()
+            if slug and slug not in _SKIP_SITEMAP_SLUGS:
+                urls.append({"loc": "%s/p/%s" % (site_url(), slug), "priority": "0.5", "changefreq": "monthly"})
+    except Exception:
+        pass
+    return urls
+
+
+def _sitemap_platforms():
+    urls = [{"loc": site_url() + "/" + slug, "priority": "0.9", "changefreq": "daily"} for slug in SLUGS]
+    return urls
+
+
+def _sitemap_blog():
+    urls = []
+    try:
         from cms import q_all
         from blog_content import post_href
         for post in q_all("SELECT id, slug, created_at FROM blog WHERE COALESCE(published,1)=1 ORDER BY id DESC"):
@@ -478,14 +709,34 @@ async def sitemap():
                 "priority": "0.7",
                 "changefreq": "weekly",
             })
-        for item in q_all("SELECT slug FROM pages"):
-            slug = (item.get("slug") or "").strip()
-            if slug:
-                urls.append({"loc": "%s/p/%s" % (site_url(), slug), "priority": "0.5", "changefreq": "monthly"})
     except Exception:
         pass
-    xml = sitemap_xml(urls)
-    return Response(xml, media_type="application/xml; charset=utf-8", headers={"Cache-Control": "public, max-age=300"})
+    return urls
+
+
+@app.get("/sitemap.xml")
+async def sitemap():
+    files = [
+        {"loc": site_url() + "/sitemap-pages.xml"},
+        {"loc": site_url() + "/sitemap-platforms.xml"},
+        {"loc": site_url() + "/sitemap-blog.xml"},
+    ]
+    return _xml_resp(sitemap_index_xml(files))
+
+
+@app.get("/sitemap-pages.xml")
+async def sitemap_pages():
+    return _xml_resp(sitemap_xml(_sitemap_pages()))
+
+
+@app.get("/sitemap-platforms.xml")
+async def sitemap_platforms():
+    return _xml_resp(sitemap_xml(_sitemap_platforms()))
+
+
+@app.get("/sitemap-blog.xml")
+async def sitemap_blog():
+    return _xml_resp(sitemap_xml(_sitemap_blog()))
 
 
 @app.get("/health")

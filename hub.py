@@ -287,6 +287,8 @@ async def integ_post(request: Request):
         "smtp_port": form.get("smtp_port") or "587",
         "recaptcha_key": form.get("recaptcha_key") or "",
         "analytics_id": form.get("analytics_id") or "",
+        "gsc_verify": form.get("gsc_verify") or "",
+        "bing_verify": form.get("bing_verify") or "",
         "google_client_id": form.get("google_client_id") or "",
         "google_login": "1" if form.get("google_login") else "0",
     })

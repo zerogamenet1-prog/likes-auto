@@ -32,3 +32,7 @@ Thumbs.db
 .vscode/
 .idea/
 _scan_secrets.py
+_tmp_*.py
+_w_*.py
+_bootstrap_write.py
+_ai_settings_backup.json

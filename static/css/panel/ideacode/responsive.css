@@ -83,6 +83,7 @@ button, .la-btn, .la-iconbtn, .la-chip, .la-pend-btn { touch-action: manipulatio
 /* Phone / tablet pass: header, forms, tables, dashboard, admin */
 @media (max-width: 980px) {
   .la-header .la-tools .la-pack-switch { display: none !important; }
+  .la-header.la-header--fz .la-tools .la-pack-switch { display: inline-flex !important; }
   .la-nav.open .la-pack-in-nav {
     display: flex !important;
     width: 100%;

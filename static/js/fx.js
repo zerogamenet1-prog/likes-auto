@@ -62,11 +62,28 @@
     document.body.classList.add('la-ready');
     if (window.laSyncPack) window.laSyncPack();
 
-    var nodes = document.querySelectorAll('.la-card,.la-plat,.la-why,.la-svc,.la-stat,.la-faq details,.la-page-head,.la-order-card,.la-form-shell,.la-cta-band,.la-section h2,.la-prose,.la-code,.la-table-wrap,.la-notice,.adm-card,.adm-ok,.adm-error,.la-filter,.la-review,.la-photo-card,.la-pay-card,.la-hero-login,.la-bigstat,.la-plat-pill,.la-pay-shot,.la-split-photo,.la-feat-list article,.la-about-card,.la-why-card,.la-step-card,.la-login-card,.la-sample-table,.la-pop-card,.la-marquee,.la-statsbar,.la-rate-card,.la-hero-social');
+    /* Followiz-style staggered hero entrance */
+    if (!reduce) {
+      var heroFade = document.querySelectorAll(
+        '.la-hero .la-badge, .la-hero h1, .la-hero .la-lead, .la-hero .la-hero-social, .la-hero .la-live-ticker, .la-hero .la-cta, .la-hero .la-trust, .la-hero .la-hero-login, .la-hero .la-login-fz'
+      );
+      for (var hf = 0; hf < heroFade.length; hf++) {
+        heroFade[hf].classList.add('la-fz-in');
+        heroFade[hf].style.setProperty('--fz-d', (hf * 0.1) + 's');
+      }
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          for (var hx = 0; hx < heroFade.length; hx++) heroFade[hx].classList.add('is-on');
+        });
+      });
+    }
+
+    var nodes = document.querySelectorAll('.la-card,.la-plat,.la-why,.la-svc,.la-stat,.la-faq details,.la-page-head,.la-order-card,.la-form-shell,.la-cta-band,.la-section h2,.la-prose,.la-code,.la-table-wrap,.la-notice,.adm-card,.adm-ok,.adm-error,.la-filter,.la-review,.la-photo-card,.la-pay-card,.la-hero-login,.la-bigstat,.la-plat-pill,.la-pay-shot,.la-split-photo,.la-feat-list article,.la-about-card,.la-why-card,.la-step-card,.la-login-card,.la-sample-table,.la-pop-card,.la-marquee,.la-statsbar,.la-rate-card,.la-hero-social,.la-home-blog-card,.la-about-shell,.la-section .la-wrap > h2,.la-section .sub');
     if (!reduce && !coarse) {
       for (var i = 0; i < nodes.length; i++) {
+        if (nodes[i].classList.contains('la-fz-in')) continue;
         nodes[i].classList.add('la-reveal');
-        nodes[i].style.setProperty('--d', ((i % 8) * 45) + 'ms');
+        nodes[i].style.setProperty('--d', ((i % 8) * 60) + 'ms');
       }
       if ('IntersectionObserver' in window) {
         var io = new IntersectionObserver(function(entries){
@@ -80,7 +97,9 @@
             }
           }
         }, {threshold: 0.08, rootMargin: '0px 0px -6% 0px'});
-        for (var k = 0; k < nodes.length; k++) io.observe(nodes[k]);
+        for (var k = 0; k < nodes.length; k++) {
+          if (nodes[k].classList.contains('la-reveal')) io.observe(nodes[k]);
+        }
       } else {
         for (var n = 0; n < nodes.length; n++) nodes[n].classList.add('is-in');
         var all = document.querySelectorAll('[data-target]');

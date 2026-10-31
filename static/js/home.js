@@ -292,70 +292,9 @@
     }
   }
 
-  /* —— About: viewers, hearts, video —— */
-  function initAbout() {
-    var el = document.getElementById("laAboutViewers");
-    if (el && !reduce && !saveData) {
-      var n = 4812;
-      function fmt(x) {
-        return x.toLocaleString("en-US");
-      }
-      setInterval(function () {
-        if (document.hidden) return;
-        n += Math.floor(Math.random() * 7) - 2;
-        if (n < 4200) n = 4200 + Math.floor(Math.random() * 40);
-        if (n > 6200) n = 6000 + Math.floor(Math.random() * 80);
-        el.textContent = fmt(n);
-      }, coarse ? 3200 : 1800);
-    }
-
-    var vid = document.getElementById("laAboutVideo");
-    if (vid && !saveData) {
-      var loaded = false;
-      var play = function () {
-        if (loaded) vid.play().catch(function () {});
-      };
-      var loadVid = function () {
-        if (loaded) return;
-        var src = vid.getAttribute("data-src");
-        if (!src) return;
-        var s = document.createElement("source");
-        s.src = src;
-        s.type = "video/mp4";
-        vid.appendChild(s);
-        vid.load();
-        loaded = true;
-        play();
-      };
-      visible(vid, loadVid, "40px 0px");
-      document.addEventListener("visibilitychange", function () {
-        if (document.hidden) vid.pause();
-        else play();
-      });
-    } else if (vid && saveData) {
-      vid.removeAttribute("data-src");
-    }
-
-    var box = document.getElementById("laAboutHearts");
-    if (!box || reduce || coarse || saveData) return;
-    var icons = ["❤️", "💜", "💗", "✨", "💙", "💖", "🔥"];
-    setInterval(function () {
-      if (document.hidden || box.childElementCount > 10) return;
-      var s = document.createElement("span");
-      s.textContent = icons[Math.floor(Math.random() * icons.length)];
-      s.style.right = 4 + Math.random() * 28 + "px";
-      s.style.animationDuration = 2.6 + Math.random() * 1.8 + "s";
-      box.appendChild(s);
-      setTimeout(function () {
-        if (s.parentNode) s.parentNode.removeChild(s);
-      }, 4500);
-    }, 1100);
-  }
-
   ready(function () {
     initHeroBits();
     initReviews();
     initTicker();
-    whenIdle(function () { initAbout(); }, coarse ? 600 : 120);
   });
 })();

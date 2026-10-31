@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 from content import COPY, FAQ, SITE
+from seo_hubs import HUB_SLUGS, hub_for
+from seo_landings import SLUGS, page_for, plat_href
 
 NOINDEX_PAGES = {
     "signin", "forgot", "reset", "neworder", "orders", "addfunds", "tickets",
@@ -13,27 +15,29 @@ NOINDEX_PAGES = {
 NOINDEX_PREFIX = ("/admin", "/internal")
 PUBLIC_KEEP_QUERY = {"cat", "tag"}
 
-DEFAULT_KEYWORDS = "ปั้มไลค์, ปั้มฟอล, ปั้มวิว, เพิ่มผู้ติดตาม, Instagram, TikTok, Facebook, YouTube, ยิงแอด, การตลาดออนไลน์, พร้อมเพย์, API"
+DEFAULT_KEYWORDS = "เว็บปั้มไลค์, ปั้มไลค์, ปั้มฟอล, ปั้มวิว, เพิ่มผู้ติดตาม, Instagram, TikTok, Facebook, YouTube, ยิงแอด, การตลาดออนไลน์, พร้อมเพย์, API"
+
+INDEXNOW_KEY = "la7f3c9e2b1d8a4f6"
 
 META = {
     "home": (
-        "ปั้มไลค์ เพิ่มผู้ติดตาม เพิ่มยอดวิว | Likes Auto",
-        "ปั้มไลค์ เพิ่มผู้ติดตาม เพิ่มยอดวิว Instagram Facebook TikTok YouTube ส่งไว ไม่ใช้รหัสผ่าน ระบบอัตโนมัติ 24 ชม. เติมเงินพร้อมเพย์ได้ทันที",
+        "เว็บปั้มไลค์ ปั้มฟอล ปั้มวิว ราคาถูก | Likes Auto",
+        "เว็บปั้มไลค์ ปั้มฟอล ปั้มวิว Instagram Facebook TikTok YouTube ราคาถูก ส่งไว ไม่ใช้รหัสผ่าน ระบบอัตโนมัติ 24 ชม. เติมพร้อมเพย์ได้ทันที",
     ),
     "services": (
-        "ราคาปั้มไลค์ ปั้มฟอล เพิ่มวิว ทุกแพลตฟอร์ม | Likes Auto",
-        "ดูราคาปั้มไลค์ เพิ่มผู้ติดตาม เพิ่มยอดวิว ทุกแพลตฟอร์ม เรทชัด ทดลองจำนวนน้อยได้ ไม่ขอรหัสผ่านโซเชียล",
+        "ราคาปั้มไลค์ ปั้มฟอล ปั้มวิว ถูกและชัด | Likes Auto",
+        "ดูราคาเว็บปั้มไลค์ ปั้มฟอล ปั้มวิว ทุกแพลตฟอร์ม เรทชัด ทดลองจำนวนน้อยได้ ไม่ขอรหัสผ่าน เติมพร้อมเพย์",
     ),
     "faq": (
-        "คำถามที่พบบ่อย ปั้มไลค์ เพิ่มฟอล ไม่ใช้รหัสผ่าน | Likes Auto",
-        "FAQ ปั้มไลค์ เพิ่มผู้ติดตาม เพิ่มยอดวิว การเติมเงินพร้อมเพย์ และความปลอดภัย ไม่ฝากรหัสผ่านโซเชียล — Likes Auto",
+        "FAQ เว็บปั้มไลค์ ปั้มฟอล ไม่ใช้รหัสผ่าน | Likes Auto",
+        "คำตอบเรื่องเว็บปั้มไลค์ ปั้มฟอล ปั้มวิว การเติมเงินพร้อมเพย์ และความปลอดภัย ไม่ฝากรหัสผ่าน — Likes Auto",
     ),
     "terms": (
         "ข้อกำหนดการใช้งาน | Likes Auto",
         "ข้อกำหนดการใช้บริการปั้มไลค์ เพิ่มผู้ติดตาม และเพิ่มยอดวิวของ Likes Auto",
     ),
     "api": (
-        "API ปั้มไลค์ สำหรับเปิดร้านต่อ | Likes Auto",
+        "API SMM Panel ปั้มไลค์ เปิดร้านต่อ | Likes Auto",
         "เชื่อม API ปั้มไลค์ เพิ่มฟอล เพิ่มวิว เพื่อเปิดร้านต่อ ใช้คีย์เดียวจัดการออเดอร์อัตโนมัติ",
     ),
     "blog": (
@@ -43,6 +47,10 @@ META = {
     "signup": (
         "สมัครฟรี ปั้มไลค์ Instagram TikTok YouTube | Likes Auto",
         "สมัคร Likes Auto ฟรี สั่งปั้มไลค์ เพิ่มผู้ติดตาม เพิ่มยอดวิว Instagram TikTok Facebook YouTube ได้ทันที ไม่ขอรหัสผ่าน ระบบอัตโนมัติ 24 ชม.",
+    ),
+    "site_map": (
+        "แผนผังเว็บ ลิงก์หน้าสำคัญทั้งหมด | Likes Auto",
+        "แผนผังเว็บ Likes Auto รวมลิงก์หน้าแรก บริการ แพลตฟอร์ม บล็อก และหน้าช่วยเหลือทั้งหมด",
     ),
     "signin": (
         "เข้าสู่ระบบแผงปั้มไลค์ | Likes Auto",
@@ -108,6 +116,12 @@ def _title_desc(name, extra):
             "ปั้มไลค์ %s ราคา เพิ่มไลค์ ฟอล วิว | Likes Auto" % cat,
             "ดูราคาปั้มไลค์ เพิ่มผู้ติดตาม เพิ่มยอดวิว %s ส่งไว ไม่ใช้รหัสผ่าน สั่งจากแผง Likes Auto" % cat,
         )
+    if name == "platform" and extra.get("plat"):
+        plat = extra["plat"]
+        return plat.get("title") or META["services"][0], plat.get("desc") or META["services"][1]
+    if name == "seo_hub" and extra.get("hub"):
+        hub = extra["hub"]
+        return hub.get("title") or META["home"][0], hub.get("desc") or META["home"][1]
     pair = META.get(name) or (COPY.get("meta_title"), COPY.get("meta_desc"))
     return pair[0], pair[1]
 
@@ -119,6 +133,10 @@ def canonical_for(request, name, extra):
         path = path.rstrip("/")
     if name == "home":
         return abs_url("/")
+    if name == "seo_hub" and extra.get("hub"):
+        return abs_url("/" + extra["hub"]["slug"])
+    if name == "platform" and extra.get("plat"):
+        return abs_url("/" + extra["plat"]["slug"])
     if name == "blog" and extra.get("post"):
         from blog_content import post_href
         return abs_url(post_href(extra["post"]))
@@ -141,6 +159,10 @@ def crumbs_for(name, extra, canonical):
     home = {"name": "หน้าแรก", "url": abs_url("/")}
     if name == "home":
         return [home]
+    if name == "seo_hub" and extra.get("hub"):
+        return [home, {"name": extra["hub"].get("h1") or extra["hub"]["slug"], "url": canonical}]
+    if name == "platform" and extra.get("plat"):
+        return [home, {"name": extra["plat"].get("h1") or extra["plat"]["slug"], "url": canonical}]
     if name == "services":
         items = [home, {"name": "บริการ", "url": abs_url("/services")}]
         cat = (extra.get("cat") or "").strip()
@@ -161,6 +183,8 @@ def crumbs_for(name, extra, canonical):
         return [home, {"name": "บล็อก", "url": abs_url("/blog")}]
     if name == "signup":
         return [home, {"name": "สมัครสมาชิก", "url": abs_url("/signup")}]
+    if name == "site_map":
+        return [home, {"name": "แผนผังเว็บ", "url": abs_url("/site-map")}]
     if name == "page" and extra.get("item"):
         return [home, {"name": extra["item"].get("title") or "หน้า", "url": canonical}]
     return [home, {"name": COPY.get("meta_title") or "Likes Auto", "url": canonical}]
@@ -187,21 +211,34 @@ def json_ld(name, extra, title, desc, canonical, crumbs):
         "logo": {
             "@type": "ImageObject",
             "url": abs_url("/static/assets/apple-touch.png"),
+            "width": 180,
+            "height": 180,
         },
+        "image": abs_url("/static/assets/og-cover.jpg"),
         "description": COPY.get("meta_desc") or desc,
-        "areaServed": "TH",
+        "areaServed": {"@type": "Country", "name": "Thailand"},
         "availableLanguage": "th",
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "url": abs_url("/faq"),
+            "availableLanguage": "th",
+        },
     }
     website = {
         "@type": "WebSite",
         "@id": abs_url("/#website"),
         "url": abs_url("/"),
         "name": "Likes Auto",
+        "alternateName": ["เว็บปั้มไลค์", "SMM Panel ไทย", "LikesAuto"],
         "inLanguage": "th",
         "publisher": {"@id": abs_url("/#org")},
         "potentialAction": {
             "@type": "SearchAction",
-            "target": abs_url("/services") + "?q={search_term_string}",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": abs_url("/services") + "?q={search_term_string}",
+            },
             "query-input": "required name=search_term_string",
         },
     }
@@ -228,11 +265,102 @@ def json_ld(name, extra, title, desc, canonical, crumbs):
     if name == "home":
         graph.append({
             "@type": "Service",
-            "name": "ปั้มไลค์ เพิ่มผู้ติดตาม เพิ่มยอดวิว",
+            "name": "เว็บปั้มไลค์ ปั้มฟอล ปั้มวิว",
             "provider": {"@id": abs_url("/#org")},
             "areaServed": "TH",
             "url": abs_url("/"),
             "description": desc,
+            "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": "บริการโซเชียล",
+                "itemListElement": [
+                    {"@type": "Offer", "itemOffered": {"@type": "Service", "name": page_for(slug)["h1"], "url": abs_url("/" + slug)}}
+                    for slug in SLUGS
+                    if page_for(slug)
+                ],
+            },
+        })
+        graph.append({
+            "@type": "ItemList",
+            "name": "แพลตฟอร์มปั้มไลค์",
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1, "url": abs_url("/" + slug), "name": page_for(slug)["h1"]}
+                for i, slug in enumerate(SLUGS)
+                if page_for(slug)
+            ] + [
+                {"@type": "ListItem", "position": len(SLUGS) + i + 1, "url": abs_url("/" + slug), "name": hub_for(slug)["h1"]}
+                for i, slug in enumerate(HUB_SLUGS)
+                if hub_for(slug)
+            ],
+        })
+    if name == "seo_hub" and extra.get("hub"):
+        hub = extra["hub"]
+        faqs = hub.get("faq") or []
+        graph.append({
+            "@type": "Service",
+            "name": hub.get("h1") or title,
+            "provider": {"@id": abs_url("/#org")},
+            "areaServed": "TH",
+            "url": canonical,
+            "description": desc,
+        })
+        if faqs:
+            graph.append({
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": item["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": item["a"]},
+                    }
+                    for item in faqs
+                ],
+            })
+        graph.append({
+            "@type": "HowTo",
+            "name": "วิธีใช้" + (hub.get("kicker") or "แผงปั้มไลค์"),
+            "description": hub.get("lead") or desc,
+            "inLanguage": "th",
+            "step": [
+                {"@type": "HowToStep", "position": i + 1, "name": step["t"], "text": step["d"]}
+                for i, step in enumerate(hub.get("steps") or [])
+            ],
+        })
+    if name == "platform" and extra.get("plat"):
+        plat = extra["plat"]
+        faqs = plat.get("faq") or []
+        graph.append({
+            "@type": "Service",
+            "name": plat.get("h1") or title,
+            "provider": {"@id": abs_url("/#org")},
+            "areaServed": "TH",
+            "url": canonical,
+            "description": desc,
+        })
+        if faqs:
+            graph.append({
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": item["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": item["a"]},
+                    }
+                    for item in faqs
+                ],
+            })
+    if name == "faq":
+        graph.append({
+            "@type": "HowTo",
+            "name": "วิธีปั้มไลค์บน Likes Auto",
+            "description": "สมัคร เติมเงิน เลือกบริการ ใส่ลิงก์ แล้วส่งออเดอร์ โดยไม่ฝากรหัสผ่านโซเชียล",
+            "inLanguage": "th",
+            "step": [
+                {"@type": "HowToStep", "position": 1, "name": "สมัครสมาชิกฟรี", "url": abs_url("/signup")},
+                {"@type": "HowToStep", "position": 2, "name": "เติมเครดิตพร้อมเพย์", "url": abs_url("/faq") + "#howto"},
+                {"@type": "HowToStep", "position": 3, "name": "เลือกบริการปั้มไลค์", "url": abs_url("/services")},
+                {"@type": "HowToStep", "position": 4, "name": "ใส่ลิงก์สาธารณะแล้วส่งออเดอร์", "url": abs_url("/faq") + "#howto"},
+            ],
         })
     if name == "blog" and extra.get("post"):
         post = extra["post"]
@@ -242,6 +370,7 @@ def json_ld(name, extra, title, desc, canonical, crumbs):
             "headline": post.get("title") or title,
             "description": desc,
             "datePublished": post.get("created_at") or "",
+            "dateModified": post.get("updated_at") or post.get("created_at") or "",
             "inLanguage": "th",
             "keywords": ", ".join(tags) if tags else DEFAULT_KEYWORDS,
             "mainEntityOfPage": canonical,
@@ -266,10 +395,16 @@ def attach_seo(request, data):
         if cover:
             image = abs_url(cover)
     keywords = DEFAULT_KEYWORDS
-    if extra.get("post") and extra["post"].get("tags"):
+    if name == "platform" and extra.get("plat"):
+        keywords = extra["plat"].get("h1", "") + ", " + DEFAULT_KEYWORDS
+    elif name == "seo_hub" and extra.get("hub"):
+        keywords = extra["hub"].get("h1", "") + ", " + DEFAULT_KEYWORDS
+    elif extra.get("post") and extra["post"].get("tags"):
         keywords = extra["post"].get("tags")
     elif extra.get("tag"):
         keywords = extra.get("tag") + ", " + DEFAULT_KEYWORDS
+    elif extra.get("cat"):
+        keywords = extra.get("cat") + ", " + DEFAULT_KEYWORDS
     data["seo"] = {
         "title": title,
         "desc": desc,
@@ -283,6 +418,9 @@ def attach_seo(request, data):
         "show_crumbs": name not in ("home", "signin", "signup", "notfound") and not data.get("dash_mode"),
         "json_ld": json_ld(name, extra, title, desc, canonical, crumbs) if indexable else "",
         "published": (extra.get("post") or {}).get("created_at") if extra.get("post") else "",
+        "modified": (extra.get("post") or {}).get("updated_at") or (extra.get("post") or {}).get("created_at") if extra.get("post") else "",
+        "gsc": (data.get("settings") or {}).get("gsc_verify") or "",
+        "bing": (data.get("settings") or {}).get("bing_verify") or "",
     }
     return data
 
@@ -306,17 +444,28 @@ def sitemap_xml(pages):
     return "\n".join(chunks)
 
 
+def sitemap_index_xml(files):
+    now = datetime.now(timezone.utc).date().isoformat()
+    chunks = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+    for item in files:
+        loc = item["loc"]
+        last = item.get("lastmod") or now
+        chunks.append("<sitemap><loc>%s</loc><lastmod>%s</lastmod></sitemap>" % (_xml(loc), _xml(last)))
+    chunks.append("</sitemapindex>")
+    return "\n".join(chunks)
+
+
 def robots_txt():
     base = site_url()
-    return "\n".join([
+    lines = [
         "User-agent: *",
         "Allow: /",
-        "Allow: /services",
-        "Allow: /faq",
-        "Allow: /blog",
-        "Allow: /api",
-        "Allow: /terms",
-        "Allow: /signup",
+        "Allow: /css/",
+        "Allow: /static/",
+        "Allow: /assets/",
         "Disallow: /admin",
         "Disallow: /internal",
         "Disallow: /addfunds",
@@ -331,10 +480,19 @@ def robots_txt():
         "Disallow: /subscriptions",
         "Disallow: /affiliates",
         "Disallow: /panels",
+        "Disallow: /services?*q=",
         "",
+        "Host: %s" % base.replace("https://", "").replace("http://", ""),
         "Sitemap: %s/sitemap.xml" % base,
+        "Sitemap: %s/sitemap-pages.xml" % base,
+        "Sitemap: %s/sitemap-platforms.xml" % base,
+        "Sitemap: %s/sitemap-blog.xml" % base,
         "",
-    ])
+        "# AI crawlers",
+        "Allow: /llms.txt",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def rss_xml(posts):

@@ -16,15 +16,27 @@
     </section>
     {% else %}
     <div class="la-page-head">
-      <h1><i class="ri-store-2-line"></i> {{ t.svc_title }}</h1>
-      <p class="sub">เลือกหมวดแล้วดูเรทต่อ 1,000 หน่วย</p>
+      <h1><i class="ri-store-2-line"></i> {% if cat %}ราคาปั้มไลค์ {{ cat }}{% else %}{{ t.svc_title }}{% endif %}</h1>
+      <p class="sub">{% if cat %}ดูเรทปั้มไลค์ เพิ่มฟอล เพิ่มวิว {{ cat }} ต่อ 1,000 หน่วย ไม่ขอรหัสผ่าน{% else %}{{ t.svc_sub or 'เลือกหมวดแล้วดูเรทปั้มไลค์ ปั้มฟอล ปั้มวิว ต่อ 1,000 หน่วย จากเว็บปั้มไลค์คนไทย' }}{% endif %}</p>
     </div>
+    {% if not cat %}
+    <article class="la-plat-seo-copy" style="margin-bottom:20px">
+      <p>หน้าราคานี้คือเรทสดของ Likes Auto สำหรับสั่งปั้มไลค์ ปั้มฟอล และปั้มวิวหลายแพลตฟอร์ม เลือกหมวด ดูราคาต่อ 1,000 แล้วสมัครเพื่อส่งออเดอร์โดยไม่ฝากรหัสผ่าน</p>
+    </article>
+    <nav class="la-plat-seo-related" aria-label="คู่มือที่เกี่ยวข้อง" style="margin:0 0 22px">
+      <a href="/pum-like">เว็บปั้มไลค์</a>
+      <a href="/pum-follow">ปั้มฟอล</a>
+      <a href="/pum-view">ปั้มวิว</a>
+      <a href="/smm-panel">SMM Panel</a>
+      <a href="/faq">วิธีใช้งาน</a>
+    </nav>
+    {% endif %}
     {% endif %}
 
     <div class="la-plat-mini la-svc-plats">
       <a href="/services" class="{% if not cat %}is-on{% endif %}"><img class="la-platlogo" src="/static/assets/plats/app.svg" alt="" width="20" height="20"> ทั้งหมด</a>
       {% for p in platforms[:12] %}
-      <a href="/services?cat={{ p.name|urlencode }}" class="{% if cat==p.name %}is-on{% endif %}">
+      <a href="{{ p.name|plat_href }}" class="{% if cat==p.name %}is-on{% endif %}">
         <img class="la-platlogo" src="{{ p.logo or '/static/assets/plats/app.svg' }}" alt="" width="20" height="20"> {{ p.name }}
       </a>
       {% endfor %}

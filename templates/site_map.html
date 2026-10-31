@@ -1,0 +1,75 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<main class="la-page">
+  <div class="la-wrap">
+    <div class="la-page-head">
+      <h1>แผนผังเว็บ</h1>
+      <p class="la-lead">ลิงก์หน้าสำคัญทั้งหมดของ Likes Auto — ช่วยให้ค้นหาและเข้าถึงบริการได้ง่าย</p>
+    </div>
+    <div class="la-sitemap-grid">
+      <section class="la-sitemap-col">
+        <h2>หน้าหลัก</h2>
+        <ul>
+          <li><a href="/">หน้าแรก</a></li>
+          <li><a href="/pum-like">เว็บปั้มไลค์</a></li>
+          <li><a href="/pum-follow">ปั้มฟอล</a></li>
+          <li><a href="/pum-view">ปั้มวิว</a></li>
+          <li><a href="/smm-panel">SMM Panel</a></li>
+          <li><a href="/add-followers">เพิ่มผู้ติดตาม</a></li>
+          <li><a href="/thai-likes">ปั้มไลค์คนไทย</a></li>
+          <li><a href="/services">ราคาบริการทั้งหมด</a></li>
+          <li><a href="/faq">คำถามที่พบบ่อย</a></li>
+          <li><a href="/api">API เปิดร้านต่อ</a></li>
+          <li><a href="/signup">สมัครสมาชิก</a></li>
+          <li><a href="/terms">ข้อกำหนดการใช้งาน</a></li>
+        </ul>
+      </section>
+      <section class="la-sitemap-col">
+        <h2>คีย์เวิร์ดหลัก</h2>
+        <ul>
+          {% for h in hub_pages %}
+          <li><a href="/{{ h.slug }}">{{ h.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </section>
+      <section class="la-sitemap-col">
+        <h2>แพลตฟอร์ม</h2>
+        <ul>
+          {% for slug in plat_slugs %}
+          <li><a href="/{{ slug }}">/{{ slug }}</a></li>
+          {% endfor %}
+        </ul>
+      </section>
+      <section class="la-sitemap-col">
+        <h2>บล็อก</h2>
+        <ul>
+          <li><a href="/blog">บทความทั้งหมด</a></li>
+          {% for tag in blog_tags %}
+          <li><a href="/blog?tag={{ tag|urlencode }}">{{ tag }}</a></li>
+          {% endfor %}
+        </ul>
+      </section>
+      <section class="la-sitemap-col">
+        <h2>บทความล่าสุด</h2>
+        <ul>
+          {% for post in blog_posts %}
+          <li><a href="{{ post.href }}">{{ post.title }}</a></li>
+          {% else %}
+          <li class="la-muted">ยังไม่มีบทความ</li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% if extra_pages %}
+      <section class="la-sitemap-col">
+        <h2>หน้าอื่นๆ</h2>
+        <ul>
+          {% for row in extra_pages %}
+          <li><a href="{{ row.href }}">{{ row.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

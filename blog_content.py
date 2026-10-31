@@ -63,10 +63,10 @@ def unique_blog_slug(title, slug="", exclude_id=None):
 
 HOME = L("/", "ปั้มไลค์")
 SVC = L("/services", "ราคาปั้มไลค์")
-IG = L("/services?cat=Instagram", "ปั้มไลค์ Instagram")
-TT = L("/services?cat=Tiktok", "ปั้มวิว TikTok")
-FB = L("/services?cat=Facebook", "ปั้มไลค์ Facebook")
-YT = L("/services?cat=Youtube", "เพิ่มยอดวิว YouTube")
+IG = L("/instagram", "ปั้มไลค์ Instagram")
+TT = L("/tiktok", "ปั้มวิว TikTok")
+FB = L("/facebook", "ปั้มไลค์ Facebook")
+YT = L("/youtube", "เพิ่มยอดวิว YouTube")
 FAQ = L("/faq", "ไม่ขอรหัสผ่าน")
 SIGN = L("/signup", "สมัครฟรี")
 API = L("/api", "API เปิดร้านต่อ")
@@ -129,12 +129,12 @@ def seed_blog():
 
 
 DAILY_PLATS = [
-    ("ig", "Instagram", "/services?cat=Instagram", "ปั้มไลค์ Instagram"),
-    ("tt", "TikTok", "/services?cat=Tiktok", "ปั้มวิว TikTok"),
-    ("fb", "Facebook", "/services?cat=Facebook", "ปั้มไลค์ Facebook"),
-    ("yt", "YouTube", "/services?cat=Youtube", "เพิ่มยอดวิว YouTube"),
-    ("x", "X (Twitter)", "/services?cat=Twitter", "ปั้มไลค์ Twitter"),
-    ("tg", "Telegram", "/services?cat=Telegram", "เพิ่มสมาชิก Telegram"),
+    ("ig", "Instagram", "/instagram", "ปั้มไลค์ Instagram"),
+    ("tt", "TikTok", "/tiktok", "ปั้มวิว TikTok"),
+    ("fb", "Facebook", "/facebook", "ปั้มไลค์ Facebook"),
+    ("yt", "YouTube", "/youtube", "เพิ่มยอดวิว YouTube"),
+    ("x", "X (Twitter)", "/twitter", "ปั้มไลค์ Twitter"),
+    ("tg", "Telegram", "/telegram", "เพิ่มสมาชิก Telegram"),
 ]
 DAILY_NICHES = [
     "ร้านอาหาร", "ร้านเสื้อผ้า", "คลินิกความงาม", "เพจข่าวสั้น", "ครีเอเตอร์",
@@ -152,8 +152,9 @@ DAILY_GOALS = [
 
 
 FEATURED_TAGS = [
-    "ปั้มไลค์", "ปั้มฟอล", "ปั้มวิว", "ยิงแอด", "Instagram", "TikTok",
-    "Facebook", "YouTube", "การตลาด", "พร้อมเพย์", "API", "วิธีใช้งาน",
+    "เว็บปั้มไลค์", "ปั้มไลค์", "ปั้มฟอล", "ปั้มวิว", "SMM Panel", "SMM Panel ไทย",
+    "เพิ่มผู้ติดตาม", "ปั้มไลค์คนไทย", "ยิงแอด",
+    "Instagram", "TikTok", "Facebook", "YouTube", "การตลาด", "พร้อมเพย์", "API", "วิธีใช้งาน",
 ]
 
 

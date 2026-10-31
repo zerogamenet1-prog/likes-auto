@@ -47,23 +47,17 @@
       </div>
 
       {% if not user %}
-      <aside class="la-hero-login la-login-card">
+      <aside class="la-hero-login la-login-card la-login-fz">
         <div class="la-login-hi">
-          <span class="la-login-live"><i></i> {{ t.ssl }}</span>
           <h3>{{ t.welcome_back }}</h3>
-          <p>{{ t.new_here }} <a href="/signup">{{ t.cta_free }}</a></p>
+          <p>{{ t.signin_dash }}</p>
         </div>
-        {% include "_google_btn.html" %}
-        <form method="post" action="/signin" id="laHomeLogin">
+        <form method="post" action="/signin" id="laHomeLogin" class="la-login-fz-form">
           {% include "_guard_fields.html" %}
-          <label class="la-field">{{ t.label_user }}</label>
-          <div class="la-input-ico">
-            <i class="ri-user-3-line"></i>
-            <input class="la-input" type="text" name="username" required autocomplete="username" placeholder="{{ t.label_user }}" autocapitalize="off" spellcheck="false">
-          </div>
-          <label class="la-field">{{ t.label_pass }}</label>
-          <div class="la-input-ico">
-            <i class="ri-lock-2-line"></i>
+          <label class="la-field" for="laHomeUser">{{ t.label_user }}</label>
+          <input class="la-input" id="laHomeUser" type="text" name="username" required autocomplete="username" placeholder="{{ t.label_user }}" autocapitalize="off" spellcheck="false">
+          <label class="la-field" for="laHomePass">{{ t.label_pass }}</label>
+          <div class="la-input-ico la-input-ico-end">
             <input class="la-input" type="password" name="password" required autocomplete="current-password" placeholder="{{ t.label_pass }}" id="laHomePass">
             <button class="la-pass-eye" type="button" id="laHomeEye" aria-label="แสดงรหัสผ่าน"><i class="ri-eye-line"></i></button>
           </div>
@@ -71,13 +65,22 @@
             <label><input type="checkbox" name="remember" value="1"> {{ t.remember }}</label>
             <a href="/forgot">{{ t.forgot }}</a>
           </div>
-          <button class="la-btn" type="submit" style="width:100%">{{ t.nav_login }}</button>
+          <button class="la-btn la-login-submit" type="submit">{{ t.nav_login }}</button>
         </form>
+        <div class="la-or"><span>{{ t.or }}</span></div>
+        {% if google_ready %}
+        <a class="la-google-btn" href="/google-login">
+          <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.8-6.7 7.3l6.3 5.2C37.5 38.4 44 33 44 24c0-1.3-.1-2.3-.4-3.5z"/>
+          </svg>
+          {{ t.google }}
+        </a>
+        {% endif %}
+        <p class="la-login-foot">{{ t.no_account }} <a href="/signup">{{ t.nav_signup }}</a></p>
       </aside>
-      {% else %}
-      <div class="la-hero-shot la-phone-wrap">
-        <img src="/static/assets/dash-laptop.jpg" alt="แผงสั่งซื้อ Likes Auto บนคอมพิวเตอร์" width="560" height="420" decoding="async" fetchpriority="low">
-      </div>
       {% endif %}
     </div>
   </section>
@@ -118,91 +121,40 @@
 
   <section class="la-section la-about-band" id="about">
     <div class="la-wrap">
-      <div class="la-about-head">
-        <div class="la-kicker">{{ t.about_kicker }}</div>
-        <h2>{{ t.about_h2 }}</h2>
-        <p class="sub">{{ t.about_sub }}</p>
-      </div>
-      <div class="la-about-layout">
-        <div class="la-about-visual is-live">
-          <div class="la-about-orbs" aria-hidden="true"><span></span><span></span><span></span></div>
-          <div class="la-phone-wrap la-about-phone">
-            <div class="la-phone" role="img" aria-label="ตัวอย่างไลฟ์สดเพิ่มยอด Likes Auto">
-              <span class="la-live"><i></i> LIVE</span>
-              <span class="la-viewers"><i class="ri-eye-line"></i> <b id="laAboutViewers">4,812</b></span>
-              <div class="la-screen">
-                <video class="la-stream-img la-stream-video" id="laAboutVideo" muted loop playsinline preload="none" poster="/static/assets/live-creator.jpg" aria-label="ตัวอย่างไลฟ์สดเพิ่มยอด Likes Auto" data-src="/static/assets/live-creator.mp4"></video>
-                <div class="la-stream-flare" aria-hidden="true"></div>
-                <div class="la-stream-vignette" aria-hidden="true"></div>
-                <div class="la-chat-live" aria-hidden="true">
-                  <div class="la-chat-track">
-                    <b>มายด์: สั่งวิวแล้วขึ้นเร็วมาก</b>
-                    <b>บีม: ไม่ขอรหัสผ่าน ปลอดภัย</b>
-                    <b>กิ๊ฟ: พร้อมเพย์แล้วสั่งได้เลย</b>
-                    <b>นัท: ไลฟ์คนดูพุ่งแล้ว 🔥</b>
-                    <b>พลอย: แผงใช้ง่ายมาก</b>
-                    <b>ต้น: อัตโนมัติ 24 ชม. จริง</b>
-                    <b>มายด์: สั่งวิวแล้วขึ้นเร็วมาก</b>
-                    <b>บีม: ไม่ขอรหัสผ่าน ปลอดภัย</b>
-                    <b>กิ๊ฟ: พร้อมเพย์แล้วสั่งได้เลย</b>
-                    <b>นัท: ไลฟ์คนดูพุ่งแล้ว 🔥</b>
-                    <b>พลอย: แผงใช้ง่ายมาก</b>
-                    <b>ต้น: อัตโนมัติ 24 ชม. จริง</b>
-                  </div>
-                </div>
-                <div class="la-hearts" id="laAboutHearts" aria-hidden="true">
-                  <span>❤️</span><span>💜</span><span>💗</span><span>✨</span>
-                  <span>❤️</span><span>💙</span><span>💜</span><span>💖</span>
-                </div>
-                <div class="la-chat-bar la-chat-bar-row">
-                  <span>พิมพ์ข้อความ...</span>
-                  <i class="ri-thumb-up-fill"></i>
-                  <i class="ri-heart-fill"></i>
-                </div>
-              </div>
-              <span class="la-phone-shine" aria-hidden="true"></span>
-            </div>
-          </div>
-          <div class="la-about-float is-left" aria-hidden="true">
-            <img src="/static/assets/plats/telegram.svg" alt="" width="28" height="28">
-            <img src="/static/assets/plats/x.svg" alt="" width="28" height="28">
-          </div>
-          <div class="la-about-float is-right" aria-hidden="true">
-            <img src="/static/assets/plats/instagram.svg" alt="" width="28" height="28">
-            <img src="/static/assets/plats/tiktok.svg" alt="" width="28" height="28">
-            <img src="/static/assets/plats/youtube.svg" alt="" width="28" height="28">
-            <img src="/static/assets/plats/facebook.svg" alt="" width="28" height="28">
-          </div>
-          <div class="la-about-glow" aria-hidden="true"></div>
-          <div class="la-about-ring" aria-hidden="true"></div>
-        </div>
+      <div class="la-about-shell">
+        <header class="la-about-head">
+          <div class="la-kicker">{{ t.about_kicker }}</div>
+          <h2>{{ t.about_h2 }}</h2>
+          <p class="sub">{{ t.about_sub }}</p>
+        </header>
         <div class="la-about-grid">
           <article class="la-about-card">
             <div class="la-about-ico"><i class="ri-building-4-line"></i></div>
-            <h3>{{ t.about1_t }}</h3>
-            <p>{{ t.about1_d }}</p>
+            <div class="la-about-copy">
+              <h3>{{ t.about1_t }}</h3>
+              <p>{{ t.about1_d }}</p>
+            </div>
           </article>
           <article class="la-about-card">
             <div class="la-about-ico"><i class="ri-apps-2-line"></i></div>
-            <h3>{{ t.about2_t }}</h3>
-            <p>{{ t.about2_d }}</p>
-            <div class="la-about-mini" aria-hidden="true">
-              <img src="/static/assets/plats/instagram.svg" alt="" width="18" height="18">
-              <img src="/static/assets/plats/tiktok.svg" alt="" width="18" height="18">
-              <img src="/static/assets/plats/youtube.svg" alt="" width="18" height="18">
-              <img src="/static/assets/plats/facebook.svg" alt="" width="18" height="18">
-              <img src="/static/assets/plats/telegram.svg" alt="" width="18" height="18">
+            <div class="la-about-copy">
+              <h3>{{ t.about2_t }}</h3>
+              <p>{{ t.about2_d }}</p>
             </div>
           </article>
           <article class="la-about-card">
             <div class="la-about-ico"><i class="ri-timer-flash-line"></i></div>
-            <h3>{{ t.about3_t }}</h3>
-            <p>{{ t.about3_d }}</p>
+            <div class="la-about-copy">
+              <h3>{{ t.about3_t }}</h3>
+              <p>{{ t.about3_d }}</p>
+            </div>
           </article>
           <article class="la-about-card">
             <div class="la-about-ico"><i class="ri-store-2-line"></i></div>
-            <h3>{{ t.about4_t }}</h3>
-            <p>{{ t.about4_d }}</p>
+            <div class="la-about-copy">
+              <h3>{{ t.about4_t }}</h3>
+              <p>{{ t.about4_d }}</p>
+            </div>
           </article>
         </div>
       </div>
@@ -217,7 +169,7 @@
       <div class="la-pop-grid">
         {% if shop_plats %}
           {% for p in shop_plats[:8] %}
-          <a class="la-pop-card" href="/services?cat={{ p.name|urlencode }}">
+          <a class="la-pop-card" href="{{ p.href or (p.name|plat_href) }}">
             <img class="la-platlogo" src="{{ p.logo or '/static/assets/plats/app.svg' }}" alt="{{ p.name }}" width="40" height="40">
             <div>
               <h3>{{ p.name }}</h3>
@@ -234,10 +186,10 @@
           </a>
           {% endfor %}
         {% else %}
-          <a class="la-pop-card" href="/services?cat=Instagram"><img class="la-platlogo" src="/static/assets/plats/instagram.svg" alt="Instagram" width="44" height="44"><div><h3>Instagram</h3><p>{{ t.ig_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
-          <a class="la-pop-card" href="/services?cat=Youtube"><img class="la-platlogo" src="/static/assets/plats/youtube.svg" alt="YouTube" width="44" height="44"><div><h3>YouTube</h3><p>{{ t.yt_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
-          <a class="la-pop-card" href="/services?cat=Tiktok"><img class="la-platlogo" src="/static/assets/plats/tiktok.svg" alt="TikTok" width="44" height="44"><div><h3>TikTok</h3><p>{{ t.tt_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
-          <a class="la-pop-card" href="/services?cat=Facebook"><img class="la-platlogo" src="/static/assets/plats/facebook.svg" alt="Facebook" width="44" height="44"><div><h3>Facebook</h3><p>{{ t.fb_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
+          <a class="la-pop-card" href="/instagram"><img class="la-platlogo" src="/static/assets/plats/instagram.svg" alt="Instagram" width="44" height="44"><div><h3>Instagram</h3><p>{{ t.ig_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
+          <a class="la-pop-card" href="/youtube"><img class="la-platlogo" src="/static/assets/plats/youtube.svg" alt="YouTube" width="44" height="44"><div><h3>YouTube</h3><p>{{ t.yt_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
+          <a class="la-pop-card" href="/tiktok"><img class="la-platlogo" src="/static/assets/plats/tiktok.svg" alt="TikTok" width="44" height="44"><div><h3>TikTok</h3><p>{{ t.tt_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
+          <a class="la-pop-card" href="/facebook"><img class="la-platlogo" src="/static/assets/plats/facebook.svg" alt="Facebook" width="44" height="44"><div><h3>Facebook</h3><p>{{ t.fb_s }}</p><div class="la-pop-meta"><b>{{ t.cta_prices }}</b></div></div></a>
         {% endif %}
       </div>
       <div class="la-home-cta">
@@ -339,81 +291,18 @@
         <button type="button" class="la-rev-nav is-prev" id="laRevPrev" aria-label="รีวิวก่อนหน้า"><i class="ri-arrow-left-s-line"></i></button>
         <div class="la-rev-track" id="laRevTrack" tabindex="0">
           {% for r in reviews %}
-          <article class="la-rev-card is-{{ r.style }}">
-            {% if r.plats %}
-            <div class="la-rev-plats" aria-hidden="true">
-              {% for p in r.plats %}
-              <img src="/static/assets/plats/{{ p }}.svg" alt="" width="16" height="16" loading="lazy" decoding="async">
-              {% endfor %}
-            </div>
-            {% endif %}
-            {% if r.style == 'quote' %}
-            <span class="la-rev-mark" aria-hidden="true">“</span>
-            <p>{{ r.text }}</p>
-            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
-            <div class="la-rev-who">
-              <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="48" height="48">
-              <div><b>{{ r.name }}</b><span>{{ r.role }}</span></div>
-              <em>{{ t.verified }}</em>
-            </div>
-            {% elif r.style == 'cover' %}
-            <img class="la-rev-hero" src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="280" height="168">
-            <em class="la-rev-pill">{{ t.verified }}</em>
-            <div class="la-rev-body">
-              <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
-              <p>{{ r.text }}</p>
-              <b>{{ r.name }}</b>
-              <span>{{ r.role }}</span>
-            </div>
-            {% elif r.style == 'split' %}
-            <img class="la-rev-side" src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="150" height="220">
-            <div class="la-rev-body">
-              <em>{{ t.verified }}</em>
-              <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
-              <p>{{ r.text }}</p>
-              <b>{{ r.name }}</b>
-              <span>{{ r.role }}</span>
-            </div>
-            {% elif r.style == 'glass' %}
-            <img class="la-rev-hex" src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="72" height="72">
-            <div>
-              <b>{{ r.name }}</b>
-              <span>{{ r.role }}</span>
-            </div>
-            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
-            <p>{{ r.text }}</p>
-            <em>{{ t.verified }}</em>
-            {% elif r.style == 'stack' %}
-            <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="88" height="88">
+          <article class="la-rev-card">
+            <span class="la-rev-plat" aria-hidden="true">
+              <img src="/static/assets/plats/{{ r.plat }}.svg" alt="" width="22" height="22" loading="lazy" decoding="async">
+            </span>
+            <span class="la-rev-ava-ring">
+              <img src="{{ r.photo }}" alt="{{ r.name }}" width="88" height="88" loading="lazy" decoding="async">
+            </span>
             <b>{{ r.name }}</b>
-            <span>{{ r.role }}</span>
+            <span class="la-rev-role">{{ r.role }}</span>
             <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
             <p>{{ r.text }}</p>
             <em>{{ t.verified }}</em>
-            {% elif r.style == 'ticket' %}
-            <span class="la-rev-stamp">{{ t.verified }}</span>
-            <div class="la-rev-who">
-              <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="56" height="56">
-              <div><b>{{ r.name }}</b><span>{{ r.role }}</span></div>
-            </div>
-            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
-            <p>{{ r.text }}</p>
-            {% elif r.style == 'glow' %}
-            <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="92" height="92">
-            <em>{{ t.verified }}</em>
-            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
-            <p>{{ r.text }}</p>
-            <b>{{ r.name }}</b>
-            <span>{{ r.role }}</span>
-            {% else %}
-            <div class="la-rev-who">
-              <img src="{{ r.photo }}" alt="{{ r.name }}" loading="lazy" decoding="async" width="44" height="44">
-              <div><b>{{ r.name }}</b><span>{{ r.role }}</span></div>
-            </div>
-            <p>{{ r.text }}</p>
-            <div class="la-stars" aria-hidden="true">{% for _ in range(5) %}<i class="ri-star-fill"></i>{% endfor %}</div>
-            <em>{{ t.verified }}</em>
-            {% endif %}
           </article>
           {% endfor %}
         </div>
@@ -423,7 +312,32 @@
     </div>
   </section>
   <script type="application/json" id="laTickerData">{{ ticker_json|safe }}</script>
-  <script src="/static/js/home.js?v=pro3" defer></script>
+  <script src="/static/js/home.js?v=pro7" defer></script>
+
+  <section class="la-section" id="seo-guide">
+    <div class="la-wrap la-seo-guide">
+      <div class="la-kicker">{{ t.seo_kicker }}</div>
+      <h2>{{ t.seo_h2 }}</h2>
+      <p>{{ t.seo_p1 }}</p>
+      <p>{{ t.seo_p2 }}</p>
+      <p>{{ t.seo_p3 }}</p>
+      {% if t.seo_p4 %}<p>{{ t.seo_p4 }}</p>{% endif %}
+      <div class="la-seo-links">
+        <a href="/pum-like">{{ t.seo_hub or 'เว็บปั้มไลค์' }}</a>
+        <a href="/pum-follow">{{ t.seo_follow or 'ปั้มฟอล' }}</a>
+        <a href="/pum-view">{{ t.seo_view or 'ปั้มวิว' }}</a>
+        <a href="/smm-panel">{{ t.seo_smm or 'SMM Panel' }}</a>
+        <a href="/add-followers">เพิ่มผู้ติดตาม</a>
+        <a href="/thai-likes">ปั้มไลค์คนไทย</a>
+        <a href="/instagram">{{ t.seo_ig }}</a>
+        <a href="/tiktok">{{ t.seo_tt }}</a>
+        <a href="/youtube">{{ t.seo_yt }}</a>
+        <a href="/facebook">{{ t.seo_fb }}</a>
+        <a href="/faq">{{ t.nav_faq }}</a>
+        <a href="/blog">{{ t.blog_all }}</a>
+      </div>
+    </div>
+  </section>
 
   <section class="la-section" id="contact">
     <div class="la-wrap">

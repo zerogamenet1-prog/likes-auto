@@ -343,7 +343,11 @@
   <label class="la-field">reCAPTCHA</label>
   <input class="la-input" name="recaptcha_key" value="{{ settings.recaptcha_key or '' }}">
   <label class="la-field">Analytics ID</label>
-  <input class="la-input" name="analytics_id" value="{{ settings.analytics_id or '' }}">
+  <input class="la-input" name="analytics_id" value="{{ settings.analytics_id or '' }}" placeholder="G-XXXXXXXX">
+  <label class="la-field">Google Search Console (content ของ meta google-site-verification)</label>
+  <input class="la-input" name="gsc_verify" value="{{ settings.gsc_verify or '' }}" placeholder="รหัสยืนยันจาก Search Console">
+  <label class="la-field">Bing Webmaster (msvalidate.01)</label>
+  <input class="la-input" name="bing_verify" value="{{ settings.bing_verify or '' }}">
   <button class="la-btn" type="submit">บันทึก</button>
 </form>
 <form method="post" action="/admin/settings/integrations/test-mail" class="adm-form" style="margin-top:12px">

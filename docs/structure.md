@@ -50,6 +50,10 @@
 | blog_content.py | รวมบทและแท็ก |
 | cms.py | ตารางบทความ, seed, อัปโหลดรูป |
 | seo.py | sitemap, RSS, meta, JSON-LD |
+| seo_hubs.py | หน้า hub คีย์เวิร์ด (/pum-like, /smm-panel, …) |
+| seo_landings.py | หน้าแพลตฟอร์ม (/instagram, /tiktok, …) |
+| templates/seo_hub.html, platform.html, site_map.html | เทมเพลต SEO |
+| static/llms.txt | สรุปเว็บสำหรับ crawlers / LLM |
 | static/assets/blog/ | รูป JPEG ชื่อ blog-*.jpg |
 
 แอดมินแก้บทจาก /admin/appearance/blog

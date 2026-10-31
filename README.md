@@ -20,7 +20,7 @@
 | สไตล์แอดมิน | `static/css/admin.css` | แดชบอร์ดแอดมิน |
 | รูปเว็บ | `static/assets/` | โลโก้ แบนเนอร์ รูปบทความ |
 | บทความบล็อก | `blog_content.py`, `blog_html.py`, `blog_posts.py`, `blog_posts_rest.py` | เนื้อหาต้นฉบับ + รูปประกอบ |
-| SEO | `seo.py` | sitemap.xml, RSS, meta, JSON-LD |
+| SEO | `seo.py`, `seo_hubs.py`, `seo_landings.py` | sitemap, RSS, meta, JSON-LD, หน้า hub และแพลตฟอร์ม |
 | ร้านค้า / ออเดอร์ | `store.py`, `smm_api.py` | สินค้า ส่งออเดอร์ไปผู้ให้บริการ |
 | เติมเงิน | `pay.py`, `inbound.py`, `slip_verify.py` | PromptPay, อัปโหลดสลิป |
 | ผู้ใช้ | `db.py`, `google_oauth.py` | สมัคร ล็อกอิน cookie / Google |
@@ -76,6 +76,9 @@ python3 -m uvicorn app:app --reload --port 8787
 
 - ลูกค้า: `/` `/services` `/blog` `/addfunds` `/orders`
 - แอดมิน: `/admin` `/admin/appearance/blog`
+- SEO hub: `/pum-like` `/pum-follow` `/pum-view` `/smm-panel` `/add-followers` `/thai-likes`
+- แพลตฟอร์ม: `/instagram` `/tiktok` `/youtube` `/facebook` และอื่น ๆ ใน `seo_landings.py`
+- แผนผัง: `/site-map` · สำหรับ AI: `/llms.txt`
 - SEO: `/sitemap.xml` `/rss.xml` `/robots.txt`
 
 ---

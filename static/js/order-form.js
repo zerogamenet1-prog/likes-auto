@@ -351,6 +351,12 @@
   }
   function renderChips(s) {
     if (!chips || !s || !qty) return;
+    if (s.needs_comments) {
+      chips.innerHTML = '';
+      chips.hidden = true;
+      return;
+    }
+    chips.hidden = false;
     var opts = [s.min_qty, 100, 500, 1000, 5000, 10000];
     if (s.max_qty && s.max_qty <= 100000) opts.push(s.max_qty);
     var seen = {};
@@ -400,8 +406,13 @@
     var box = document.getElementById('svc-explain');
     var hint = document.getElementById('qty-hint');
     if (hint) {
-      if (s && (s.min_qty || s.max_qty)) hint.textContent = 'ขั้นต่ำ: ' + fmtQty(s.min_qty) + ' - สูงสุด: ' + fmtQty(s.max_qty);
-      else hint.textContent = '';
+      if (s && s.needs_comments) {
+        hint.textContent = 'ขั้นต่ำ: ' + fmtQty(s.min_qty) + ' - สูงสุด: ' + fmtQty(s.max_qty) + ' (นับจากจำนวนบรรทัดคอมเมนต์)';
+      } else if (s && (s.min_qty || s.max_qty)) {
+        hint.textContent = 'ขั้นต่ำ: ' + fmtQty(s.min_qty) + ' - สูงสุด: ' + fmtQty(s.max_qty);
+      } else {
+        hint.textContent = '';
+      }
     }
     if (!box) return;
     var notes = (s && s.notes) || [];
@@ -443,9 +454,11 @@
     if (qty) {
       qty.min = s.min_qty;
       qty.max = s.max_qty;
-      var n = parseInt(qty.value || '0', 10);
-      if (!n || n < s.min_qty) qty.value = s.min_qty;
-      if (n > s.max_qty) qty.value = s.max_qty;
+      if (!s.needs_comments) {
+        var n = parseInt(qty.value || '0', 10);
+        if (!n || n < s.min_qty) qty.value = s.min_qty;
+        if (n > s.max_qty) qty.value = s.max_qty;
+      }
     }
     var catShow = decodeEnt(s.category_th || s.category || '');
     var bits = svcBits(s);
@@ -582,24 +595,37 @@
     if (commentsWrap) commentsWrap.hidden = !needsComments;
     if (commentsEl) {
       commentsEl.required = needsComments;
+      commentsEl.setAttribute('rows', '8');
       if (!needsComments) commentsEl.value = '';
     }
     if (commentsHint) {
       commentsHint.textContent = needsComments
-        ? 'จำนวนคอมเมนต์ = จำนวนบรรทัด (อัปเดตอัตโนมัติ)'
+        ? 'กด Enter เพื่อขึ้นบรรทัดใหม่ · 1 บรรทัด = 1 คอมเมนต์ · จำนวนอัปเดตอัตโนมัติ'
         : '';
     }
-    if (needsComments && qty) qty.readOnly = true;
-    else if (qty) qty.readOnly = false;
+    if (needsComments && qty) {
+      qty.readOnly = true;
+      qty.classList.add('is-synced');
+    } else if (qty) {
+      qty.readOnly = false;
+      qty.classList.remove('is-synced');
+    }
   }
   function syncCommentsQty() {
     var s = current();
     if (!s || !s.needs_comments || !qty || !commentsEl) return;
     var n = countCommentLines(commentsEl.value);
-    if (n > 0) {
-      if (n < s.min_qty) n = s.min_qty;
-      if (n > s.max_qty) n = s.max_qty;
-      qty.value = n;
+    if (n > 0) qty.value = n;
+    else qty.value = s.min_qty || 1;
+    if (commentsHint) {
+      var warn = '';
+      if (n > 0 && n < s.min_qty) warn = ' · ต้องมีอย่างน้อย ' + fmtQty(s.min_qty) + ' บรรทัด';
+      else if (n > s.max_qty) warn = ' · เกินสูงสุด ' + fmtQty(s.max_qty) + ' บรรทัด';
+      commentsHint.textContent = 'มี ' + n + ' คอมเมนต์' + warn + ' · กด Enter เพื่อขึ้นบรรทัดใหม่';
+    }
+    var hint = document.getElementById('qty-hint');
+    if (hint) {
+      hint.textContent = 'ขั้นต่ำ: ' + fmtQty(s.min_qty) + ' - สูงสุด: ' + fmtQty(s.max_qty) + ' (นับจากจำนวนบรรทัดคอมเมนต์)';
     }
     infoChargeOnly();
   }

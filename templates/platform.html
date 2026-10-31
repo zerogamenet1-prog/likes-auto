@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page la-plat-seo">
+  <div class="la-wrap">
+    <header class="la-page-head la-plat-seo-head">
+      <div class="la-kicker">{{ plat.kicker }}</div>
+      <h1>{{ plat.h1 }}</h1>
+      <p class="sub">{{ plat.lead }}</p>
+      {% if from_rate is not none %}
+      <p class="la-plat-seo-price">{{ t.from_price }} ฿{{ "%.4f"|format(from_rate) }} {{ t.per_1k }}</p>
+      {% endif %}
+      <div class="la-cta">
+        <a class="la-btn" href="/signup">{{ t.cta_free }}</a>
+        <a class="la-btn la-btn-ghost" href="/services">{{ t.cta_prices }}</a>
+      </div>
+    </header>
+
+    <ul class="la-plat-seo-bullets">
+      {% for b in plat.bullets %}
+      <li><i class="ri-check-line"></i> {{ b }}</li>
+      {% endfor %}
+    </ul>
+
+    <article class="la-plat-seo-copy">
+      {% for para in plat.body %}
+      <p>{{ para }}</p>
+      {% endfor %}
+    </article>
+
+    {% if catalog %}
+    <section class="la-plat-seo-list" aria-labelledby="plat-price">
+      <h2 id="plat-price">ราคาบริการ {{ plat.kicker }}</h2>
+      <p class="sub">เรทต่อ 1,000 ตามรายการที่เปิดขาย — สมัครแล้วสั่งจากแดชบอร์ด</p>
+      <div class="la-table-wrap la-svc-wrap">
+        <table class="la-svc-table la-svc-table-pro">
+          <thead>
+            <tr>
+              <th>บริการ</th>
+              <th>เรท / 1k</th>
+              <th>ช่วง</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for s in catalog[:16] %}
+            <tr>
+              <td data-label="บริการ" class="la-svc-namecell">
+                <b>{{ s.title or s.name_short or s.name }}</b>
+              </td>
+              <td data-label="เรท"><b class="la-svc-rate">฿{{ "%.2f"|format(s.rate or 0) }}</b></td>
+              <td data-label="ช่วง">{{ "{:,}".format(s.min_qty or 0) }}–{{ "{:,}".format(s.max_qty or 0) }}</td>
+              <td>
+                <a class="la-btn la-btn-mini" href="{% if user %}/neworder?cat={{ s.platform|urlencode }}&amp;sid={{ s.id }}{% else %}/signup{% endif %}">สั่งซื้อ</a>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if plat.faq %}
+    <section class="la-faq la-faq-pro" aria-labelledby="plat-faq">
+      <h2 id="plat-faq">คำถามที่พบบ่อย</h2>
+      {% for item in plat.faq %}
+      <details>
+        <summary>{{ item.q }}</summary>
+        <p>{{ item.a }}</p>
+      </details>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <nav class="la-plat-seo-related" aria-label="หน้าที่เกี่ยวข้อง">
+      {% for href, label in plat.related %}
+      <a href="{{ href }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+  </div>
+</main>
+{% endblock %}

@@ -1,12 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Likes Auto">
   <defs>
-    <linearGradient id="g" x1="8" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#22d3ee"/>
-      <stop offset="1" stop-color="#a855f7"/>
+    <linearGradient id="laBoltBg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8ee31f"/>
+      <stop offset="1" stop-color="#5eb516"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="20" fill="url(#g)"/>
-  <circle cx="32" cy="26" r="13" fill="none" stroke="#ffd56a" stroke-width="3"/>
-  <circle cx="32" cy="26" r="5" fill="#ffd56a"/>
-  <path d="M18 48h8l4-10 4 10h8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="64" height="64" rx="16" fill="url(#laBoltBg)"/>
+  <path fill="#071006" d="M36.8 8.5 18.2 34.2c-.55.76-.02 1.85.92 1.85h11.1l-3.6 19.1c-.22 1.16 1.22 1.86 2.02.98L48.1 30.3c.58-.75.05-1.84-.9-1.84H36.4l4.1-18.7c.25-1.14-1.16-1.88-1.98-1.05z"/>
 </svg>

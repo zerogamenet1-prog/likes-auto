@@ -155,7 +155,7 @@ def ctx(request: Request, page: str, extra=None):
         from theme import public_theme_ctx
         data.update(public_theme_ctx(data.get("settings")))
     except Exception:
-        data.setdefault("theme_pack", "violet")
+        data.setdefault("theme_pack", "peak")
         data.setdefault("theme_switch", True)
         data.setdefault("theme_css", "")
         data.setdefault("theme_packs", [])

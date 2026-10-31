@@ -61,11 +61,6 @@
           <button class="la-paste" type="button" id="paste-link">วางลิงก์</button>
         </div>
       </div>
-      <div id="comments-wrap" hidden>
-        <label class="la-field" for="comments-pick">คอมเมนต์</label>
-        <textarea class="la-input la-comments" name="comments" id="comments-pick" rows="6" placeholder="พิมพ์คอมเมนต์แต่ละบรรทัด (1 บรรทัด = 1 คอมเมนต์)"></textarea>
-        <p class="la-qty-hint" id="comments-hint">จำนวนคอมเมนต์จะนับจากจำนวนบรรทัดอัตโนมัติ</p>
-      </div>
       <div class="la-form-row la-qty-row la-metrics">
         <div>
           <label class="la-field">จำนวน</label>
@@ -82,6 +77,11 @@
       </div>
       <p class="la-qty-hint" id="qty-hint"></p>
       <div class="la-chips" id="qty-chips"></div>
+      <div id="comments-wrap" hidden>
+        <label class="la-field" for="comments-pick">คอมเมนต์ (1 บรรทัด = 1 คอมเมนต์)</label>
+        <textarea class="la-input la-comments" name="comments" id="comments-pick" rows="8" wrap="soft" placeholder="พิมพ์คอมเมนต์ทีละบรรทัด&#10;ตัวอย่างบรรทัดที่ 1&#10;ตัวอย่างบรรทัดที่ 2"></textarea>
+        <p class="la-qty-hint" id="comments-hint">กด Enter เพื่อขึ้นบรรทัดใหม่ · จำนวนจะนับจากบรรทัดอัตโนมัติ</p>
+      </div>
       <button class="la-btn" type="submit" style="width:100%"><i class="ri-send-plane-2-line"></i> ส่งออเดอร์</button>
     </form>
 
@@ -116,7 +116,7 @@
     </aside>
   </div>
   <script id="cat-data" type="application/json">{{ categories | tojson }}</script>
-  <script src="/static/js/order-form.js?v=pro36"></script>
+  <script src="/static/js/order-form.js?v=pro37"></script>
   {% endif %}
 </main>
 {% endblock %}

@@ -1,7 +1,7 @@
 <aside class="la-side" id="laSide">
   <a class="la-side-brand" href="{{ shop_home or '/neworder' }}">
-    <img src="/static/assets/brand.svg" width="32" height="32" alt="">
-    <span>Likes Auto</span>
+    <span class="la-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
+    <span class="la-brand-text">Likes<em>Auto</em></span>
   </a>
   {% if user %}
   {% if mods.mod_account %}<a class="la-side-user" href="/account">{% else %}<div class="la-side-user">{% endif %}

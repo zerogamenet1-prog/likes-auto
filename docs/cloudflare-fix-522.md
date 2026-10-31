@@ -1,0 +1,32 @@
+# แก้ likes-auto.com ขึ้น 522 (ชี้มา Visperhost)
+
+เว็บอัปขึ้นโฮสต์ **165.101.65.6** แล้ว (ทดสอบด้วย Host `likes-auto.com` ได้หน้าแรก 200)  
+แต่โดเมนผ่าน **Cloudflare** ยังชี้ไปเซิร์ฟเวอร์เก่าที่ปิด → ขึ้น **522**
+
+## ขั้นตอน (ทำครั้งเดียว)
+
+1. เข้า [Cloudflare Dashboard](https://dash.cloudflare.com) → โดเมน **likes-auto.com**
+2. เมนู **DNS** → **Records**
+3. แก้ **A** ชื่อ `@` ให้เป็น **`165.101.65.6`**
+4. แก้ **A** ชื่อ `www` ให้เป็น **`165.101.65.6`** (หรือ CNAME ไป `@`)
+5. ชั่วคราวตั้ง **Proxy status** เป็น **DNS only** (เมฆเทา) จน SSL บนโฮสต์พร้อม
+6. รอ 2–10 นาที แล้วเปิด https://likes-auto.com/
+
+## SSL หลัง DNS ถูกแล้ว
+
+ใน DirectAdmin → **ใบรับรอง SSL/TLS** → ออกใบรับรองฟรี (Let's Encrypt) สำหรับ `likes-auto.com`  
+จากนั้นที่ Cloudflare ตั้ง SSL/TLS เป็น **Full** หรือ **Full (strict)** ได้
+
+## ทดสอบก่อนแก้ DNS (บน PC คุณ)
+
+แก้ไฟล์ `C:\Windows\System32\drivers\etc\hosts` (Run as Admin):
+
+```
+165.101.65.6 likes-auto.com www.likes-auto.com
+```
+
+เปิด http://likes-auto.com/ ควรเห็นหน้า Likes Auto (เวอร์ชัน static)
+
+## ข้อจำกัดชั่วคราว
+
+ชุดที่อัปตอนนี้เป็น ** static HTML** (หน้าโชว์ + SEO + บล็อก) — **สมัคร / ล็อกอิน / สั่งซื้อ** ต้องรอรัน Python backend (ขอ SSH จาก Visperhost หรือ VPS)

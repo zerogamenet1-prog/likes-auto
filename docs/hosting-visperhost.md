@@ -11,6 +11,8 @@
 
 **อย่าเก็บรหัสผ่าน panel ใน Git หรือในแชท** — ใส่เฉพาะใน `.env` / ตัวแปร session บนเครื่องคุณ
 
+**หมายเหตุ:** รหัสโฮสต์ Visperhost (`likesaut`) **ไม่ใช่** รหัส VPS เก่า — ถ้ามี `$env:VPS_PW` ค้างอยู่ FTP จะล็อกอินไม่ผ่าน ให้ใช้ `$env:HOST_PW` แทน
+
 ---
 
 ## สำคัญ: แอป Likes Auto ไม่ใช่เว็บ PHP ธรรมดา
@@ -77,6 +79,27 @@ python _deploy_web_release.py
 ```
 
 ถ้า SFTP ไม่ขึ้น: ใน DirectAdmin → **SSH Keys** / **FTP** / ติดต่อ support ให้เปิด SSH
+
+### FTP (ทดสอบแล้ว — ใช้งานได้)
+
+| รายการ | ค่า |
+|--------|-----|
+| Host | `165.101.65.6` |
+| Port | `21` |
+| User | `likesaut` |
+| โฟลเดอร์เว็บ | `domains/likes-auto.com/public_html` (หรือ symlink `public_html`) |
+
+ตอนนี้ใน `public_html` มีแค่ `index.html` เริ่มต้นจากโฮสต์ — **ยังไม่ใช่** แอป Likes Auto
+
+### Panel ที่เข้าได้ / ไม่ได้
+
+| หน้า | URL ตัวอย่าง | สถานะ |
+|------|----------------|--------|
+| แดชบอร์ด | `/evo/` | ใช้ได้ |
+| SSL | `/evo/user/ssl` | ใช้ได้ (ออกใบรับรองหลัง DNS ชี้มา) |
+| DNS | `/evo/user/dns` | 404 — โดเมนใช้ NS ภายนอก (เช่น Cloudflare) |
+| Git / Nginx Unit | plugin | 404 — ต้องให้ support เปิดสิทธิ์ |
+| SSH | พอร์ต 22 | จากภายนอกเชื่อมไม่ได้ (ต้องขอเปิด) |
 
 ---
 

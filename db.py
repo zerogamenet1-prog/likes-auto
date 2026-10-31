@@ -151,6 +151,39 @@ def init_db():
     extra_migrate()
     from cms import cms_migrate
     cms_migrate()
+    _seed_demo_client()
+
+
+def _seed_demo_client():
+    """Create demo panel user once when ALLOW_DEMO_SEED is on (after migrate)."""
+    if str(os.environ.get("ALLOW_DEMO_SEED", "0")).strip() not in {"1", "true", "yes"}:
+        return
+    demo_user = (os.environ.get("DEMO_CLIENT_USER") or "demo").strip() or "demo"
+    demo_pass = os.environ.get("DEMO_CLIENT_PASS") or "Demo1234!"
+    con = connect()
+    try:
+        if con.execute("SELECT id FROM clients WHERE username=?", (demo_user,)).fetchone():
+            return
+        con.execute(
+            "INSERT INTO clients (username,email,balance,status,created_at,password_hash,api_key,ref_code,referred_by,ref_earn) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (
+                demo_user,
+                "demo@likes-auto.local",
+                500,
+                "active",
+                now(),
+                _hash(demo_pass),
+                os.urandom(12).hex(),
+                demo_user[:12],
+                None,
+                0,
+            ),
+        )
+        con.commit()
+    except Exception:
+        pass
+    finally:
+        con.close()
 
 
 def check_admin(username: str, password: str) -> bool:

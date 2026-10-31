@@ -186,7 +186,7 @@ def page(request: Request, template: str, name: str, extra=None, status_code=200
         data["csrf"] = ensure_csrf(request)
     except Exception:
         data["csrf"] = ""
-    if data.get("user") and name not in ("home", "signin", "signup", "blog", "terms", "platform"):
+    if data.get("user") and name not in ("home", "signin", "signup", "blog", "terms", "privacy", "platform"):
         data["dash_mode"] = True
         data["dash"] = client_dash(data["user"]["username"])
     data["menus"] = []
@@ -537,6 +537,11 @@ async def terms(request: Request):
     return page(request, "terms.html", "terms")
 
 
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy(request: Request):
+    return page(request, "privacy.html", "privacy")
+
+
 @app.get("/api", response_class=HTMLResponse)
 async def api_page(request: Request):
     blocked = _mod_gate(request, "mod_api")
@@ -609,8 +614,8 @@ async def blog_one(request: Request, slug: str):
     return page(request, "blog_post.html", "blog", {"post": decorate([post])[0], "related": decorate(picked)})
 
 
-_CMS_REDIRECT = {"faq": "/faq", "terms": "/terms"}
-_SKIP_SITEMAP_SLUGS = {"faq", "terms"}
+_CMS_REDIRECT = {"faq": "/faq", "terms": "/terms", "privacy": "/privacy"}
+_SKIP_SITEMAP_SLUGS = {"faq", "terms", "privacy"}
 
 
 @app.get("/p/{slug}", response_class=HTMLResponse)
@@ -691,6 +696,7 @@ def _sitemap_pages():
         {"loc": site_url() + "/services", "priority": "0.9", "changefreq": "daily"},
         {"loc": site_url() + "/faq", "priority": "0.8", "changefreq": "weekly"},
         {"loc": site_url() + "/terms", "priority": "0.4", "changefreq": "monthly"},
+        {"loc": site_url() + "/privacy", "priority": "0.4", "changefreq": "monthly"},
         {"loc": site_url() + "/api", "priority": "0.6", "changefreq": "weekly"},
         {"loc": site_url() + "/blog", "priority": "0.8", "changefreq": "daily"},
         {"loc": site_url() + "/signup", "priority": "0.7", "changefreq": "monthly"},

@@ -6,10 +6,8 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
-    disk:
-      name: likes-auto-data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
+    # Persistent disk requires a paid Render plan. On Free, avoid frequent redeploys
+    # (SQLite in data/ resets when the instance is rebuilt).
     envVars:
       - key: SESSION_SECRET
         generateValue: true

@@ -1,0 +1,17 @@
+# Deploy on Render.com: Web Service + persistent disk for SQLite (data/app.db).
+services:
+  - type: web
+    name: likes-auto
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:$PORT app:app
+    envVars:
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_USER
+        value: admin
+      - key: ADMIN_PASS
+        sync: false
+      - key: ALLOW_DEMO_SEED
+        value: "1"

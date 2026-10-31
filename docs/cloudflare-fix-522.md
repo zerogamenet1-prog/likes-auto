@@ -8,14 +8,17 @@
 1. เข้า [Cloudflare Dashboard](https://dash.cloudflare.com) → โดเมน **likes-auto.com**
 2. เมนู **DNS** → **Records**
 3. แก้ **A** ชื่อ `@` ให้เป็น **`165.101.65.6`**
-4. แก้ **A** ชื่อ `www` ให้เป็น **`165.101.65.6`** (หรือ CNAME ไป `@`)
-5. ชั่วคราวตั้ง **Proxy status** เป็น **DNS only** (เมฆเทา) จน SSL บนโฮสต์พร้อม
-6. รอ 2–10 นาที แล้วเปิด https://likes-auto.com/
+4. แก้ **A** ชื่อ `www` ให้เป็น **`165.101.65.6`** (แนะนำใช้ **A record** โดยตรง — อย่าใช้ CNAME แบบเคยเปิด Proxy แล้วปิด เพราะบาง resolver ยังเห็น IP ของ Cloudflare ค้าง)
+5. ตั้ง **Proxy status** ของ `@`, `www`, `ftp`, `name` เป็น **DNS only** (เมฆเทา) — **อย่าเปิดเมฆส้ม** บน Visperhost (ขึ้น **522**). ถ้า UI ขึ้นเมฆเทาแต่ DNS ยังเป็น 104.21.x ให้ **ลบ A record แล้วสร้างใหม่** (grey cloud) แล้วเช็กที่ `nslookup -type=A likes-auto.com carla.ns.cloudflare.com` ต้องได้ **165.101.65.6**
+6. ออก **Let's Encrypt** ใน DirectAdmin แล้วใช้ **https://** ตรงจากโฮสต์ (กุญแจเขียว ไม่มีคำเตือนใบรับรอง)
+7. รอ 2–10 นาที แล้วเปิด https://likes-auto.com/ และ https://www.likes-auto.com/
+8. ถ้าเครื่องคุณยังเห็น **522** หรือ IP 104.21.x / 172.67.x ให้รัน `ipconfig /flushdns` (Windows) แล้วลองใหม่
+9. ใน Cloudflare → **Caching** → **Purge Everything** (ล้าง cache 522 เก่า)
 
 ## SSL หลัง DNS ถูกแล้ว
 
 ใน DirectAdmin → **ใบรับรอง SSL/TLS** → ออกใบรับรองฟรี (Let's Encrypt) สำหรับ `likes-auto.com`  
-จากนั้นที่ Cloudflare ตั้ง SSL/TLS เป็น **Full** หรือ **Full (strict)** ได้
+ใช้ **DNS only** ที่ Cloudflare — ไม่ต้องเปิด Proxy จนกว่าโฮสต์จะรองรับ IP ของ Cloudflare
 
 ## ทดสอบก่อนแก้ DNS (บน PC คุณ)
 

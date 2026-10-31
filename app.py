@@ -97,12 +97,33 @@ app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 def startup():
     init_db()
     try:
+        from blog_content import seed_blog
+
+        seed_blog()
+    except Exception:
+        pass
+    try:
         from inbound import migrate as inbound_migrate
         inbound_migrate()
         from pay import pay_notify_token
         pay_notify_token()
     except Exception:
         pass
+
+
+@app.middleware("http")
+async def proxy_headers_mw(request: Request, call_next):
+    """Trust Visperhost PHP bridge / Render proxy headers."""
+    proto = (request.headers.get("x-forwarded-proto") or "").split(",")[0].strip().lower()
+    if proto in ("http", "https"):
+        request.scope["scheme"] = proto
+    fwd_host = (request.headers.get("x-forwarded-host") or "").split(",")[0].strip()
+    if fwd_host:
+        request.scope["headers"] = [
+            (k, v) if k != b"host" else (b"host", fwd_host.encode())
+            for k, v in request.scope.get("headers", [])
+        ]
+    return await call_next(request)
 
 
 @app.middleware("http")

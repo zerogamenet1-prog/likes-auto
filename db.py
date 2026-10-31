@@ -1692,8 +1692,6 @@ def provider_migrate():
     """)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_catalog_provider ON provider_catalog(provider_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_svc_status_plat ON services(status, platform)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_svc_status_cat ON services(status, platform, category)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_svc_provider_api ON services(provider_id, api_service)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_catalog_api ON provider_catalog(provider_id, api_service)")
     for table, col, spec in [
         ("services", "provider_id", "INTEGER"),
@@ -1714,6 +1712,10 @@ def provider_migrate():
     ]:
         if not _has_col(cur, table, col):
             cur.execute("ALTER TABLE %s ADD COLUMN %s %s" % (table, col, spec))
+    if _has_col(cur, "services", "category"):
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_svc_status_cat ON services(status, platform, category)")
+    if _has_col(cur, "services", "provider_id") and _has_col(cur, "services", "api_service"):
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_svc_provider_api ON services(provider_id, api_service)")
     con.commit()
     con.close()
 

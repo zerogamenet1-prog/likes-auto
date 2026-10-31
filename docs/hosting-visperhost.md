@@ -89,7 +89,31 @@ python _deploy_web_release.py
 | User | `likesaut` |
 | โฟลเดอร์เว็บ | `domains/likes-auto.com/public_html` (หรือ symlink `public_html`) |
 
-ตอนนี้ใน `public_html` มีแค่ `index.html` เริ่มต้นจากโฮสต์ — **ยังไม่ใช่** แอป Likes Auto
+Deploy จากเครื่องคุณ (static + PHP bridge):
+
+```powershell
+cd "...\py-app"
+$env:HOST_PW = "รหัส FTP likesaut"
+python _export_hosting_static.py
+python _deploy_ftp_visperhost.py
+```
+
+- หน้า SEO / บริการ / บล็อก → HTML ใน `public_html`
+- **ล็อกอิน / แอดมิน / สั่งงาน (POST)** → ต้องมี FastAPI แล้วตั้ง `public_html/la-config.php` ค่า `backend_base` (เช่น Render หรือ VPS)
+- ทดสอบ PHP: `https://likes-auto.com/ping.php` → `{"ok":true,"php":"..."}`
+
+### Backend บน Render (แนะนำเมื่อไม่มี SSH)
+
+1. Push โค้ด GitHub แล้วสร้าง Web Service จาก `render.yaml`
+2. ตั้ง `ADMIN_PASS` ใน Render dashboard
+3. คัดลอก URL เช่น `https://likes-auto.onrender.com` ใส่ใน `la-config.php`:
+
+```php
+'backend_base' => 'https://likes-auto.onrender.com',
+'backend_host' => 'likes-auto.com',
+```
+
+4. อัปโหลด `la-config.php` ทาง FTP — จากนั้น POST `/signin/` และ `/admin/login/` จะถูกส่งไป Python
 
 ### Panel ที่เข้าได้ / ไม่ได้
 

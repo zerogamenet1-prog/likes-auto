@@ -77,7 +77,20 @@ $upstreamHost = (string) (parse_url($base, PHP_URL_HOST) ?: $host);
 $headers[] = 'Host: ' . $upstreamHost;
 $headers[] = 'X-Forwarded-Proto: ' . ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
 $headers[] = 'X-Forwarded-Host: ' . ($host ?: ($_SERVER['HTTP_HOST'] ?? 'likes-auto.com'));
-$headers[] = 'X-Forwarded-For: ' . ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+// Prefer real visitor IP (CF / proxy). Never rate-limit the whole site on the edge IP.
+$clientIp = '';
+if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+    $clientIp = trim((string) $_SERVER['HTTP_CF_CONNECTING_IP']);
+} elseif (!empty($_SERVER['HTTP_TRUE_CLIENT_IP'])) {
+    $clientIp = trim((string) $_SERVER['HTTP_TRUE_CLIENT_IP']);
+} elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $clientIp = trim(explode(',', (string) $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+}
+if ($clientIp === '') {
+    $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+}
+$headers[] = 'X-Forwarded-For: ' . $clientIp;
+$headers[] = 'X-Real-IP: ' . $clientIp;
 if (str_contains($base, 'loca.lt') || str_contains($base, 'trycloudflare.com')) {
     $headers[] = 'Bypass-Tunnel-Reminder: true';
 }

@@ -19,6 +19,9 @@ AddType application/x-httpd-php .php
 RewriteEngine On
 RewriteBase /
 
+# Prevent Apache from 301'ing /admin/login -> /admin/login/ (drops POST body)
+DirectorySlash Off
+
 # Allow Let's Encrypt HTTP-01 challenges (must not redirect)
 RewriteRule ^\\.well-known/acme-challenge/ - [L]
 

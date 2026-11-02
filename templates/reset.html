@@ -11,7 +11,7 @@
           <p class="la-auth-card-lead">รหัสอย่างน้อย 6 ตัว ตั้งเสร็จแล้วเข้าสู่ระบบได้ทันที</p>
         </div>
         {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
-        <form method="post" action="/reset" class="la-auth-form">
+        <form method="post" action="/reset/" class="la-auth-form">
           {% include "_guard_fields.html" %}
           <input type="hidden" name="token" value="{{ token }}">
           <label class="la-field" for="rsPass">รหัสผ่านใหม่</label>

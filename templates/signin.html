@@ -10,7 +10,7 @@
           <p class="la-auth-card-lead">{{ t.signin_dash }}</p>
         </div>
         {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
-        <form method="post" action="/signin" id="laSigninForm" class="la-login-fz-form la-auth-form">
+        <form method="post" action="/signin/" id="laSigninForm" class="la-login-fz-form la-auth-form">
           {% include "_guard_fields.html" %}
           <label class="la-field" for="siUser">{{ t.label_user }}</label>
           <input class="la-input" id="siUser" type="text" name="username" required autocomplete="username" placeholder="{{ t.label_user }}" autocapitalize="off" spellcheck="false" enterkeyhint="next">

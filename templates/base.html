@@ -195,7 +195,7 @@
           <h3 id="laLoginTitle">{{ t.welcome_back }}</h3>
           <p>{{ t.signin_dash }}</p>
         </div>
-        <form method="post" action="/signin" class="la-login-fz-form" id="laModalLogin">
+        <form method="post" action="/signin/" class="la-login-fz-form" id="laModalLogin">
           {% include "_guard_fields.html" %}
           <label class="la-field" for="laModalUser">{{ t.label_user }}</label>
           <input class="la-input" id="laModalUser" type="text" name="username" required autocomplete="username" placeholder="{{ t.label_user }}" autocapitalize="off" spellcheck="false">

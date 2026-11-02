@@ -52,7 +52,7 @@
           <h3>{{ t.welcome_back }}</h3>
           <p>{{ t.signin_dash }}</p>
         </div>
-        <form method="post" action="/signin" id="laHomeLogin" class="la-login-fz-form">
+        <form method="post" action="/signin/" id="laHomeLogin" class="la-login-fz-form">
           {% include "_guard_fields.html" %}
           <label class="la-field" for="laHomeUser">{{ t.label_user }}</label>
           <input class="la-input" id="laHomeUser" type="text" name="username" required autocomplete="username" placeholder="{{ t.label_user }}" autocapitalize="off" spellcheck="false">

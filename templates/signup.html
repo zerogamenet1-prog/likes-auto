@@ -13,7 +13,7 @@
         </div>
         {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
         {% include "_google_btn.html" %}
-        <form method="post" action="/signup" id="laSignupForm" class="la-auth-form">
+        <form method="post" action="/signup/" id="laSignupForm" class="la-auth-form">
           {% include "_guard_fields.html" %}
           <label class="la-field" for="suUser">{{ t.label_user }}</label>
           <div class="la-input-ico">

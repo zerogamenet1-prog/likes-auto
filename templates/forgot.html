@@ -13,7 +13,7 @@
         </div>
         {% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
         {% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
-        <form method="post" action="/forgot" class="la-auth-form">
+        <form method="post" action="/forgot/" class="la-auth-form">
           {% include "_guard_fields.html" %}
           <label class="la-field" for="fgEmail">{{ t.label_email }}</label>
           <div class="la-input-ico">

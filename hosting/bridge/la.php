@@ -62,7 +62,7 @@ if ($path !== '/' && substr($path, -1) === '/') {
 $forwardUri = $path . ($query !== null && $query !== '' ? ('?' . $query) : '');
 $url = $base . $forwardUri;
 $headers = [];
-$skip = ['host', 'connection', 'content-length', 'accept-encoding'];
+$skip = ['host', 'connection', 'content-length', 'accept-encoding', 'content-type'];
 foreach ($_SERVER as $key => $value) {
     if (strpos($key, 'HTTP_') !== 0) {
         continue;
@@ -95,20 +95,62 @@ if (str_contains($base, 'loca.lt') || str_contains($base, 'trycloudflare.com')) 
     $headers[] = 'Bypass-Tunnel-Reminder: true';
 }
 
-$body = file_get_contents('php://input');
+$contentType = (string) ($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '');
+$isMultipart = $method !== 'GET' && $method !== 'HEAD' && (
+    !empty($_FILES) || stripos($contentType, 'multipart/form-data') !== false
+);
+
 $ch = curl_init($url);
-curl_setopt_array($ch, [
+$opts = [
     CURLOPT_CUSTOMREQUEST => $method,
     CURLOPT_HTTPHEADER => $headers,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HEADER => true,
     CURLOPT_FOLLOWLOCATION => false,
     CURLOPT_TIMEOUT => 120,
-    CURLOPT_POSTFIELDS => $body !== false ? $body : null,
-]);
-if ($method !== 'GET' && $method !== 'HEAD' && isset($_SERVER['CONTENT_TYPE'])) {
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge($headers, ['Content-Type: ' . $_SERVER['CONTENT_TYPE']]));
+];
+
+if ($isMultipart) {
+    // php://input is empty for multipart; rebuild from $_POST/$_FILES so slip uploads reach Render.
+    $fields = [];
+    foreach ($_POST as $key => $value) {
+        $fields[$key] = $value;
+    }
+    foreach ($_FILES as $key => $file) {
+        if (!is_array($file) || !isset($file['name'])) {
+            continue;
+        }
+        if (is_array($file['name'])) {
+            $count = count($file['name']);
+            for ($i = 0; $i < $count; $i++) {
+                $err = $file['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+                $tmp = $file['tmp_name'][$i] ?? '';
+                $name = $file['name'][$i] ?? 'file.bin';
+                $type = $file['type'][$i] ?? 'application/octet-stream';
+                if ((int) $err === UPLOAD_ERR_OK && $tmp !== '' && is_uploaded_file($tmp)) {
+                    $fields[$key . '[' . $i . ']'] = new CURLFile($tmp, $type ?: 'application/octet-stream', $name);
+                }
+            }
+            continue;
+        }
+        $err = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+        $tmp = $file['tmp_name'] ?? '';
+        $name = $file['name'] ?? 'file.bin';
+        $type = $file['type'] ?? 'application/octet-stream';
+        if ((int) $err === UPLOAD_ERR_OK && $tmp !== '' && is_uploaded_file($tmp)) {
+            $fields[$key] = new CURLFile($tmp, $type ?: 'application/octet-stream', $name);
+        }
+    }
+    $opts[CURLOPT_POSTFIELDS] = $fields;
+} else {
+    $body = file_get_contents('php://input');
+    $opts[CURLOPT_POSTFIELDS] = $body !== false ? $body : null;
+    if ($method !== 'GET' && $method !== 'HEAD' && $contentType !== '') {
+        $opts[CURLOPT_HTTPHEADER] = array_merge($headers, ['Content-Type: ' . $contentType]);
+    }
 }
+
+curl_setopt_array($ch, $opts);
 
 $raw = curl_exec($ch);
 if ($raw === false) {

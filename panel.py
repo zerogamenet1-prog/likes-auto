@@ -546,9 +546,11 @@ def _slip_check_job(pid, path):
             if paid:
                 set_pay_note(pid, "")
                 return
-            if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "not_slip", "no_qr", "not_pending", "off", "no_slip"):
+            if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "not_slip", "no_qr", "not_pending", "off", "no_slip", "bad_qr"):
                 break
-            time.sleep(2.5 * (attempt + 1))
+            if code in ("timeout", "fail", "quota_exceeded") and attempt >= 1:
+                break
+            time.sleep(1.2 * (attempt + 1))
         set_pay_note(pid, verify_error_text(last))
     except Exception:
         set_pay_note(pid, "ตรวจสลิปไม่ผ่าน รอแอดมินตรวจสอบ")
@@ -664,21 +666,28 @@ async def addfunds_slip(request: Request, pid: int, background_tasks: Background
     slip = form.get("slip")
     err = ""
     path = pay.get("slip") or ""
-    has_file = slip is not None and (getattr(slip, "filename", None) or getattr(slip, "size", 0))
+    fname = (getattr(slip, "filename", None) or "").strip() if slip is not None else ""
+    has_file = bool(slip is not None and (fname or getattr(slip, "size", None) or hasattr(slip, "read")))
     if has_file:
         raw = b""
         try:
             raw = await slip.read()
         except Exception:
-            raw = slip.file.read() if hasattr(slip, "file") else b""
-        path, ferr = save_slip_bytes(raw, pid, getattr(slip, "filename", "") or "")
-        if ferr:
-            err = {
-                "file_type": "อัปโหลดได้เฉพาะรูป JPG PNG WEBP หรือไฟล์ PDF",
-                "file_size": "ไฟล์ใหญ่เกิน 8MB",
-                "file_read": "อ่านไฟล์ไม่สำเร็จ",
-                "file_bad": "ไฟล์ไม่ถูกต้อง",
-            }.get(ferr, "อัปโหลดไม่สำเร็จ")
+            try:
+                raw = slip.file.read() if hasattr(slip, "file") else b""
+            except Exception:
+                raw = b""
+        if not raw:
+            err = "อ่านไฟล์สลิปไม่สำเร็จ ลองบันทึกรูปจากแอปธนาคารแล้วแนบใหม่"
+        else:
+            path, ferr = save_slip_bytes(raw, pid, fname or "slip.jpg")
+            if ferr:
+                err = {
+                    "file_type": "อัปโหลดได้เฉพาะรูป JPG PNG WEBP หรือไฟล์ PDF",
+                    "file_size": "ไฟล์ใหญ่เกิน 8MB",
+                    "file_read": "อ่านไฟล์ไม่สำเร็จ",
+                    "file_bad": "ไฟล์ไม่ถูกต้อง",
+                }.get(ferr, "อัปโหลดไม่สำเร็จ")
     elif not path:
         err = "กรุณาอัปโหลดสลิปจากแอปธนาคาร"
     if not err:

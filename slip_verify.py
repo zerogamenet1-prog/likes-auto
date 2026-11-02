@@ -565,22 +565,92 @@ def _slip_views(im):
     yield im.crop((int(w * 0.45), int(h * 0.62), w, h))
 
 
+def _decode_qr_opencv(image_bytes, texts):
+    try:
+        import cv2
+        import numpy as np
+    except Exception:
+        return
+    try:
+        arr = np.frombuffer(image_bytes, dtype=np.uint8)
+        img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    except Exception:
+        return
+    if img is None:
+        return
+    det = cv2.QRCodeDetector()
+    try:
+        ok, decoded, _pts, _ = det.detectAndDecodeMulti(img)
+    except Exception:
+        ok, decoded = False, []
+        try:
+            data, _pts, _ = det.detectAndDecode(img)
+            if data:
+                ok, decoded = True, [data]
+        except Exception:
+            return
+    if not ok:
+        return
+    for item in decoded or []:
+        text = str(item or "").strip()
+        if text and text not in texts:
+            texts.append(text)
+
+
 def decode_qr_texts(image_bytes):
     texts = []
     try:
         from PIL import Image
         from pyzbar.pyzbar import decode as zbar_decode
     except Exception:
-        return texts
-    try:
-        im = Image.open(io.BytesIO(image_bytes))
-    except Exception:
-        return texts
-    for img in _slip_views(im):
-        _collect_qr(img, zbar_decode, texts)
-        if any(is_transfer_slip_qr(item) for item in texts):
-            break
+        zbar_decode = None
+        Image = None
+    if zbar_decode and Image is not None:
+        try:
+            im = Image.open(io.BytesIO(image_bytes))
+        except Exception:
+            im = None
+        if im is not None:
+            for img in _slip_views(im):
+                _collect_qr(img, zbar_decode, texts)
+                if any(is_transfer_slip_qr(item) for item in texts):
+                    return texts
+    if not any(is_transfer_slip_qr(item) for item in texts):
+        _decode_qr_opencv(image_bytes, texts)
     return texts
+
+
+def credit_from_local_qr(pid, pay, qr_text):
+    """Fallback when EasySlip/OIIO are down: trust a CRC-valid transfer QR."""
+    text = str(qr_text or "").strip()
+    if not is_transfer_slip_qr(text):
+        return False, "not_slip"
+    if text.rfind("6304") >= 12 and not emv_crc_ok(text):
+        return False, "bad_qr"
+    amt = payload_amount(text)
+    if not amt or not amounts_match(pay.get("amount"), amt):
+        return False, "amount"
+    ref = payload_ref(text)
+    if len(ref) < MIN_REF:
+        return False, "no_ref"
+    dests = payload_destinations(text)
+    info = {
+        "transRef": ref,
+        "amount": amt,
+        "payload": text,
+        "date": "",
+        "receiver": {
+            "account": {
+                "proxy": {"account": dests[0] if dests else ""},
+                "bank": {"account": dests[0] if dests else ""},
+            }
+        },
+        "receiver_id": dests[0] if dests else "",
+        "verified": False,
+    }
+    if receiver_verdict(info, pay, text) != "match":
+        return False, "receiver_unclear" if not dests else "receiver"
+    return credit_from_verified(pid, pay, info, "local-qr", text)
 
 
 def _usable_qrs(texts, ours):
@@ -712,6 +782,16 @@ def auto_credit_from_slip(pid, image_path=None, payload="", count_try=True):
             last = code
         elif err:
             last = str(err).lower().replace("-", "_") or last
+
+    # Hosted checkers often go down; still credit when transfer QR proves amount+receiver.
+    if qrs and last in ("timeout", "fail", "no_qr", "quota_exceeded", "slip_pending"):
+        for text in qrs[:3]:
+            paid, code = credit_from_local_qr(pid, pay, text)
+            if paid:
+                return True, "paid"
+            last = code
+            if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "bad_qr", "not_slip"):
+                break
 
     key = str(last or "").lower().replace("-", "_")
     if key == "slip_pending":

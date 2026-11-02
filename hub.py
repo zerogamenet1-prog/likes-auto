@@ -92,19 +92,76 @@ async def currency_post(request: Request, currency: str = Form("THB"), usd_rate:
     return RedirectResponse("/admin/settings/currency?saved=1", status_code=303)
 
 
+def _payments_qr_status(settings=None, methods=None):
+    from pay import infer_kind, normalize_promptpay, promptpay_payload
+
+    s = settings or get_settings()
+    rows = methods if methods is not None else fetch_all("SELECT * FROM methods ORDER BY id")
+    active_pp = [
+        r for r in rows
+        if str(r.get("status") or "") == "active"
+        and infer_kind(r.get("name"), r.get("kind")) == "promptpay"
+    ]
+    main_id = (s.get("promptpay") or "").strip()
+    method_id = ""
+    for r in active_pp:
+        method_id = (r.get("pay_to") or "").strip()
+        if method_id:
+            break
+    target = method_id or main_id
+    normalized = normalize_promptpay(target) if target else ""
+    merchant = (s.get("pay_merchant") or "LIKES AUTO").strip() or "LIKES AUTO"
+    sample_amount = 20.01
+    payload = promptpay_payload(target, sample_amount, merchant) if normalized else ""
+    return {
+        "has_active_promptpay": bool(active_pp),
+        "active_count": len(active_pp),
+        "has_promptpay_id": bool(normalized),
+        "target": target,
+        "target_source": "method" if method_id else ("main" if main_id else ""),
+        "merchant": merchant,
+        "payload": payload,
+        "sample_amount": sample_amount,
+        "ready": bool(active_pp and normalized and payload),
+        "easyslip_ready": bool((s.get("easyslip_key") or "").strip()),
+        "oiio_on": str(s.get("oiio_slip_on") or "1") != "0",
+        "auto_slip": str(s.get("auto_approve_slip") or "1") != "0",
+    }
+
+
 @router.get("/settings/payments", response_class=HTMLResponse)
-async def payments_set(request: Request):
+async def payments_set(request: Request, saved: str = ""):
     g = ok(request)
     if g:
         return g
     from content import SITE
     from pay import pay_notify_token
+    methods = fetch_all("SELECT * FROM methods ORDER BY id")
     tok = pay_notify_token()
     return render(request, "admin/settings_hub.html", settings_ctx("payments", {
-        "methods": fetch_all("SELECT * FROM methods ORDER BY id"),
+        "methods": methods,
+        "saved": saved == "1",
+        "qr_status": _payments_qr_status(get_settings(), methods),
         "pay_notify_token": tok,
         "pay_notify_url": (SITE.get("url") or "https://likes-auto.com").rstrip("/") + "/internal/pay/in?token=" + tok,
     }))
+
+
+@router.get("/settings/payments/qr.png")
+async def payments_qr_preview(request: Request):
+    g = ok(request)
+    if g:
+        return g
+    from fastapi.responses import Response
+    from pay import qr_png_bytes
+
+    status = _payments_qr_status()
+    payload = status.get("payload") or ""
+    if not payload:
+        return Response(status_code=404)
+    return Response(content=qr_png_bytes(payload), media_type="image/png", headers={
+        "Cache-Control": "no-store",
+    })
 
 
 @router.post("/settings/payments")
@@ -113,7 +170,7 @@ async def payments_add(request: Request, name: str = Form(...), detail: str = Fo
     if g:
         return g
     q_run("INSERT INTO methods (name, detail, status, kind, pay_to) VALUES (?,?,?,?,?)", (name, detail, "active", kind, pay_to.strip()))
-    return RedirectResponse("/admin/settings/payments", status_code=303)
+    return RedirectResponse("/admin/settings/payments?saved=1", status_code=303)
 
 
 @router.post("/settings/payments/options")
@@ -124,6 +181,7 @@ async def payments_options(
     pay_merchant: str = Form("LIKES AUTO"),
     pay_unique_satang: str = Form(""),
     auto_approve_slip: str = Form(""),
+    oiio_slip_on: str = Form(""),
     easyslip_key: str = Form(""),
 ):
     g = ok(request)
@@ -133,14 +191,15 @@ async def payments_options(
         "promptpay": promptpay.strip(),
         "truemoney": truemoney.strip(),
         "pay_merchant": pay_merchant.strip() or "LIKES AUTO",
-        "pay_unique_satang": "1",
+        "pay_unique_satang": "1" if pay_unique_satang else "0",
         "auto_approve_slip": "1" if auto_approve_slip else "0",
+        "oiio_slip_on": "1" if oiio_slip_on else "0",
     }
     key = easyslip_key.strip()
     if key:
         values["easyslip_key"] = key
     save_settings(values)
-    return RedirectResponse("/admin/settings/payments", status_code=303)
+    return RedirectResponse("/admin/settings/payments?saved=1", status_code=303)
 
 
 @router.post("/settings/payments/telegram")
@@ -173,7 +232,7 @@ async def payments_edit(request: Request, mid: int, pay_to: str = Form("")):
     if g:
         return g
     q_run("UPDATE methods SET pay_to=? WHERE id=?", (pay_to.strip(), mid))
-    return RedirectResponse("/admin/settings/payments", status_code=303)
+    return RedirectResponse("/admin/settings/payments?saved=1", status_code=303)
 
 
 @router.post("/settings/payments/{mid}/toggle")
@@ -184,7 +243,7 @@ async def payments_toggle(request: Request, mid: int):
     row = q_one("SELECT status FROM methods WHERE id=?", (mid,))
     if row:
         q_run("UPDATE methods SET status=? WHERE id=?", ("paused" if row["status"] == "active" else "active", mid))
-    return RedirectResponse("/admin/settings/payments", status_code=303)
+    return RedirectResponse("/admin/settings/payments?saved=1", status_code=303)
 
 
 @router.get("/settings/bonuses", response_class=HTMLResponse)

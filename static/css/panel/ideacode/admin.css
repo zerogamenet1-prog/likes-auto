@@ -313,6 +313,41 @@ textarea.la-input { min-height: 90px; padding: 10px 12px; }
 .adm-num { width: 110px; }
 .adm-help { color: var(--t-muted); margin: 0 0 16px; max-width: 720px; }
 .adm-h2 { font-size: 16px; font-weight: 700; margin: 22px 0 6px; }
+.adm-pay-ready {
+  display: grid;
+  grid-template-columns: 1.4fr .7fr;
+  gap: 18px;
+  align-items: center;
+  margin: 0 0 18px;
+  padding: 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--stroke);
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+}
+.adm-pay-ready.is-ok { border-color: color-mix(in srgb, var(--ok) 45%, var(--stroke)); }
+.adm-pay-ready.is-warn { border-color: color-mix(in srgb, var(--warn) 45%, var(--stroke)); }
+.adm-pay-ready-copy h2 { margin: 0 0 12px; font-size: 18px; font-weight: 800; }
+.adm-pay-steps { margin: 0 0 12px; padding-left: 18px; color: var(--t-muted); }
+.adm-pay-steps li { margin: 0 0 8px; }
+.adm-pay-steps li strong { display: block; color: var(--t-base); }
+.adm-pay-steps li.done strong { color: var(--ok); }
+.adm-pay-steps li.done strong::before { content: "✓ "; }
+.adm-pay-qr { text-align: center; }
+.adm-pay-qr img {
+  width: 180px; height: 180px; object-fit: contain;
+  border-radius: 14px; background: #fff; border: 1px solid var(--stroke);
+}
+.adm-pay-qr p { margin: 10px 0 0; color: var(--t-muted); font-size: 13px; line-height: 1.45; }
+.adm-pay-qr-empty {
+  width: 180px; height: 180px; margin: 0 auto;
+  display: grid; place-items: center;
+  border-radius: 14px; border: 1px dashed var(--stroke);
+  color: var(--t-muted); background: var(--bg-hover); font-weight: 700;
+}
+@media (max-width: 900px) {
+  .adm-pay-ready { grid-template-columns: 1fr; }
+}
 .adm-mod-wrap { margin: 18px 0 8px; padding-top: 8px; border-top: 1px solid var(--stroke); }
 .adm-mod-group { margin: 0 0 18px; }
 .adm-mod-group h3 {

@@ -120,34 +120,78 @@
 {% endif %}
 
 {% if tab=='payments' %}
+{% set qs = qr_status or {} %}
+<section class="adm-pay-ready {% if qs.ready %}is-ok{% else %}is-warn{% endif %}">
+  <div class="adm-pay-ready-copy">
+    <h2>{% if qs.ready %}QR สแกนรับเงินพร้อมใช้{% else %}ยังโชว์ QR ไม่ได้ — ทำ 2 อย่างนี้{% endif %}</h2>
+    <ol class="adm-pay-steps">
+      <li class="{% if qs.has_promptpay_id %}done{% endif %}">
+        <strong>กรอกเลขพร้อมเพย์</strong>
+        <span>เบอร์ 10 หลัก หรือเลขผู้เสียภาษี 13 หลัก{% if qs.target %} · ตอนนี้ใช้ <b>{{ qs.target }}</b>{% endif %}</span>
+      </li>
+      <li class="{% if qs.has_active_promptpay %}done{% endif %}">
+        <strong>เปิดช่องทางประเภทพร้อมเพย์ / QR</strong>
+        <span>{% if qs.active_count %}เปิดอยู่ {{ qs.active_count }} ช่องทาง{% else %}ยังไม่มีช่องทางพร้อมเพย์ที่เปิดอยู่{% endif %}</span>
+      </li>
+      <li class="{% if qs.ready %}done{% endif %}">
+        <strong>ลูกค้าไปหน้าเติมเงิน</strong>
+        <span>สร้างรายการ → ระบบสร้าง QR ยอดเงินนั้น → สแกนด้วยแอปธนาคาร → แนบสลิป</span>
+      </li>
+    </ol>
+    <p class="adm-help" style="margin:0">
+      {% if qs.ready %}
+      ทดลองที่ <a href="/addfunds" target="_blank" rel="noopener">/addfunds</a> · ตัวอย่างด้านขวาเป็น QR ยอดทดสอบ ฿{{ qs.sample_amount }}
+      {% else %}
+      กรอกเลขด้านล่างแล้วกดบันทึก จากนั้นตรวจว่ามีช่องทาง PromptPay สถานะเปิด
+      {% endif %}
+    </p>
+  </div>
+  <div class="adm-pay-qr">
+    {% if qs.ready %}
+    <img src="/admin/settings/payments/qr.png?v={{ qs.target }}-{{ qs.merchant }}" width="180" height="180" alt="ตัวอย่าง PromptPay QR">
+    <p>สแกนทดสอบได้<br><b>{{ qs.merchant }}</b><br>{{ qs.target }}</p>
+    {% else %}
+    <div class="adm-pay-qr-empty">ยังไม่มี QR</div>
+    <p>ใส่เลขพร้อมเพย์<br>แล้วเปิดช่องทาง PromptPay</p>
+    {% endif %}
+  </div>
+</section>
+
 <form method="post" action="/admin/settings/payments/options" class="adm-form" style="margin-bottom:18px">
-  <p class="adm-help">เลขพร้อมเพย์และทรูมันนี่ใช้เป็นค่าเริ่มเมื่อช่องทางไม่ได้ใส่เลขเฉพาะ</p>
+  <h2 class="adm-h2" style="margin-top:0">1) เลขรับเงินหลัก</h2>
+  <p class="adm-help">เลขนี้ใช้สร้าง QR พร้อมเพย์ให้ลูกค้าสแกนรับเงิน ถ้าช่องทางไม่ได้ใส่เลขเฉพาะ</p>
   <div class="adm-form-grid">
     <div>
-      <label class="la-field">พร้อมเพย์หลัก</label>
-      <input class="la-input" name="promptpay" value="{{ settings.promptpay or '' }}" placeholder="0812345678">
-    </div>
-    <div>
-      <label class="la-field">ทรูมันนี่หลัก</label>
-      <input class="la-input" name="truemoney" value="{{ settings.truemoney or '' }}">
+      <label class="la-field">พร้อมเพย์หลัก *</label>
+      <input class="la-input" name="promptpay" value="{{ settings.promptpay or '' }}" placeholder="0812345678 หรือ เลขภาษี 13 หลัก" inputmode="numeric">
     </div>
     <div>
       <label class="la-field">ชื่อบน QR</label>
-      <input class="la-input" name="pay_merchant" value="{{ settings.pay_merchant or 'LIKES AUTO' }}">
+      <input class="la-input" name="pay_merchant" value="{{ settings.pay_merchant or 'LIKES AUTO' }}" placeholder="LIKES AUTO">
+    </div>
+    <div>
+      <label class="la-field">ทรูมันนี่หลัก</label>
+      <input class="la-input" name="truemoney" value="{{ settings.truemoney or '' }}" placeholder="เบอร์วอลเล็ท (ไม่ใช่ QR EMV)">
     </div>
   </div>
-  <label class="adm-sw"><input type="checkbox" name="pay_unique_satang" value="1" {% if settings.get('pay_unique_satang','1') != '0' %}checked{% endif %}> สุ่มสตางค์บน QR ไม่ให้ยอดซ้ำ</label>
-  <label class="adm-sw"><input type="checkbox" name="auto_approve_slip" value="1" {% if settings.get('auto_approve_slip','1') != '0' %}checked{% endif %}> อนุมัติอัตโนมัติเมื่อลูกค้าแนบสลิปแล้วตรวจยอดผ่าน</label>
-  <label class="la-field">EasySlip API key</label>
+  <div class="adm-sw-row" style="margin: 4px 0 14px">
+    <label class="adm-sw"><input type="checkbox" name="pay_unique_satang" value="1" {% if settings.get('pay_unique_satang','1') != '0' %}checked{% endif %}> สุ่มสตางค์บน QR ไม่ให้ยอดซ้ำ</label>
+    <label class="adm-sw"><input type="checkbox" name="auto_approve_slip" value="1" {% if settings.get('auto_approve_slip','1') != '0' %}checked{% endif %}> อนุมัติอัตโนมัติเมื่อแนบสลิปผ่าน</label>
+    <label class="adm-sw"><input type="checkbox" name="oiio_slip_on" value="1" {% if settings.get('oiio_slip_on','1') != '0' %}checked{% endif %}> ใช้ OIIO ตรวจสลิปสำรอง</label>
+  </div>
+  <label class="la-field">EasySlip API key (ตรวจสลิปอัตโนมัติ)</label>
   <input class="la-input" type="password" name="easyslip_key" placeholder="{{ 'ตั้งค่าแล้ว — เว้นว่างถ้าไม่เปลี่ยน' if settings.easyslip_key else 'วางคีย์จาก developer.easyslip.com' }}" autocomplete="new-password">
   <p class="adm-help">ลูกค้าสแกน QR แล้วแนบสลิปจากแอปธนาคาร ระบบอ่าน QR บนสลิป เทียบยอด แล้วเข้ากระเป๋าทันที</p>
-  <button class="la-btn" type="submit">บันทึกช่องทางหลัก</button>
+  <button class="la-btn" type="submit">บันทึกเลขรับเงิน / QR</button>
 </form>
+
 <form method="post" class="adm-form" style="margin-bottom:18px">
+  <h2 class="adm-h2" style="margin-top:0">2) ช่องทางที่ลูกค้าเห็น</h2>
+  <p class="adm-help">ต้องมีอย่างน้อย 1 ช่องทางประเภท <b>พร้อมเพย์ / QR</b> สถานะเปิด ลูกค้าถึงจะเห็น QR ตอนเติมเงิน</p>
   <div class="adm-form-grid">
     <div>
       <label class="la-field">ชื่อช่องทาง</label>
-      <input class="la-input" name="name" required>
+      <input class="la-input" name="name" required placeholder="เช่น PromptPay">
     </div>
     <div>
       <label class="la-field">ประเภท</label>
@@ -161,12 +205,13 @@
       </select>
     </div>
   </div>
-  <label class="la-field">เลขพร้อมเพย์ / เบอร์วอลเล็ท / ที่อยู่กระเป๋า</label>
-  <input class="la-input" name="pay_to" placeholder="เว้นว่างถ้าใช้ค่าหลักด้านบน">
+  <label class="la-field">เลขพร้อมเพย์ / เบอร์วอลเล็ท (เว้นว่าง = ใช้เลขหลักด้านบน)</label>
+  <input class="la-input" name="pay_to" placeholder="เว้นว่างถ้าใช้พร้อมเพย์หลัก">
   <label class="la-field">รายละเอียด</label>
-  <input class="la-input" name="detail">
+  <input class="la-input" name="detail" placeholder="ข้อความช่วยลูกค้า เช่น สแกนแล้วแนบสลิป">
   <button class="la-btn" type="submit">เพิ่มช่องทาง</button>
 </form>
+
 <div class="adm-table-wrap">
   <table class="adm-table">
     <thead><tr><th>ช่องทาง</th><th>ประเภท</th><th>เลขรับเงิน</th><th>รายละเอียด</th><th>สถานะ</th><th></th></tr></thead>
@@ -174,8 +219,8 @@
     {% for r in methods %}
       <tr>
         <td>{{ r.name }}</td>
-        <td>{{ r.kind or '-' }}</td>
-        <td>{{ r.pay_to or '-' }}</td>
+        <td>{% if (r.kind or '') == 'promptpay' %}พร้อมเพย์ / QR{% elif (r.kind or '') == 'truemoney' %}ทรูมันนี่{% elif (r.kind or '') == 'bank' %}โอนธนาคาร{% else %}{{ r.kind or '-' }}{% endif %}</td>
+        <td>{{ r.pay_to or ('ใช้เลขหลัก' if (r.kind or '') == 'promptpay' else '-') }}</td>
         <td class="wrap">{{ r.detail }}</td>
         <td><span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span></td>
         <td>
@@ -187,7 +232,7 @@
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="6">ยังไม่มีช่องทาง</td></tr>
+      <tr><td colspan="6">ยังไม่มีช่องทาง — เพิ่มประเภทพร้อมเพย์ / QR ด้านบน</td></tr>
     {% endfor %}
     </tbody>
   </table>

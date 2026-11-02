@@ -108,13 +108,27 @@ def init_db():
         );
         """
     )
-    if cur.execute("SELECT COUNT(*) FROM admins").fetchone()[0] == 0:
-        user = os.environ.get("ADMIN_USER", "admin")
-        pw = os.environ.get("ADMIN_PASS", "ChangeMe#2026")
+    admin_user = (os.environ.get("ADMIN_USER") or "admin").strip() or "admin"
+    admin_pass = (os.environ.get("ADMIN_PASS") or "").strip()
+    admin_count = cur.execute("SELECT COUNT(*) FROM admins").fetchone()[0]
+    if admin_count == 0:
         cur.execute(
             "INSERT INTO admins (username, password_hash) VALUES (?, ?)",
-            (user, _hash(pw)),
+            (admin_user, _hash(admin_pass or "ChangeMe#2026")),
         )
+    elif admin_pass:
+        # Keep Render ADMIN_PASS as source of truth after each boot / DB restore.
+        row = cur.execute("SELECT id, username FROM admins ORDER BY id LIMIT 1").fetchone()
+        if row:
+            cur.execute(
+                "UPDATE admins SET username=?, password_hash=? WHERE id=?",
+                (admin_user, _hash(admin_pass), row["id"]),
+            )
+        else:
+            cur.execute(
+                "INSERT INTO admins (username, password_hash) VALUES (?, ?)",
+                (admin_user, _hash(admin_pass)),
+            )
     # Demo services are seeded at most once. Never re-insert after admin deletes them.
     demo = cur.execute("SELECT value FROM settings WHERE key='demo_seeded'").fetchone()
     if not demo:

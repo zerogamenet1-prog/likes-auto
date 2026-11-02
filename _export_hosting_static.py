@@ -44,29 +44,19 @@ RewriteRule ^ https://likes-auto.com%{REQUEST_URI} [L,R=301]
   Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 </IfModule>
 
-# Auth/admin/panel must hit bridge (even if static HTML exists) so CSRF/session match
-RewriteCond %{REQUEST_URI} ^/(admin|signin|signup|forgot|reset|neworder|orders|addfunds|account|tickets|dripfeeds|subscriptions|affiliates|panels|google-login|shop|v2|api|logout|internal)(/|$) [NC]
+# Prefer live Python (Render via la.php) for every page/API.
+# Static snapshots remain as CDN/cache fallback only for asset files.
+RewriteCond %{REQUEST_URI} !^/(css|assets|static|\\.well-known)/ [NC]
+RewriteCond %{REQUEST_URI} !\\.(css|js|mjs|map|jpg|jpeg|png|gif|webp|svg|ico|woff|woff2|ttf|eot|mp4|webm|pdf)$ [NC]
+RewriteCond %{REQUEST_URI} !^/(la\\.php|ping\\.php|la-config\\.php)$ [NC]
 RewriteRule ^ la.php [L,QSA]
 
-# POST always hits bridge
-RewriteCond %{REQUEST_METHOD} !^(GET|HEAD)$ [NC]
-RewriteCond %{REQUEST_URI} !^/(css|assets|static)/ [NC]
-RewriteRule ^ la.php [L,QSA]
-
-# Serve existing files/dirs
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-# /path -> /path/index.html
-RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}/index.html -f
-RewriteRule ^(.+?)/?$ $1/index.html [L]
-
-# Fallback to bridge (404 static pages)
+# Safety net if rewrite conditions miss something
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ la.php [L,QSA]
 
-DirectoryIndex index.html la.php
+DirectoryIndex la.php index.html
 """
 
 ALIAS_REDIRECTS = {

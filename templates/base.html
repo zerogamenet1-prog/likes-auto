@@ -424,13 +424,16 @@
   (function(){
     var meta = document.querySelector('meta[name="csrf-token"]');
     var tok = meta ? meta.getAttribute('content') : '';
-    if (!tok) return;
     document.querySelectorAll('form[method="post"], form[method="POST"]').forEach(function(f){
-      if (!f.querySelector('input[name="_csrf"]')) {
+      if (tok && !f.querySelector('input[name="_csrf"]')) {
         var i = document.createElement('input');
         i.type = 'hidden'; i.name = '_csrf'; i.value = tok;
         f.appendChild(i);
       }
+      f.addEventListener('submit', function(){
+        var hp = f.querySelector('input[name="la_hp_x9"]');
+        if (hp) hp.value = '';
+      });
     });
   })();
   </script>

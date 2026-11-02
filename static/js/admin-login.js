@@ -82,6 +82,8 @@
   if (form) {
     form.addEventListener("submit", function () {
       if (body.classList.contains("is-locked")) return;
+      var hp = form.querySelector('input[name="la_hp_x9"]');
+      if (hp) hp.value = "";
       form.classList.add("is-busy");
       try {
         if (remember && remember.checked && user) localStorage.setItem(KEY, user.value.trim());

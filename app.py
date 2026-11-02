@@ -48,7 +48,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=os.environ.get("SESSION_SECRET", "likes-auto-session-change-me"),
     same_site="lax",
-    https_only=False,
+    https_only=os.environ.get("SESSION_HTTPS_ONLY", "1") != "0",
     max_age=60 * 60 * 12,
 )
 app.add_middleware(GZipMiddleware, minimum_size=400)

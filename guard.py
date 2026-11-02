@@ -229,10 +229,11 @@ class GuardMiddleware(BaseHTTPMiddleware):
         if path == "/signin" and method == "POST" and too_many("signin_hit", ip, 30, 60):
             return _deny(request, 429, "พยายามบ่อยเกินไป")
 
-        if path == "/signup" and method == "POST" and too_many("signup_hit", ip, 8, 3600):
-            return _deny(request, 429, "สมัครบ่อยเกินไป กรุณารอสักครู่")
+        # Soft cap only — hard lock stays in panel.signup_post via login_block on failures.
+        if path == "/signup" and method == "POST" and too_many("signup_hit", ip, 60, 3600):
+            return _deny(request, 429, "สมัครบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่")
 
-        if path == "/forgot" and method == "POST" and too_many("forgot_hit", ip, 6, 3600):
+        if path == "/forgot" and method == "POST" and too_many("forgot_hit", ip, 12, 3600):
             return _deny(request, 429, "ขอรีเซ็ตบ่อยเกินไป")
 
         if path == "/api/v2" and too_many("api_hit", ip, 80, 60):

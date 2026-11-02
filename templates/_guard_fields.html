@@ -1,2 +1,5 @@
 <input type="hidden" name="_csrf" value="{{ csrf or '' }}">
-<p class="la-hp" aria-hidden="true"><label>hp<input type="text" name="la_hp_x9" tabindex="-1" autocomplete="off"></label></p>
+{# Honeypot: keep empty. readonly+tabindex stops most password-managers from filling it. #}
+<p class="la-hp" aria-hidden="true" hidden>
+  <label>Leave blank<input type="text" name="la_hp_x9" value="" tabindex="-1" autocomplete="off" autocapitalize="off" spellcheck="false" readonly inputmode="none" data-lpignore="true" data-1p-ignore="true" data-form-type="other"></label>
+</p>

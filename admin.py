@@ -206,7 +206,9 @@ async def login_get(request: Request):
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...), la_hp_x9: str = Form("")):
     init_db()
     name = (username or "").strip()[:80]
-    if (la_hp_x9 or "").strip():
+    # Ignore honeypot if password managers autofilled it with the username/email.
+    hp = (la_hp_x9 or "").strip()
+    if hp and hp.lower() not in {name.lower(), (password or "").strip().lower()}:
         return login_page(request, "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
     blocked = login_block("admin_login", request, ADMIN_FAILS, ADMIN_LOCK)
     if blocked:

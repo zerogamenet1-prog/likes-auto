@@ -181,7 +181,11 @@
   </div>
   <label class="la-field">EasySlip API key (ตรวจสลิปอัตโนมัติ)</label>
   <input class="la-input" type="password" name="easyslip_key" placeholder="{{ 'ตั้งค่าแล้ว — เว้นว่างถ้าไม่เปลี่ยน' if settings.easyslip_key else 'วางคีย์จาก developer.easyslip.com' }}" autocomplete="new-password">
+  {% if not settings.easyslip_key %}
+  <p class="adm-help" style="color:#c2410c">ยังไม่มีคีย์ EasySlip — ตัวตรวจสำรอง OIIO ล่มอยู่ตอนนี้ แนะนำสมัครฟรีที่ developer.easyslip.com แล้ววางคีย์ตรงนี้ ไม่งั้นสลิปจะค้างรอแอดมินอนุมัติ</p>
+  {% else %}
   <p class="adm-help">ลูกค้าสแกน QR แล้วแนบสลิปจากแอปธนาคาร ระบบอ่าน QR บนสลิป เทียบยอด แล้วเข้ากระเป๋าทันที</p>
+  {% endif %}
   <button class="la-btn" type="submit">บันทึกเลขรับเงิน / QR</button>
 </form>
 

@@ -44,11 +44,15 @@ RewriteRule ^ https://likes-auto.com%{REQUEST_URI} [L,R=301]
   Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
 </IfModule>
 
+# DB restore blobs for Render bootstrap (must stay as real files, not bridged)
+RewriteRule ^\\.la-db-restore-.*\\.db$ - [L]
+
 # Prefer live Python (Render via la.php) for every page/API.
 # Static snapshots remain as CDN/cache fallback only for asset files.
 RewriteCond %{REQUEST_URI} !^/(css|assets|static|\\.well-known)/ [NC]
-RewriteCond %{REQUEST_URI} !\\.(css|js|mjs|map|jpg|jpeg|png|gif|webp|svg|ico|woff|woff2|ttf|eot|mp4|webm|pdf)$ [NC]
+RewriteCond %{REQUEST_URI} !\\.(css|js|mjs|map|jpg|jpeg|png|gif|webp|svg|ico|woff|woff2|ttf|eot|mp4|webm|pdf|db)$ [NC]
 RewriteCond %{REQUEST_URI} !^/(la\\.php|ping\\.php|la-config\\.php)$ [NC]
+RewriteCond %{REQUEST_URI} !^/\\.la-db-restore- [NC]
 RewriteRule ^ la.php [L,QSA]
 
 # Safety net if rewrite conditions miss something

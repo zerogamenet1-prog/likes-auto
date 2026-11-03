@@ -536,7 +536,7 @@ def _slip_check_job(pid, path):
 
     last = "timeout"
     try:
-        for attempt in range(3):
+        for attempt in range(2):
             pay = get_payment(pid)
             if not pay or pay.get("status") != "pending":
                 set_pay_note(pid, "")
@@ -546,11 +546,14 @@ def _slip_check_job(pid, path):
             if paid:
                 set_pay_note(pid, "")
                 return
-            if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "not_slip", "no_qr", "not_pending", "off", "no_slip", "bad_qr"):
+            if code in (
+                "amount", "receiver", "receiver_unclear", "duplicate", "stale", "no_ref",
+                "not_slip", "no_qr", "not_pending", "off", "no_slip", "bad_qr", "limit",
+            ):
                 break
-            if code in ("timeout", "fail", "quota_exceeded") and attempt >= 1:
+            if code in ("timeout", "fail", "quota_exceeded"):
                 break
-            time.sleep(1.2 * (attempt + 1))
+            time.sleep(1.0 * (attempt + 1))
         set_pay_note(pid, verify_error_text(last))
     except Exception:
         set_pay_note(pid, "ตรวจสลิปไม่ผ่าน รอแอดมินตรวจสอบ")

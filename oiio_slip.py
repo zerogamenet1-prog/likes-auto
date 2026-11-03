@@ -13,10 +13,11 @@ from db import get_settings
 from pay import get_payment
 
 OIIO_URL = "https://slip-c.oiio.download"
-TIMEOUT = 18
+TIMEOUT = 10
 TRIES = 2
 # Do not keep retrying when the hosted checker is clearly down/blocked.
-HARD_FAIL = {403, 404, 410, 451, 501}
+# 5xx: public OIIO host is often offline — fail in one shot.
+HARD_FAIL = {403, 404, 410, 451, 501, 502, 503, 504}
 
 
 def _num(value, default=0.0):
@@ -73,7 +74,8 @@ def _retrying(make_call):
     last = "timeout"
     for attempt in range(TRIES):
         status, raw = make_call()
-        if int(status or 0) in HARD_FAIL:
+        code = int(status or 0)
+        if code in HARD_FAIL:
             return None, "timeout"
         info, err = _parse(status, raw)
         if not err:
@@ -81,12 +83,8 @@ def _retrying(make_call):
         last = err
         if err in ("slip_not_found", "qrcode_not_found", "amount_not_verified", "amount", "bad_qr", "off"):
             return None, err
-        # 503 / empty body from a dead host — one quick retry max, then give up.
-        if int(status or 0) in (502, 503, 504) and attempt >= 0:
-            if attempt + 1 >= TRIES:
-                return None, "timeout"
         if attempt + 1 < TRIES:
-            time.sleep(0.8 * (attempt + 1))
+            time.sleep(0.6 * (attempt + 1))
     return None, last
 
 

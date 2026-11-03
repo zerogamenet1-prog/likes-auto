@@ -128,6 +128,8 @@ def is_transfer_slip_qr(text):
         return False
     if is_promptpay_presentment(blob):
         return False
+    if is_slip_verify_qr(blob):
+        return False
     if "A000000677010112" in blob:
         return True
     tlv = parse_tlv(blob)
@@ -135,6 +137,73 @@ def is_transfer_slip_qr(text):
     if any(len((extra.get(key) or "").strip()) >= MIN_REF for key in ("05", "07", "01", "02")):
         return blob.startswith("000201")
     return False
+
+
+def slip_verify_crc_ok(text):
+    blob = str(text or "").strip()
+    idx = blob.rfind("9104")
+    if idx < 12 or idx + 8 != len(blob):
+        return False
+    from pay import crc16_ccitt
+
+    try:
+        return crc16_ccitt(blob[: idx + 4]).upper() == blob[-4:].upper()
+    except Exception:
+        return False
+
+
+def parse_slip_verify_qr(text):
+    """Parse BOT Slip-Verify Mini-QR (tag 00 + country + tag 91 CRC)."""
+    blob = str(text or "").strip()
+    if len(blob) < 28 or not blob.startswith("00"):
+        return None
+    if is_promptpay_presentment(blob) or blob.startswith("000201"):
+        return None
+    tlv = parse_tlv(blob)
+    root = tlv.get("00") or ""
+    if not root or "000001" not in root[:12]:
+        return None
+    if "91" not in tlv and "9104" not in blob[-10:]:
+        return None
+    inner = parse_tlv(root)
+    bank = (inner.get("01") or "").strip()
+    ref = (inner.get("02") or "").strip()
+    if (inner.get("00") or "") != "000001" and not root.startswith("0006000001"):
+        return None
+    if (not ref or not bank) and root.startswith("0006000001"):
+        # Fallback peel when lengths are off (common on KTB Mini-QR).
+        rest = root[10:]
+        if len(rest) >= 5 and rest[:2] == "01":
+            try:
+                blen = int(rest[2:4])
+            except ValueError:
+                blen = 0
+            bank = bank or rest[4 : 4 + blen]
+            rest = rest[4 + blen :]
+            if len(rest) >= 4 and rest[:2] == "02":
+                try:
+                    rlen = int(rest[2:4])
+                except ValueError:
+                    rlen = 0
+                ref = ref or rest[4 : 4 + rlen]
+    # Banks sometimes eat country tag 5102 into the ref length field.
+    if ref.endswith("5102"):
+        ref = ref[:-4]
+    elif "5102" in ref:
+        ref = ref.split("5102", 1)[0]
+    ref = ref.strip()
+    if len(ref) < MIN_REF or len(bank) < 2:
+        return None
+    return {
+        "sendingBank": bank,
+        "transRef": ref,
+        "payload": blob,
+        "crc_ok": slip_verify_crc_ok(blob),
+    }
+
+
+def is_slip_verify_qr(text):
+    return parse_slip_verify_qr(text) is not None
 
 
 def _digits(value):
@@ -623,6 +692,8 @@ def decode_qr_texts(image_bytes):
 def credit_from_local_qr(pid, pay, qr_text):
     """Fallback when EasySlip/OIIO are down: trust a CRC-valid transfer QR."""
     text = str(qr_text or "").strip()
+    if is_slip_verify_qr(text):
+        return False, "need_ocr"
     if not is_transfer_slip_qr(text):
         return False, "not_slip"
     if text.rfind("6304") >= 12 and not emv_crc_ok(text):
@@ -651,6 +722,113 @@ def credit_from_local_qr(pid, pay, qr_text):
     if receiver_verdict(info, pay, text) != "match":
         return False, "receiver_unclear" if not dests else "receiver"
     return credit_from_verified(pid, pay, info, "local-qr", text)
+
+
+def ocr_slip_text(image_bytes):
+    """Digit-focused OCR for amount / account tails on Thai bank slips."""
+    raw = image_bytes or b""
+    if len(raw) < 64:
+        return ""
+    try:
+        import pytesseract
+        from PIL import Image, ImageOps
+    except Exception:
+        return ""
+    try:
+        im = Image.open(io.BytesIO(raw))
+    except Exception:
+        return ""
+    try:
+        im = ImageOps.exif_transpose(im)
+    except Exception:
+        pass
+    if im.mode != "RGB":
+        im = im.convert("RGB")
+    if max(im.size) > 1600:
+        im = im.copy()
+        im.thumbnail((1400, 1400), Image.Resampling.LANCZOS)
+    gray = ImageOps.autocontrast(im.convert("L"))
+    w, h = gray.size
+    crops = [
+        gray,
+        gray.crop((0, int(h * 0.35), w, h)),
+        gray.crop((0, int(h * 0.55), w, int(h * 0.92))),
+        gray.crop((int(w * 0.35), int(h * 0.35), w, int(h * 0.75))),
+    ]
+    chunks = []
+    cfg = "--psm 6 -c tessedit_char_whitelist=0123456789.,Xx* "
+    for crop in crops:
+        try:
+            text = pytesseract.image_to_string(crop, config=cfg) or ""
+        except Exception:
+            continue
+        text = text.strip()
+        if text and text not in chunks:
+            chunks.append(text)
+    return "\n".join(chunks)
+
+
+def _ocr_amount_candidates(ocr_text):
+    found = []
+    blob = str(ocr_text or "")
+    for m in re.finditer(r"(?<!\d)(\d{1,7}[.,]\d{2})(?!\d)", blob):
+        raw = m.group(1).replace(",", ".")
+        amt = _num(raw)
+        if 0.01 <= amt <= 500000 and amt not in found:
+            found.append(amt)
+    return found
+
+
+def _ocr_receiver_match(ocr_text, pay):
+    compact = re.sub(r"\s+", "", str(ocr_text or ""))
+    digits_only = _digits(compact)
+    for our in our_account_ids(pay):
+        forms = _account_forms(our)
+        for form in forms:
+            if len(form) >= 9 and form in digits_only:
+                return form
+            tail = form[-4:]
+            if len(tail) != 4 or tail not in digits_only:
+                continue
+            # Masked account / PromptPay on slip usually keeps the last 4 digits.
+            if re.search(r"(?:X{2,}|\*{2,}).{0,8}" + re.escape(tail), compact, re.I):
+                return form
+            if compact.count(tail) >= 1 and len(forms[0]) >= 9:
+                return form
+    return ""
+
+
+def credit_from_slip_verify_local(pid, pay, qr_text, image_bytes):
+    """When Mini-QR is present but EasySlip/OIIO are down: OCR amount + account tail."""
+    parsed = parse_slip_verify_qr(qr_text)
+    if not parsed:
+        return False, "not_slip"
+    ref = parsed.get("transRef") or ""
+    ocr = ocr_slip_text(image_bytes)
+    if not ocr.strip():
+        return False, "timeout"
+    expected = _num(pay.get("amount"))
+    amts = _ocr_amount_candidates(ocr)
+    if not any(amounts_match(expected, amt) for amt in amts):
+        return False, "amount"
+    recv = _ocr_receiver_match(ocr, pay)
+    if not recv:
+        return False, "receiver_unclear"
+    info = {
+        "transRef": ref,
+        "amount": expected,
+        "payload": parsed.get("payload") or qr_text,
+        "date": "",
+        "receiver": {
+            "account": {
+                "proxy": {"account": recv},
+                "bank": {"account": recv},
+            }
+        },
+        "receiver_id": recv,
+        "verified": False,
+    }
+    return credit_from_verified(pid, pay, info, "local-mini-qr", qr_text)
 
 
 def _usable_qrs(texts, ours):
@@ -784,13 +962,32 @@ def auto_credit_from_slip(pid, image_path=None, payload="", count_try=True):
             last = str(err).lower().replace("-", "_") or last
 
     # Hosted checkers often go down; still credit when transfer QR proves amount+receiver.
-    if qrs and last in ("timeout", "fail", "no_qr", "quota_exceeded", "slip_pending"):
+    if qrs and last in ("timeout", "fail", "no_qr", "quota_exceeded", "slip_pending", "need_ocr"):
         for text in qrs[:3]:
             paid, code = credit_from_local_qr(pid, pay, text)
             if paid:
                 return True, "paid"
+            if code == "need_ocr":
+                paid, code = credit_from_slip_verify_local(pid, pay, text, raw)
+                if paid:
+                    return True, "paid"
             last = code
-            if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "bad_qr", "not_slip"):
+            if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "bad_qr"):
+                break
+            # Keep scanning other QR payloads; do not treat Mini-QR as "receive QR".
+            if code == "not_slip":
+                continue
+
+    # Mini-QR only image (common on Krungthai / SCB slips) — OCR path even if local-qr skipped.
+    if raw and last in ("timeout", "fail", "need_ocr", "no_qr"):
+        for text in qrs[:3]:
+            if not is_slip_verify_qr(text):
+                continue
+            paid, code = credit_from_slip_verify_local(pid, pay, text, raw)
+            if paid:
+                return True, "paid"
+            last = code
+            if code in ("amount", "receiver", "duplicate", "stale", "no_ref"):
                 break
 
     key = str(last or "").lower().replace("-", "_")
@@ -798,6 +995,8 @@ def auto_credit_from_slip(pid, image_path=None, payload="", count_try=True):
         return False, "slip_pending"
     if key in ("slip_not_found", "qrcode_not_found"):
         return False, "no_qr"
+    if key == "need_ocr":
+        return False, "timeout"
     return False, last if last else "no_qr"
 
 
@@ -814,9 +1013,10 @@ def verify_error_text(code):
         "not_pending": "รายการนี้ตรวจแล้ว",
         "slip_pending": "ธนาคารยังไม่ยืนยันสลิป รอสักครู่แล้วแนบใหม่",
         "quota_exceeded": "ระบบตรวจสลิปเต็มโควต้า รอแอดมินตรวจสอบ",
-        "timeout": "ระบบตรวจสลิปภายนอกขัดข้อง อ่านสลิปแล้วแต่ยืนยันกับธนาคารไม่ได้ — รอแอดมินอนุมัติ หรือใส่คีย์ EasySlip ที่ตั้งค่าช่องทางจ่าย",
+        "timeout": "ระบบตรวจสลิปภายนอกขัดข้อง — ใส่คีย์ EasySlip ที่ตั้งค่าช่องทางจ่าย หรือรอแอดมินอนุมัติ",
         "bad_qr": "QR บนสลิปไม่ถูกต้อง",
         "stale": "เวลาในสลิปไม่ตรงกับรายการนี้",
         "no_ref": "ธนาคารไม่ยืนยันเลขอ้างอิงสลิป รอแอดมินตรวจสอบ",
         "limit": "ส่งสลิปบ่อยเกินไป รอสักครู่แล้วลองใหม่",
+        "need_ocr": "อ่าน Mini-QR บนสลิปแล้ว กำลังเทียบยอดจากรูป",
     }.get(str(code or "").lower().replace("-", "_"), "ตรวจสลิปไม่ผ่าน รอแอดมินตรวจสอบ")

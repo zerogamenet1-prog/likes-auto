@@ -277,11 +277,6 @@ async def client_balance(request: Request, cid: int, amount: float = Form(...), 
     row = fetch_one("SELECT username FROM clients WHERE id=?", (cid,))
     if row:
         adjust_balance(row["username"], amount, note or "แอดมิน")
-        try:
-            from db_backup import push_db_backup
-            push_db_backup()
-        except Exception:
-            pass
     return RedirectResponse("/admin/clients", status_code=303)
 
 

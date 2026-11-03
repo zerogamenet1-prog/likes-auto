@@ -109,6 +109,22 @@ def startup():
         pay_notify_token()
     except Exception:
         pass
+    # Sync current live DB out to Visperhost shortly after boot (covers warm starts too).
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("startup")
+    except Exception:
+        pass
+
+
+@app.on_event("shutdown")
+def shutdown():
+    # Render Free sends SIGTERM before wiping the instance — push DB first.
+    try:
+        from db_backup import backup_on_shutdown
+        backup_on_shutdown()
+    except Exception:
+        pass
 
 
 @app.middleware("http")

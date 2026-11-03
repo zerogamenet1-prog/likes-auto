@@ -299,6 +299,11 @@ async def signup_post(request: Request, username: str = Form(...), email: str = 
     request.session["user_id"] = user["id"]
     mark_login("signup", request, True, 6, 3600)
     add_log("สมัครสมาชิก %s" % user["username"], client_ip(request))
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("signup")
+    except Exception:
+        pass
     return RedirectResponse("/neworder", status_code=303)
 
 

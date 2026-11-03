@@ -325,6 +325,11 @@ def attach_slip(pid, username, path, note=""):
     )
     con.commit()
     con.close()
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("attach_slip")
+    except Exception:
+        pass
     return True
 
 
@@ -344,6 +349,11 @@ def cancel_own_payment(pid, username):
     con.execute("UPDATE payments SET status='canceled' WHERE id=?", (pid,))
     con.commit()
     con.close()
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("cancel_payment")
+    except Exception:
+        pass
     return True
 
 

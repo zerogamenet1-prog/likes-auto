@@ -40,12 +40,42 @@ def appear_ctx(tab, extra=None):
 
 
 @router.get("/settings/general", response_class=HTMLResponse)
-async def general_get(request: Request, saved: str = ""):
+async def general_get(request: Request, saved: str = "", backup: str = "", bytes: str = ""):
     g = ok(request)
     if g:
         return g
     cms_migrate()
-    return render(request, "admin/settings_hub.html", settings_ctx("general", {"saved": saved == "1"}))
+    extra = {"saved": saved == "1"}
+    if backup != "":
+        extra["backup_ok"] = backup == "1"
+        extra["backup_bytes"] = bytes
+    try:
+        from db_backup import backup_status
+        extra["backup_status"] = backup_status()
+    except Exception:
+        extra["backup_status"] = {}
+    return render(request, "admin/settings_hub.html", settings_ctx("general", extra))
+
+
+@router.post("/settings/backup-now")
+async def backup_now(request: Request):
+    g = ok(request)
+    if g:
+        return g
+    ok_push, msg = False, "fail"
+    try:
+        from db_backup import flush_backup_now, backup_status
+        ok_push, msg = flush_backup_now("admin")
+        st = backup_status()
+        add_log("แอดมินกดสำรองฐานข้อมูล %s" % ("ok" if ok_push else msg), request.client.host if request.client else "-")
+        q = "1" if ok_push else "0"
+        return RedirectResponse(
+            "/admin/settings/general?backup=%s&bytes=%s" % (q, st.get("db_bytes") or 0),
+            status_code=303,
+        )
+    except Exception as err:
+        add_log("สำรองฐานข้อมูลล้มเหลว %s" % type(err).__name__, request.client.host if request.client else "-")
+        return RedirectResponse("/admin/settings/general?backup=0", status_code=303)
 
 
 @router.post("/settings/general")
@@ -73,8 +103,8 @@ async def general_post(request: Request):
     save_settings(values)
     add_log("บันทึกตั้งค่าทั่วไป", request.client.host if request.client else "-")
     try:
-        from db_backup import push_db_backup
-        push_db_backup()
+        from db_backup import schedule_backup
+        schedule_backup("settings_general")
     except Exception:
         pass
     return RedirectResponse("/admin/settings/general?saved=1", status_code=303)
@@ -204,6 +234,11 @@ async def payments_options(
     if key:
         values["easyslip_key"] = key
     save_settings(values)
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("settings_payments")
+    except Exception:
+        pass
     return RedirectResponse("/admin/settings/payments?saved=1", status_code=303)
 
 

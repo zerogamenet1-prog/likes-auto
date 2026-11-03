@@ -285,6 +285,11 @@ def run_all():
     )
     add_cron_log("pull", detail)
     add_log("cron " + detail, "-")
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("cron")
+    except Exception:
+        pass
     return detail
 
 

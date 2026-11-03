@@ -3,6 +3,10 @@
 {% block subtitle %}<p class="adm-sub">{% if tab=='general' %}ภาพรวมร้าน สวิตช์ที่เปิดอยู่ขึ้นสีเขียว กดบันทึกด้านล่างเมื่อแก้เสร็จ{% else %}ตั้งค่าเท่าที่ต้องใช้ รายการเพิ่มเติมซ่อนไว้ด้านล่าง{% endif %}</p>{% endblock %}
 {% block content %}
 {% if saved %}<div class="adm-ok">บันทึกแล้ว</div>{% endif %}
+{% if backup_ok is defined %}
+  {% if backup_ok %}<div class="adm-ok">สำรองฐานข้อมูลขึ้นโฮสต์แล้ว ({{ backup_bytes or backup_status.db_bytes or 0 }} ไบต์) — ใช้กู้หลัง Render redeploy</div>
+  {% else %}<div class="adm-err">สำรองฐานข้อมูลไม่สำเร็จ ลองใหม่</div>{% endif %}
+{% endif %}
 
 {% if tab=='general' %}
 {% set s = settings %}
@@ -36,6 +40,17 @@
     <a class="set-qbtn" href="/admin/account"><i class="ri-lock-password-line"></i> รหัสแอดมิน</a>
     <a class="set-qbtn" href="/admin/logs"><i class="ri-file-list-3-line"></i> บันทึกระบบ</a>
   </div>
+
+  <section class="set-card">
+    <div class="set-card-head">
+      <div>
+        <h2>สำรองฐานข้อมูล (Render Free)</h2>
+        <p>แผนฟรีลบดิสก์ทุกครั้งที่เดพลอย — ระบบสำรองขึ้นโฮสต์อัตโนมัติหลังเติมเงิน/สมัคร/ปรับยอด และตอนปิดเซิร์ฟเวอร์</p>
+      </div>
+      <span class="set-badge is-on"><i class="ri-database-2-fill"></i> {{ (backup_status.db_bytes if backup_status else 0) or 0 }} B</span>
+    </div>
+    <button class="la-btn" type="submit" formaction="/admin/settings/backup-now" formmethod="post"><i class="ri-upload-cloud-2-line"></i> สำรองขึ้นโฮสต์ทันที</button>
+  </section>
 
   <section class="set-card">
     <div class="set-card-head">

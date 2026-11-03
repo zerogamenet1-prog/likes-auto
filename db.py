@@ -1606,6 +1606,11 @@ def create_payment(client, method, amount, method_id=None):
     # keep generated ref; only fill if empty
     con.commit()
     con.close()
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("create_payment")
+    except Exception:
+        pass
     return pid, None
 
 
@@ -1660,6 +1665,11 @@ def approve_payment(pid):
         credit_affiliate(row["client"], row["amount"])
     except Exception:
         pass
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("approve_payment")
+    except Exception:
+        pass
     return True
 
 
@@ -1676,6 +1686,11 @@ def reject_payment(pid, note=""):
     con.commit()
     con.close()
     add_log("ปฏิเสธเติมเงิน #%s" % pid, "-")
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("reject_payment")
+    except Exception:
+        pass
     return True
 
 

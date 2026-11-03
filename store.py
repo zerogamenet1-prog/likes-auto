@@ -205,8 +205,13 @@ def get_client_by_key(key):
 
 
 def adjust_balance(username, amount, note="-"):
-    execute("UPDATE clients SET balance = balance + ? WHERE username=?", (amount, username))
+    execute("UPDATE clients SET balance = ROUND(balance + ?, 2) WHERE username=?", (amount, username))
     add_log("ปรับยอด %s %s (%s)" % (username, amount, note), "-")
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("adjust_balance")
+    except Exception:
+        pass
 
 
 def set_client_status(cid, status):

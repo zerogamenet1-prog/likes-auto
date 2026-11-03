@@ -86,7 +86,7 @@ async def general_post(request: Request):
     form = dict(await request.form())
     keys = [
         "site_name", "currency", "usd_rate", "profit_percent", "support_email", "timezone", "announcement",
-        "fundstransfer_fees", "max_ticket", "google_client_id",
+        "fundstransfer_fees", "max_ticket",
         "affiliate_percent", "child_panel_price", "child_ns1", "child_ns2", "min_deposit",
         "promptpay", "truemoney", "alert_balance", "custom_header", "custom_footer",
         "pay_merchant", "admin_allow_ips",
@@ -97,6 +97,10 @@ async def general_post(request: Request):
         "registration_page", "resetpass", "google_login", "auto_refill",
     ):
         values[flag] = "1" if form.get(flag) else "0"
+    # Never blank out Google OAuth credentials on a partial general save.
+    g_id = str(form.get("google_client_id") or "").strip()
+    if g_id:
+        values["google_client_id"] = g_id
     secret = str(form.get("google_client_secret") or "").strip()
     if secret:
         values["google_client_secret"] = secret
@@ -379,7 +383,7 @@ async def integ_post(request: Request):
     if g:
         return g
     form = dict(await request.form())
-    save_settings({
+    values = {
         "smtp_host": form.get("smtp_host") or "",
         "smtp_user": form.get("smtp_user") or "",
         "smtp_port": form.get("smtp_port") or "587",
@@ -387,15 +391,23 @@ async def integ_post(request: Request):
         "analytics_id": form.get("analytics_id") or "",
         "gsc_verify": form.get("gsc_verify") or "",
         "bing_verify": form.get("bing_verify") or "",
-        "google_client_id": form.get("google_client_id") or "",
         "google_login": "1" if form.get("google_login") else "0",
-    })
+    }
+    g_id = str(form.get("google_client_id") or "").strip()
+    if g_id:
+        values["google_client_id"] = g_id
     secret = str(form.get("smtp_pass") or "").strip()
     if secret:
-        save_settings({"smtp_pass": secret})
+        values["smtp_pass"] = secret
     gsecret = str(form.get("google_client_secret") or "").strip()
     if gsecret:
-        save_settings({"google_client_secret": gsecret})
+        values["google_client_secret"] = gsecret
+    save_settings(values)
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("settings_integrations")
+    except Exception:
+        pass
     return RedirectResponse("/admin/settings/integrations?saved=1", status_code=303)
 
 

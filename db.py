@@ -129,6 +129,31 @@ def init_db():
                 "INSERT INTO admins (username, password_hash) VALUES (?, ?)",
                 (admin_user, _hash(admin_pass)),
             )
+    # Re-seed Google OAuth from env when DB restore wiped credentials.
+    env_gid = (os.environ.get("GOOGLE_CLIENT_ID") or "").strip()
+    env_gsecret = (os.environ.get("GOOGLE_CLIENT_SECRET") or "").strip()
+    if env_gid:
+        row = cur.execute("SELECT value FROM settings WHERE key='google_client_id'").fetchone()
+        if not row or not str(row["value"] or "").strip():
+            cur.execute(
+                "INSERT INTO settings(key,value) VALUES('google_client_id',?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (env_gid,),
+            )
+    if env_gsecret:
+        row = cur.execute("SELECT value FROM settings WHERE key='google_client_secret'").fetchone()
+        if not row or not str(row["value"] or "").strip():
+            cur.execute(
+                "INSERT INTO settings(key,value) VALUES('google_client_secret',?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (env_gsecret,),
+            )
+    if env_gid and env_gsecret:
+        # Env credentials present → keep Google login enabled after restore.
+        cur.execute(
+            "INSERT INTO settings(key,value) VALUES('google_login','1') "
+            "ON CONFLICT(key) DO UPDATE SET value='1'"
+        )
     # Demo services are seeded at most once. Never re-insert after admin deletes them.
     demo = cur.execute("SELECT value FROM settings WHERE key='demo_seeded'").fetchone()
     if not demo:

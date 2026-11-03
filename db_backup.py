@@ -148,16 +148,19 @@ def push_db_backup(path: Path | None = None, reason: str = "") -> tuple[bool, st
         raw = db.read_bytes()
         if not raw.startswith(b"SQLite format 3"):
             return False, "not_sqlite"
+        headers = {
+            "Content-Type": "application/octet-stream",
+            "X-LA-DB-TOKEN": token,
+            "X-LA-DB-REASON": reason[:80],
+            "User-Agent": "likes-auto-db-backup/2",
+        }
+        if reason in CRITICAL_REASONS or reason.startswith("live_") or reason.startswith("restore_"):
+            headers["X-LA-DB-FORCE"] = "1"
         req = urllib.request.Request(
             url,
             data=raw,
             method="POST",
-            headers={
-                "Content-Type": "application/octet-stream",
-                "X-LA-DB-TOKEN": token,
-                "X-LA-DB-REASON": reason[:80],
-                "User-Agent": "likes-auto-db-backup/2",
-            },
+            headers=headers,
         )
         with urllib.request.urlopen(req, timeout=90) as r:
             body = r.read().decode("utf-8", "replace")

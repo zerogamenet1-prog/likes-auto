@@ -1,108 +1,207 @@
 {% extends "admin/base.html" %}
 {% block title %}ตั้งค่า{% endblock %}
-{% block subtitle %}<p class="adm-sub">ตั้งค่าเท่าที่ต้องใช้ รายการเพิ่มเติมซ่อนไว้ด้านล่าง</p>{% endblock %}
+{% block subtitle %}<p class="adm-sub">{% if tab=='general' %}ภาพรวมร้าน สวิตช์ที่เปิดอยู่ขึ้นสีเขียว กดบันทึกด้านล่างเมื่อแก้เสร็จ{% else %}ตั้งค่าเท่าที่ต้องใช้ รายการเพิ่มเติมซ่อนไว้ด้านล่าง{% endif %}</p>{% endblock %}
 {% block content %}
 {% if saved %}<div class="adm-ok">บันทึกแล้ว</div>{% endif %}
 
 {% if tab=='general' %}
-<form method="post" class="adm-form">
-  <div class="adm-form-grid">
-    <div>
-      <label class="la-field">ชื่อเว็บ</label>
-      <input class="la-input" name="site_name" value="{{ settings.site_name or '' }}">
+{% set s = settings %}
+{% set reg_on = s.get('registration_page','1') != '0' %}
+{% set google_on = s.get('google_login','1') != '0' %}
+{% set reset_on = s.get('resetpass','1') != '0' %}
+{% set ticket_on = s.get('ticket_system','1') != '0' %}
+{% set transfer_on = s.get('enable_transfer_funds','1') != '0' %}
+{% set refill_on = s.get('auto_refill','1') != '0' %}
+{% set maint_on = s.get('maintenance') == '1' %}
+{% set pp_on = (s.get('promptpay','') or '')|trim|length > 0 %}
+{% set tm_on = (s.get('truemoney','') or '')|trim|length > 0 %}
+<form method="post" class="adm-form adm-form-wide set-general" id="setGeneralForm">
+  <div class="set-status" aria-label="สถานะที่เปิดอยู่">
+    <div class="set-chip {% if not maint_on %}is-on{% else %}is-danger{% endif %}">
+      <i class="ri-{% if maint_on %}error-warning{% else %}checkbox-circle{% endif %}-fill"></i>
+      <span>{% if maint_on %}ปิดปรับปรุง{% else %}ร้านเปิดขาย{% endif %}</span>
     </div>
-    <div>
-      <label class="la-field">สกุลเงิน</label>
-      <input class="la-input" name="currency" value="{{ settings.currency or 'THB' }}">
+    <div class="set-chip {% if reg_on %}is-on{% else %}is-off{% endif %}"><i class="ri-user-add-fill"></i><span>สมัครสมาชิก</span></div>
+    <div class="set-chip {% if google_on %}is-on{% else %}is-off{% endif %}"><i class="ri-google-fill"></i><span>Google</span></div>
+    <div class="set-chip {% if ticket_on %}is-on{% else %}is-off{% endif %}"><i class="ri-customer-service-2-fill"></i><span>ตั๋วซัพพอร์ต</span></div>
+    <div class="set-chip {% if transfer_on %}is-on{% else %}is-off{% endif %}"><i class="ri-exchange-funds-fill"></i><span>โอนในร้าน</span></div>
+    <div class="set-chip {% if refill_on %}is-on{% else %}is-off{% endif %}"><i class="ri-refresh-fill"></i><span>ขอเติมยอด</span></div>
+    <div class="set-chip {% if pp_on %}is-on{% else %}is-off{% endif %}"><i class="ri-qr-code-fill"></i><span>พร้อมเพย์</span></div>
+    <div class="set-chip {% if tm_on %}is-on{% else %}is-off{% endif %}"><i class="ri-wallet-3-fill"></i><span>ทรูมันนี่</span></div>
+  </div>
+
+  <div class="set-quick">
+    <a class="set-qbtn" href="/admin/settings/payments"><i class="ri-qr-code-line"></i> ช่องทางจ่าย / QR</a>
+    <a class="set-qbtn" href="/admin/settings/modules"><i class="ri-toggle-line"></i> เปิด-ปิดเมนู</a>
+    <a class="set-qbtn" href="/admin/settings/integrations"><i class="ri-plug-line"></i> เชื่อมต่อ</a>
+    <a class="set-qbtn" href="/admin/settings/currency"><i class="ri-money-dollar-circle-line"></i> เรทเงิน</a>
+    <a class="set-qbtn" href="/addfunds" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> ดูหน้าเติมเงิน</a>
+    <a class="set-qbtn" href="/" target="_blank" rel="noopener"><i class="ri-home-smile-line"></i> หน้าเว็บลูกค้า</a>
+  </div>
+
+  <section class="set-card">
+    <div class="set-card-head">
+      <div>
+        <h2>ข้อมูลร้าน</h2>
+        <p>ชื่อ สกุลเงิน ติดต่อ และประกาศที่ลูกค้าเห็น</p>
+      </div>
+      <span class="set-badge is-on"><i class="ri-store-2-fill"></i> หลัก</span>
     </div>
-    <div>
-      <label class="la-field">อีเมลซัพพอร์ต</label>
-      <input class="la-input" name="support_email" value="{{ settings.support_email or '' }}">
+    <div class="adm-form-grid">
+      <div>
+        <label class="la-field">ชื่อเว็บ</label>
+        <input class="la-input" name="site_name" value="{{ s.site_name or '' }}" placeholder="LIKES AUTO">
+      </div>
+      <div>
+        <label class="la-field">สกุลเงิน</label>
+        <input class="la-input" name="currency" value="{{ s.currency or 'THB' }}">
+      </div>
+      <div>
+        <label class="la-field">อีเมลซัพพอร์ต</label>
+        <input class="la-input" name="support_email" value="{{ s.support_email or '' }}" placeholder="support@likes-auto.com">
+      </div>
+      <div>
+        <label class="la-field">เขตเวลา</label>
+        <input class="la-input" name="timezone" value="{{ s.timezone or 'Asia/Bangkok' }}">
+      </div>
+      <div>
+        <label class="la-field">ยอดเติมขั้นต่ำ (บาท)</label>
+        <input class="la-input" name="min_deposit" value="{{ s.min_deposit or '20' }}" inputmode="decimal">
+      </div>
+      <div>
+        <label class="la-field">ประกาศหน้าเว็บ</label>
+        <input class="la-input" name="announcement" value="{{ s.announcement or '' }}" placeholder="ข้อความสั้น ๆ บนหัวเว็บ">
+      </div>
     </div>
-    <div>
-      <label class="la-field">เขตเวลา</label>
-      <input class="la-input" name="timezone" value="{{ settings.timezone or 'Asia/Bangkok' }}">
+  </section>
+
+  <section class="set-card">
+    <div class="set-card-head">
+      <div>
+        <h2>รับเงินด่วน</h2>
+        <p>ใส่เลขตรงนี้ก็ใช้ได้ หรือไปตั้งละเอียดที่เมนูช่องทางจ่าย</p>
+      </div>
+      <span class="set-badge {% if pp_on %}is-on{% else %}is-off{% endif %}"><i class="ri-bank-card-fill"></i> {% if pp_on %}พร้อมใช้{% else %}ยังไม่ครบ{% endif %}</span>
     </div>
-    <div>
-      <label class="la-field">ยอดเติมขั้นต่ำ</label>
-      <input class="la-input" name="min_deposit" value="{{ settings.min_deposit or '20' }}">
-    </div>
+    <div class="adm-form-grid">
       <div>
         <label class="la-field">พร้อมเพย์</label>
-        <input class="la-input" name="promptpay" value="{{ settings.promptpay or '' }}" placeholder="เบอร์ 10 หลัก หรือเลขผู้เสียภาษี 13 หลัก">
+        <input class="la-input" name="promptpay" value="{{ s.promptpay or '' }}" placeholder="เบอร์ 10 หลัก หรือเลขภาษี 13 หลัก" inputmode="numeric">
       </div>
       <div>
         <label class="la-field">ทรูมันนี่วอลเล็ท</label>
-        <input class="la-input" name="truemoney" value="{{ settings.truemoney or '' }}" placeholder="เบอร์วอลเล็ท">
-      </div>
-  </div>
-  <label class="la-field">ประกาศหน้าเว็บ</label>
-  <input class="la-input" name="announcement" value="{{ settings.announcement or '' }}">
-  <details class="adm-more"{% if saved %} open{% endif %}>
-    <summary>ตั้งค่าเพิ่มเติม</summary>
-    <div class="adm-sw-box">
-      <p class="adm-sw-k">ร้าน</p>
-      <div class="adm-sw-row">
-        <label class="adm-sw"><input type="checkbox" name="maintenance" value="1" {% if settings.maintenance=='1' %}checked{% endif %}> ปิดปรับปรุง</label>
-        <label class="adm-sw"><input type="checkbox" name="registration_page" value="1" {% if settings.get('registration_page', '1') != '0' %}checked{% endif %}> สมัครสมาชิก</label>
-        <label class="adm-sw"><input type="checkbox" name="google_login" value="1" {% if settings.get('google_login', '1') != '0' %}checked{% endif %}> Google</label>
-        <label class="adm-sw"><input type="checkbox" name="resetpass" value="1" {% if settings.get('resetpass', '1') != '0' %}checked{% endif %}> รีเซ็ตรหัส</label>
-        <label class="adm-sw"><input type="checkbox" name="ticket_system" value="1" {% if settings.get('ticket_system', '1') != '0' %}checked{% endif %}> ระบบตั๋ว</label>
-        <label class="adm-sw"><input type="checkbox" name="enable_transfer_funds" value="1" {% if settings.get('enable_transfer_funds', '1') != '0' %}checked{% endif %}> โอนเงินในร้าน</label>
-        <label class="adm-sw"><input type="checkbox" name="auto_refill" value="1" {% if settings.get('auto_refill', '1') != '0' %}checked{% endif %}> ขอเติมยอด</label>
+        <input class="la-input" name="truemoney" value="{{ s.truemoney or '' }}" placeholder="เบอร์วอลเล็ท">
       </div>
     </div>
-    <label class="la-field">IP ที่เข้าแอดมินได้ (เว้นว่าง = ทุก IP, คั่นด้วยจุลภาค)</label>
-    <input class="la-input" name="admin_allow_ips" value="{{ settings.admin_allow_ips or '' }}" placeholder="เช่น 1.2.3.4, 5.6.7.8">
-    <div class="adm-form-grid" style="margin-top:12px">
+  </section>
+
+  <section class="set-card">
+    <div class="set-card-head">
       <div>
-        <label class="la-field">เรท USD</label>
-        <input class="la-input" name="usd_rate" value="{{ settings.usd_rate or '35' }}">
+        <h2>สวิตช์ร้าน</h2>
+        <p>ตัวที่เปิดอยู่ขึ้นเขียวทันที — กดอีกครั้งเพื่อปิด</p>
+      </div>
+    </div>
+    <div class="adm-sw-box set-sw">
+      <p class="adm-sw-k">สถานะร้าน</p>
+      <div class="adm-sw-row">
+        <label class="adm-sw adm-sw-warn"><input type="checkbox" name="maintenance" value="1" {% if maint_on %}checked{% endif %}><i class="ri-tools-fill"></i> ปิดปรับปรุง</label>
+      </div>
+      <p class="adm-sw-k">ลูกค้าใช้งาน</p>
+      <div class="adm-sw-row">
+        <label class="adm-sw"><input type="checkbox" name="registration_page" value="1" {% if reg_on %}checked{% endif %}><i class="ri-user-add-fill"></i> สมัครสมาชิก</label>
+        <label class="adm-sw"><input type="checkbox" name="google_login" value="1" {% if google_on %}checked{% endif %}><i class="ri-google-fill"></i> เข้าด้วย Google</label>
+        <label class="adm-sw"><input type="checkbox" name="resetpass" value="1" {% if reset_on %}checked{% endif %}><i class="ri-lock-password-fill"></i> รีเซ็ตรหัส</label>
+        <label class="adm-sw"><input type="checkbox" name="ticket_system" value="1" {% if ticket_on %}checked{% endif %}><i class="ri-customer-service-2-fill"></i> ระบบตั๋ว</label>
+        <label class="adm-sw"><input type="checkbox" name="enable_transfer_funds" value="1" {% if transfer_on %}checked{% endif %}><i class="ri-exchange-funds-fill"></i> โอนเงินในร้าน</label>
+        <label class="adm-sw"><input type="checkbox" name="auto_refill" value="1" {% if refill_on %}checked{% endif %}><i class="ri-refresh-fill"></i> ขอเติมยอด</label>
+      </div>
+    </div>
+  </section>
+
+  <section class="set-card">
+    <div class="set-card-head">
+      <div>
+        <h2>ตัวเลขธุรกิจ</h2>
+        <p>เรท กำไร ค่าธรรมเนียม และแผงลูก</p>
+      </div>
+    </div>
+    <div class="adm-form-grid">
+      <div>
+        <label class="la-field">เรท USD (1 USD = กี่บาท)</label>
+        <input class="la-input" name="usd_rate" value="{{ s.usd_rate or '35' }}" inputmode="decimal">
       </div>
       <div>
         <label class="la-field">กำไรบริการ %</label>
-        <input class="la-input" name="profit_percent" value="{{ settings.profit_percent or '100' }}">
+        <input class="la-input" name="profit_percent" value="{{ s.profit_percent or '100' }}" inputmode="decimal">
       </div>
       <div>
         <label class="la-field">ค่าธรรมเนียมโอน %</label>
-        <input class="la-input" name="fundstransfer_fees" value="{{ settings.fundstransfer_fees or '0' }}">
+        <input class="la-input" name="fundstransfer_fees" value="{{ s.fundstransfer_fees or '0' }}" inputmode="decimal">
       </div>
       <div>
         <label class="la-field">ตั๋วสูงสุดต่อคน</label>
-        <input class="la-input" name="max_ticket" value="{{ settings.max_ticket or '5' }}">
+        <input class="la-input" name="max_ticket" value="{{ s.max_ticket or '5' }}" inputmode="numeric">
       </div>
       <div>
         <label class="la-field">% แนะนำเพื่อน</label>
-        <input class="la-input" name="affiliate_percent" value="{{ settings.affiliate_percent or '5' }}">
+        <input class="la-input" name="affiliate_percent" value="{{ s.affiliate_percent or '5' }}" inputmode="decimal">
       </div>
       <div>
-        <label class="la-field">ราคาแผงลูก</label>
-        <input class="la-input" name="child_panel_price" value="{{ settings.child_panel_price or '500' }}">
+        <label class="la-field">ราคาแผงลูก (บาท)</label>
+        <input class="la-input" name="child_panel_price" value="{{ s.child_panel_price or '500' }}" inputmode="decimal">
       </div>
       <div>
         <label class="la-field">Nameserver 1</label>
-        <input class="la-input" name="child_ns1" value="{{ settings.child_ns1 or 'ns1.likes-auto.com' }}" placeholder="ns1.likes-auto.com">
+        <input class="la-input" name="child_ns1" value="{{ s.child_ns1 or 'ns1.likes-auto.com' }}" placeholder="ns1.likes-auto.com">
       </div>
       <div>
         <label class="la-field">Nameserver 2</label>
-        <input class="la-input" name="child_ns2" value="{{ settings.child_ns2 or 'ns2.likes-auto.com' }}" placeholder="ns2.likes-auto.com">
+        <input class="la-input" name="child_ns2" value="{{ s.child_ns2 or 'ns2.likes-auto.com' }}" placeholder="ns2.likes-auto.com">
       </div>
       <div>
         <label class="la-field">แจ้งเมื่อยอดผู้ให้บริการต่ำกว่า</label>
-        <input class="la-input" name="alert_balance" value="{{ settings.alert_balance or '10' }}">
+        <input class="la-input" name="alert_balance" value="{{ s.alert_balance or '10' }}" inputmode="decimal">
       </div>
     </div>
+  </section>
+
+  <section class="set-card">
+    <div class="set-card-head">
+      <div>
+        <h2>Google Login</h2>
+        <p>ใส่ Client ID/Secret แล้วเปิดสวิตช์ Google ด้านบน</p>
+      </div>
+      <span class="set-badge {% if google_on and (s.google_client_id or '') %}is-on{% else %}is-off{% endif %}"><i class="ri-google-fill"></i> {% if google_on and (s.google_client_id or '') %}พร้อม{% else %}ยังไม่ครบ{% endif %}</span>
+    </div>
     <label class="la-field">Google Client ID</label>
-    <input class="la-input" name="google_client_id" value="{{ settings.google_client_id or '' }}" placeholder="xxxx.apps.googleusercontent.com">
+    <input class="la-input" name="google_client_id" value="{{ s.google_client_id or '' }}" placeholder="xxxx.apps.googleusercontent.com" autocomplete="off">
     <label class="la-field">Google Client Secret</label>
-    <input class="la-input" type="password" name="google_client_secret" placeholder="เว้นว่างถ้าไม่เปลี่ยน">
-    <p class="adm-sub">Redirect URI ที่ต้องใส่ใน Google: <b>https://likes-auto.com/google-login</b></p>
+    <input class="la-input" type="password" name="google_client_secret" placeholder="{{ 'ตั้งค่าแล้ว — เว้นว่างถ้าไม่เปลี่ยน' if s.google_client_secret else 'วาง Secret จาก Google Cloud' }}" autocomplete="new-password">
+    <p class="adm-help">Redirect URI ใน Google Console: <b>https://likes-auto.com/google-login</b></p>
+  </section>
+
+  <section class="set-card">
+    <div class="set-card-head">
+      <div>
+        <h2>ความปลอดภัย &amp; โค้ดพิเศษ</h2>
+        <p>จำกัด IP แอดมิน และแทรก HTML ส่วนหัว/ท้าย</p>
+      </div>
+    </div>
+    <label class="la-field">IP ที่เข้าแอดมินได้ (เว้นว่าง = ทุก IP, คั่นด้วยจุลภาค)</label>
+    <input class="la-input" name="admin_allow_ips" value="{{ s.admin_allow_ips or '' }}" placeholder="เช่น 1.2.3.4, 5.6.7.8">
     <label class="la-field">Custom header</label>
-    <textarea class="la-input" name="custom_header" style="min-height:80px;padding:12px">{{ settings.custom_header or '' }}</textarea>
+    <textarea class="la-input" name="custom_header" rows="3">{{ s.custom_header or '' }}</textarea>
     <label class="la-field">Custom footer</label>
-    <textarea class="la-input" name="custom_footer" style="min-height:80px;padding:12px">{{ settings.custom_footer or '' }}</textarea>
-  </details>
-  <button class="la-btn" type="submit">บันทึก</button>
+    <textarea class="la-input" name="custom_footer" rows="3">{{ s.custom_footer or '' }}</textarea>
+  </section>
+
+  <div class="set-actions">
+    <button class="la-btn set-save" type="submit"><i class="ri-save-3-fill"></i> บันทึกทั้งหมด</button>
+    <a class="la-btn la-btn-ghost" href="/admin/settings/payments"><i class="ri-qr-code-line"></i> ไปช่องทางจ่าย</a>
+    <a class="la-btn la-btn-ghost" href="/admin/settings/modules"><i class="ri-toggle-line"></i> เปิด-ปิดเมนู</a>
+    <button class="la-btn la-btn-ghost" type="reset"><i class="ri-arrow-go-back-line"></i> คืนค่าในฟอร์ม</button>
+  </div>
 </form>
 {% endif %}
 
@@ -174,10 +273,10 @@
       <input class="la-input" name="truemoney" value="{{ settings.truemoney or '' }}" placeholder="เบอร์วอลเล็ท (ไม่ใช่ QR EMV)">
     </div>
   </div>
-  <div class="adm-sw-row" style="margin: 4px 0 14px">
-    <label class="adm-sw"><input type="checkbox" name="pay_unique_satang" value="1" {% if settings.get('pay_unique_satang','1') != '0' %}checked{% endif %}> สุ่มสตางค์บน QR ไม่ให้ยอดซ้ำ</label>
-    <label class="adm-sw"><input type="checkbox" name="auto_approve_slip" value="1" {% if settings.get('auto_approve_slip','1') != '0' %}checked{% endif %}> อนุมัติอัตโนมัติเมื่อแนบสลิปผ่าน</label>
-    <label class="adm-sw"><input type="checkbox" name="oiio_slip_on" value="1" {% if settings.get('oiio_slip_on','1') != '0' %}checked{% endif %}> ใช้ OIIO ตรวจสลิปสำรอง</label>
+  <div class="adm-sw-row set-sw" style="margin: 4px 0 14px">
+    <label class="adm-sw"><input type="checkbox" name="pay_unique_satang" value="1" {% if settings.get('pay_unique_satang','1') != '0' %}checked{% endif %}><i class="ri-coin-fill"></i> สุ่มสตางค์บน QR ไม่ให้ยอดซ้ำ</label>
+    <label class="adm-sw"><input type="checkbox" name="auto_approve_slip" value="1" {% if settings.get('auto_approve_slip','1') != '0' %}checked{% endif %}><i class="ri-shield-check-fill"></i> อนุมัติอัตโนมัติเมื่อแนบสลิปผ่าน</label>
+    <label class="adm-sw"><input type="checkbox" name="oiio_slip_on" value="1" {% if settings.get('oiio_slip_on','1') != '0' %}checked{% endif %}><i class="ri-scan-2-fill"></i> ใช้ OIIO ตรวจสลิปสำรอง</label>
   </div>
   <label class="la-field">EasySlip API key (ตรวจสลิปอัตโนมัติ)</label>
   <input class="la-input" type="password" name="easyslip_key" placeholder="{{ 'ตั้งค่าแล้ว — เว้นว่างถ้าไม่เปลี่ยน' if settings.easyslip_key else 'วางคีย์จาก developer.easyslip.com' }}" autocomplete="new-password">
@@ -299,32 +398,32 @@
 {% if tab=='modules' %}
 <form method="post" class="adm-form adm-form-wide">
   <p class="adm-help">ติ๊กเพื่อเปิดเมนูให้ลูกค้าเห็น ถ้าปิดแล้วเข้าหน้านั้นไม่ได้</p>
-  <div class="adm-sw-box">
+    <div class="adm-sw-box set-sw">
     <p class="adm-sw-k">คำสั่งซื้อ</p>
     <div class="adm-sw-row">
-        <label class="adm-sw"><input type="checkbox" name="mod_neworder" value="1" {% if settings.get('mod_neworder', '1') != '0' %}checked{% endif %}> สั่งซื้อใหม่</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_dripfeed" value="1" {% if settings.get('mod_dripfeed', '1') != '0' %}checked{% endif %}> ส่งทีละรอบ</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_services" value="1" {% if settings.get('mod_services', '1') != '0' %}checked{% endif %}> บริการ</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_orders" value="1" {% if settings.get('mod_orders', '1') != '0' %}checked{% endif %}> ประวัติ</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_subscription" value="1" {% if settings.get('mod_subscription', '1') != '0' %}checked{% endif %}> เติมอัตโนมัติ</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_neworder" value="1" {% if settings.get('mod_neworder', '1') != '0' %}checked{% endif %}><i class="ri-shopping-bag-3-fill"></i> สั่งซื้อใหม่</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_dripfeed" value="1" {% if settings.get('mod_dripfeed', '1') != '0' %}checked{% endif %}><i class="ri-timer-flash-fill"></i> ส่งทีละรอบ</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_services" value="1" {% if settings.get('mod_services', '1') != '0' %}checked{% endif %}><i class="ri-list-settings-fill"></i> บริการ</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_orders" value="1" {% if settings.get('mod_orders', '1') != '0' %}checked{% endif %}><i class="ri-file-list-3-fill"></i> ประวัติ</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_subscription" value="1" {% if settings.get('mod_subscription', '1') != '0' %}checked{% endif %}><i class="ri-loop-right-fill"></i> เติมอัตโนมัติ</label>
     </div>
     <p class="adm-sw-k">เงิน</p>
     <div class="adm-sw-row">
-        <label class="adm-sw"><input type="checkbox" name="mod_addfunds" value="1" {% if settings.get('mod_addfunds', '1') != '0' %}checked{% endif %}> เติมเงิน</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_affiliate" value="1" {% if settings.get('mod_affiliate', '1') != '0' %}checked{% endif %}> เชิญเพื่อน</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_child" value="1" {% if settings.get('mod_child', '1') != '0' %}checked{% endif %}> แผงลูก</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_transfer" value="1" {% if settings.get('mod_transfer', '1') != '0' %}checked{% endif %}> โอนเงิน</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_addfunds" value="1" {% if settings.get('mod_addfunds', '1') != '0' %}checked{% endif %}><i class="ri-wallet-3-fill"></i> เติมเงิน</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_affiliate" value="1" {% if settings.get('mod_affiliate', '1') != '0' %}checked{% endif %}><i class="ri-user-shared-2-fill"></i> เชิญเพื่อน</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_child" value="1" {% if settings.get('mod_child', '1') != '0' %}checked{% endif %}><i class="ri-layout-grid-fill"></i> แผงลูก</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_transfer" value="1" {% if settings.get('mod_transfer', '1') != '0' %}checked{% endif %}><i class="ri-exchange-funds-fill"></i> โอนเงิน</label>
     </div>
     <p class="adm-sw-k">ช่วยเหลือ</p>
     <div class="adm-sw-row">
-        <label class="adm-sw"><input type="checkbox" name="mod_tickets" value="1" {% if settings.get('mod_tickets', '1') != '0' %}checked{% endif %}> ซัพพอร์ต</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_faq" value="1" {% if settings.get('mod_faq', '1') != '0' %}checked{% endif %}> FAQ</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_tickets" value="1" {% if settings.get('mod_tickets', '1') != '0' %}checked{% endif %}><i class="ri-customer-service-2-fill"></i> ซัพพอร์ต</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_faq" value="1" {% if settings.get('mod_faq', '1') != '0' %}checked{% endif %}><i class="ri-question-answer-fill"></i> FAQ</label>
     </div>
     <p class="adm-sw-k">อื่นๆ</p>
     <div class="adm-sw-row">
-        <label class="adm-sw"><input type="checkbox" name="mod_account" value="1" {% if settings.get('mod_account', '1') != '0' %}checked{% endif %}> บัญชี</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_api" value="1" {% if settings.get('mod_api', '1') != '0' %}checked{% endif %}> API</label>
-        <label class="adm-sw"><input type="checkbox" name="mod_logout" value="1" {% if settings.get('mod_logout', '1') != '0' %}checked{% endif %}> ออก</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_account" value="1" {% if settings.get('mod_account', '1') != '0' %}checked{% endif %}><i class="ri-user-settings-fill"></i> บัญชี</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_api" value="1" {% if settings.get('mod_api', '1') != '0' %}checked{% endif %}><i class="ri-code-box-fill"></i> API</label>
+        <label class="adm-sw"><input type="checkbox" name="mod_logout" value="1" {% if settings.get('mod_logout', '1') != '0' %}checked{% endif %}><i class="ri-logout-box-r-fill"></i> ออก</label>
     </div>
   </div>
   <button class="la-btn" type="submit">บันทึก</button>

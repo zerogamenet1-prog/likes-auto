@@ -95,6 +95,13 @@ app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
 @app.on_event("startup")
 def startup():
+    # Pull Visperhost restore BEFORE init if local disk was wiped (Render Free).
+    try:
+        from db_backup import ensure_restored_db
+
+        ensure_restored_db()
+    except Exception:
+        pass
     init_db()
     try:
         from blog_content import seed_blog
@@ -109,12 +116,20 @@ def startup():
         pay_notify_token()
     except Exception:
         pass
-    # Sync current live DB out to Visperhost shortly after boot (covers warm starts too).
+    # Second chance after init in case start.sh restore raced CDN.
     try:
-        from db_backup import schedule_backup
+        from db_backup import ensure_restored_db, schedule_backup
+
+        if ensure_restored_db():
+            init_db()
         schedule_backup("startup")
     except Exception:
-        pass
+        try:
+            from db_backup import schedule_backup
+
+            schedule_backup("startup")
+        except Exception:
+            pass
 
 
 @app.on_event("shutdown")

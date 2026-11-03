@@ -5,8 +5,9 @@
  *
  * Auth: header X-LA-DB-TOKEN must match token in la-config.php
  *
- * Safety: rejects thinner uploads (fewer clients / smaller than current)
- * unless X-LA-DB-FORCE=1 or reason is admin/shutdown/force.
+ * Hard rule: NEVER overwrite with fewer clients / fewer paid payments.
+ * Intentional shrink only with X-LA-DB-ALLOW_THINNER=1 + reason admin|force.
+ * Shutdown / FORCE alone cannot wipe customers.
  */
 declare(strict_types=1);
 
@@ -35,31 +36,51 @@ if (strncmp($raw, 'SQLite format 3', 15) !== 0) {
 }
 
 /**
- * Count clients without creating -wal/-shm beside the restore file.
- *
- * @return int client count, or -1 if unreadable
+ * @return array{clients:int,paid:int,balance:float}
  */
-function la_sqlite_client_count(string $path): int
+function la_sqlite_fingerprint(string $path): array
 {
+    $out = ['clients' => -1, 'paid' => -1, 'balance' => -1.0];
     if (!is_file($path)) {
-        return -1;
+        return $out;
     }
-    // Copy to a private temp so SQLite never touches the published restore path.
     $probe = sys_get_temp_dir() . '/la-db-probe-' . getmypid() . '-' . bin2hex(random_bytes(4)) . '.db';
     if (!@copy($path, $probe)) {
-        return -1;
+        return $out;
     }
     try {
+        $run = static function ($db) use (&$out): void {
+            if (is_object($db) && $db instanceof SQLite3) {
+                $c = $db->querySingle('SELECT COUNT(*) FROM clients');
+                $p = $db->querySingle("SELECT COUNT(*) FROM payments WHERE status='paid'");
+                $b = $db->querySingle('SELECT COALESCE(SUM(balance),0) FROM clients');
+                if (is_numeric($c)) {
+                    $out['clients'] = (int) $c;
+                }
+                if (is_numeric($p)) {
+                    $out['paid'] = (int) $p;
+                }
+                if (is_numeric($b)) {
+                    $out['balance'] = (float) $b;
+                }
+                return;
+            }
+            if (is_object($db) && $db instanceof PDO) {
+                $out['clients'] = (int) $db->query('SELECT COUNT(*) FROM clients')->fetchColumn();
+                $out['paid'] = (int) $db->query("SELECT COUNT(*) FROM payments WHERE status='paid'")->fetchColumn();
+                $out['balance'] = (float) $db->query('SELECT COALESCE(SUM(balance),0) FROM clients')->fetchColumn();
+            }
+        };
         if (class_exists('SQLite3')) {
             try {
                 $db = new SQLite3($probe, SQLITE3_OPEN_READONLY);
-                $row = $db->querySingle('SELECT COUNT(*) FROM clients');
+                $run($db);
                 $db->close();
-                if (is_numeric($row)) {
-                    return (int) $row;
+                if ($out['clients'] >= 0) {
+                    return $out;
                 }
             } catch (Throwable $e) {
-                // fall through to PDO
+                // fall through
             }
         }
         if (class_exists('PDO')) {
@@ -67,14 +88,13 @@ function la_sqlite_client_count(string $path): int
                 $pdo = new PDO('sqlite:' . $probe, null, null, [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 ]);
-                $n = (int) $pdo->query('SELECT COUNT(*) FROM clients')->fetchColumn();
+                $run($pdo);
                 $pdo = null;
-                return $n;
             } catch (Throwable $e) {
-                return -1;
+                // keep defaults
             }
         }
-        return -1;
+        return $out;
     } finally {
         @unlink($probe);
         @unlink($probe . '-wal');
@@ -93,24 +113,31 @@ if (file_put_contents($tmp, $raw) === false) {
 }
 
 $reason = strtolower(trim((string) ($_SERVER['HTTP_X_LA_DB_REASON'] ?? '')));
-// Intentional wipe only via explicit admin allow-thinner header (never from Render shutdown).
 $allowThinner = ((string) ($_SERVER['HTTP_X_LA_DB_ALLOW_THINNER'] ?? '') === '1')
     && in_array($reason, ['admin', 'force'], true);
 
-$incoming = la_sqlite_client_count($tmp);
-$existing = is_file($path) ? la_sqlite_client_count($path) : -1;
+$incoming = la_sqlite_fingerprint($tmp);
+$existing = is_file($path) ? la_sqlite_fingerprint($path) : ['clients' => -1, 'paid' => -1, 'balance' => -1.0];
 $existingBytes = is_file($path) ? (int) filesize($path) : 0;
 $incomingBytes = strlen($raw);
 
 $reject = null;
-if ($incoming < 0) {
+if ($incoming['clients'] < 0) {
     $reject = 'incoming_unreadable';
-} elseif (!$allowThinner && $existing >= 0 && $incoming < $existing) {
-    // Absolute rule: never drop customers, even if caller sends FORCE/shutdown.
+} elseif (!$allowThinner && $existing['clients'] >= 0 && $incoming['clients'] < $existing['clients']) {
     $reject = 'thinner_than_existing';
-} elseif (!$allowThinner && $existing < 0 && $existingBytes > 0 && $incomingBytes + 4096 < $existingBytes) {
+} elseif (
+    !$allowThinner
+    && $existing['clients'] >= 0
+    && $incoming['clients'] === $existing['clients']
+    && $existing['paid'] >= 0
+    && $incoming['paid'] >= 0
+    && $incoming['paid'] < $existing['paid']
+) {
+    $reject = 'fewer_paid_payments';
+} elseif (!$allowThinner && $existing['clients'] < 0 && $existingBytes > 0 && $incomingBytes + 4096 < $existingBytes) {
     $reject = 'smaller_than_existing_unreadable';
-} elseif (!$allowThinner && $existingBytes > 0 && $incoming === 0 && $existingBytes >= 100000) {
+} elseif (!$allowThinner && $existingBytes > 0 && $incoming['clients'] === 0 && $existingBytes >= 100000) {
     $reject = 'zero_clients_overwrite';
 }
 
@@ -121,8 +148,8 @@ if ($reject !== null) {
     echo json_encode([
         'ok' => false,
         'error' => $reject,
-        'incoming_clients' => $incoming,
-        'existing_clients' => $existing,
+        'incoming' => $incoming,
+        'existing' => $existing,
         'incoming_bytes' => $incomingBytes,
         'existing_bytes' => $existingBytes,
         'reason' => $reason,
@@ -153,7 +180,8 @@ $hist = $histDir . '/app-' . $stamp . '.db';
 @chmod($hist, 0644);
 $files = glob($histDir . '/app-*.db') ?: [];
 rsort($files);
-foreach (array_slice($files, 12) as $old) {
+// Keep more history so a bad push can be recovered manually.
+foreach (array_slice($files, 30) as $old) {
     @unlink($old);
 }
 
@@ -167,5 +195,6 @@ echo json_encode([
     'alias' => '.la-db-restore-latest.db',
     'history' => basename($hist),
     'reason' => $reason,
-    'clients' => $incoming,
+    'clients' => $incoming['clients'],
+    'paid' => $incoming['paid'],
 ], JSON_UNESCAPED_UNICODE);

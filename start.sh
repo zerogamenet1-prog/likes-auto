@@ -20,8 +20,12 @@ fi
 try_restore() {
   url="$1"
   attempt="$2"
-  echo "restore attempt $attempt from $url"
-  if curl -fsSL --retry 2 --retry-delay 2 -o data/app.db.tmp "$url"; then
+  # Bust CDN/proxy caches — stale restore files wiped live customers before.
+  bust="${url}?t=$(date +%s)-${attempt}"
+  echo "restore attempt $attempt from $bust"
+  if curl -fsSL --retry 2 --retry-delay 2 \
+      -H "Cache-Control: no-cache" -H "Pragma: no-cache" \
+      -o data/app.db.tmp "$bust"; then
     head=$(dd if=data/app.db.tmp bs=15 count=1 2>/dev/null || true)
     case "$head" in
       "SQLite format 3"*)

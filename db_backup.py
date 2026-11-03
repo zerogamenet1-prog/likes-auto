@@ -77,6 +77,52 @@ def snapshot_db(dest: Path | None = None) -> Path | None:
             return None
 
 
+def _client_count(db: Path) -> int:
+    try:
+        con = sqlite3.connect(str(db))
+        try:
+            row = con.execute("SELECT COUNT(*) FROM clients").fetchone()
+            return int(row[0] or 0) if row else 0
+        finally:
+            con.close()
+    except Exception:
+        return -1
+
+
+def _remote_restore_client_count() -> int:
+    """Peek hosted restore so a seeded empty boot cannot overwrite a richer backup."""
+    url = (
+        os.environ.get("DB_RESTORE_URL")
+        or "https://likes-auto.com/.la-db-restore-d1qyg5az73cs4unx8jl9trbw.db"
+    ).strip()
+    bust = "%s?peek=%s" % (url, int(time.time()))
+    tmp = None
+    try:
+        req = urllib.request.Request(
+            bust,
+            headers={
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+                "User-Agent": "likes-auto-db-backup/2-peek",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=45) as r:
+            raw = r.read()
+        if not raw.startswith(b"SQLite format 3") or len(raw) < 1024:
+            return -1
+        tmp = Path(DB_PATH).parent / ("app-peek-%s.db" % int(time.time()))
+        tmp.write_bytes(raw)
+        return _client_count(tmp)
+    except Exception:
+        return -1
+    finally:
+        if tmp is not None and tmp.is_file():
+            try:
+                tmp.unlink()
+            except Exception:
+                pass
+
+
 def push_db_backup(path: Path | None = None, reason: str = "") -> tuple[bool, str]:
     global _last_ok_at, _last_msg
     snap = None
@@ -88,6 +134,15 @@ def push_db_backup(path: Path | None = None, reason: str = "") -> tuple[bool, st
             db = Path(path)
         if not db or not db.is_file() or db.stat().st_size < 1024:
             return False, "missing_db"
+        reason = reason or "manual"
+        # Guard: never let a thin freshly-seeded DB wipe a richer Visperhost restore.
+        # Manual/admin/shutdown flushes are always allowed.
+        if reason in {"startup", "cron", "debounced", "change"}:
+            local_n = _client_count(db)
+            remote_n = _remote_restore_client_count()
+            if local_n >= 0 and remote_n >= 0 and local_n < remote_n:
+                _last_msg = "skip_thinner_than_remote local=%s remote=%s" % (local_n, remote_n)
+                return False, _last_msg
         url = (os.environ.get("DB_BACKUP_PUT_URL") or DEFAULT_PUT).strip()
         token = backup_token()
         raw = db.read_bytes()
@@ -100,7 +155,7 @@ def push_db_backup(path: Path | None = None, reason: str = "") -> tuple[bool, st
             headers={
                 "Content-Type": "application/octet-stream",
                 "X-LA-DB-TOKEN": token,
-                "X-LA-DB-REASON": (reason or "manual")[:80],
+                "X-LA-DB-REASON": reason[:80],
                 "User-Agent": "likes-auto-db-backup/2",
             },
         )

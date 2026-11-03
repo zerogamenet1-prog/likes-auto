@@ -10,3 +10,5 @@ pyzbar>=0.1.9
 opencv-python-headless>=4.8.0
 numpy>=1.26.0
 pytesseract>=0.3.10
+rapidocr>=2.0.0
+onnxruntime>=1.17.0

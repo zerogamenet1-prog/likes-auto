@@ -93,9 +93,9 @@ if (file_put_contents($tmp, $raw) === false) {
 }
 
 $reason = strtolower(trim((string) ($_SERVER['HTTP_X_LA_DB_REASON'] ?? '')));
-// Never treat "shutdown" as force — a dying Render Free disk can be empty.
-$force = ((string) ($_SERVER['HTTP_X_LA_DB_FORCE'] ?? '') === '1')
-    || in_array($reason, ['admin', 'force', 'flush'], true);
+// Intentional wipe only via explicit admin allow-thinner header (never from Render shutdown).
+$allowThinner = ((string) ($_SERVER['HTTP_X_LA_DB_ALLOW_THINNER'] ?? '') === '1')
+    && in_array($reason, ['admin', 'force'], true);
 
 $incoming = la_sqlite_client_count($tmp);
 $existing = is_file($path) ? la_sqlite_client_count($path) : -1;
@@ -103,18 +103,15 @@ $existingBytes = is_file($path) ? (int) filesize($path) : 0;
 $incomingBytes = strlen($raw);
 
 $reject = null;
-if (!$force) {
-    if ($incoming < 0) {
-        $reject = 'incoming_unreadable';
-    } elseif ($existing >= 0 && $incoming < $existing) {
-        $reject = 'thinner_than_existing';
-    } elseif ($existing < 0 && $existingBytes > 0 && $incomingBytes + 4096 < $existingBytes) {
-        // Existing file unreadable but clearly larger — do not shrink it.
-        $reject = 'smaller_than_existing_unreadable';
-    } elseif ($existingBytes > 0 && $incoming === 0 && $existingBytes >= 100000) {
-        // Never replace a real DB with a zero-client seed.
-        $reject = 'zero_clients_overwrite';
-    }
+if ($incoming < 0) {
+    $reject = 'incoming_unreadable';
+} elseif (!$allowThinner && $existing >= 0 && $incoming < $existing) {
+    // Absolute rule: never drop customers, even if caller sends FORCE/shutdown.
+    $reject = 'thinner_than_existing';
+} elseif (!$allowThinner && $existing < 0 && $existingBytes > 0 && $incomingBytes + 4096 < $existingBytes) {
+    $reject = 'smaller_than_existing_unreadable';
+} elseif (!$allowThinner && $existingBytes > 0 && $incoming === 0 && $existingBytes >= 100000) {
+    $reject = 'zero_clients_overwrite';
 }
 
 if ($reject !== null) {

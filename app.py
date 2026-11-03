@@ -129,7 +129,7 @@ async def proxy_headers_mw(request: Request, call_next):
 @app.middleware("http")
 async def maintenance_mw(request: Request, call_next):
     path = request.url.path
-    if path.startswith("/admin") or path.startswith("/css") or path.startswith("/assets") or path.startswith("/static") or path in ("/health", "/internal/cron", "/internal/pay/in", "/internal/pay/tg"):
+    if path.startswith("/admin") or path.startswith("/css") or path.startswith("/assets") or path.startswith("/static") or path in ("/health", "/internal/cron", "/internal/pay/in", "/internal/pay/tg", "/internal/db/dump"):
         return await call_next(request)
     try:
         s = get_settings()
@@ -769,6 +769,20 @@ async def sitemap_blog():
 @app.get("/health")
 async def health():
     return {"ok": True, "engine": "python"}
+
+
+@app.get("/internal/db/dump")
+async def internal_db_dump(request: Request):
+    """Protected SQLite download for emergency restore / Visperhost sync."""
+    from db import DB_PATH
+    from db_backup import backup_token
+
+    got = (request.headers.get("x-la-db-token") or "").strip()
+    if not got or not hmac.compare_digest(got, backup_token()):
+        return JSONResponse({"ok": False, "error": "unauthorized"}, status_code=401)
+    if not DB_PATH.is_file():
+        return JSONResponse({"ok": False, "error": "missing"}, status_code=404)
+    return FileResponse(str(DB_PATH), media_type="application/octet-stream", filename="app.db")
 
 
 @app.get("/manifest.webmanifest")

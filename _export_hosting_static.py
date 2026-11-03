@@ -51,7 +51,7 @@ RewriteRule ^\\.la-db-restore-.*\\.db$ - [L]
 # Static snapshots remain as CDN/cache fallback only for asset files.
 RewriteCond %{REQUEST_URI} !^/(css|assets|static|\\.well-known)/ [NC]
 RewriteCond %{REQUEST_URI} !\\.(css|js|mjs|map|jpg|jpeg|png|gif|webp|svg|ico|woff|woff2|ttf|eot|mp4|webm|pdf|db)$ [NC]
-RewriteCond %{REQUEST_URI} !^/(la\\.php|ping\\.php|la-config\\.php)$ [NC]
+RewriteCond %{REQUEST_URI} !^/(la\\.php|ping\\.php|la-config\\.php|db-put\\.php)$ [NC]
 RewriteCond %{REQUEST_URI} !^/\\.la-db-restore- [NC]
 RewriteRule ^ la.php [L,QSA]
 

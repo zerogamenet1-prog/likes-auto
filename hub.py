@@ -72,6 +72,11 @@ async def general_post(request: Request):
         values["google_client_secret"] = secret
     save_settings(values)
     add_log("บันทึกตั้งค่าทั่วไป", request.client.host if request.client else "-")
+    try:
+        from db_backup import push_db_backup
+        push_db_backup()
+    except Exception:
+        pass
     return RedirectResponse("/admin/settings/general?saved=1", status_code=303)
 
 

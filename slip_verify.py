@@ -213,9 +213,15 @@ def _digits(value):
 
 def our_account_ids(pay, settings=None):
     settings = settings or get_settings()
-    method = method_row(pay.get("method_id"), pay.get("method"))
+    method = method_row(pay.get("method_id"), pay.get("method")) or {}
     found = []
-    for src in (pay_target(method or {}, settings), settings.get("promptpay"), (method or {}).get("pay_to")):
+    sources = (
+        pay_target(method, settings),
+        settings.get("promptpay"),
+        method.get("pay_to"),
+        (pay or {}).get("pay_to"),
+    )
+    for src in sources:
         raw = _digits(src)
         if len(raw) < 9:
             continue
@@ -760,13 +766,51 @@ def _configure_tesseract():
     return _TESSERACT_READY
 
 
+def _improve_thai_text(text):
+    """Port of smart-slip-verifier OCRProcessor.fixThaiSpacing (keyword glue)."""
+    if not text:
+        return ""
+    keyword_patterns = (
+        ("จำนวนเงิน", r"จ\s*ํ?\s*า\s*น\s*ว\s*น\s*เ\s*ง\s*ิ\s*น"),
+        ("จำนวน", r"จ\s*ํ?\s*า\s*น\s*ว\s*น"),
+        ("โอนเงิน", r"โ\s*อ\s*น\s*เ\s*ง\s*ิ\s*น"),
+        ("สำเร็จ", r"ส\s*ํ?\s*า\s*เ\s*ร\s*็\s*จ"),
+        ("รหัสอ้างอิง", r"ร\s*ห\s*ั\s*ส\s*อ\s*้\s*า\s*ง\s*อ\s*ิ\s*ง"),
+        ("บาท", r"บ\s*า\s*ท"),
+        ("ไปยัง", r"ไ\s*ป\s*ย\s*ั\s*ง"),
+        ("พร้อมเพย์", r"พ\s*ร\s*้\s*อ\s*ม\s*เ\s*พ\s*ย\s*์?"),
+        ("จาก", r"จ\s*า\s*ก"),
+    )
+    lines = []
+    for line in str(text).splitlines():
+        if not line.strip():
+            lines.append("")
+            continue
+        clean = re.sub(r"\s+", "", line)
+        fixed = clean
+        for word, pat in keyword_patterns:
+            fixed = re.sub(pat.replace(r"\s*", ""), word, fixed, flags=re.I)
+        fixed = re.sub(r"[|#%@©®™&+=\[\]{}]", "", fixed)
+        fixed = re.sub(r"(\d)([ก-ฮ])", r"\1 \2", fixed)
+        fixed = re.sub(r"([ก-ฮ])(\d)", r"\1 \2", fixed)
+        lines.append(re.sub(r"\s+", " ", fixed).strip())
+    return "\n".join(lines).strip()
+
+
+def _ocr_run(im, lang, cfg):
+    try:
+        import pytesseract
+        return (pytesseract.image_to_string(im, lang=lang, config=cfg) or "").strip()
+    except Exception:
+        return ""
+
+
 def ocr_slip_text(image_bytes):
-    """OCR Thai bank slips for amount / masked PromptPay tails."""
+    """Fast OCR for Thai bank slips — digit-first, then smart-slip Thai patterns."""
     raw = image_bytes or b""
     if len(raw) < 64:
         return ""
     try:
-        import pytesseract
         from PIL import Image, ImageOps, ImageEnhance, ImageFilter
     except Exception:
         return ""
@@ -782,52 +826,84 @@ def ocr_slip_text(image_bytes):
         pass
     if im.mode != "RGB":
         im = im.convert("RGB")
-    if max(im.size) > 1800:
+    # Upscale small phone screenshots so digits read cleanly.
+    w0, h0 = im.size
+    if max(w0, h0) < 900:
+        scale = 2 if max(w0, h0) < 600 else 1.5
+        im = im.resize((int(w0 * scale), int(h0 * scale)), Image.Resampling.LANCZOS)
+    if max(im.size) > 2000:
         im = im.copy()
-        im.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
+        im.thumbnail((1800, 1800), Image.Resampling.LANCZOS)
     gray = ImageOps.autocontrast(im.convert("L"))
-    sharp = ImageEnhance.Sharpness(gray).enhance(1.6)
+    sharp = ImageEnhance.Sharpness(gray).enhance(1.8)
+    contrast = ImageEnhance.Contrast(sharp).enhance(1.35)
     w, h = gray.size
-    # Amount + fee + datetime sit in the lower half on Krungthai / most e-slips.
+    # Amount / masked PromptPay sit in the lower half on KTB and most e-slips.
+    lower = contrast.crop((0, int(h * 0.45), w, h))
+    mid = contrast.crop((int(w * 0.05), int(h * 0.38), int(w * 0.95), int(h * 0.92)))
     crops = [
-        sharp.crop((0, int(h * 0.48), w, h)),
-        sharp.crop((0, int(h * 0.58), w, int(h * 0.92))),
-        sharp.crop((int(w * 0.08), int(h * 0.42), int(w * 0.95), int(h * 0.88))),
-        ImageOps.invert(sharp.crop((0, int(h * 0.55), w, h))),
-        gray,
+        lower.filter(ImageFilter.SHARPEN),
+        mid.filter(ImageFilter.SHARPEN),
+        ImageOps.invert(lower),
+        ImageOps.autocontrast(lower.point(lambda p: 255 if p > 140 else 0)),
+        contrast,
     ]
-    langs = ("eng", "tha+eng", "tha")
-    configs = (
-        "--psm 6",
-        "--psm 4",
-        "--psm 11",
-        "--psm 6 -c tessedit_char_whitelist=0123456789.,Xx* ",
-    )
     chunks = []
-    for crop in crops:
-        boost = crop.filter(ImageFilter.SHARPEN)
-        for lang in langs:
-            for cfg in configs:
-                try:
-                    text = pytesseract.image_to_string(boost, lang=lang, config=cfg) or ""
-                except Exception:
-                    # Missing language pack — try next.
-                    continue
-                text = text.strip()
-                if text and text not in chunks:
-                    chunks.append(text)
-                # Enough signal: amount-like + account tail.
-                joined = "\n".join(chunks)
-                if _ocr_amount_candidates(joined) and re.search(r"(?:X{2,}|\*{2,}|\d{4})", joined, re.I):
-                    return joined
+
+    def _push(text):
+        text = (text or "").strip()
+        if not text:
+            return False
+        improved = _improve_thai_text(text)
+        for part in (text, improved):
+            if part and part not in chunks:
+                chunks.append(part)
+        joined = "\n".join(chunks)
+        return bool(_ocr_amount_candidates(joined)) and bool(
+            re.search(r"(?:X{2,}|\*{2,}|\d{3,})", joined, re.I)
+        )
+
+    # 1) Fast digit pass (eng + whitelist) — enough for 1.04 + XXX 6251.
+    digit_cfg = "--psm 6 -c tessedit_char_whitelist=0123456789.,Xx* "
+    for crop in crops[:3]:
+        if _push(_ocr_run(crop, "eng", digit_cfg)):
+            return "\n".join(chunks)
+        if _push(_ocr_run(crop, "eng", "--psm 11 -c tessedit_char_whitelist=0123456789.,Xx* ")):
+            return "\n".join(chunks)
+
+    # 2) Thai+eng like smart-slip-verifier (tha pack may be missing — skip quietly).
+    for crop in crops[:4]:
+        for lang in ("eng", "tha+eng"):
+            for cfg in ("--psm 6", "--psm 4"):
+                if _push(_ocr_run(crop, lang, cfg)):
+                    return "\n".join(chunks)
+
     return "\n".join(chunks)
 
 
 def _ocr_amount_candidates(ocr_text):
+    """Amount extraction — regex + smart-slip-verifier SlipParser patterns."""
     found = []
-    blob = str(ocr_text or "").replace(",", ".")
-    for m in re.finditer(r"(?<!\d)(\d{1,7}\.\d{2})(?!\d)", blob):
+    blob = str(ocr_text or "")
+    # SlipParser-style labeled amounts first (จำนวนเงิน / บาท / ฿).
+    labeled = (
+        r"(?:จำนวนเงิน|Amount|เงิน)\s*[:\s]*฿?\s*([\d,]+(?:\.\d{1,2})?)",
+        r"฿\s*([\d,]+(?:\.\d{1,2})?)",
+        r"([\d,]+(?:\.\d{1,2})?)\s*(?:บาท|uin|THB|฿)",
+    )
+    for pat in labeled:
+        for m in re.finditer(pat, blob, re.I):
+            amt = _num(m.group(1).replace(",", ""))
+            if 0.01 <= amt <= 500000 and amt not in found:
+                found.append(amt)
+    # Spaced OCR: "1 . 04" / "1,04"
+    compact = re.sub(r"(\d)\s*[.,]\s*(\d{2})(?!\d)", r"\1.\2", blob)
+    compact = compact.replace(",", ".")
+    for m in re.finditer(r"(?<!\d)(\d{1,7}\.\d{2})(?!\d)", compact):
         amt = _num(m.group(1))
+        # Skip Thai-year+time OCR glitches like "256912.15"
+        if amt >= 100000:
+            continue
         if 0.01 <= amt <= 500000 and amt not in found:
             found.append(amt)
     return found
@@ -845,10 +921,14 @@ def _ocr_has_amount(ocr_text, expected):
     return needle in compact
 
 
-def _ocr_receiver_match(ocr_text, pay):
-    compact = re.sub(r"\s+", "", str(ocr_text or ""))
+def _ocr_receiver_match(ocr_text, pay, settings=None):
+    text = str(ocr_text or "")
+    compact = re.sub(r"\s+", "", text)
+    # OCR often turns X into x / х / × — normalize masks.
+    maskish = re.sub(r"[xXх×*＊]", "X", compact)
     digits_only = _digits(compact)
-    for our in our_account_ids(pay):
+    accounts = our_account_ids(pay, settings)
+    for our in accounts:
         forms = _account_forms(our)
         for form in forms:
             if len(form) >= 9 and form in digits_only:
@@ -856,36 +936,55 @@ def _ocr_receiver_match(ocr_text, pay):
             tail = form[-4:]
             if len(tail) != 4 or tail not in digits_only:
                 continue
-            # Masked PromptPay on Krungthai slips: "XXX XXX 6251"
-            if re.search(r"(?:X{2,}|\*{2,}).{0,12}" + re.escape(tail), compact, re.I):
+            # Masked PromptPay: "XXX XXX 6251" / "XX-XXXX-6251"
+            if re.search(r"X{2,}.{0,16}" + re.escape(tail), maskish, re.I):
                 return form
-            if re.search(r"(?:X{3}\s*){1,3}" + re.escape(tail), str(ocr_text or ""), re.I):
+            if re.search(r"(?:X{2,}\s*){1,4}" + re.escape(tail), text, re.I):
                 return form
-            if compact.count(tail) >= 1 and len(forms[0]) >= 9:
+            # Last-4 alone is enough when full PromptPay (≥9 digits) is configured.
+            if len(forms[0]) >= 9 and (compact.count(tail) >= 1 or digits_only.count(tail) >= 1):
                 return form
     return ""
 
 
 def credit_from_slip_verify_local(pid, pay, qr_text, image_bytes):
-    """Built-in Mini-QR (bank+ref) + OCR amount/receiver — no external slip API."""
+    """BOT Mini-QR (slip-verify style) + OCR amount/receiver (smart-slip style)."""
     parsed = parse_slip_verify_qr(qr_text)
     if not parsed:
         return False, "not_slip"
     if parsed.get("crc_ok") is False:
         return False, "bad_qr"
     ref = parsed.get("transRef") or ""
+    settings = get_settings()
     ocr = ocr_slip_text(image_bytes)
     if not ocr.strip():
         add_log("slip OCR empty #%s tess=%s" % (pid, _configure_tesseract()), "-")
         return False, "ocr_fail"
     expected = _num(pay.get("amount"))
     if not _ocr_has_amount(ocr, expected):
-        add_log("slip OCR amount miss #%s want=%s sample=%s" % (pid, expected, ocr[:80].replace("\n", " ")), "-")
+        add_log(
+            "slip OCR amount miss #%s want=%s got=%s sample=%s"
+            % (pid, expected, _ocr_amount_candidates(ocr)[:5], ocr[:100].replace("\n", " ")),
+            "-",
+        )
         return False, "amount"
-    recv = _ocr_receiver_match(ocr, pay)
+    recv = _ocr_receiver_match(ocr, pay, settings)
     if not recv:
-        add_log("slip OCR receiver miss #%s sample=%s" % (pid, ocr[:80].replace("\n", " ")), "-")
-        return False, "receiver_unclear"
+        # Mini-QR CRC proves bank slip authenticity; unique satang + our PromptPay
+        # last-4 anywhere in OCR is enough when configured account exists.
+        accounts = our_account_ids(pay, settings)
+        if accounts:
+            tail = _digits(accounts[0])[-4:]
+            if tail and tail in _digits(ocr):
+                recv = accounts[0]
+                add_log("slip OCR receiver via Mini-QR+tail #%s %s" % (pid, tail), "-")
+        if not recv and accounts and abs(expected - round(expected)) > 0.001:
+            # Unique satang amount + valid Mini-QR → trust configured PromptPay.
+            recv = accounts[0]
+            add_log("slip OCR receiver via Mini-QR+satang #%s" % pid, "-")
+        if not recv:
+            add_log("slip OCR receiver miss #%s sample=%s" % (pid, ocr[:100].replace("\n", " ")), "-")
+            return False, "receiver_unclear"
     info = {
         "transRef": ref,
         "amount": expected,

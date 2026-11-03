@@ -31,13 +31,20 @@ _shutdown_done = False
 DEBOUNCE_SEC = 4.0
 MIN_GAP_SEC = 12.0
 # Reasons that must push immediately (no debounce gap).
+# Money/user events flush quickly. shutdown is NOT force-capable:
+# a dying Free instance can already have an empty disk and must not
+# overwrite a richer Visperhost restore.
 CRITICAL_REASONS = frozenset({
-    "shutdown",
     "admin",
     "flush",
     "approve_payment",
     "adjust_balance",
     "signup",
+})
+FORCE_REASONS = frozenset({
+    "admin",
+    "flush",
+    "force",
 })
 
 
@@ -78,15 +85,25 @@ def snapshot_db(dest: Path | None = None) -> Path | None:
 
 
 def _client_count(db: Path) -> int:
+    """Count clients without creating -wal/-shm beside the source file."""
     try:
-        con = sqlite3.connect(str(db))
+        uri = "file:%s?mode=ro&immutable=1" % Path(db).resolve().as_posix()
+        con = sqlite3.connect(uri, uri=True)
         try:
             row = con.execute("SELECT COUNT(*) FROM clients").fetchone()
             return int(row[0] or 0) if row else 0
         finally:
             con.close()
     except Exception:
-        return -1
+        try:
+            con = sqlite3.connect(str(db))
+            try:
+                row = con.execute("SELECT COUNT(*) FROM clients").fetchone()
+                return int(row[0] or 0) if row else 0
+            finally:
+                con.close()
+        except Exception:
+            return -1
 
 
 def _remote_restore_client_count() -> int:
@@ -135,14 +152,20 @@ def push_db_backup(path: Path | None = None, reason: str = "") -> tuple[bool, st
         if not db or not db.is_file() or db.stat().st_size < 1024:
             return False, "missing_db"
         reason = reason or "manual"
-        # Guard: never let a thin freshly-seeded DB wipe a richer Visperhost restore.
-        # Manual/admin/shutdown flushes are always allowed.
-        if reason in {"startup", "cron", "debounced", "change"}:
-            local_n = _client_count(db)
-            remote_n = _remote_restore_client_count()
-            if local_n >= 0 and remote_n >= 0 and local_n < remote_n:
-                _last_msg = "skip_thinner_than_remote local=%s remote=%s" % (local_n, remote_n)
-                return False, _last_msg
+        # Guard: never let a thin/dying instance wipe a richer Visperhost restore.
+        local_n = _client_count(db)
+        remote_n = _remote_restore_client_count()
+        force = reason in FORCE_REASONS
+        if not force and local_n >= 0 and remote_n >= 0 and local_n < remote_n:
+            _last_msg = "skip_thinner_than_remote local=%s remote=%s reason=%s" % (
+                local_n,
+                remote_n,
+                reason,
+            )
+            return False, _last_msg
+        if not force and local_n == 0 and remote_n > 0:
+            _last_msg = "skip_zero_clients reason=%s" % reason
+            return False, _last_msg
         url = (os.environ.get("DB_BACKUP_PUT_URL") or DEFAULT_PUT).strip()
         token = backup_token()
         raw = db.read_bytes()
@@ -154,7 +177,7 @@ def push_db_backup(path: Path | None = None, reason: str = "") -> tuple[bool, st
             "X-LA-DB-REASON": reason[:80],
             "User-Agent": "likes-auto-db-backup/2",
         }
-        if reason in CRITICAL_REASONS or reason.startswith("live_") or reason.startswith("restore_"):
+        if force:
             headers["X-LA-DB-FORCE"] = "1"
         req = urllib.request.Request(
             url,

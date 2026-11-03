@@ -35,6 +35,8 @@ if (strncmp($raw, 'SQLite format 3', 15) !== 0) {
 }
 
 /**
+ * Count clients without creating -wal/-shm beside the restore file.
+ *
  * @return int client count, or -1 if unreadable
  */
 function la_sqlite_client_count(string $path): int
@@ -42,31 +44,42 @@ function la_sqlite_client_count(string $path): int
     if (!is_file($path)) {
         return -1;
     }
-    if (class_exists('SQLite3')) {
-        try {
-            $db = new SQLite3($path, SQLITE3_OPEN_READONLY);
-            $row = $db->querySingle('SELECT COUNT(*) FROM clients');
-            $db->close();
-            if (is_numeric($row)) {
-                return (int) $row;
+    // Copy to a private temp so SQLite never touches the published restore path.
+    $probe = sys_get_temp_dir() . '/la-db-probe-' . getmypid() . '-' . bin2hex(random_bytes(4)) . '.db';
+    if (!@copy($path, $probe)) {
+        return -1;
+    }
+    try {
+        if (class_exists('SQLite3')) {
+            try {
+                $db = new SQLite3($probe, SQLITE3_OPEN_READONLY);
+                $row = $db->querySingle('SELECT COUNT(*) FROM clients');
+                $db->close();
+                if (is_numeric($row)) {
+                    return (int) $row;
+                }
+            } catch (Throwable $e) {
+                // fall through to PDO
             }
-        } catch (Throwable $e) {
-            // fall through to PDO
         }
-    }
-    if (class_exists('PDO')) {
-        try {
-            $pdo = new PDO('sqlite:' . $path, null, null, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            ]);
-            $n = (int) $pdo->query('SELECT COUNT(*) FROM clients')->fetchColumn();
-            $pdo = null;
-            return $n;
-        } catch (Throwable $e) {
-            return -1;
+        if (class_exists('PDO')) {
+            try {
+                $pdo = new PDO('sqlite:' . $probe, null, null, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                ]);
+                $n = (int) $pdo->query('SELECT COUNT(*) FROM clients')->fetchColumn();
+                $pdo = null;
+                return $n;
+            } catch (Throwable $e) {
+                return -1;
+            }
         }
+        return -1;
+    } finally {
+        @unlink($probe);
+        @unlink($probe . '-wal');
+        @unlink($probe . '-shm');
     }
-    return -1;
 }
 
 $name = (string) ($config['db_restore_name'] ?? '.la-db-restore-d1qyg5az73cs4unx8jl9trbw.db');
@@ -80,8 +93,9 @@ if (file_put_contents($tmp, $raw) === false) {
 }
 
 $reason = strtolower(trim((string) ($_SERVER['HTTP_X_LA_DB_REASON'] ?? '')));
+// Never treat "shutdown" as force — a dying Render Free disk can be empty.
 $force = ((string) ($_SERVER['HTTP_X_LA_DB_FORCE'] ?? '') === '1')
-    || in_array($reason, ['admin', 'shutdown', 'force', 'flush'], true);
+    || in_array($reason, ['admin', 'force', 'flush'], true);
 
 $incoming = la_sqlite_client_count($tmp);
 $existing = is_file($path) ? la_sqlite_client_count($path) : -1;

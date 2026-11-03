@@ -204,6 +204,7 @@ def refresh_catalogs(force_shop=False):
         if err or not items:
             save_settings({"catalog_sync_pid": str(nxt["id"])})
             add_cron_log("catalog", "pid=%s fetch_fail %s" % (nxt["id"], (err or "empty")[:160]))
+            # Do not rebuild/sync against a failed fetch — that culls the shop.
             return 0
         currency = (full.get("currency") or "USD").strip() or "USD"
         # Prefer currency from first service row when present
@@ -211,7 +212,10 @@ def refresh_catalogs(force_shop=False):
             if isinstance(it, dict) and (it.get("currency") or it.get("Currency")):
                 currency = str(it.get("currency") or it.get("Currency") or currency).strip() or currency
                 break
-        replace_provider_catalog(nxt["id"], items, currency)
+        n_cat = replace_provider_catalog(nxt["id"], items, currency)
+        if n_cat <= 0:
+            add_cron_log("catalog", "pid=%s skip_empty_replace" % nxt["id"])
+            return 0
         do_rebuild = (force_shop or shop_rebuild_due()) and not shop_manual_locked()
         if do_rebuild:
             stats = rebuild_best_shop(nxt["id"], fetch=False) or {}

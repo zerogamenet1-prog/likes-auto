@@ -87,8 +87,20 @@ def snapshot_db(dest: Path | None = None) -> Path | None:
 
 
 def db_fingerprint(db: Path) -> dict:
-    """Wealth score used to refuse thinner restores/backups."""
-    out = {"clients": -1, "paid": -1, "balance": -1.0, "bytes": 0}
+    """Wealth score used to refuse thinner restores/backups.
+
+    Protects customers AND the SMM catalog (providers / linked services).
+    A redeploy that only keeps clients must never overwrite a full catalog.
+    """
+    out = {
+        "clients": -1,
+        "paid": -1,
+        "balance": -1.0,
+        "providers": -1,
+        "services": -1,
+        "catalog": -1,
+        "bytes": 0,
+    }
     try:
         out["bytes"] = int(Path(db).stat().st_size)
     except Exception:
@@ -126,6 +138,29 @@ def db_fingerprint(db: Path) -> dict:
             )
         except Exception:
             out["balance"] = -1.0
+        try:
+            out["providers"] = int(
+                con.execute("SELECT COUNT(*) FROM providers").fetchone()[0] or 0
+            )
+        except Exception:
+            out["providers"] = -1
+        try:
+            # Linked shop rows (real catalog), not demo orphans without provider_id.
+            out["services"] = int(
+                con.execute(
+                    "SELECT COUNT(*) FROM services WHERE provider_id IS NOT NULL"
+                ).fetchone()[0]
+                or 0
+            )
+        except Exception:
+            out["services"] = -1
+        try:
+            out["catalog"] = int(
+                con.execute("SELECT COUNT(*) FROM provider_catalog").fetchone()[0]
+                or 0
+            )
+        except Exception:
+            out["catalog"] = -1
         return out
     finally:
         try:
@@ -135,20 +170,40 @@ def db_fingerprint(db: Path) -> dict:
 
 
 def _client_count(db: Path) -> int:
-    return int(db_fingerprint(db).get("clients") or -1)
+    return _fp_int(db_fingerprint(db), "clients")
+
+
+def _fp_int(d: dict, key: str, default: int = -1) -> int:
+    """Read fingerprint int; keep real 0 (do not treat 0 as missing)."""
+    if not isinstance(d, dict) or key not in d or d[key] is None:
+        return default
+    try:
+        return int(d[key])
+    except (TypeError, ValueError):
+        return default
 
 
 def _is_thinner(local: dict, remote: dict) -> bool:
-    """True when local would destroy customers / paid history on Visperhost."""
-    lc, rc = int(local.get("clients") or -1), int(remote.get("clients") or -1)
+    """True when local would destroy customers / paid history / catalog on Visperhost."""
+    lc, rc = _fp_int(local, "clients"), _fp_int(remote, "clients")
     if lc >= 0 and rc >= 0 and lc < rc:
         return True
     if lc == 0 and rc > 0:
         return True
-    lp, rp = int(local.get("paid") or -1), int(remote.get("paid") or -1)
+    lp, rp = _fp_int(local, "paid"), _fp_int(remote, "paid")
     if lc >= 0 and rc >= 0 and lc == rc and lp >= 0 and rp >= 0 and lp < rp:
         return True
-    lb, rb = int(local.get("bytes") or 0), int(remote.get("bytes") or 0)
+    # Catalog wealth: never push 0 providers over a restore that still has them.
+    lprov, rprov = _fp_int(local, "providers"), _fp_int(remote, "providers")
+    if lprov >= 0 and rprov >= 0 and lprov < rprov:
+        return True
+    lsvc, rsvc = _fp_int(local, "services"), _fp_int(remote, "services")
+    if lsvc >= 0 and rsvc >= 0 and lsvc < rsvc:
+        return True
+    lcat, rcat = _fp_int(local, "catalog"), _fp_int(remote, "catalog")
+    if lcat >= 0 and rcat >= 0 and lcat < rcat:
+        return True
+    lb, rb = _fp_int(local, "bytes", 0), _fp_int(remote, "bytes", 0)
     if lc == 0 and rb >= 100000 and lb + 4096 < rb:
         return True
     return False
@@ -180,7 +235,15 @@ def _download_restore(url: str, dest: Path) -> bool:
 
 def _remote_restore_fingerprint() -> dict:
     """Peek hosted restore so a seeded empty boot cannot overwrite a richer backup."""
-    empty = {"clients": -1, "paid": -1, "balance": -1.0, "bytes": 0}
+    empty = {
+        "clients": -1,
+        "paid": -1,
+        "balance": -1.0,
+        "providers": -1,
+        "services": -1,
+        "catalog": -1,
+        "bytes": 0,
+    }
     url = DEFAULT_RESTORE.strip()
     tmp = None
     try:
@@ -211,29 +274,46 @@ def _remote_restore_fingerprint() -> dict:
 
 
 def ensure_restored_db() -> bool:
-    """If local DB lost customers, pull Visperhost restore before serving traffic."""
+    """If local DB lost customers or catalog, pull Visperhost restore before traffic."""
     local = Path(DB_PATH)
     local_fp = db_fingerprint(local) if local.is_file() else {
-        "clients": 0, "paid": 0, "balance": 0.0, "bytes": 0
+        "clients": 0,
+        "paid": 0,
+        "balance": 0.0,
+        "providers": 0,
+        "services": 0,
+        "catalog": 0,
+        "bytes": 0,
     }
     remote_fp = _remote_restore_fingerprint()
-    if int(remote_fp.get("clients") or 0) <= 0:
+    remote_has_value = (
+        _fp_int(remote_fp, "clients", 0) > 0
+        or _fp_int(remote_fp, "providers", 0) > 0
+        or _fp_int(remote_fp, "services", 0) > 0
+    )
+    if not remote_has_value:
         return False
-    if int(local_fp.get("clients") or 0) >= int(remote_fp.get("clients") or 0) and not _is_thinner(
-        local_fp, remote_fp
+    if not _is_thinner(local_fp, remote_fp) and (
+        _fp_int(local_fp, "clients", 0) > 0
+        or _fp_int(local_fp, "providers", 0) > 0
     ):
-        # Local is at least as rich.
-        if int(local_fp.get("clients") or 0) > 0:
-            return False
+        # Local is at least as rich on every protected axis.
+        return False
     for url in (DEFAULT_RESTORE, DEFAULT_RESTORE_ALT):
         if _download_restore(url, local):
             got = db_fingerprint(local)
-            if int(got.get("clients") or 0) >= int(remote_fp.get("clients") or 0):
+            if not _is_thinner(got, remote_fp):
                 try:
                     from db import add_log
 
                     add_log(
-                        "db-restore ok clients=%s paid=%s" % (got.get("clients"), got.get("paid")),
+                        "db-restore ok clients=%s paid=%s providers=%s services=%s"
+                        % (
+                            got.get("clients"),
+                            got.get("paid"),
+                            got.get("providers"),
+                            got.get("services"),
+                        ),
                         "-",
                     )
                 except Exception:

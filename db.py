@@ -1468,23 +1468,25 @@ def sync_listed_from_catalog(provider_id):
         ).fetchone()[0] or 0
 
     removed = 0
-    shop_apis = [
-        str(r["api_service"])
-        for r in con.execute(
-            "SELECT api_service FROM services WHERE provider_id=? AND IFNULL(api_service,'')!=''",
-            (pid,),
-        )
-    ]
-    missing = [sid for sid in shop_apis if sid not in live_set]
-    chunk = 400
-    for i in range(0, len(missing), chunk):
-        part = missing[i:i + chunk]
-        marks = ",".join("?" * len(part))
-        cur = con.execute(
-            "UPDATE services SET status='inactive' WHERE provider_id=? AND api_service IN (%s)" % marks,
-            [pid] + part,
-        )
-        removed += int(cur.rowcount or 0)
+    # Empty catalog sync must not mass-deactivate the whole shop (API blip / wipe).
+    if live_set:
+        shop_apis = [
+            str(r["api_service"])
+            for r in con.execute(
+                "SELECT api_service FROM services WHERE provider_id=? AND IFNULL(api_service,'')!=''",
+                (pid,),
+            )
+        ]
+        missing = [sid for sid in shop_apis if sid not in live_set]
+        chunk = 400
+        for i in range(0, len(missing), chunk):
+            part = missing[i:i + chunk]
+            marks = ",".join("?" * len(part))
+            cur = con.execute(
+                "UPDATE services SET status='inactive' WHERE provider_id=? AND api_service IN (%s)" % marks,
+                [pid] + part,
+            )
+            removed += int(cur.rowcount or 0)
 
     con.commit()
     active_n = con.execute(
@@ -2186,6 +2188,14 @@ def replace_provider_catalog(provider_id, items, currency):
             refill,
         ))
     con = connect()
+    # Never wipe a populated catalog with an empty API response (transient failure).
+    if not rows:
+        existing = con.execute(
+            "SELECT COUNT(*) FROM provider_catalog WHERE provider_id=?",
+            (int(provider_id),),
+        ).fetchone()[0]
+        con.close()
+        return int(existing or 0)
     con.execute("DELETE FROM provider_catalog WHERE provider_id=?", (int(provider_id),))
     con.executemany(
         "INSERT INTO provider_catalog (provider_id, api_service, category, main_cat, name, rate, min_qty, max_qty, type, currency, refill) VALUES (?,?,?,?,?,?,?,?,?,?,?)",

@@ -441,7 +441,21 @@ def apply_picked_services(pid, picked, cfg):
             )
             added += 1
     removed = 0
+    # Only cull when the new pick is non-empty. An empty pick must never wipe the shop.
     if keep:
+        existing_n = len(existing)
+        # Guardrail: if pick is tiny vs a large curated shop, update only — do not mass-inactivate.
+        if existing_n >= 200 and len(keep) < max(40, int(existing_n * 0.15)):
+            con.commit()
+            con.close()
+            shop_cache_clear()
+            return {
+                "added": added,
+                "updated": updated,
+                "removed": 0,
+                "kept": len(keep),
+                "skipped_cull": 1,
+            }
         marks = ",".join("?" * len(keep))
         cur = con.execute(
             "UPDATE services SET status='inactive' WHERE provider_id=? AND IFNULL(api_service,'')!='' AND api_service NOT IN (%s)" % marks,

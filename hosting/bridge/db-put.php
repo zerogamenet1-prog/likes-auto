@@ -5,9 +5,9 @@
  *
  * Auth: header X-LA-DB-TOKEN must match token in la-config.php
  *
- * Hard rule: NEVER overwrite with fewer clients / fewer paid payments.
+ * Hard rule: NEVER overwrite with fewer clients / paid / providers / linked services.
  * Intentional shrink only with X-LA-DB-ALLOW_THINNER=1 + reason admin|force.
- * Shutdown / FORCE alone cannot wipe customers.
+ * Shutdown / FORCE alone cannot wipe customers or the SMM catalog.
  */
 declare(strict_types=1);
 
@@ -36,11 +36,18 @@ if (strncmp($raw, 'SQLite format 3', 15) !== 0) {
 }
 
 /**
- * @return array{clients:int,paid:int,balance:float}
+ * @return array{clients:int,paid:int,balance:float,providers:int,services:int,catalog:int}
  */
 function la_sqlite_fingerprint(string $path): array
 {
-    $out = ['clients' => -1, 'paid' => -1, 'balance' => -1.0];
+    $out = [
+        'clients' => -1,
+        'paid' => -1,
+        'balance' => -1.0,
+        'providers' => -1,
+        'services' => -1,
+        'catalog' => -1,
+    ];
     if (!is_file($path)) {
         return $out;
     }
@@ -54,6 +61,9 @@ function la_sqlite_fingerprint(string $path): array
                 $c = $db->querySingle('SELECT COUNT(*) FROM clients');
                 $p = $db->querySingle("SELECT COUNT(*) FROM payments WHERE status='paid'");
                 $b = $db->querySingle('SELECT COALESCE(SUM(balance),0) FROM clients');
+                $prov = @$db->querySingle('SELECT COUNT(*) FROM providers');
+                $svc = @$db->querySingle('SELECT COUNT(*) FROM services WHERE provider_id IS NOT NULL');
+                $cat = @$db->querySingle('SELECT COUNT(*) FROM provider_catalog');
                 if (is_numeric($c)) {
                     $out['clients'] = (int) $c;
                 }
@@ -63,12 +73,38 @@ function la_sqlite_fingerprint(string $path): array
                 if (is_numeric($b)) {
                     $out['balance'] = (float) $b;
                 }
+                if (is_numeric($prov)) {
+                    $out['providers'] = (int) $prov;
+                }
+                if (is_numeric($svc)) {
+                    $out['services'] = (int) $svc;
+                }
+                if (is_numeric($cat)) {
+                    $out['catalog'] = (int) $cat;
+                }
                 return;
             }
             if (is_object($db) && $db instanceof PDO) {
                 $out['clients'] = (int) $db->query('SELECT COUNT(*) FROM clients')->fetchColumn();
                 $out['paid'] = (int) $db->query("SELECT COUNT(*) FROM payments WHERE status='paid'")->fetchColumn();
                 $out['balance'] = (float) $db->query('SELECT COALESCE(SUM(balance),0) FROM clients')->fetchColumn();
+                try {
+                    $out['providers'] = (int) $db->query('SELECT COUNT(*) FROM providers')->fetchColumn();
+                } catch (Throwable $e) {
+                    $out['providers'] = -1;
+                }
+                try {
+                    $out['services'] = (int) $db->query(
+                        'SELECT COUNT(*) FROM services WHERE provider_id IS NOT NULL'
+                    )->fetchColumn();
+                } catch (Throwable $e) {
+                    $out['services'] = -1;
+                }
+                try {
+                    $out['catalog'] = (int) $db->query('SELECT COUNT(*) FROM provider_catalog')->fetchColumn();
+                } catch (Throwable $e) {
+                    $out['catalog'] = -1;
+                }
             }
         };
         if (class_exists('SQLite3')) {
@@ -117,7 +153,16 @@ $allowThinner = ((string) ($_SERVER['HTTP_X_LA_DB_ALLOW_THINNER'] ?? '') === '1'
     && in_array($reason, ['admin', 'force'], true);
 
 $incoming = la_sqlite_fingerprint($tmp);
-$existing = is_file($path) ? la_sqlite_fingerprint($path) : ['clients' => -1, 'paid' => -1, 'balance' => -1.0];
+$existing = is_file($path)
+    ? la_sqlite_fingerprint($path)
+    : [
+        'clients' => -1,
+        'paid' => -1,
+        'balance' => -1.0,
+        'providers' => -1,
+        'services' => -1,
+        'catalog' => -1,
+    ];
 $existingBytes = is_file($path) ? (int) filesize($path) : 0;
 $incomingBytes = strlen($raw);
 
@@ -135,6 +180,27 @@ if ($incoming['clients'] < 0) {
     && $incoming['paid'] < $existing['paid']
 ) {
     $reject = 'fewer_paid_payments';
+} elseif (
+    !$allowThinner
+    && ($existing['providers'] ?? -1) >= 0
+    && ($incoming['providers'] ?? -1) >= 0
+    && $incoming['providers'] < $existing['providers']
+) {
+    $reject = 'fewer_providers';
+} elseif (
+    !$allowThinner
+    && ($existing['services'] ?? -1) >= 0
+    && ($incoming['services'] ?? -1) >= 0
+    && $incoming['services'] < $existing['services']
+) {
+    $reject = 'fewer_linked_services';
+} elseif (
+    !$allowThinner
+    && ($existing['catalog'] ?? -1) >= 0
+    && ($incoming['catalog'] ?? -1) >= 0
+    && $incoming['catalog'] < $existing['catalog']
+) {
+    $reject = 'fewer_catalog_rows';
 } elseif (!$allowThinner && $existing['clients'] < 0 && $existingBytes > 0 && $incomingBytes + 4096 < $existingBytes) {
     $reject = 'smaller_than_existing_unreadable';
 } elseif (!$allowThinner && $existingBytes > 0 && $incoming['clients'] === 0 && $existingBytes >= 100000) {

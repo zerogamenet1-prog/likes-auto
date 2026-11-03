@@ -1574,12 +1574,12 @@ def client_orders(username):
 def create_payment(client, method, amount, method_id=None):
     from pay import infer_kind, make_ref_code, method_row, unique_amount
     amt = float(amount)
-    min_amt = 20.0
+    min_amt = 1.0
     settings = get_settings()
     try:
-        min_amt = float(settings.get("min_deposit") or 20)
+        min_amt = float(settings.get("min_deposit") or 1)
     except (TypeError, ValueError):
-        min_amt = 20.0
+        min_amt = 1.0
     if amt < min_amt:
         return None, "ยอดเติมขั้นต่ำ %.0f บาท" % min_amt
     try:

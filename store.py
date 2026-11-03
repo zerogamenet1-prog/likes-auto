@@ -146,7 +146,7 @@ def extra_migrate():
         "child_ns2": "ns2.likes-auto.com",
         "announcement": "",
         "maintenance": "0",
-        "min_deposit": "20",
+        "min_deposit": "1",
         "promptpay": "0619196251",
         "bank_name": "",
         "bank_account": "",

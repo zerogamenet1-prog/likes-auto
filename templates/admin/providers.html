@@ -4,7 +4,8 @@
 {% block content %}
 {% if saved %}<div class="adm-ok">บันทึกแล้ว</div>{% endif %}
 {% if imported %}<div class="adm-ok">ดึงบริการแล้ว {{ imported }} รายการ</div>{% endif %}
-<details class="adm-more" {% if not providers or editing %}open{% endif %}>
+{% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
+<details class="adm-more" {% if not providers or editing or error %}open{% endif %}>
   <summary>{% if editing %}แก้ผู้ให้บริการ{% else %}เพิ่มผู้ให้บริการ{% endif %}</summary>
   <form method="post" action="/admin/providers" class="adm-form" style="margin-top:14px">
     <input type="hidden" name="pid" value="{{ editing.id if editing else '' }}">
@@ -13,7 +14,8 @@
     <label class="la-field">API URL</label>
     <input class="la-input" type="url" name="api_url" value="{{ editing.api_url if editing else '' }}" placeholder="https://provider.com/api/v2" required>
     <label class="la-field">API Key</label>
-    <input class="la-input" type="text" name="api_key" placeholder="{% if editing %}เว้นว่างถ้าไม่เปลี่ยน{% else %}คีย์จากแผงต้นทาง{% endif %}" {% if not editing %}required{% endif %}>
+    <input class="la-input" type="text" name="api_key" placeholder="{% if editing %}วางคีย์จริงใหม่ (ห้ามใส่ ****) หรือเว้นว่างถ้าไม่เปลี่ยน{% else %}คีย์เต็มจากแผงต้นทาง ห้ามคัดลอก ****{% endif %}" {% if not editing %}required{% endif %} autocomplete="off" spellcheck="false">
+    <p class="adm-hint">ต้องเป็นคีย์เต็มจากหน้า API ของผู้ให้บริการ — ถ้าเห็นเป็น **** แปลว่ายังไม่ใช่คีย์จริง</p>
     <button class="la-btn" type="submit">{% if editing %}บันทึก{% else %}เพิ่ม{% endif %}</button>
     {% if editing %}<a class="la-btn la-btn-ghost" href="/admin/providers">ยกเลิก</a>{% endif %}
   </form>

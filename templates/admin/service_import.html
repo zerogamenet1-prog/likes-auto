@@ -2,7 +2,7 @@
 {% block title %}เลือกบริการจาก API{% endblock %}
 {% block subtitle %}<p class="adm-sub">โหลดจากผู้ให้บริการ → หมวดหลัก → หมวดย่อย → ติ๊กบริการ · ค้นหาได้ทั้งแคตตาล็อก</p>{% endblock %}
 {% block content %}
-{% if error %}<div class="adm-error"><i class="ri-error-warning-line"></i> ดึงรายการไม่สำเร็จ ตรวจ API URL และคีย์ที่ผู้ให้บริการ</div>{% endif %}
+{% if error %}<div class="adm-error"><i class="ri-error-warning-line"></i> ดึงรายการไม่สำเร็จ{% if error_msg %}: {{ error_msg }}{% else %} — ตรวจ API URL และคีย์ที่ผู้ให้บริการ{% endif %}</div>{% endif %}
 {% if loaded %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> โหลดจาก API แล้ว {{ loaded }} รายการ{% if synced %} · ซิงก์ร้านแล้ว เปิดขาย {{ synced }}{% if inactive_n %} · ปิด/ไม่มีต้นทาง {{ inactive_n }}{% endif %}{% endif %} · เลือกหมวดหลัก / หมวดย่อยด้านล่างได้เลย</div>{% endif %}
 {% if added %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> เพิ่มแล้ว {{ added }} รายการ</div>{% endif %}
 

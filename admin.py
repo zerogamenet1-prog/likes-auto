@@ -55,6 +55,8 @@ NAV_GROUPS = [
         ("crons", "/admin/crons", "บันทึกงาน", "ri-file-list-3-line"),
         ("reports", "/admin/reports", "รายได้", "ri-bar-chart-2-line"),
         ("news", "/admin/appearance/pages", "หน้าเว็บ", "ri-palette-line"),
+        ("staff", "/admin/staff", "พนักงาน", "ri-shield-user-line"),
+        ("logs", "/admin/logs", "บันทึกระบบ", "ri-file-paper-2-line"),
         ("settings", "/admin/settings/general", "ตั้งค่า", "ri-settings-3-line"),
     ]),
 ]
@@ -66,8 +68,13 @@ SECTION = {
     "affiliates": "clients",
     "panels": "clients",
     "account": "settings",
-    "staff": "settings",
-    "logs": "settings",
+    "bonuses": "settings",
+    "banks": "settings",
+    "alerts": "settings",
+    "general": "settings",
+    "modules": "settings",
+    "integrations": "settings",
+    "currency": "settings",
 }
 ORDER_TABS = [
     ("orders", "/admin/orders", "ออเดอร์"),
@@ -83,9 +90,14 @@ CLIENT_TABS = [
 SETTING_TABS_UI = [
     ("general", "/admin/settings/general", "ทั่วไป", "ri-store-2-line"),
     ("payments", "/admin/settings/payments", "ช่องทางจ่าย", "ri-qr-code-line"),
+    ("bonuses", "/admin/settings/bonuses", "โบนัสเติม", "ri-gift-line"),
+    ("banks", "/admin/settings/banks", "บัญชีธนาคาร", "ri-bank-card-line"),
+    ("alerts", "/admin/settings/alerts", "แจ้งเตือน", "ri-notification-3-line"),
     ("modules", "/admin/settings/modules", "เปิด-ปิดเมนู", "ri-toggle-line"),
     ("integrations", "/admin/settings/integrations", "เชื่อมต่อ", "ri-plug-line"),
     ("currency", "/admin/settings/currency", "เรทเงิน", "ri-money-dollar-circle-line"),
+    ("staff", "/admin/staff", "พนักงาน", "ri-shield-user-line"),
+    ("logs", "/admin/logs", "บันทึก", "ri-file-list-3-line"),
 ]
 APPEAR_TABS = [
     ("themes", "/admin/appearance/themes", "ธีมเว็บ"),
@@ -108,6 +120,9 @@ PAGE_TABS = {
     "account": SETTING_TABS_UI,
     "staff": SETTING_TABS_UI,
     "logs": SETTING_TABS_UI,
+    "bonuses": SETTING_TABS_UI,
+    "banks": SETTING_TABS_UI,
+    "alerts": SETTING_TABS_UI,
 }
 
 
@@ -478,64 +493,189 @@ async def services(request: Request, added: str = "", main: str = "", q: str = "
     })
 
 
-def _pay_back(status: str = "", ok: str = ""):
-    q = []
+def _pay_back(status: str = "", ok: str = "", err: str = "", q: str = ""):
+    from urllib.parse import quote
+
+    parts = []
     if status in ("pending", "paid", "canceled"):
-        q.append("status=" + status)
+        parts.append("status=" + status)
     if ok:
-        q.append("ok=" + ok)
-    return RedirectResponse("/admin/payments" + (("?" + "&".join(q)) if q else ""), status_code=303)
+        parts.append("ok=" + quote(str(ok)))
+    if err:
+        parts.append("err=" + quote(err[:220]))
+    if q:
+        parts.append("q=" + quote(q))
+    return RedirectResponse("/admin/payments" + (("?" + "&".join(parts)) if parts else ""), status_code=303)
+
+
+def _payments_slip_health():
+    try:
+        from slip_verify import tess_diag
+
+        td = tess_diag()
+        ready = bool(td.get("ready"))
+        return {
+            "ready": ready,
+            "version": (td.get("version") or "").splitlines()[0][:64] if td.get("version") else "",
+            "cmd": td.get("cmd") or "",
+            "langs": (td.get("langs") or "")[:120],
+            "detail": "" if ready else (td.get("error") or "OCR ไม่พร้อม"),
+        }
+    except Exception as e:
+        return {"ready": False, "version": "", "cmd": "", "langs": "", "detail": str(e)[:120]}
+
+
+def _slip_try_count(pid):
+    try:
+        con = connect()
+        n = con.execute(
+            "SELECT COUNT(*) AS c FROM slip_tries WHERE payment_id=?",
+            (int(pid),),
+        ).fetchone()
+        con.close()
+        return int((n["c"] if n else 0) or 0)
+    except Exception:
+        return 0
+
+
+def _enrich_pay_rows(items):
+    out = []
+    for p in items:
+        row = dict(p)
+        row["slip_tries"] = _slip_try_count(row.get("id"))
+        row["has_slip"] = bool((row.get("slip") or "").strip())
+        row["has_ref"] = bool((row.get("trans_ref") or "").strip())
+        out.append(row)
+    return out
 
 
 @router.get("/payments", response_class=HTMLResponse)
-async def payments(request: Request, status: str = "", ok: str = "", err: str = ""):
+async def payments(
+    request: Request,
+    status: str = "",
+    ok: str = "",
+    err: str = "",
+    q: str = "",
+    method: str = "",
+):
     gate = require_admin(request)
     if gate:
         return gate
+    q = (q or "").strip()
+    method = (method or "").strip()
     con = connect()
-    pending = [dict(x) for x in con.execute(
-        "SELECT * FROM payments WHERE status='pending' ORDER BY id DESC"
-    ).fetchall()]
-    counts = {r["status"]: dict(r) for r in con.execute(
-        "SELECT status, COUNT(*) n, COALESCE(SUM(amount),0) s FROM payments GROUP BY status"
-    ).fetchall()}
+    methods = [
+        r["method"]
+        for r in con.execute(
+            "SELECT DISTINCT method FROM payments WHERE IFNULL(method,'')!='' ORDER BY method"
+        ).fetchall()
+    ]
+    pending_sql = "SELECT * FROM payments WHERE status='pending'"
+    pending_args = []
+    if method:
+        pending_sql += " AND method=?"
+        pending_args.append(method)
+    if q:
+        pending_sql += " AND (client LIKE ? OR CAST(id AS TEXT)=? OR CAST(amount AS TEXT) LIKE ? OR IFNULL(trans_ref,'') LIKE ? OR IFNULL(note,'') LIKE ? OR IFNULL(ref_code,'') LIKE ?)"
+        like = f"%{q}%"
+        pending_args.extend([like, q, like, like, like, like])
+    pending_sql += " ORDER BY id DESC"
+    pending = _enrich_pay_rows([dict(x) for x in con.execute(pending_sql, tuple(pending_args)).fetchall()])
+    counts = {
+        r["status"]: dict(r)
+        for r in con.execute(
+            "SELECT status, COUNT(*) n, COALESCE(SUM(amount),0) s FROM payments GROUP BY status"
+        ).fetchall()
+    }
+    where = ["1=1"]
+    args = []
     if status in ("pending", "paid", "canceled"):
-        items = [dict(x) for x in con.execute(
-            "SELECT * FROM payments WHERE status=? ORDER BY id DESC LIMIT 200", (status,)
-        ).fetchall()]
-    else:
-        items = [dict(x) for x in con.execute(
-            "SELECT * FROM payments ORDER BY id DESC LIMIT 200"
-        ).fetchall()]
+        where.append("status=?")
+        args.append(status)
+    if method:
+        where.append("method=?")
+        args.append(method)
+    if q:
+        where.append(
+            "(client LIKE ? OR CAST(id AS TEXT)=? OR CAST(amount AS TEXT) LIKE ? OR IFNULL(trans_ref,'') LIKE ? OR IFNULL(note,'') LIKE ? OR IFNULL(ref_code,'') LIKE ?)"
+        )
+        like = f"%{q}%"
+        args.extend([like, q, like, like, like, like])
+    items = _enrich_pay_rows(
+        [
+            dict(x)
+            for x in con.execute(
+                "SELECT * FROM payments WHERE "
+                + " AND ".join(where)
+                + " ORDER BY id DESC LIMIT 200",
+                tuple(args),
+            ).fetchall()
+        ]
+    )
     con.close()
     pending_n = int((counts.get("pending") or {}).get("n") or 0)
     paid_n = int((counts.get("paid") or {}).get("n") or 0)
     canceled_n = int((counts.get("canceled") or {}).get("n") or 0)
-    return render(request, "admin/payments.html", {
-        "page": "payments",
-        "title": "ประวัติเติมเงิน",
-        "rows": items,
-        "pending_rows": pending,
-        "status": status,
-        "ok": ok,
-        "err": err,
-        "pay_sum": {
-            "pending_n": pending_n,
-            "pending_s": float((counts.get("pending") or {}).get("s") or 0),
-            "paid_n": paid_n,
-            "paid_s": float((counts.get("paid") or {}).get("s") or 0),
-            "canceled_n": canceled_n,
-            "all_n": pending_n + paid_n + canceled_n,
+    s = get_settings()
+    return render(
+        request,
+        "admin/payments.html",
+        {
+            "page": "payments",
+            "title": "ประวัติเติมเงิน",
+            "rows": items,
+            "pending_rows": pending,
+            "status": status,
+            "ok": ok,
+            "err": err,
+            "q": q,
+            "method": method,
+            "methods": methods,
+            "slip_health": _payments_slip_health(),
+            "pay_flags": {
+                "auto_approve": (s.get("auto_approve_slip") or "1") != "0",
+                "unique_satang": (s.get("pay_unique_satang") or "1") != "0",
+                "promptpay": (s.get("promptpay") or "").strip(),
+                "min_deposit": s.get("min_deposit") or "1",
+                "max_deposit": s.get("max_deposit") or "5000",
+            },
+            "pay_sum": {
+                "pending_n": pending_n,
+                "pending_s": float((counts.get("pending") or {}).get("s") or 0),
+                "paid_n": paid_n,
+                "paid_s": float((counts.get("paid") or {}).get("s") or 0),
+                "canceled_n": canceled_n,
+                "all_n": pending_n + paid_n + canceled_n,
+            },
         },
-    })
+    )
 
 
 @router.post("/payments/match")
-async def payments_match(request: Request, amount: str = Form(""), qr: str = Form("")):
+async def payments_match(request: Request, amount: str = Form(""), next: str = Form("")):
     gate = require_admin(request)
     if gate:
         return gate
-    return _pay_back("pending")
+    from pay import credit_by_incoming
+
+    try:
+        amt = float(str(amount).replace(",", "").strip())
+    except Exception:
+        return _pay_back(next or "pending", err="จำนวนเงินไม่ถูกต้อง")
+    if amt <= 0:
+        return _pay_back(next or "pending", err="จำนวนเงินต้องมากกว่า 0")
+    pid, code = credit_by_incoming(amt, "admin")
+    if pid:
+        add_log("แอดมินจับคู่ยอด %.2f → #%s" % (amt, pid), "-")
+        return _pay_back(next or "pending", "matched")
+    msgs = {
+        "none": "ไม่พบรายการรอยอดนี้",
+        "ambiguous": "มียอดซ้ำหลายรายการ — อนุมัติทีละใบ",
+        "off": "ปิดอนุมัติอัตโนมัติอยู่",
+        "approve": "อนุมัติไม่สำเร็จ",
+        "bad_amount": "จำนวนเงินไม่ถูกต้อง",
+    }
+    return _pay_back(next or "pending", err=msgs.get(code, "จับคู่ไม่สำเร็จ: %s" % (code or "-")))
 
 
 @router.post("/payments/{pid}/approve")
@@ -543,8 +683,9 @@ async def payments_approve(request: Request, pid: int, next: str = Form("")):
     gate = require_admin(request)
     if gate:
         return gate
-    approve_payment(pid)
-    return _pay_back(next, "paid")
+    if approve_payment(pid):
+        return _pay_back(next, "paid")
+    return _pay_back(next, err="อนุมัติไม่สำเร็จ (อาจไม่ใช่สถานะรอ)")
 
 
 @router.post("/payments/{pid}/reject")
@@ -552,8 +693,116 @@ async def payments_reject(request: Request, pid: int, note: str = Form(""), next
     gate = require_admin(request)
     if gate:
         return gate
-    reject_payment(pid, note)
-    return _pay_back(next, "canceled")
+    if reject_payment(pid, note):
+        return _pay_back(next, "canceled")
+    return _pay_back(next, err="ปฏิเสธไม่สำเร็จ")
+
+
+def _get_payment(pid):
+    con = connect()
+    row = con.execute("SELECT * FROM payments WHERE id=?", (int(pid),)).fetchone()
+    con.close()
+    return dict(row) if row else None
+
+
+@router.post("/payments/{pid}/recheck")
+async def payments_recheck(request: Request, pid: int, next: str = Form("")):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    pay = _get_payment(pid)
+    if not pay:
+        return _pay_back(next, err="ไม่พบรายการ #%s" % pid)
+    if pay.get("status") != "pending":
+        return _pay_back(next, err="รายการ #%s ไม่ใช่สถานะรอ" % pid)
+    slip = (pay.get("slip") or "").strip()
+    if not slip:
+        return _pay_back(next, err="รายการ #%s ยังไม่มีสลิป" % pid)
+    from pay import set_pay_note
+    from slip_verify import auto_credit_from_slip, verify_error_text
+
+    paid, code = auto_credit_from_slip(pid, slip, "", count_try=False)
+    if paid:
+        add_log("แอดมินตรวจสลิปใหม่ #%s สำเร็จ" % pid, "-")
+        return _pay_back(next or "pending", "recheck_ok")
+    msg = verify_error_text(code) or ("ตรวจไม่ผ่าน: %s" % (code or "unknown"))
+    try:
+        set_pay_note(pid, msg)
+    except Exception:
+        pass
+    add_log("แอดมินตรวจสลิปใหม่ #%s ไม่ผ่าน (%s)" % (pid, code or "-"), "-")
+    return _pay_back(next or "pending", err="#%s — %s" % (pid, msg))
+
+
+@router.post("/payments/{pid}/unlock-slip")
+async def payments_unlock_slip(request: Request, pid: int, next: str = Form("")):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    pay = _get_payment(pid)
+    if not pay:
+        return _pay_back(next, err="ไม่พบรายการ #%s" % pid)
+    if pay.get("status") != "pending":
+        return _pay_back(next, err="ปลดล็อกได้เฉพาะรายการรอ #%s" % pid)
+    con = connect()
+    try:
+        con.execute("DELETE FROM slip_hashes WHERE payment_id=?", (pid,))
+        try:
+            con.execute("DELETE FROM slip_refs WHERE payment_id=?", (pid,))
+        except Exception:
+            pass
+        try:
+            con.execute("DELETE FROM slip_tries WHERE payment_id=?", (pid,))
+        except Exception:
+            pass
+        con.execute("UPDATE payments SET trans_ref=NULL WHERE id=? AND status='pending'", (pid,))
+        con.commit()
+    except Exception as e:
+        try:
+            con.rollback()
+        except Exception:
+            pass
+        con.close()
+        return _pay_back(next, err="ปลดล็อกไม่สำเร็จ: %s" % str(e)[:80])
+    con.close()
+    try:
+        from pay import set_pay_note
+
+        set_pay_note(pid, "แอดมินปลดล็อกสลิปแล้ว — กดตรวจใหม่ได้")
+    except Exception:
+        pass
+    add_log("แอดมินปลดล็อกสลิป #%s" % pid, "-")
+    return _pay_back(next or "pending", "unlock_ok")
+
+
+@router.post("/payments/{pid}/note")
+async def payments_note(request: Request, pid: int, note: str = Form(""), next: str = Form("")):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    from pay import set_pay_note
+
+    set_pay_note(pid, (note or "").strip()[:500])
+    add_log("แก้โน้ตเติมเงิน #%s" % pid, "-")
+    return _pay_back(next, "note_ok")
+
+
+@router.get("/payments/slip-diag")
+async def payments_slip_diag(request: Request):
+    """Admin-only OCR/Mini-QR probe (JSON)."""
+    from fastapi.responses import JSONResponse
+
+    gate = require_admin(request)
+    if gate:
+        return gate
+    try:
+        from slip_verify import tess_diag
+
+        data = tess_diag()
+        data["ok"] = True
+        return JSONResponse(data)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)[:200]}, status_code=500)
 
 
 @router.get("/tickets", response_class=HTMLResponse)
@@ -652,17 +901,36 @@ async def settings_post(
 
 
 @router.get("/providers", response_class=HTMLResponse)
-async def providers_page(request: Request, saved: str = "", imported: str = "", edit: str = ""):
+async def providers_page(
+    request: Request,
+    saved: str = "",
+    imported: str = "",
+    edit: str = "",
+    error: str = "",
+    msg: str = "",
+):
     gate = require_admin(request)
     if gate:
         return gate
     editing = get_provider(int(edit)) if str(edit).isdigit() else None
+    err_text = ""
+    if error == "masked_key":
+        err_text = "API Key ที่ใส่เป็นค่าปกปิด (****) ไม่ใช่คีย์จริง — คัดลอกคีย์เต็มจาก justanotherpanel.com แล้วบันทึกใหม่"
+    elif error == "api":
+        err_text = "เรียก API ไม่สำเร็จ: %s" % (msg or "Unknown")
+    elif error == "save":
+        err_text = "บันทึกไม่สำเร็จ ตรวจชื่อ / API URL / API Key ให้ครบ"
+    elif error == "missing":
+        err_text = "ไม่พบผู้ให้บริการ"
+    elif error:
+        err_text = msg or error
     return render(request, "admin/providers.html", {
         "page": "providers",
         "providers": list_providers(),
         "saved": saved == "1",
         "imported": imported,
         "editing": editing,
+        "error": err_text,
     })
 
 
@@ -677,7 +945,21 @@ async def providers_save(
     gate = require_admin(request)
     if gate:
         return gate
-    save_provider(pid or None, name, api_url, api_key)
+    from smm_api import looks_like_masked_key
+
+    if api_key and looks_like_masked_key(api_key):
+        add_log(
+            "บันทึกผู้ให้บริการล้มเหลว: API key เป็นค่าปกปิด (****) ไม่ใช่คีย์จริง",
+            request.client.host if request.client else "-",
+        )
+        return RedirectResponse("/admin/providers?error=masked_key", status_code=303)
+    saved = save_provider(pid or None, name, api_url, api_key)
+    if not saved:
+        add_log(
+            "บันทึกผู้ให้บริการล้มเหลว: ข้อมูลไม่ครบหรือคีย์ไม่ถูกต้อง",
+            request.client.host if request.client else "-",
+        )
+        return RedirectResponse("/admin/providers?error=save", status_code=303)
     add_log("บันทึกผู้ให้บริการ", request.client.host if request.client else "-")
     return RedirectResponse("/admin/providers?saved=1", status_code=303)
 
@@ -687,12 +969,29 @@ async def providers_balance(request: Request, pid: int = Form(...)):
     gate = require_admin(request)
     if gate:
         return gate
+    from smm_api import looks_like_masked_key
+    from urllib.parse import quote
+
     p = get_provider(pid)
-    if p:
-        result = action(p["api_url"], {"key": p["api_key"], "action": "balance"})
-        if isinstance(result, dict) and "balance" in result:
-            save_provider_balance(pid, result.get("balance"), result.get("currency") or "")
-    return RedirectResponse("/admin/providers?saved=1", status_code=303)
+    if not p:
+        return RedirectResponse("/admin/providers?error=missing", status_code=303)
+    if looks_like_masked_key(p.get("api_key") or ""):
+        return RedirectResponse("/admin/providers?error=masked_key", status_code=303)
+    result = action(p["api_url"], {"key": p["api_key"], "action": "balance"})
+    if isinstance(result, dict) and "balance" in result and not result.get("error"):
+        save_provider_balance(pid, result.get("balance"), result.get("currency") or "")
+        return RedirectResponse("/admin/providers?saved=1", status_code=303)
+    err = ""
+    if isinstance(result, dict):
+        err = str(result.get("error") or result.get("message") or "")
+    add_log(
+        "เช็คยอดผู้ให้บริการ #%s ไม่สำเร็จ: %s" % (pid, (err or "unknown")[:160]),
+        request.client.host if request.client else "-",
+    )
+    return RedirectResponse(
+        "/admin/providers?error=api&msg=%s" % quote((err or "เรียก API ไม่สำเร็จ")[:120]),
+        status_code=303,
+    )
 
 
 @router.post("/providers/import")

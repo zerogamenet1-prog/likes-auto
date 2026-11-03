@@ -1845,10 +1845,15 @@ def add_provider(name, api_url, api_key):
 
 
 def save_provider(pid, name, api_url, api_key):
+    from smm_api import looks_like_masked_key
+
     name = (name or "").strip()
     api_url = (api_url or "").strip()
     api_key = (api_key or "").strip()
     if not name or not api_url:
+        return None
+    if api_key and looks_like_masked_key(api_key):
+        # Reject **** placeholders copied from masked UIs.
         return None
     if not pid:
         if not api_key:
@@ -1858,6 +1863,8 @@ def save_provider(pid, name, api_url, api_key):
     if not old:
         return add_provider(name, api_url, api_key) if api_key else None
     key = api_key or old.get("api_key") or ""
+    if looks_like_masked_key(key):
+        return None
     con = connect()
     con.execute(
         "UPDATE providers SET name=?, api_url=?, api_key=? WHERE id=?",

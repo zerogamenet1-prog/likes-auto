@@ -573,6 +573,7 @@ async def services_import(
     loaded: str = "",
     added: str = "",
     error: str = "",
+    msg: str = "",
     synced: str = "",
     inactive: str = "",
 ):
@@ -654,6 +655,7 @@ async def services_import(
         "loaded": loaded,
         "added": added,
         "error": error,
+        "error_msg": msg,
         "synced": synced,
         "inactive_n": inactive,
         "shop_synced_at": settings.get("shop_synced_at") or settings.get("catalog_synced_at") or "",
@@ -671,6 +673,16 @@ async def services_import_fetch(request: Request, pid: int = Form(...)):
     p = get_provider(pid)
     if not p:
         return RedirectResponse("/admin/services/import?error=1", status_code=303)
+    from smm_api import looks_like_masked_key
+    from urllib.parse import quote
+
+    if looks_like_masked_key(p.get("api_key") or ""):
+        add_log("ดึงบริการไม่สำเร็จ: API key เป็นค่าปกปิด (****)", request.client.host if request.client else "-")
+        return RedirectResponse(
+            "/admin/services/import?pid=%s&error=1&msg=%s"
+            % (pid, quote("API Key เป็น **** ไม่ใช่คีย์จริง — แก้ที่หน้าผู้ให้บริการ")),
+            status_code=303,
+        )
     result = action(p["api_url"], {"key": p["api_key"], "action": "services"}, timeout=70)
     items, err = normalize_services(result)
     currency = norm_currency(p.get("currency") or "", "")
@@ -679,11 +691,14 @@ async def services_import_fetch(request: Request, pid: int = Form(...)):
     if isinstance(bal, dict):
         if bal.get("currency"):
             currency = norm_currency(bal.get("currency"), currency or "USD")
-        if bal.get("balance") is not None:
+        if bal.get("balance") is not None and not bal.get("error"):
             bal_amt = bal.get("balance")
     if err:
         add_log("ดึงบริการไม่สำเร็จ: %s" % err, request.client.host if request.client else "-")
-        return RedirectResponse("/admin/services/import?pid=%s&error=1" % pid, status_code=303)
+        return RedirectResponse(
+            "/admin/services/import?pid=%s&error=1&msg=%s" % (pid, quote(str(err)[:160])),
+            status_code=303,
+        )
     # If API items carry currency, prefer first non-empty; else balance / provider
     for it in items:
         if isinstance(it, dict) and (it.get("currency") or it.get("Currency")):

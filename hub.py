@@ -219,6 +219,8 @@ async def payments_options(
     pay_merchant: str = Form("LIKES AUTO"),
     pay_unique_satang: str = Form(""),
     auto_approve_slip: str = Form(""),
+    min_deposit: str = Form(""),
+    max_deposit: str = Form(""),
 ):
     g = ok(request)
     if g:
@@ -236,6 +238,10 @@ async def payments_options(
         "oiio_slip_on": "0",
         "easyslip_key": "",
     }
+    if str(min_deposit or "").strip():
+        values["min_deposit"] = str(min_deposit).strip()
+    if str(max_deposit or "").strip():
+        values["max_deposit"] = str(max_deposit).strip()
     save_settings(values)
     try:
         from db_backup import schedule_backup

@@ -285,6 +285,14 @@
       <label class="la-field">ทรูมันนี่หลัก</label>
       <input class="la-input" name="truemoney" value="{{ settings.truemoney or '' }}" placeholder="เบอร์วอลเล็ท (ไม่ใช่ QR EMV)">
     </div>
+    <div>
+      <label class="la-field">เติมขั้นต่ำ (บาท)</label>
+      <input class="la-input" name="min_deposit" value="{{ settings.min_deposit or '1' }}" inputmode="decimal">
+    </div>
+    <div>
+      <label class="la-field">เติมสูงสุด (บาท)</label>
+      <input class="la-input" name="max_deposit" value="{{ settings.max_deposit or '5000' }}" inputmode="decimal">
+    </div>
   </div>
   <div class="adm-sw-row set-sw" style="margin: 4px 0 14px">
     <label class="adm-sw"><input type="checkbox" name="pay_unique_satang" value="1" {% if settings.get('pay_unique_satang','1') != '0' %}checked{% endif %}><i class="ri-coin-fill"></i> สุ่มสตางค์บน QR ไม่ให้ยอดซ้ำ</label>
@@ -292,6 +300,37 @@
   </div>
   <p class="adm-help">ตรวจสลิปด้วยระบบของเราเอง: สแกน Mini-QR บนสลิป → อ่านยอด + เลขท้ายพร้อมเพย์จากรูป → เข้ากระเป๋าทันที (ไม่ใช้ EasySlip / API ภายนอก)</p>
   <button class="la-btn" type="submit">บันทึกเลขรับเงิน / QR</button>
+</form>
+
+<section class="adm-form" style="margin-bottom:18px">
+  <h2 class="adm-h2" style="margin-top:0">1.5) สถานะ OCR / Mini-QR</h2>
+  <p class="adm-help">ใช้ตรวจว่าเซิร์ฟเวอร์อ่านสลิปได้ — ถ้าไม่พร้อม ให้ redeploy หรือดู <a href="/admin/payments/slip-diag" target="_blank" rel="noopener">Slip diag</a></p>
+  <div class="adm-sw-row" style="gap:10px;flex-wrap:wrap">
+    <a class="la-btn la-btn-ghost" href="/admin/payments"><i class="ri-wallet-3-line"></i> คิวเติมเงิน</a>
+    <a class="la-btn la-btn-ghost" href="/admin/payments/slip-diag" target="_blank" rel="noopener"><i class="ri-stethoscope-line"></i> Slip diag JSON</a>
+    <a class="la-btn la-btn-ghost" href="/admin/settings/bonuses"><i class="ri-gift-line"></i> โบนัสเติม</a>
+    <a class="la-btn la-btn-ghost" href="/admin/settings/banks"><i class="ri-bank-card-line"></i> บัญชีธนาคาร</a>
+  </div>
+</section>
+
+<form method="post" action="/admin/settings/payments/telegram" class="adm-form" style="margin-bottom:18px">
+  <h2 class="adm-h2" style="margin-top:0">1.6) แจ้งเตือน Telegram (สลิป / โอนเข้า)</h2>
+  <p class="adm-help">ใส่ Bot Token แล้วระบบตั้ง webhook ให้อัตโนมัติ — ใช้คู่กับ URL แจ้งโอนด้านล่าง</p>
+  <label class="la-field">Telegram Bot Token</label>
+  <input class="la-input" name="pay_tg_token" value="{{ settings.pay_tg_token or '' }}" placeholder="123456:ABC..." autocomplete="off">
+  <button class="la-btn" type="submit">บันทึก + ตั้ง webhook</button>
+</form>
+
+<form method="post" action="/admin/settings/payments/notify-token" class="adm-form" style="margin-bottom:18px">
+  <h2 class="adm-h2" style="margin-top:0">1.7) URL แจ้งโอนเข้า (ธนาคาร / webhook)</h2>
+  <p class="adm-help">ส่ง POST ยอดเงินมาที่ URL นี้ ระบบจะจับคู่รายการรออัตโนมัติ — กดสร้างโทเคนใหม่ได้ถ้าหลุด</p>
+  <label class="la-field">Notify URL</label>
+  <div class="g-copyrow" style="margin-bottom:10px">
+    <code style="word-break:break-all">{{ pay_notify_url or '—' }}</code>
+  </div>
+  <label class="la-field">Token ปัจจุบัน</label>
+  <input class="la-input" value="{{ pay_notify_token or '' }}" readonly>
+  <button class="la-btn la-btn-ghost" type="submit" onclick="return confirm('สร้างโทเคนใหม่? URL เก่าใช้ไม่ได้ทันที')">สร้างโทเคนใหม่</button>
 </form>
 
 <form method="post" class="adm-form" style="margin-bottom:18px">

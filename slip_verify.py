@@ -743,6 +743,7 @@ def _tessdata_dirs():
         if val:
             found.append(val)
     for candidate in (
+        str(ROOT / "vendor" / "tesseract" / "tessdata"),
         "/usr/share/tesseract-ocr/5/tessdata",
         "/usr/share/tesseract-ocr/4.00/tessdata",
         "/usr/share/tessdata",
@@ -754,7 +755,7 @@ def _tessdata_dirs():
 
 
 def _configure_tesseract():
-    """Locate tesseract binary once (Linux package path or Windows installer)."""
+    """Locate tesseract: vendored static binary (Render), apt, or Windows."""
     global _TESSERACT_READY
     if _TESSERACT_READY is not None:
         return _TESSERACT_READY
@@ -765,21 +766,26 @@ def _configure_tesseract():
     except Exception:
         _TESSERACT_READY = False
         return False
-    cmd = shutil.which("tesseract")
-    if not cmd:
-        for candidate in (
-            r"C:\Program Files\Tesseract-OCR\tesseract.exe",
-            r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
-            "/usr/bin/tesseract",
-            "/usr/local/bin/tesseract",
-        ):
-            if Path(candidate).is_file():
-                cmd = candidate
-                break
+    cmd = ""
+    for candidate in (
+        str(ROOT / "vendor" / "tesseract" / "tesseract"),
+        shutil.which("tesseract") or "",
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+        "/usr/bin/tesseract",
+        "/usr/local/bin/tesseract",
+    ):
+        if candidate and Path(candidate).is_file():
+            cmd = candidate
+            break
     if cmd:
         pytesseract.pytesseract.tesseract_cmd = cmd
+        try:
+            os.chmod(cmd, 0o755)
+        except Exception:
+            pass
     for d in _tessdata_dirs():
-        os.environ.setdefault("TESSDATA_PREFIX", d)
+        os.environ["TESSDATA_PREFIX"] = d
         break
     try:
         pytesseract.get_tesseract_version()
@@ -812,26 +818,32 @@ def tess_diag():
         try:
             import pytesseract
 
-            info["cmd"] = (
-                getattr(pytesseract.pytesseract, "tesseract_cmd", None)
-                or shutil.which("tesseract")
-                or ""
-            )
+            cand = getattr(pytesseract.pytesseract, "tesseract_cmd", None) or ""
+            if cand and Path(cand).is_file():
+                info["cmd"] = cand
+            else:
+                info["cmd"] = shutil.which("tesseract") or ""
+                vendor = ROOT / "vendor" / "tesseract" / "tesseract"
+                if vendor.is_file():
+                    info["cmd"] = str(vendor)
         except Exception:
             info["cmd"] = shutil.which("tesseract") or ""
-        if info["cmd"]:
-            info["version"] = subprocess.check_output(
-                [info["cmd"], "--version"], stderr=subprocess.STDOUT, timeout=15
-            ).decode("utf-8", "replace")[:240]
-            info["langs"] = subprocess.check_output(
-                [info["cmd"], "--list-langs"], stderr=subprocess.STDOUT, timeout=15
-            ).decode("utf-8", "replace")[:240]
+        if info["cmd"] and Path(info["cmd"]).is_file():
+            try:
+                info["version"] = subprocess.check_output(
+                    [info["cmd"], "--version"], stderr=subprocess.STDOUT, timeout=15
+                ).decode("utf-8", "replace")[:240]
+                info["langs"] = subprocess.check_output(
+                    [info["cmd"], "--list-langs"], stderr=subprocess.STDOUT, timeout=15
+                ).decode("utf-8", "replace")[:240]
+            except Exception as ex:
+                info["error"] = "tess probe: %s" % ex
         # Prefer a real slip if present; else synthetic digits.
         sample_path = ROOT / "data" / "_live_slip_2.jpg"
         if sample_path.is_file():
             raw = sample_path.read_bytes()
         else:
-            from PIL import Image, ImageDraw, ImageFont
+            from PIL import Image, ImageDraw
 
             im = Image.new("RGB", (400, 120), (255, 255, 255))
             ImageDraw.Draw(im).text((20, 40), "1.04 XXXXXX6251", fill=(0, 0, 0))
@@ -841,8 +853,8 @@ def tess_diag():
         text = ocr_slip_text(raw) or ""
         info["sample"] = text[:160]
         info["has_amount"] = _ocr_has_amount(text, 1.04)
-        info["rapidocr"] = bool(_rapidocr_engine())
         info["amounts"] = _ocr_amount_candidates(text)[:8]
+        info["vendor"] = str(ROOT / "vendor" / "tesseract" / "tesseract")
     except Exception as ex:
         info["error"] = str(ex)[:200]
     return info
@@ -919,92 +931,21 @@ def _ocr_cli(im, lang="eng", psm=6):
                 pass
 
 
-_RAPIDOCR = None
-
-
-def _rapidocr_engine():
-    """Lazy RapidOCR — works on Render native Python (no apt tesseract)."""
-    global _RAPIDOCR
-    if _RAPIDOCR is False:
-        return None
-    if _RAPIDOCR is not None:
-        return _RAPIDOCR
-    try:
-        from rapidocr import RapidOCR
-
-        _RAPIDOCR = RapidOCR()
-        return _RAPIDOCR
-    except Exception as ex:
-        add_log("rapidocr init fail: %s" % ex, "-")
-        _RAPIDOCR = False
-        return None
-
-
-def _ocr_rapid(image_bytes):
-    engine = _rapidocr_engine()
-    if not engine:
-        return ""
-    try:
-        result = engine(image_bytes)
-    except Exception:
-        try:
-            import numpy as np
-            from PIL import Image
-
-            arr = np.array(Image.open(io.BytesIO(image_bytes)).convert("RGB"))
-            result = engine(arr)
-        except Exception as ex:
-            add_log("rapidocr run fail: %s" % ex, "-")
-            return ""
-    texts = []
-    if result is None:
-        return ""
-    # rapidocr>=2 returns object with .txts; older returns (list, elapse)
-    if hasattr(result, "txts") and result.txts:
-        texts = list(result.txts)
-    elif isinstance(result, (list, tuple)) and result:
-        first = result[0]
-        if isinstance(first, (list, tuple)):
-            for row in first:
-                if isinstance(row, (list, tuple)) and len(row) >= 2:
-                    texts.append(str(row[1]))
-                elif isinstance(row, str):
-                    texts.append(row)
-        elif hasattr(result, "__iter__") and not isinstance(result, (str, bytes)):
-            try:
-                texts = [str(x) for x in result if x]
-            except Exception:
-                pass
-    joined = "\n".join(t for t in texts if t).strip()
-    if joined:
-        improved = _improve_thai_text(joined)
-        return (joined + ("\n" + improved if improved and improved != joined else "")).strip()
-    return ""
-
-
 def ocr_slip_text(image_bytes):
-    """Fast OCR for Thai bank slips — RapidOCR (Render) + Tesseract when present."""
+    """Fast OCR for Thai bank slips — digit-first Tesseract (vendored on Render)."""
     raw = image_bytes or b""
     if len(raw) < 64:
         return ""
-
-    # 0) RapidOCR first on hosts without apt tesseract (Render native Python).
-    rapid = _ocr_rapid(raw)
-    if rapid and _ocr_amount_candidates(rapid) and re.search(
-        r"(?:X{2,}|\*{2,}|\d{3,})", rapid, re.I
-    ):
-        return rapid
-
     try:
         from PIL import Image, ImageOps, ImageEnhance, ImageFilter
     except Exception:
-        return rapid
-
-    tess_ok = _configure_tesseract()
+        return ""
+    if not _configure_tesseract():
+        return ""
     try:
         im = Image.open(io.BytesIO(raw))
     except Exception:
-        return rapid
+        return ""
     try:
         im = ImageOps.exif_transpose(im)
     except Exception:
@@ -1034,8 +975,6 @@ def ocr_slip_text(image_bytes):
         contrast,
     ]
     chunks = []
-    if rapid:
-        chunks.append(rapid)
 
     def _push(text):
         text = (text or "").strip()
@@ -1049,9 +988,6 @@ def ocr_slip_text(image_bytes):
         return bool(_ocr_amount_candidates(joined)) and bool(
             re.search(r"(?:X{2,}|\*{2,}|\d{3,})", joined, re.I)
         )
-
-    if not tess_ok:
-        return "\n".join(chunks)
 
     # 1) Fast digit pass (eng + whitelist) — enough for 1.04 + XXX 6251.
     digit_cfg = "--psm 6 -c tessedit_char_whitelist=0123456789.,Xx* "

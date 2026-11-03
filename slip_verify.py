@@ -691,7 +691,7 @@ def decode_qr_texts(image_bytes):
 
 
 def credit_from_local_qr(pid, pay, qr_text):
-    """Fallback when EasySlip/OIIO are down: trust a CRC-valid transfer QR."""
+    """Local EMV transfer-QR fallback: trust a CRC-valid payload amount/receiver."""
     text = str(qr_text or "").strip()
     if is_slip_verify_qr(text):
         return False, "need_ocr"
@@ -867,7 +867,7 @@ def _ocr_receiver_match(ocr_text, pay):
 
 
 def credit_from_slip_verify_local(pid, pay, qr_text, image_bytes):
-    """Mini-QR (bank+ref) + OCR amount/receiver when EasySlip/OIIO are down."""
+    """Built-in Mini-QR (bank+ref) + OCR amount/receiver — no external slip API."""
     parsed = parse_slip_verify_qr(qr_text)
     if not parsed:
         return False, "not_slip"
@@ -948,19 +948,8 @@ def auto_credit_from_slip(pid, image_path=None, payload="", count_try=True):
     if only_presentment:
         return False, "not_slip"
     last = "no_qr"
-    easy_ready = False
-    try:
-        from easyslip import ready as easy_on
-        from easyslip import verify_image, verify_payload
 
-        easy_ready = easy_on()
-    except Exception:
-        verify_payload = None
-        verify_image = None
-
-    def bank_credit(info, source, blob):
-        return credit_from_verified(pid, pay, info, source, blob)
-
+    # Built-in only: Mini-QR + OCR, then local EMV transfer QR. No EasySlip/OIIO.
     for text in qrs[:3]:
         if text.rfind("6304") >= 12 and not emv_crc_ok(text):
             last = "bad_qr"
@@ -969,120 +958,37 @@ def auto_credit_from_slip(pid, image_path=None, payload="", count_try=True):
         if qr_amt and not amounts_match(pay.get("amount"), qr_amt):
             return False, "amount"
 
-        # 1) EasySlip bank lookup (best) when API key is set.
-        if easy_ready and verify_payload:
-            info, err = verify_payload(text)
-            if not err and info:
-                paid, code = bank_credit(info, "easyslip", text)
-                if paid:
-                    return True, "paid"
-                last = code
-                if code in ("amount", "receiver", "duplicate", "stale", "no_ref"):
-                    return False, code
-            elif err:
-                key = str(err).lower().replace("-", "_")
-                if key in ("duplicate_slip", "duplicate"):
-                    return False, "duplicate"
-                if key in ("quota_exceeded", "slip_pending"):
-                    last = key
-                elif key not in ("timeout", "no_key", "fail", "bad_qr"):
-                    last = key
-
-        # 2) Thai Mini-QR on real bank slips: scan QR (bank+ref) then OCR amount/receiver.
         if is_slip_verify_qr(text):
             paid, code = credit_from_slip_verify_local(pid, pay, text, raw)
             if paid:
                 return True, "paid"
             last = code
-            if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "bad_qr"):
+            if code in (
+                "amount",
+                "receiver",
+                "duplicate",
+                "stale",
+                "no_ref",
+                "bad_qr",
+                "ocr_fail",
+                "receiver_unclear",
+            ):
                 return False, code
-            # Mini-QR is authoritative for Krungthai-style slips. Do not bury OCR
-            # failures under the OIIO "external down" message.
-            if code in ("ocr_fail", "receiver_unclear"):
-                oiio_on = str(get_settings().get("oiio_slip_on") or "1") != "0"
-                if not oiio_on:
-                    return False, code
-            elif code not in ("timeout",):
-                continue
+            continue
 
-        # 3) Optional hosted OIIO (often offline) — last resort only.
-        oiio_on = str(get_settings().get("oiio_slip_on") or "1") != "0"
-        if oiio_on and (not is_slip_verify_qr(text) or last in ("timeout", "ocr_fail", "receiver_unclear", "no_qr")):
-            try:
-                from oiio_slip import verify_transfer_qr
+        paid, code = credit_from_local_qr(pid, pay, text)
+        if paid:
+            return True, "paid"
+        last = code
+        if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "bad_qr"):
+            return False, code
+        if code == "not_slip":
+            continue
 
-                info, err = verify_transfer_qr(text, pay.get("amount"))
-                if not err and info:
-                    paid, code = bank_credit(info, "oiio", text)
-                    if paid:
-                        return True, "paid"
-                    last = code
-                    if code in ("amount", "receiver", "duplicate", "stale", "no_ref"):
-                        return False, code
-                elif err:
-                    key = str(err).lower().replace("-", "_")
-                    if key in ("amount_not_verified", "amount"):
-                        return False, "amount"
-                    # Keep OCR-specific code when OIIO is just offline.
-                    if key in ("timeout", "fail") and last in ("ocr_fail", "receiver_unclear"):
-                        pass
-                    else:
-                        last = key
-            except Exception as err:
-                add_log("slip oiio error #%s %s" % (pid, type(err).__name__), "-")
-                if last == "no_qr":
-                    last = "timeout"
-
-    oiio_on = str(get_settings().get("oiio_slip_on") or "1") != "0"
-    if (
-        oiio_on
-        and last in ("timeout", "fail", "no_qr")
-        and raw
-        and not any(is_slip_verify_qr(t) for t in qrs[:3])
-    ):
-        try:
-            from oiio_slip import verify_transfer_image
-
-            info, err = verify_transfer_image(raw, pay.get("amount"))
-            if not err and info:
-                paid, code = bank_credit(info, "oiio-img", info.get("payload") or (qrs[0] if qrs else ""))
-                if paid:
-                    return True, "paid"
-                last = code
-            elif err:
-                key = str(err).lower().replace("-", "_")
-                if key not in ("no_slip", "off"):
-                    last = key
-        except Exception as err:
-            add_log("slip oiio image error #%s %s" % (pid, type(err).__name__), "-")
-
-    if not qrs and easy_ready and disk and verify_image:
-        info, err = verify_image(str(disk))
-        if not err and info:
-            paid, code = bank_credit(info, "easyslip-img", info.get("payload") or "")
-            if paid:
-                return True, "paid"
-            last = code
-        elif err:
-            last = str(err).lower().replace("-", "_") or last
-
-    # EMV transfer QR fallback (amount+receiver inside payload).
-    if qrs and last in ("timeout", "fail", "no_qr", "quota_exceeded", "slip_pending", "need_ocr"):
-        for text in qrs[:3]:
-            if is_slip_verify_qr(text):
-                continue
-            paid, code = credit_from_local_qr(pid, pay, text)
-            if paid:
-                return True, "paid"
-            last = code
-            if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "bad_qr"):
-                break
-            if code == "not_slip":
-                continue
+    if not qrs:
+        return False, "no_qr"
 
     key = str(last or "").lower().replace("-", "_")
-    if key == "slip_pending":
-        return False, "slip_pending"
     if key in ("slip_not_found", "qrcode_not_found"):
         return False, "no_qr"
     if key == "need_ocr":
@@ -1103,7 +1009,7 @@ def verify_error_text(code):
         "not_pending": "รายการนี้ตรวจแล้ว",
         "slip_pending": "ธนาคารยังไม่ยืนยันสลิป รอสักครู่แล้วแนบใหม่",
         "quota_exceeded": "ระบบตรวจสลิปเต็มโควต้า รอแอดมินตรวจสอบ",
-        "timeout": "ระบบตรวจสลิปภายนอกขัดข้อง — ใส่คีย์ EasySlip ที่ตั้งค่าช่องทางจ่าย หรือรอแอดมินอนุมัติ",
+        "timeout": "ตรวจสลิปไม่สำเร็จ ถ่ายให้เห็น QR + ยอดเงินชัด แล้วแนบใหม่ หรือรอแอดมินอนุมัติ",
         "ocr_fail": "อ่านยอดจากรูปสลิปไม่สำเร็จ ถ่ายสลิปให้ชัด (เห็น QR + ยอดเงิน) แล้วแนบใหม่ หรือรอแอดมินอนุมัติ",
         "bad_qr": "QR บนสลิปไม่ถูกต้อง",
         "stale": "เวลาในสลิปไม่ตรงกับรายการนี้",

@@ -289,15 +289,8 @@
   <div class="adm-sw-row set-sw" style="margin: 4px 0 14px">
     <label class="adm-sw"><input type="checkbox" name="pay_unique_satang" value="1" {% if settings.get('pay_unique_satang','1') != '0' %}checked{% endif %}><i class="ri-coin-fill"></i> สุ่มสตางค์บน QR ไม่ให้ยอดซ้ำ</label>
     <label class="adm-sw"><input type="checkbox" name="auto_approve_slip" value="1" {% if settings.get('auto_approve_slip','1') != '0' %}checked{% endif %}><i class="ri-shield-check-fill"></i> อนุมัติอัตโนมัติเมื่อแนบสลิปผ่าน</label>
-    <label class="adm-sw"><input type="checkbox" name="oiio_slip_on" value="1" {% if settings.get('oiio_slip_on','1') != '0' %}checked{% endif %}><i class="ri-scan-2-fill"></i> ลอง OIIO (โฮสต์สาธารณะมักล่ม)</label>
   </div>
-  <label class="la-field">EasySlip API key (ตรวจสลิปอัตโนมัติ)</label>
-  <input class="la-input" type="password" name="easyslip_key" placeholder="{{ 'ตั้งค่าแล้ว — เว้นว่างถ้าไม่เปลี่ยน' if settings.easyslip_key else 'วางคีย์จาก developer.easyslip.com' }}" autocomplete="new-password">
-  {% if not settings.easyslip_key %}
-  <p class="adm-help">ระบบสแกน Mini-QR บนสลิปจริง แล้วอ่านยอด + เลขท้ายพร้อมเพย์จากรูปเพื่อเทียบรายการ (แนะนำใส่คีย์ EasySlip ถ้าต้องการยืนยันตรงกับธนาคาร)</p>
-  {% else %}
-  <p class="adm-help">แนบสลิปจากแอปธนาคาร → สแกน QR บนสลิป → เทียบยอดกับธนาคาร → เข้ากระเป๋าทันที</p>
-  {% endif %}
+  <p class="adm-help">ตรวจสลิปด้วยระบบของเราเอง: สแกน Mini-QR บนสลิป → อ่านยอด + เลขท้ายพร้อมเพย์จากรูป → เข้ากระเป๋าทันที (ไม่ใช้ EasySlip / API ภายนอก)</p>
   <button class="la-btn" type="submit">บันทึกเลขรับเงิน / QR</button>
 </form>
 

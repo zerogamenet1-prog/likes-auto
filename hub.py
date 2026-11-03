@@ -158,8 +158,7 @@ def _payments_qr_status(settings=None, methods=None):
         "payload": payload,
         "sample_amount": sample_amount,
         "ready": bool(active_pp and normalized and payload),
-        "easyslip_ready": bool((s.get("easyslip_key") or "").strip()),
-        "oiio_on": str(s.get("oiio_slip_on") or "1") != "0",
+        "local_slip": True,
         "auto_slip": str(s.get("auto_approve_slip") or "1") != "0",
     }
 
@@ -216,8 +215,6 @@ async def payments_options(
     pay_merchant: str = Form("LIKES AUTO"),
     pay_unique_satang: str = Form(""),
     auto_approve_slip: str = Form(""),
-    oiio_slip_on: str = Form(""),
-    easyslip_key: str = Form(""),
 ):
     g = ok(request)
     if g:
@@ -225,17 +222,16 @@ async def payments_options(
     def _on(val: str) -> str:
         return "1" if str(val or "").strip().lower() in {"1", "on", "true", "yes"} else "0"
 
+    # Local Mini-QR + OCR only — never call EasySlip / public OIIO.
     values = {
         "promptpay": promptpay.strip(),
         "truemoney": truemoney.strip(),
         "pay_merchant": pay_merchant.strip() or "LIKES AUTO",
         "pay_unique_satang": _on(pay_unique_satang),
         "auto_approve_slip": _on(auto_approve_slip),
-        "oiio_slip_on": _on(oiio_slip_on),
+        "oiio_slip_on": "0",
+        "easyslip_key": "",
     }
-    key = easyslip_key.strip()
-    if key:
-        values["easyslip_key"] = key
     save_settings(values)
     try:
         from db_backup import schedule_backup

@@ -47,7 +47,7 @@ DEFAULTS = {
     "pay_merchant": "LIKES AUTO",
     "easyslip_key": "",
     "auto_approve_slip": "1",
-    "oiio_slip_on": "1",
+    "oiio_slip_on": "0",
     "pay_notify_token": "",
     "max_deposit": "5000",
     "logo_url": "/static/assets/admin-crest.png",

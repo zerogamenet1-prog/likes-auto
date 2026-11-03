@@ -279,9 +279,9 @@
   <label class="la-field">EasySlip API key (ตรวจสลิปอัตโนมัติ)</label>
   <input class="la-input" type="password" name="easyslip_key" placeholder="{{ 'ตั้งค่าแล้ว — เว้นว่างถ้าไม่เปลี่ยน' if settings.easyslip_key else 'วางคีย์จาก developer.easyslip.com' }}" autocomplete="new-password">
   {% if not settings.easyslip_key %}
-  <p class="adm-help" style="color:#c2410c">ยังไม่มีคีย์ EasySlip — ระบบจะอ่าน Mini-QR บนสลิป + OCR ยอด/เลขท้ายบัญชีเอง (แนะนำใส่คีย์ EasySlip เพื่อยืนยันกับธนาคารแม่นขึ้น)</p>
+  <p class="adm-help">ระบบสแกน Mini-QR บนสลิปจริง แล้วอ่านยอด + เลขท้ายพร้อมเพย์จากรูปเพื่อเทียบรายการ (แนะนำใส่คีย์ EasySlip ถ้าต้องการยืนยันตรงกับธนาคาร)</p>
   {% else %}
-  <p class="adm-help">ลูกค้าสแกน QR แล้วแนบสลิปจากแอปธนาคาร ระบบอ่าน QR บนสลิป เทียบยอด แล้วเข้ากระเป๋าทันที</p>
+  <p class="adm-help">แนบสลิปจากแอปธนาคาร → สแกน QR บนสลิป → เทียบยอดกับธนาคาร → เข้ากระเป๋าทันที</p>
   {% endif %}
   <button class="la-btn" type="submit">บันทึกเลขรับเงิน / QR</button>
 </form>

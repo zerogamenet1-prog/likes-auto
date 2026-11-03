@@ -160,7 +160,7 @@ async def proxy_headers_mw(request: Request, call_next):
 @app.middleware("http")
 async def maintenance_mw(request: Request, call_next):
     path = request.url.path
-    if path.startswith("/admin") or path.startswith("/css") or path.startswith("/assets") or path.startswith("/static") or path in ("/health", "/internal/cron", "/internal/pay/in", "/internal/pay/tg", "/internal/db/dump"):
+    if path.startswith("/admin") or path.startswith("/css") or path.startswith("/assets") or path.startswith("/static") or path in ("/health", "/internal/cron", "/internal/pay/in", "/internal/pay/tg", "/internal/db/dump", "/internal/slip-diag"):
         return await call_next(request)
     try:
         s = get_settings()
@@ -814,6 +814,24 @@ async def internal_db_dump(request: Request):
     if not DB_PATH.is_file():
         return JSONResponse({"ok": False, "error": "missing"}, status_code=404)
     return FileResponse(str(DB_PATH), media_type="application/octet-stream", filename="app.db")
+
+
+@app.get("/internal/slip-diag")
+async def internal_slip_diag(request: Request):
+    """Protected OCR/tesseract probe — confirms Render has working slip OCR."""
+    from db_backup import backup_token
+
+    got = (request.headers.get("x-la-db-token") or "").strip()
+    if not got or not hmac.compare_digest(got, backup_token()):
+        return JSONResponse({"ok": False, "error": "unauthorized"}, status_code=401)
+    try:
+        from slip_verify import tess_diag
+
+        info = tess_diag()
+        info["ok"] = True
+        return JSONResponse(info)
+    except Exception as ex:
+        return JSONResponse({"ok": False, "error": str(ex)[:200]}, status_code=500)
 
 
 @app.get("/manifest.webmanifest")

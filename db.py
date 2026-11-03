@@ -1624,7 +1624,10 @@ def create_payment(client, method, amount, method_id=None):
         (client, name, amt, "pending", now(), row.get("id"), kind, make_ref_code()),
     )
     pid = cur.lastrowid
-    exact = unique_amount(amt, pid)
+    if str(settings.get("pay_unique_satang") or "1") != "0":
+        exact = unique_amount(amt, pid)
+    else:
+        exact = round(amt, 2)
     con.execute("UPDATE payments SET amount=? WHERE id=?", (exact, pid))
     ref = "LA%06d" % int(pid)
     con.execute("UPDATE payments SET ref_code=? WHERE id=? AND (ref_code IS NULL OR ref_code='')", (ref, pid))

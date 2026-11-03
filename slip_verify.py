@@ -734,12 +734,32 @@ def credit_from_local_qr(pid, pay, qr_text):
 _TESSERACT_READY = None
 
 
+def _tessdata_dirs():
+    import os
+
+    found = []
+    for key in ("TESSDATA_PREFIX",):
+        val = (os.environ.get(key) or "").strip()
+        if val:
+            found.append(val)
+    for candidate in (
+        "/usr/share/tesseract-ocr/5/tessdata",
+        "/usr/share/tesseract-ocr/4.00/tessdata",
+        "/usr/share/tessdata",
+        r"C:\Program Files\Tesseract-OCR\tessdata",
+    ):
+        if Path(candidate).is_dir() and candidate not in found:
+            found.append(candidate)
+    return found
+
+
 def _configure_tesseract():
     """Locate tesseract binary once (Linux package path or Windows installer)."""
     global _TESSERACT_READY
     if _TESSERACT_READY is not None:
         return _TESSERACT_READY
     try:
+        import os
         import shutil
         import pytesseract
     except Exception:
@@ -758,12 +778,72 @@ def _configure_tesseract():
                 break
     if cmd:
         pytesseract.pytesseract.tesseract_cmd = cmd
+    for d in _tessdata_dirs():
+        os.environ.setdefault("TESSDATA_PREFIX", d)
+        break
     try:
         pytesseract.get_tesseract_version()
         _TESSERACT_READY = True
-    except Exception:
+    except Exception as ex:
+        add_log("tesseract configure fail: %s" % ex, "-")
         _TESSERACT_READY = False
     return _TESSERACT_READY
+
+
+def tess_diag():
+    """Runtime probe for Render / ops — binary, langs, sample OCR."""
+    import os
+    import shutil
+    import subprocess
+
+    info = {
+        "ready": False,
+        "cmd": "",
+        "tessdata": _tessdata_dirs(),
+        "env_prefix": (os.environ.get("TESSDATA_PREFIX") or ""),
+        "version": "",
+        "langs": "",
+        "sample": "",
+        "has_amount": False,
+        "error": "",
+    }
+    try:
+        info["ready"] = bool(_configure_tesseract())
+        try:
+            import pytesseract
+
+            info["cmd"] = (
+                getattr(pytesseract.pytesseract, "tesseract_cmd", None)
+                or shutil.which("tesseract")
+                or ""
+            )
+        except Exception:
+            info["cmd"] = shutil.which("tesseract") or ""
+        if info["cmd"]:
+            info["version"] = subprocess.check_output(
+                [info["cmd"], "--version"], stderr=subprocess.STDOUT, timeout=15
+            ).decode("utf-8", "replace")[:240]
+            info["langs"] = subprocess.check_output(
+                [info["cmd"], "--list-langs"], stderr=subprocess.STDOUT, timeout=15
+            ).decode("utf-8", "replace")[:240]
+        # Prefer a real slip if present; else synthetic digits.
+        sample_path = ROOT / "data" / "_live_slip_2.jpg"
+        if sample_path.is_file():
+            raw = sample_path.read_bytes()
+        else:
+            from PIL import Image, ImageDraw, ImageFont
+
+            im = Image.new("RGB", (400, 120), (255, 255, 255))
+            ImageDraw.Draw(im).text((20, 40), "1.04 XXXXXX6251", fill=(0, 0, 0))
+            buf = io.BytesIO()
+            im.save(buf, format="PNG")
+            raw = buf.getvalue()
+        text = ocr_slip_text(raw) or ""
+        info["sample"] = text[:160]
+        info["has_amount"] = _ocr_has_amount(text, 1.04)
+    except Exception as ex:
+        info["error"] = str(ex)[:200]
+    return info
 
 
 def _improve_thai_text(text):
@@ -805,6 +885,38 @@ def _ocr_run(im, lang, cfg):
         return ""
 
 
+def _ocr_cli(im, lang="eng", psm=6):
+    """Direct tesseract CLI fallback when pytesseract returns empty on Linux."""
+    import os
+    import shutil
+    import subprocess
+    import tempfile
+
+    cmd = shutil.which("tesseract") or ""
+    if not cmd:
+        return ""
+    path = ""
+    try:
+        fd, path = tempfile.mkstemp(suffix=".png")
+        os.close(fd)
+        im.save(path, format="PNG")
+        args = [cmd, path, "stdout", "-l", lang, "--psm", str(psm)]
+        env = os.environ.copy()
+        for d in _tessdata_dirs():
+            env.setdefault("TESSDATA_PREFIX", d)
+            break
+        out = subprocess.check_output(args, stderr=subprocess.DEVNULL, timeout=25, env=env)
+        return out.decode("utf-8", "replace").strip()
+    except Exception:
+        return ""
+    finally:
+        if path:
+            try:
+                os.unlink(path)
+            except Exception:
+                pass
+
+
 def ocr_slip_text(image_bytes):
     """Fast OCR for Thai bank slips — digit-first, then smart-slip Thai patterns."""
     raw = image_bytes or b""
@@ -815,7 +927,8 @@ def ocr_slip_text(image_bytes):
     except Exception:
         return ""
     if not _configure_tesseract():
-        return ""
+        # Still try CLI — binary may exist even if pytesseract probe failed.
+        pass
     try:
         im = Image.open(io.BytesIO(raw))
     except Exception:
@@ -870,6 +983,8 @@ def ocr_slip_text(image_bytes):
             return "\n".join(chunks)
         if _push(_ocr_run(crop, "eng", "--psm 11 -c tessedit_char_whitelist=0123456789.,Xx* ")):
             return "\n".join(chunks)
+        if _push(_ocr_cli(crop, "eng", 6)):
+            return "\n".join(chunks)
 
     # 2) Thai+eng like smart-slip-verifier (tha pack may be missing — skip quietly).
     for crop in crops[:4]:
@@ -877,6 +992,8 @@ def ocr_slip_text(image_bytes):
             for cfg in ("--psm 6", "--psm 4"):
                 if _push(_ocr_run(crop, lang, cfg)):
                     return "\n".join(chunks)
+            if _push(_ocr_cli(crop, lang.split("+")[0], 6)):
+                return "\n".join(chunks)
 
     return "\n".join(chunks)
 

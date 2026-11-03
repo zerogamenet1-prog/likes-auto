@@ -81,18 +81,11 @@ CLIENT_TABS = [
     ("panels", "/admin/panels", "แผงลูก"),
 ]
 SETTING_TABS_UI = [
-    ("general", "/admin/settings/general", "ทั่วไป"),
-    ("currency", "/admin/settings/currency", "เรทเงิน"),
-    ("payments", "/admin/settings/payments", "ช่องทางจ่าย"),
-    ("banks", "/admin/settings/banks", "บัญชีธนาคาร"),
-    ("bonuses", "/admin/settings/bonuses", "โบนัส"),
-    ("alerts", "/admin/settings/alerts", "แจ้งเตือน"),
-    ("modules", "/admin/settings/modules", "เปิด-ปิดระบบ"),
-    ("integrations", "/admin/settings/integrations", "เชื่อมต่อ"),
-    ("subjects", "/admin/settings/subjects", "หัวข้อตั๋ว"),
-    ("account", "/admin/account", "รหัสแอดมิน"),
-    ("staff", "/admin/staff", "พนักงาน"),
-    ("logs", "/admin/logs", "บันทึก"),
+    ("general", "/admin/settings/general", "ทั่วไป", "ri-store-2-line"),
+    ("payments", "/admin/settings/payments", "ช่องทางจ่าย", "ri-qr-code-line"),
+    ("modules", "/admin/settings/modules", "เปิด-ปิดเมนู", "ri-toggle-line"),
+    ("integrations", "/admin/settings/integrations", "เชื่อมต่อ", "ri-plug-line"),
+    ("currency", "/admin/settings/currency", "เรทเงิน", "ri-money-dollar-circle-line"),
 ]
 APPEAR_TABS = [
     ("themes", "/admin/appearance/themes", "ธีมเว็บ"),

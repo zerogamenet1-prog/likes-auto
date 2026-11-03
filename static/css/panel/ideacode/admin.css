@@ -228,13 +228,30 @@ img { max-width: 100%; }
 .queue-item:last-child { border-bottom: 0; }
 .adm-empty { color: var(--t-muted); margin: 0; }
 
-.adm-tabs { display: flex; gap: 8px; overflow: auto; padding-bottom: 6px; margin: 0 0 16px; }
-.adm-tabs a {
-  flex: 0 0 auto; padding: 8px 14px; border-radius: 999px;
-  border: 1px solid var(--stroke); color: var(--t-muted);
-  background: var(--bg-card); font-size: 14px; font-weight: 600;
+.adm-tabs {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin: 0 0 16px; padding: 10px;
+  border: 1px solid var(--stroke); border-radius: 16px;
+  background: var(--bg-card); box-shadow: var(--shadow);
 }
-.adm-tabs a.active, .adm-tabs a:hover { background: var(--primary); color: #fff; border-color: transparent; }
+.adm-tabs a {
+  display: inline-flex; align-items: center; gap: 8px;
+  flex: 0 0 auto; padding: 10px 14px; border-radius: 12px;
+  border: 1px solid transparent; color: var(--t-muted);
+  background: transparent; font-size: 13px; font-weight: 700;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.adm-tabs a i { font-size: 16px; opacity: .75; }
+.adm-tabs a:hover {
+  color: var(--t-base); background: var(--bg-hover);
+  border-color: var(--stroke);
+}
+.adm-tabs a.active {
+  color: var(--ok); background: var(--ok-soft);
+  border-color: color-mix(in srgb, var(--ok) 55%, var(--stroke));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 14%, transparent);
+}
+.adm-tabs a.active i { opacity: 1; color: var(--ok); }
 
 .adm-table-wrap { overflow: auto; background: var(--bg-card); border: 1px solid var(--stroke); border-radius: var(--radius); }
 .adm-toolbar { display: flex; gap: 10px; align-items: center; margin: 0 0 12px; flex-wrap: wrap; padding: 12px 12px 0; }

@@ -9,7 +9,7 @@
   <link rel="icon" href="/static/assets/admin-crest.png">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@3.2.0/fonts/remixicon.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/panel/ideacode/admin.css?v=dash26">
+  <link rel="stylesheet" href="/static/css/panel/ideacode/admin.css?v=dash27">
   <link rel="stylesheet" href="/static/css/panel/ideacode/responsive.css?v=r7">
   <script>
     (function(){ try { var t=localStorage.getItem('la-dash-theme'); if(t) document.documentElement.setAttribute('data-theme', t); } catch(e){} })();
@@ -74,6 +74,7 @@
             </button>
             <div class="dash-menu" id="user-menu">
               <a href="/admin/account"><i class="ri-lock-line"></i> รหัสแอดมิน</a>
+              <a href="/admin/staff"><i class="ri-user-settings-line"></i> พนักงาน</a>
               <a href="/admin/settings/general"><i class="ri-settings-3-line"></i> ตั้งค่า</a>
               <a href="/admin/logout"><i class="ri-logout-box-r-line"></i> ออกจากระบบ</a>
             </div>
@@ -84,9 +85,13 @@
         <h1 class="dash-h">{{ self.title() }}</h1>
         {% block subtitle %}{% endblock %}
         {% if tabs %}
-        <nav class="adm-tabs">
-          {% for key, href, label in tabs %}
-          <a href="{{ href }}" class="{% if tab == key %}active{% endif %}">{{ label }}</a>
+        <nav class="adm-tabs" aria-label="เมนูตั้งค่า">
+          {% for item in tabs %}
+          {% set key = item[0] %}
+          {% set href = item[1] %}
+          {% set label = item[2] %}
+          {% set icon = item[3] if item|length > 3 else '' %}
+          <a href="{{ href }}" class="{% if tab == key %}active{% endif %}">{% if icon %}<i class="{{ icon }}"></i>{% endif %}<span>{{ label }}</span></a>
           {% endfor %}
         </nav>
         {% endif %}

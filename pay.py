@@ -196,6 +196,12 @@ def pay_migrate():
     cur.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", ("easyslip_key", ""))
     cur.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", ("auto_approve_slip", "1"))
     cur.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", ("pay_notify_token", ""))
+    cur.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", ("promptpay", "0619196251"))
+    # Public OIIO host is often offline — prefer local Mini-QR + OCR.
+    cur.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", ("oiio_slip_on", "0"))
+    row = cur.execute("SELECT value FROM settings WHERE key='promptpay'").fetchone()
+    if row is not None and not str(row[0] or "").strip():
+        cur.execute("UPDATE settings SET value=? WHERE key='promptpay'", ("0619196251",))
     con.commit()
     con.close()
 

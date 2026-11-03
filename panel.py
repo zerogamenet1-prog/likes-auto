@@ -554,6 +554,7 @@ def _slip_check_job(pid, path):
             if code in (
                 "amount", "receiver", "receiver_unclear", "duplicate", "stale", "no_ref",
                 "not_slip", "no_qr", "not_pending", "off", "no_slip", "bad_qr", "limit",
+                "ocr_fail",
             ):
                 break
             if code in ("timeout", "fail", "quota_exceeded"):

@@ -222,13 +222,16 @@ async def payments_options(
     g = ok(request)
     if g:
         return g
+    def _on(val: str) -> str:
+        return "1" if str(val or "").strip().lower() in {"1", "on", "true", "yes"} else "0"
+
     values = {
         "promptpay": promptpay.strip(),
         "truemoney": truemoney.strip(),
         "pay_merchant": pay_merchant.strip() or "LIKES AUTO",
-        "pay_unique_satang": "1" if pay_unique_satang else "0",
-        "auto_approve_slip": "1" if auto_approve_slip else "0",
-        "oiio_slip_on": "1" if oiio_slip_on else "0",
+        "pay_unique_satang": _on(pay_unique_satang),
+        "auto_approve_slip": _on(auto_approve_slip),
+        "oiio_slip_on": _on(oiio_slip_on),
     }
     key = easyslip_key.strip()
     if key:

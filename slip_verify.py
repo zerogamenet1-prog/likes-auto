@@ -796,6 +796,7 @@ def ocr_slip_text(image_bytes):
         ImageOps.invert(sharp.crop((0, int(h * 0.55), w, h))),
         gray,
     ]
+    langs = ("eng", "tha+eng", "tha")
     configs = (
         "--psm 6",
         "--psm 4",
@@ -805,18 +806,20 @@ def ocr_slip_text(image_bytes):
     chunks = []
     for crop in crops:
         boost = crop.filter(ImageFilter.SHARPEN)
-        for cfg in configs:
-            try:
-                text = pytesseract.image_to_string(boost, config=cfg) or ""
-            except Exception:
-                continue
-            text = text.strip()
-            if text and text not in chunks:
-                chunks.append(text)
-            # Enough signal: amount-like + account tail.
-            joined = "\n".join(chunks)
-            if _ocr_amount_candidates(joined) and re.search(r"(?:X{2,}|\*{2,}|\d{4})", joined, re.I):
-                return joined
+        for lang in langs:
+            for cfg in configs:
+                try:
+                    text = pytesseract.image_to_string(boost, lang=lang, config=cfg) or ""
+                except Exception:
+                    # Missing language pack — try next.
+                    continue
+                text = text.strip()
+                if text and text not in chunks:
+                    chunks.append(text)
+                # Enough signal: amount-like + account tail.
+                joined = "\n".join(chunks)
+                if _ocr_amount_candidates(joined) and re.search(r"(?:X{2,}|\*{2,}|\d{4})", joined, re.I):
+                    return joined
     return "\n".join(chunks)
 
 
@@ -873,12 +876,15 @@ def credit_from_slip_verify_local(pid, pay, qr_text, image_bytes):
     ref = parsed.get("transRef") or ""
     ocr = ocr_slip_text(image_bytes)
     if not ocr.strip():
-        return False, "timeout"
+        add_log("slip OCR empty #%s tess=%s" % (pid, _configure_tesseract()), "-")
+        return False, "ocr_fail"
     expected = _num(pay.get("amount"))
     if not _ocr_has_amount(ocr, expected):
+        add_log("slip OCR amount miss #%s want=%s sample=%s" % (pid, expected, ocr[:80].replace("\n", " ")), "-")
         return False, "amount"
     recv = _ocr_receiver_match(ocr, pay)
     if not recv:
+        add_log("slip OCR receiver miss #%s sample=%s" % (pid, ocr[:80].replace("\n", " ")), "-")
         return False, "receiver_unclear"
     info = {
         "transRef": ref,
@@ -990,12 +996,18 @@ def auto_credit_from_slip(pid, image_path=None, payload="", count_try=True):
             last = code
             if code in ("amount", "receiver", "duplicate", "stale", "no_ref", "bad_qr"):
                 return False, code
-            # Fall through to optional OIIO only if OCR could not read the slip.
-            if code not in ("timeout", "receiver_unclear"):
+            # Mini-QR is authoritative for Krungthai-style slips. Do not bury OCR
+            # failures under the OIIO "external down" message.
+            if code in ("ocr_fail", "receiver_unclear"):
+                oiio_on = str(get_settings().get("oiio_slip_on") or "1") != "0"
+                if not oiio_on:
+                    return False, code
+            elif code not in ("timeout",):
                 continue
 
-        # 3) Optional hosted OIIO (often offline) — skip when Mini-QR OCR already decided.
-        if not is_slip_verify_qr(text) or last in ("timeout", "receiver_unclear", "no_qr"):
+        # 3) Optional hosted OIIO (often offline) — last resort only.
+        oiio_on = str(get_settings().get("oiio_slip_on") or "1") != "0"
+        if oiio_on and (not is_slip_verify_qr(text) or last in ("timeout", "ocr_fail", "receiver_unclear", "no_qr")):
             try:
                 from oiio_slip import verify_transfer_qr
 
@@ -1011,13 +1023,23 @@ def auto_credit_from_slip(pid, image_path=None, payload="", count_try=True):
                     key = str(err).lower().replace("-", "_")
                     if key in ("amount_not_verified", "amount"):
                         return False, "amount"
-                    last = key
+                    # Keep OCR-specific code when OIIO is just offline.
+                    if key in ("timeout", "fail") and last in ("ocr_fail", "receiver_unclear"):
+                        pass
+                    else:
+                        last = key
             except Exception as err:
                 add_log("slip oiio error #%s %s" % (pid, type(err).__name__), "-")
                 if last == "no_qr":
                     last = "timeout"
 
-    if last in ("timeout", "fail", "no_qr") and raw and not any(is_slip_verify_qr(t) for t in qrs[:3]):
+    oiio_on = str(get_settings().get("oiio_slip_on") or "1") != "0"
+    if (
+        oiio_on
+        and last in ("timeout", "fail", "no_qr")
+        and raw
+        and not any(is_slip_verify_qr(t) for t in qrs[:3])
+    ):
         try:
             from oiio_slip import verify_transfer_image
 
@@ -1064,7 +1086,7 @@ def auto_credit_from_slip(pid, image_path=None, payload="", count_try=True):
     if key in ("slip_not_found", "qrcode_not_found"):
         return False, "no_qr"
     if key == "need_ocr":
-        return False, "timeout"
+        return False, "ocr_fail"
     return False, last if last else "no_qr"
 
 
@@ -1082,6 +1104,7 @@ def verify_error_text(code):
         "slip_pending": "ธนาคารยังไม่ยืนยันสลิป รอสักครู่แล้วแนบใหม่",
         "quota_exceeded": "ระบบตรวจสลิปเต็มโควต้า รอแอดมินตรวจสอบ",
         "timeout": "ระบบตรวจสลิปภายนอกขัดข้อง — ใส่คีย์ EasySlip ที่ตั้งค่าช่องทางจ่าย หรือรอแอดมินอนุมัติ",
+        "ocr_fail": "อ่านยอดจากรูปสลิปไม่สำเร็จ ถ่ายสลิปให้ชัด (เห็น QR + ยอดเงิน) แล้วแนบใหม่ หรือรอแอดมินอนุมัติ",
         "bad_qr": "QR บนสลิปไม่ถูกต้อง",
         "stale": "เวลาในสลิปไม่ตรงกับรายการนี้",
         "no_ref": "ธนาคารไม่ยืนยันเลขอ้างอิงสลิป รอแอดมินตรวจสอบ",

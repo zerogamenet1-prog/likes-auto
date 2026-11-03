@@ -147,7 +147,7 @@ def extra_migrate():
         "announcement": "",
         "maintenance": "0",
         "min_deposit": "20",
-        "promptpay": "",
+        "promptpay": "0619196251",
         "bank_name": "",
         "bank_account": "",
         "bank_holder": "",

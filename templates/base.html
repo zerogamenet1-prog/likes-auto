@@ -117,24 +117,7 @@
         </a>
       </div>
       {% if user %}
-                  <!-- Desktop Horizontal Navigation (>= 1024px) -->
-      <nav class="la-desktop-nav pk-desktop-nav" aria-label="เมนูหลักสำหรับคอมพิวเตอร์">
-        <a href="/" class="la-dlink pk-dlink {% if page == 'home' %}active{% endif %}">
-          <span>หน้าแรก</span>
-        </a>
-        <a href="/services" class="la-dlink pk-dlink {% if page == 'services' %}active{% endif %}">
-          <span>บริการและราคา</span>
-        </a>
-        <a href="/blog" class="la-dlink pk-dlink {% if page == 'blog' or page == 'blog_post' %}active{% endif %}">
-          <span>บทความ</span>
-        </a>
-        <a href="/faq" class="la-dlink pk-dlink {% if page == 'faq' %}active{% endif %}">
-          <span>คำถามที่พบบ่อย</span>
-        </a>
-        <a href="/#contact" class="la-dlink pk-dlink">
-          <span>ติดต่อเรา</span>
-        </a>
-      </nav>
+                  <!-- Desktop Horizontal Navigation omitted for spacious minimal modern header -->
       <div class="la-tools">
         {% include "_pack_switch.html" %}
         <a class="la-nav-login" href="/signin" onclick="laOpenLogin(event)">{{ t.nav_login }}</a>

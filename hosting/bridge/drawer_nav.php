@@ -2,55 +2,15 @@
 /**
  * Peakerr-Inspired Modern Responsive Navigation System for Likes Auto
  * High-Converting, Ultra-Modern Dark Theme with Signature Neon Lime Glow
- * Perfectly adapted from Peakerr.com (World's #1 SMM Panel Design)
+ * Universal Off-Canvas Drawer for Mobile, Tablet & Desktop
  */
 $isLoggedIn = !empty($isUser);
 $userInitial = !empty($username) ? mb_strtoupper(mb_substr($username, 0, 1, 'UTF-8')) : 'U';
 $userBalFormatted = isset($balance) ? number_format((float)$balance, 2) : '0.00';
 $cur = $currentPage ?? '';
 ?>
-<!-- 1. Desktop Horizontal Navigation Bar (Clean, Spacious & Ultra-Modern) -->
-<nav class="la-desktop-nav pk-desktop-nav" aria-label="เมนูหลัก">
-  <?php if ($isLoggedIn): ?>
-  <a href="/neworder" class="la-dlink pk-dlink <?= ($cur==='neworder')?'active':'' ?>">
-    <span>สั่งซื้อใหม่</span>
-  </a>
-  <a href="/orders" class="la-dlink pk-dlink <?= ($cur==='orders')?'active':'' ?>">
-    <span>ประวัติคำสั่งซื้อ</span>
-  </a>
-  <a href="/services" class="la-dlink pk-dlink <?= ($cur==='services')?'active':'' ?>">
-    <span>บริการและราคา</span>
-  </a>
-  <a href="/addfunds" class="la-dlink pk-dlink <?= ($cur==='addfunds')?'active':'' ?>">
-    <span>เติมเงิน</span>
-  </a>
-  <a href="/tickets" class="la-dlink pk-dlink <?= ($cur==='tickets')?'active':'' ?>">
-    <span>ตั๋วช่วยเหลือ</span>
-  </a>
-  <a href="/blog" class="la-dlink pk-dlink <?= ($cur==='blog')?'active':'' ?>">
-    <span>บทความ</span>
-  </a>
-  <?php else: ?>
-  <a href="/" class="la-dlink pk-dlink <?= ($cur===''||$cur==='home')?'active':'' ?>">
-    <span>หน้าแรก</span>
-  </a>
-  <a href="/services" class="la-dlink pk-dlink <?= ($cur==='services')?'active':'' ?>">
-    <span>บริการและราคา</span>
-  </a>
-  <a href="/blog" class="la-dlink pk-dlink <?= ($cur==='blog')?'active':'' ?>">
-    <span>บทความ</span>
-  </a>
-  <a href="/faq" class="la-dlink pk-dlink <?= ($cur==='faq')?'active':'' ?>">
-    <span>คำถามที่พบบ่อย</span>
-  </a>
-  <a href="/#contact" class="la-dlink pk-dlink">
-    <span>ติดต่อเรา</span>
-  </a>
-  <?php endif; ?>
-</nav>
-
-<!-- 2. Peakerr Mobile Off-Canvas Drawer Navigation -->
-<nav class="la-nav la-drawer-revamp pk-drawer" id="laNav" aria-label="เมนูหลักมือถือ">
+<!-- Universal Peakerr Off-Canvas Drawer Navigation (Mobile, Tablet & Desktop) -->
+<nav class="la-nav la-drawer-revamp pk-drawer" id="laNav" aria-label="เมนูหลัก">
   <!-- Peakerr Drawer Top Bar -->
   <div class="la-drawer-top pk-drawer-top">
     <div class="la-drawer-brand">

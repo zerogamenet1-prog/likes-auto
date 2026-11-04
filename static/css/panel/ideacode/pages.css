@@ -3872,6 +3872,7 @@ html.la-light .la-modal-close {
 /* ========================================================
    PEAKERR-INSPIRED ULTRA-MODERN HEADER & NAVIGATION SYSTEM
    Clean, Spacious, Minimal & Ultra-Modern (Peakerr Paradigm)
+   Universal Drawer Navigation for Mobile, Tablet & Desktop
    ======================================================== */
 
 :root {
@@ -3936,13 +3937,37 @@ html.la-light .la-modal-close {
   padding: 0 32px !important;
 }
 
-/* --- Peakerr Brand Identity (Asymmetrical Skewed Bolt + Bold Text) --- */
+/* --- Peakerr Brand Identity & Universal Menu Toggle --- */
 .la-header.la-header--fz .la-header-left {
   display: flex !important;
   align-items: center !important;
   gap: 16px !important;
   flex-shrink: 0 !important;
 }
+
+/* Universal Menu Toggle Button (Visible on ALL Devices: Desktop, Tablet & Mobile) */
+.la-header.la-header--fz .la-menu-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 9px !important;
+  background: rgba(142, 227, 31, 0.08) !important;
+  border: 1px solid rgba(142, 227, 31, 0.35) !important;
+  color: var(--pk-green, #8ee31f) !important;
+  font-size: 22px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+.la-header.la-header--fz .la-menu-btn:hover {
+  background: rgba(142, 227, 31, 0.18) !important;
+  border-color: var(--pk-green, #8ee31f) !important;
+  box-shadow: 0 0 18px rgba(142, 227, 31, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
 .la-header.la-header--fz .la-brand {
   display: inline-flex !important;
   align-items: center !important;
@@ -4004,112 +4029,63 @@ html.la-light .la-modal-close {
   text-shadow: 0 0 18px rgba(142, 227, 31, 0.35) !important;
 }
 
-/* Peakerr Mobile Menu Toggle Button */
-.la-header.la-header--fz .la-menu-btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 8px !important;
-  background: rgba(142, 227, 31, 0.08) !important;
-  border: 1px solid rgba(142, 227, 31, 0.35) !important;
-  color: var(--pk-green, #8ee31f) !important;
-  font-size: 22px !important;
-  transition: all 0.18s ease !important;
-  cursor: pointer !important;
-}
-.la-header.la-header--fz .la-menu-btn:hover {
-  background: rgba(142, 227, 31, 0.16) !important;
-  border-color: var(--pk-green, #8ee31f) !important;
-  box-shadow: 0 0 16px rgba(142, 227, 31, 0.35) !important;
+/* Completely remove remaining text menu links for clean, spacious, modern aesthetics */
+.la-desktop-nav,
+.pk-desktop-nav {
+  display: none !important;
 }
 
-/* --- Clean, Airy, Spacious Desktop Navigation (>= 1024px) --- */
-.la-desktop-nav {
-  display: none;
-}
-@media (min-width: 1024px) {
-  .la-header.la-header--fz .la-menu-btn {
-    display: none !important;
-  }
-  .la-desktop-nav,
-  .la-desktop-nav.pk-desktop-nav {
-    display: flex !important;
-    align-items: center !important;
-    gap: 20px !important;
-    margin-left: 42px !important;
-    margin-right: auto !important;
-    height: 76px !important;
-  }
-  .la-dlink,
-  .pk-dlink {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    padding: 0 10px !important;
-    height: 76px !important;
-    font-size: 15px !important;
-    font-weight: 500 !important;
-    color: #e2e8f0 !important;
-    text-decoration: none !important;
-    position: relative !important;
-    background: transparent !important;
-    border: none !important;
-    cursor: pointer !important;
-    transition: color 0.22s ease !important;
-    white-space: nowrap !important;
-    letter-spacing: 0.01em !important;
-  }
-  .la-dlink::after,
-  .pk-dlink::after {
-    content: "" !important;
-    position: absolute !important;
-    right: 10px !important;
-    bottom: 22px !important;
-    left: 10px !important;
-    height: 2px !important;
-    border-radius: 20px !important;
-    background: linear-gradient(90deg, var(--pk-green, #8ee31f), var(--pk-green-2, #5eb516)) !important;
-    opacity: 0 !important;
-    transform: scaleX(0.35) !important;
-    transition: opacity 0.22s ease, transform 0.22s ease !important;
-  }
-  .la-dlink:hover,
-  .la-dlink:focus,
-  .pk-dlink:hover,
-  .pk-dlink:focus {
-    color: var(--pk-green, #8ee31f) !important;
-  }
-  .la-dlink:hover::after,
-  .la-dlink:focus::after,
-  .la-dlink.active::after,
-  .pk-dlink:hover::after,
-  .pk-dlink:focus::after,
-  .pk-dlink.active::after {
-    opacity: 1 !important;
-    transform: scaleX(1) !important;
-  }
-  .la-dlink.active,
-  .pk-dlink.active {
-    color: var(--pk-green, #8ee31f) !important;
-  }
-}
-
-/* --- Clean Right Header Actions (.la-tools) --- */
+/* --- Right Header Actions (.la-tools) --- */
 .la-header.la-header--fz .la-tools {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 14px !important;
   margin-left: auto !important;
   flex-shrink: 0 !important;
 }
 
-/* Hide bulky theme circles on top desktop navbar for airy, modern minimalism */
+/* --- High-End Modern Theme Switcher Capsule (Kept & Optimized for All Devices) --- */
 .la-header.la-header--fz .la-tools .la-pack-switch {
-  display: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 999px !important;
+  padding: 4px 8px !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s ease !important;
+}
+.la-header.la-header--fz .la-tools .la-pack-switch:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(142, 227, 31, 0.35) !important;
+}
+.la-header.la-header--fz .la-tools .la-pack-switch button {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  border: 2px solid transparent !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: conic-gradient(var(--sw) 50%, var(--sw2) 50%) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+}
+.la-header.la-header--fz .la-tools .la-pack-switch button:hover {
+  transform: scale(1.22) !important;
+  box-shadow: 0 0 10px var(--sw2) !important;
+}
+.la-header.la-header--fz .la-tools .la-pack-switch button[aria-pressed="true"],
+.la-header.la-header--fz .la-tools .la-pack-switch button.active {
+  border-color: #ffffff !important;
+  transform: scale(1.15) !important;
+  box-shadow: 0 0 12px var(--sw2) !important;
 }
 
+/* Sign In Glass Button */
 .la-header.la-header--fz a.la-nav-login {
   display: inline-flex !important;
   align-items: center !important;
@@ -4163,7 +4139,7 @@ html.la-light .la-modal-close {
 }
 
 /* ========================================================
-   PEAKERR MOBILE NAVIGATION DRAWER (.la-drawer-revamp)
+   PEAKERR MOBILE & DESKTOP OFF-CANVAS DRAWER (.la-drawer-revamp)
    ======================================================== */
 
 .la-header.la-header--fz .la-nav.la-drawer-revamp,
@@ -4695,7 +4671,7 @@ body.la-nav-open .la-header.la-header--fz .la-nav-scrim {
   color: #fff !important;
 }
 
-/* 7. Theme Switcher */
+/* 7. Theme Switcher in Drawer */
 .la-drawer-theme-box,
 .pk-theme-box {
   display: flex;
@@ -4732,40 +4708,79 @@ body.la-nav-open .la-header.la-header--fz .la-nav-scrim {
   color: #fff !important;
 }
 
-/* --- Responsive adjustments for Mobile Screen Sizes --- */
-@media (max-width: 1023px) {
+/* ========================================================
+   RESPONSIVE DESIGN ACROSS ALL DEVICE SIZES
+   ======================================================== */
+
+@media (max-width: 767px) {
   .la-header.la-header--fz {
-    min-height: 66px !important;
+    min-height: 64px !important;
   }
   .la-header.la-header--fz .la-header-inner {
-    min-height: 66px !important;
-    padding: 0 16px !important;
+    min-height: 64px !important;
+    padding: 0 12px !important;
+  }
+  .la-header.la-header--fz .la-header-left {
+    gap: 10px !important;
+  }
+  .la-header.la-header--fz .la-menu-btn {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 20px !important;
   }
   .la-header.la-header--fz .la-brand {
-    font-size: 20px !important;
+    font-size: 19px !important;
   }
   .brand-mark,
   .la-brand .brand-mark,
   .la-header.la-header--fz .la-brand-mark,
   .pk-brand-mark {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 17px !important;
-    margin-right: 8px !important;
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 16px !important;
+    margin-right: 7px !important;
   }
   .brand-text,
   .la-header.la-header--fz .la-brand-text,
   .pk-brand-text {
-    font-size: 19px !important;
+    font-size: 18px !important;
   }
+  .la-header.la-header--fz .la-tools {
+    gap: 6px !important;
+  }
+  .la-header.la-header--fz .la-tools .la-pack-switch {
+    padding: 3px 6px !important;
+    gap: 4px !important;
+  }
+  .la-header.la-header--fz .la-tools .la-pack-switch button {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  /* On small mobile screens (<768px), keep Sign In inside drawer to prevent header overflow */
   .la-header.la-header--fz a.la-nav-login {
-    min-height: 36px !important;
-    padding: 6px 12px !important;
-    font-size: 13px !important;
+    display: none !important;
   }
-  .la-header.la-header--fz .la-btn-mini {
-    min-height: 36px !important;
-    padding: 6px 15px !important;
-    font-size: 13px !important;
+  .la-header.la-header--fz .la-btn-mini,
+  .la-header.la-header--fz .pk-signup-btn {
+    min-height: 34px !important;
+    padding: 6px 12px !important;
+    font-size: 12.5px !important;
+    border-radius: 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand-text,
+  .la-header.la-header--fz .la-brand-text,
+  .pk-brand-text {
+    font-size: 16px !important;
+  }
+  .la-header.la-header--fz .la-tools .la-pack-switch {
+    padding: 2px 4px !important;
+    gap: 3px !important;
+  }
+  .la-header.la-header--fz .la-tools .la-pack-switch button {
+    width: 14px !important;
+    height: 14px !important;
   }
 }

@@ -1,0 +1,513 @@
+<style id="svc-unified-rate-style">
+.svc-unified-rate-card {
+  border: 1px solid rgba(59, 130, 246, 0.35) !important;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+  border-radius: 14px !important;
+  padding: 22px !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35) !important;
+}
+.svc-rate-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.svc-rate-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #f8fafc;
+}
+.svc-rate-head h3 i {
+  color: #3b82f6;
+  font-size: 1.3rem;
+}
+.svc-rate-head p {
+  margin: 0;
+  font-size: 13.5px;
+  color: #94a3b8;
+}
+.svc-rate-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.svc-rate-meta .adm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.svc-rate-meta .adm-badge.profit-badge {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+.svc-scope-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 18px;
+}
+.svc-scope-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.svc-scope-tab:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+.svc-scope-tab.is-active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+}
+.svc-scope-tab.is-active.sel {
+  background: #7c3aed;
+  border-color: #8b5cf6;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.35);
+}
+.svc-unified-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+@media (max-width: 860px) {
+  .svc-unified-grid { grid-template-columns: 1fr; }
+  .svc-scope-tabs { grid-template-columns: 1fr; }
+}
+.svc-inputs-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.svc-field-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.svc-preset-btns {
+  display: flex;
+  gap: 4px;
+}
+.svc-preset-btn {
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.svc-preset-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.svc-preset-btn.is-active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #fff;
+}
+.svc-input-unit {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.svc-input-unit input {
+  width: 100%;
+  padding-right: 48px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 8px !important;
+  color: #f8fafc !important;
+  height: 42px !important;
+  padding-left: 12px !important;
+}
+.svc-input-unit input:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+}
+.svc-input-unit .unit {
+  position: absolute;
+  right: 12px;
+  color: #94a3b8;
+  font-size: 13.5px;
+  font-weight: 600;
+  pointer-events: none;
+}
+.svc-preview-col {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.svc-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.svc-preview-header .lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.svc-preview-header .badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  font-weight: 600;
+}
+.svc-preview-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.svc-preview-steps .step {
+  display: flex;
+  flex-direction: column;
+}
+.svc-preview-steps .step .s-lbl {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-bottom: 3px;
+}
+.svc-preview-steps .step .s-val {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+.svc-preview-steps .step .s-val.profit { color: #38bdf8; }
+.svc-preview-steps .step.final .s-val.sell {
+  font-size: 16.5px;
+  color: #22c55e;
+}
+.svc-preview-steps .op {
+  color: #64748b;
+  font-size: 14px;
+}
+.svc-preview-summary {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  line-height: 1.4;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.svc-master-submit-btn {
+  width: 100%;
+  padding: 13px 20px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  border-radius: 10px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  border: none !important;
+}
+.svc-master-submit-btn.all {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+}
+.svc-master-submit-btn.all:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+}
+.svc-master-submit-btn.sel {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4) !important;
+}
+.svc-master-submit-btn.sel:hover {
+  background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%) !important;
+}
+</style>
+
+<section class="adm-card svc-rate-card svc-unified-rate-card">
+  <!-- Header -->
+  <div class="svc-rate-head">
+    <div>
+      <h3>
+        <i class="ri-percent-line"></i> ปรับราคาขายจากต้นทุนจริง (Cost-Plus Pricing)
+      </h3>
+      <p>
+        คำนวณราคาขายอัตโนมัติจากต้นทุนผู้ให้บริการ (แปลงเป็นบาทตามเรท USD) แล้วบวกกำไรตามที่กำหนด
+      </p>
+    </div>
+    <div class="svc-rate-meta">
+      <span class="adm-badge"><i class="ri-exchange-dollar-line"></i> เรทปัจจุบัน: 1 USD = 35.0 บาท</span>
+      <span class="adm-badge profit-badge"><i class="ri-funds-line"></i> บวกกำไรระบบ: +100%</span>
+    </div>
+  </div>
+
+  <!-- Unified Form -->
+  <form id="svc-unified-rate-form" method="post" action="/admin/services/bulk-rate-all" onsubmit="return handleRateSubmit(this)">
+    <input type="hidden" name="ids" id="unified-ids" value="">
+
+    <!-- Scope Selector Tabs (ขอบเขตการปรับราคา) -->
+    <div class="svc-scope-tabs">
+      <button type="button" class="svc-scope-tab is-active" id="scope-tab-all" onclick="setMasterScope('all')">
+        <i class="ri-store-3-line"></i>
+        <span>ปรับทุกบริการในร้าน (ทั้งร้าน)</span>
+      </button>
+      <button type="button" class="svc-scope-tab" id="scope-tab-sel" onclick="setMasterScope('sel')">
+        <i class="ri-checkbox-multiple-line"></i>
+        <span>ปรับเฉพาะบริการที่เลือก (<span class="js-sel-badge-text">ยังไม่ได้เลือก</span>)</span>
+      </button>
+    </div>
+
+    <!-- Inputs & Preview Grid -->
+    <div class="svc-unified-grid">
+      <!-- Left: Inputs & Preset Chips -->
+      <div class="svc-inputs-col">
+        <!-- Profit % -->
+        <div class="svc-rate-field-group">
+          <div class="svc-field-top">
+            <label class="la-field" for="master-profit" style="margin-bottom:0;color:#e2e8f0;font-weight:600">กำหนดอัตราบวกกำไร (%)</label>
+            <div class="svc-preset-btns">
+              <button type="button" class="svc-preset-btn" onclick="setMasterPct(30)">+30%</button>
+              <button type="button" class="svc-preset-btn" onclick="setMasterPct(50)">+50%</button>
+              <button type="button" class="svc-preset-btn is-active" onclick="setMasterPct(100)">+100%</button>
+              <button type="button" class="svc-preset-btn" onclick="setMasterPct(150)">+150%</button>
+              <button type="button" class="svc-preset-btn" onclick="setMasterPct(200)">+200%</button>
+            </div>
+          </div>
+          <div class="svc-input-unit">
+            <input class="la-input adm-num" id="master-profit" type="number" step="0.1" name="percent" value="100" required oninput="calcMasterPreview()">
+            <span class="unit">%</span>
+          </div>
+        </div>
+
+        <!-- Fixed Addition -->
+        <div class="svc-rate-field-group">
+          <label class="la-field" for="master-fixed" style="color:#e2e8f0;font-weight:600">บวกเพิ่มคงที่ (บาทต่อ 1,000 ชิ้น)</label>
+          <div class="svc-input-unit">
+            <input class="la-input adm-num" id="master-fixed" type="number" step="0.01" name="fixed" value="0" oninput="calcMasterPreview()">
+            <span class="unit">บาท</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Live Formula Preview Card -->
+      <div class="svc-preview-col">
+        <div class="svc-preview-header">
+          <span class="lbl"><i class="ri-calculator-line"></i> จำลองราคาขายจริง (Live Preview)</span>
+          <span class="badge">คำนวณสด</span>
+        </div>
+        <div class="svc-preview-steps">
+          <div class="step">
+            <span class="s-lbl">สมมุติต้นทุน</span>
+            <span class="s-val">10.00 ฿</span>
+          </div>
+          <i class="ri-add-line op"></i>
+          <div class="step">
+            <span class="s-lbl">บวกกำไร (<span id="prev-pct-lbl">+100%</span>)</span>
+            <span class="s-val profit" id="prev-profit-add">+10.00 ฿</span>
+          </div>
+          <i class="ri-arrow-right-line op"></i>
+          <div class="step final">
+            <span class="s-lbl">ราคาขายหน้าร้าน</span>
+            <span class="s-val sell" id="prev-sell-total">20.00 ฿</span>
+          </div>
+        </div>
+        <div class="svc-preview-summary">
+          <i class="ri-information-line"></i> เมื่อปรับแล้ว คุณจะได้กำไรสุทธิ <strong id="prev-net-sum" style="color:#16a34a">10.00 บาท</strong> ต่อ 1,000 ชิ้น
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Action Button -->
+    <div class="svc-action-row" style="margin-top:14px">
+      <button type="submit" class="la-btn svc-master-submit-btn all" id="master-submit-btn">
+        <i class="ri-flashlight-line"></i>
+        <span id="master-submit-label">ยืนยันปรับราคาขาย ทุกบริการในร้าน</span>
+      </button>
+    </div>
+  </form>
+</section>
+
+<script id="svc-unified-rate-js">
+(function(){
+  window.masterScope = 'all';
+
+  // Count items from table
+  function countAllServices() {
+    var sids = document.querySelectorAll('.js-sid');
+    return sids.length || 0;
+  }
+
+  window.setMasterScope = function(scope) {
+    window.masterScope = scope;
+    var form = document.getElementById('svc-unified-rate-form');
+    var tabAll = document.getElementById('scope-tab-all');
+    var tabSel = document.getElementById('scope-tab-sel');
+    var btn = document.getElementById('master-submit-btn');
+    var btnLbl = document.getElementById('master-submit-label');
+    var checked = document.querySelectorAll('.js-sid:checked');
+    var n = checked.length;
+    var tot = countAllServices();
+
+    if (scope === 'all') {
+      tabAll.className = 'svc-scope-tab is-active';
+      tabSel.className = 'svc-scope-tab';
+      form.action = '/admin/services/bulk-rate-all';
+      btn.className = 'la-btn svc-master-submit-btn all';
+      btnLbl.textContent = 'ยืนยันปรับราคาขาย ทุกบริการในร้าน' + (tot ? ' (' + tot.toLocaleString() + ' รายการ)' : '');
+    } else {
+      tabAll.className = 'svc-scope-tab';
+      tabSel.className = 'svc-scope-tab is-active sel';
+      form.action = '/admin/services/bulk-rate';
+      btn.className = 'la-btn svc-master-submit-btn sel';
+      btnLbl.textContent = n ? ('ยืนยันปรับราคาขาย เฉพาะบริการที่เลือก (' + n + ' รายการ)') : 'ยืนยันปรับราคาขาย เฉพาะบริการที่เลือก (ยังไม่ได้เลือก)';
+    }
+  };
+
+  window.setMasterPct = function(pct) {
+    var inp = document.getElementById('master-profit');
+    if (inp) {
+      inp.value = pct;
+      window.calcMasterPreview();
+    }
+    document.querySelectorAll('.svc-preset-btn').forEach(function(b) {
+      var t = b.textContent.replace(/[^0-9]/g, '');
+      if (parseInt(t, 10) === pct) {
+        b.className = 'svc-preset-btn is-active';
+      } else {
+        b.className = 'svc-preset-btn';
+      }
+    });
+  };
+
+  window.calcMasterPreview = function() {
+    var pInp = document.getElementById('master-profit');
+    var fInp = document.getElementById('master-fixed');
+    var pct = pInp ? parseFloat(pInp.value) || 0 : 100;
+    var fix = fInp ? parseFloat(fInp.value) || 0 : 0;
+    var cost = 10.0;
+    var profitAdd = (cost * pct / 100.0) + fix;
+    var sellTotal = cost + profitAdd;
+
+    var lbl = document.getElementById('prev-pct-lbl');
+    var pAdd = document.getElementById('prev-profit-add');
+    var sTot = document.getElementById('prev-sell-total');
+    var nSum = document.getElementById('prev-net-sum');
+
+    if (lbl) lbl.textContent = '+' + pct + '%' + (fix > 0 ? (' +' + fix.toFixed(2) + '฿') : '');
+    if (pAdd) pAdd.textContent = '+' + profitAdd.toFixed(2) + ' ฿';
+    if (sTot) sTot.textContent = sellTotal.toFixed(2) + ' ฿';
+    if (nSum) nSum.textContent = profitAdd.toFixed(2) + ' บาท';
+  };
+
+  window.handleRateSubmit = function(form) {
+    var pInp = document.getElementById('master-profit');
+    var pct = pInp ? pInp.value : '100';
+    if (window.masterScope === 'all') {
+      return confirm('ยืนยันปรับราคาขาย ทุกบริการในร้าน ด้วยกำไร ' + pct + '% จากต้นทุนจริง?');
+    } else {
+      var checked = Array.from(document.querySelectorAll('.js-sid:checked')).map(function(x){ return x.value; });
+      if (!checked.length) {
+        alert('กรุณาติ๊กเลือกบริการในตารางด้านล่างอย่างน้อย 1 รายการก่อนครับ');
+        return false;
+      }
+      var hiddenIds = document.getElementById('unified-ids');
+      if (hiddenIds) hiddenIds.value = checked.join(',');
+      return confirm('ยืนยันปรับราคาขายเฉพาะ ' + checked.length + ' บริการที่เลือก ด้วยกำไร ' + pct + '%?');
+    }
+  };
+
+  function updateSelBadge() {
+    var n = document.querySelectorAll('.js-sid:checked').length;
+    var el = document.getElementById('svc-sel-count');
+    if (el) el.textContent = n ? ('เลือก ' + n + ' รายการ') : '';
+    document.querySelectorAll('.js-sel-badge-text').forEach(function(b) {
+      b.textContent = n ? (n + ' รายการ') : 'ยังไม่ได้เลือก';
+    });
+    if (window.masterScope === 'sel') {
+      var btnLbl = document.getElementById('master-submit-label');
+      if (btnLbl) {
+        btnLbl.textContent = n ? ('ยืนยันปรับราคาขาย เฉพาะบริการที่เลือก (' + n + ' รายการ)') : 'ยืนยันปรับราคาขาย เฉพาะบริการที่เลือก (ยังไม่ได้เลือก)';
+      }
+    }
+  }
+
+  // Hook change events on table checkboxes
+  document.querySelectorAll('.js-sid').forEach(function(cb) {
+    cb.addEventListener('change', updateSelBadge);
+  });
+  var masterCheck = document.querySelector('th input[type="checkbox"]');
+  if (masterCheck) {
+    masterCheck.addEventListener('change', function() {
+      setTimeout(updateSelBadge, 50);
+    });
+  }
+
+  // Initialize total count on tab label & submit button
+  setTimeout(function(){
+    var tot = countAllServices();
+    if (tot > 0) {
+      var tabSpan = document.querySelector('#scope-tab-all span');
+      if (tabSpan) tabSpan.textContent = 'ปรับทุกบริการในร้าน (ทั้งร้าน ' + tot.toLocaleString() + ' รายการ)';
+      var btnSpan = document.getElementById('master-submit-label');
+      if (btnSpan && window.masterScope === 'all') {
+        btnSpan.textContent = 'ยืนยันปรับราคาขาย ทุกบริการในร้าน (' + tot.toLocaleString() + ' รายการ)';
+      }
+    }
+    window.calcMasterPreview();
+  }, 100);
+})();
+</script>

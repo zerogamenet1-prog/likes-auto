@@ -167,14 +167,29 @@ curl_close($ch);
 $rawHeaders = substr($raw, 0, $headerSize);
 $respBody = substr($raw, $headerSize);
 
+// Patch dynamic templates if live backend is running older container build
+if ($code === 200 && strpos($path, '/admin/services') === 0 && stripos($respBody, '<section class="adm-card svc-rate-card">') !== false && stripos($respBody, 'svc-unified-rate-card') === false) {
+    $patchFile = __DIR__ . '/svc_rate_card.html';
+    if (is_file($patchFile)) {
+        $patchHtml = file_get_contents($patchFile);
+        if ($patchHtml !== false && $patchHtml !== '') {
+            if (preg_match('/1 USD = ([\d\.]+) บาท/', $respBody, $mRate)) {
+                $patchHtml = str_replace('1 USD = 35.0 บาท', '1 USD = ' . $mRate[1] . ' บาท', $patchHtml);
+            }
+            $respBody = preg_replace('#<section class="adm-card svc-rate-card">.*?</section>#s', $patchHtml, $respBody, 1);
+        }
+    }
+}
+
 http_response_code($code);
 foreach (preg_split("/\r\n|\n|\r/", $rawHeaders) as $line) {
     if ($line === '' || stripos($line, 'HTTP/') === 0) {
         continue;
     }
-    if (stripos($line, 'transfer-encoding:') === 0) {
+    if (stripos($line, 'transfer-encoding:') === 0 || stripos($line, 'content-length:') === 0) {
         continue;
     }
     header($line, false);
 }
+header('Content-Length: ' . strlen($respBody));
 echo $respBody;

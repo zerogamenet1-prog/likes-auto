@@ -1,48 +1,7 @@
-<div class="la-theme-dropdown {{ extra_class|default('') }}" id="laThemeDropdown">
-  <button type="button" class="la-theme-btn" onclick="laToggleThemeMenu(event)" aria-haspopup="true" aria-expanded="false" title="เลือกธีมการแสดงผล" aria-label="เลือกธีมการแสดงผล">
-    <span class="la-theme-ico"><i class="ri-palette-line"></i></span>
-    <span class="la-theme-dot" id="laCurrentThemeDot"></span>
-    <span class="la-theme-name" id="laCurrentThemeLabel">Peakerr Lime</span>
-    <i class="ri-arrow-down-s-line la-theme-arrow"></i>
-  </button>
-  <div class="la-theme-popover" id="laThemeMenu" role="menu">
-    <div class="la-theme-popover-head">
-      <i class="ri-paint-brush-fill"></i>
-      <span>เลือกธีมการแสดงผล</span>
-    </div>
-    <div class="la-theme-options">
-      <button type="button" class="la-theme-opt" data-theme-val="peak" onclick="laSelectTheme('peak', event)">
-        <span class="theme-swatch" style="--sw:#020804;--sw2:#8ee31f;"></span>
-        <div class="theme-meta">
-          <strong class="theme-title">Peakerr Lime <span class="theme-badge-rec">แนะนำ</span></strong>
-          <span class="theme-sub">ดำลึกตัดเขียวนีออน (สไตล์ Peakerr)</span>
-        </div>
-        <i class="ri-check-line theme-chk"></i>
-      </button>
-      <button type="button" class="la-theme-opt" data-theme-val="violet" onclick="laSelectTheme('violet', event)">
-        <span class="theme-swatch" style="--sw:#080614;--sw2:#a855f7;"></span>
-        <div class="theme-meta">
-          <strong class="theme-title">Night Violet</strong>
-          <span class="theme-sub">ม่วงนีออน ลึกลับโมเดิร์น</span>
-        </div>
-        <i class="ri-check-line theme-chk"></i>
-      </button>
-      <button type="button" class="la-theme-opt" data-theme-val="navy" onclick="laSelectTheme('navy', event)">
-        <span class="theme-swatch" style="--sw:#0b1020;--sw2:#3b82f6;"></span>
-        <div class="theme-meta">
-          <strong class="theme-title">Midnight Navy</strong>
-          <span class="theme-sub">น้ำเงินเข้ม พรีเมียมคมชัด</span>
-        </div>
-        <i class="ri-check-line theme-chk"></i>
-      </button>
-      <button type="button" class="la-theme-opt" data-theme-val="light" onclick="laSelectTheme('light', event)">
-        <span class="theme-swatch" style="--sw:#f4f7f2;--sw2:#5eb516;"></span>
-        <div class="theme-meta">
-          <strong class="theme-title">Peakerr Soft (Light)</strong>
-          <span class="theme-sub">โหมดสว่าง สะอาดตา สบายตา</span>
-        </div>
-        <i class="ri-check-line theme-chk"></i>
-      </button>
-    </div>
-  </div>
+<div class="la-pack-switch pk-theme-strip {{ extra_class|default('') }}" role="group" aria-label="เลือกธีม">
+  <span class="pk-theme-icon" title="เลือกธีมการแสดงผล"><i class="ri-palette-line"></i></span>
+  <button type="button" class="pk-swatch-btn" data-pack="peak" onclick="laSetPack('peak')" title="Peakerr Lime" aria-label="Peakerr Lime" aria-pressed="false" style="--sw:#020804;--sw2:#8ee31f;"></button>
+  <button type="button" class="pk-swatch-btn" data-pack="violet" onclick="laSetPack('violet')" title="Night Violet" aria-label="Night Violet" aria-pressed="false" style="--sw:#080614;--sw2:#a855f7;"></button>
+  <button type="button" class="pk-swatch-btn" data-pack="navy" onclick="laSetPack('navy')" title="Midnight Navy" aria-label="Midnight Navy" aria-pressed="false" style="--sw:#0b1020;--sw2:#3b82f6;"></button>
+  <button type="button" class="pk-swatch-btn" data-pack="light" onclick="laSetPack('light')" title="Peakerr Soft (Light)" aria-label="Peakerr Soft (Light)" aria-pressed="false" style="--sw:#f4f7f2;--sw2:#5eb516;"></button>
 </div>

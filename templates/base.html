@@ -352,7 +352,12 @@
     document.querySelectorAll('.la-pack-switch [data-pack]').forEach(function(b){
       var on = b.getAttribute('data-pack') === pack;
       b.classList.toggle('is-on', on);
+      b.classList.toggle('active', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    document.querySelectorAll('.pk-theme-card').forEach(function(c){
+      var on = c.getAttribute('onclick') && c.getAttribute('onclick').indexOf(pack) !== -1;
+      c.classList.toggle('active', on);
     });
     var lbl = document.getElementById('laCurrentThemeLabel');
     if (lbl && themeNames[pack]) lbl.textContent = themeNames[pack];

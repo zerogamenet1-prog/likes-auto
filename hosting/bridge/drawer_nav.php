@@ -219,15 +219,28 @@ $cur = $currentPage ?? '';
       </a>
     </div>
 
-    <!-- Theme Switcher -->
-    <div class="la-drawer-theme-box pk-theme-box">
-      <span class="theme-lbl">ธีมการแสดงผล</span>
-      <div class="la-pack-switch" role="group" aria-label="เปลี่ยนธีม">
-        <button type="button" data-pack="peak" onclick="laSetPack('peak')" title="Peakerr Lime" aria-label="Peakerr Lime" style="--sw:#020804;--sw2:#8ee31f"></button>
-        <button type="button" data-pack="cyber" onclick="laSetPack('cyber')" title="Cyberpunk Neon" aria-label="Cyberpunk Neon" style="--sw:#0d0614;--sw2:#a855f7"></button>
-        <button type="button" data-pack="neon" onclick="laSetPack('neon')" title="Neon Obsidian" aria-label="Neon Obsidian" style="--sw:#0b0f19;--sw2:#00e5ff"></button>
-        <button type="button" data-pack="glass" onclick="laSetPack('glass')" title="Midnight Glass" aria-label="Midnight Glass" style="--sw:#070b14;--sw2:#3b82f6"></button>
-        <button type="button" data-pack="light" onclick="laSetPack('light')" title="Clean Light" aria-label="Clean Light" style="--sw:#f4f6fa;--sw2:#2563eb"></button>
+        <!-- Theme Switcher in Drawer (Professional 2x2 Grid) -->
+    <div class="la-drawer-theme-box pk-theme-box" style="display:flex !important; flex-direction:column !important; align-items:stretch !important; gap:10px !important;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span class="theme-lbl" style="font-size:12px; font-weight:700; color:#94a3b8; text-transform:uppercase;"><i class="ri-palette-line" style="color:var(--pk-green, #8ee31f); margin-right:4px;"></i> ธีมการแสดงผล</span>
+      </div>
+      <div class="la-drawer-theme-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button type="button" class="pk-theme-card" onclick="laSelectTheme('peak', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
+          <span style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#020804 50%, #8ee31f 50%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
+          <span style="font-size:12.5px; font-weight:600;">Peakerr</span>
+        </button>
+        <button type="button" class="pk-theme-card" onclick="laSelectTheme('violet', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
+          <span style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#080614 50%, #a855f7 50%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
+          <span style="font-size:12.5px; font-weight:600;">Violet</span>
+        </button>
+        <button type="button" class="pk-theme-card" onclick="laSelectTheme('navy', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
+          <span style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#0b1020 50%, #3b82f6 50%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
+          <span style="font-size:12.5px; font-weight:600;">Navy</span>
+        </button>
+        <button type="button" class="pk-theme-card" onclick="laSelectTheme('light', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
+          <span style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#f4f7f2 50%, #5eb516 50%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
+          <span style="font-size:12.5px; font-weight:600;">Light</span>
+        </button>
       </div>
     </div>
 

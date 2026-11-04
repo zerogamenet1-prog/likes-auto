@@ -538,7 +538,129 @@ if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
                     $post
                 );
                 
+                // Enhance Theme Switcher to Executive Dropdown Popover in $post
+                $themeDropdownHtml = '<div class="la-theme-dropdown" id="laThemeDropdown">
+  <button type="button" class="la-theme-btn" onclick="laToggleThemeMenu(event)" aria-haspopup="true" aria-expanded="false" title="เลือกธีมการแสดงผล" aria-label="เลือกธีมการแสดงผล">
+    <span class="la-theme-ico"><i class="ri-palette-line"></i></span>
+    <span class="la-theme-dot" id="laCurrentThemeDot"></span>
+    <span class="la-theme-name" id="laCurrentThemeLabel">Peakerr Lime</span>
+    <i class="ri-arrow-down-s-line la-theme-arrow"></i>
+  </button>
+  <div class="la-theme-popover" id="laThemeMenu" role="menu">
+    <div class="la-theme-popover-head">
+      <i class="ri-paint-brush-fill"></i>
+      <span>เลือกธีมการแสดงผล</span>
+    </div>
+    <div class="la-theme-options">
+      <button type="button" class="la-theme-opt" data-theme-val="peak" onclick="laSelectTheme(\'peak\', event)">
+        <span class="theme-swatch" style="--sw:#020804;--sw2:#8ee31f;"></span>
+        <div class="theme-meta">
+          <strong class="theme-title">Peakerr Lime <span class="theme-badge-rec">แนะนำ</span></strong>
+          <span class="theme-sub">ดำลึกตัดเขียวนีออน (สไตล์ Peakerr)</span>
+        </div>
+        <i class="ri-check-line theme-chk"></i>
+      </button>
+      <button type="button" class="la-theme-opt" data-theme-val="violet" onclick="laSelectTheme(\'violet\', event)">
+        <span class="theme-swatch" style="--sw:#080614;--sw2:#a855f7;"></span>
+        <div class="theme-meta">
+          <strong class="theme-title">Night Violet</strong>
+          <span class="theme-sub">ม่วงนีออน ลึกลับโมเดิร์น</span>
+        </div>
+        <i class="ri-check-line theme-chk"></i>
+      </button>
+      <button type="button" class="la-theme-opt" data-theme-val="navy" onclick="laSelectTheme(\'navy\', event)">
+        <span class="theme-swatch" style="--sw:#0b1020;--sw2:#3b82f6;"></span>
+        <div class="theme-meta">
+          <strong class="theme-title">Midnight Navy</strong>
+          <span class="theme-sub">น้ำเงินเข้ม พรีเมียมคมชัด</span>
+        </div>
+        <i class="ri-check-line theme-chk"></i>
+      </button>
+      <button type="button" class="la-theme-opt" data-theme-val="light" onclick="laSelectTheme(\'light\', event)">
+        <span class="theme-swatch" style="--sw:#f4f7f2;--sw2:#5eb516;"></span>
+        <div class="theme-meta">
+          <strong class="theme-title">Peakerr Soft (Light)</strong>
+          <span class="theme-sub">โหมดสว่าง สะอาดตา สบายตา</span>
+        </div>
+        <i class="ri-check-line theme-chk"></i>
+      </button>
+    </div>
+  </div>
+</div>';
+
+                if (stripos($post, 'la-theme-dropdown') === false) {
+                    $post = preg_replace(
+                        '#<div class="la-pack-switch\b[^"]*"[^>]*>.*?</div>#s',
+                        $themeDropdownHtml,
+                        $post,
+                        1
+                    );
+                }
+                
                 $respBody = $pre . "\n" . $newDrawer . "\n" . $post;
+                
+                // Inject helper script for theme dropdown if not present
+                if (stripos($respBody, 'laSelectTheme') === false && stripos($respBody, '</body>') !== false) {
+                    $themeJs = '<script>
+(function(){
+  var themeNames = {"peak":"Peakerr Lime","violet":"Night Violet","navy":"Midnight Navy","light":"Peakerr Soft"};
+  var themeColors = {"peak":"#8ee31f","violet":"#a855f7","navy":"#3b82f6","light":"#5eb516"};
+  window.laSyncThemeUI = function(pack){
+    pack = pack || document.documentElement.getAttribute("data-la-pack") || "peak";
+    var lbl = document.getElementById("laCurrentThemeLabel");
+    if (lbl && themeNames[pack]) lbl.textContent = themeNames[pack];
+    var dot = document.getElementById("laCurrentThemeDot");
+    if (dot && themeColors[pack]) {
+      dot.style.background = themeColors[pack];
+      dot.style.boxShadow = "0 0 8px " + themeColors[pack];
+    }
+    document.querySelectorAll(".la-theme-opt").forEach(function(opt){
+      var on = opt.getAttribute("data-theme-val") === pack;
+      opt.classList.toggle("active", on);
+      opt.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  };
+  window.laSelectTheme = function(pack, e){
+    if (e) e.stopPropagation();
+    if (typeof laSetPack === "function") laSetPack(pack);
+    laSyncThemeUI(pack);
+    var menu = document.getElementById("laThemeMenu");
+    var btn = document.querySelector(".la-theme-btn");
+    if (menu) menu.classList.remove("open");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+  };
+  window.laToggleThemeMenu = function(e){
+    if (e) e.stopPropagation();
+    var menu = document.getElementById("laThemeMenu");
+    var btn = document.querySelector(".la-theme-btn");
+    if (!menu) return;
+    var isOpen = menu.classList.toggle("open");
+    if (btn) btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  };
+  document.addEventListener("click", function(e){
+    var dd = document.getElementById("laThemeDropdown");
+    if (dd && !dd.contains(e.target)) {
+      var menu = document.getElementById("laThemeMenu");
+      var btn = document.querySelector(".la-theme-btn");
+      if (menu) menu.classList.remove("open");
+      if (btn) btn.setAttribute("aria-expanded", "false");
+    }
+  });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape") {
+      var menu = document.getElementById("laThemeMenu");
+      var btn = document.querySelector(".la-theme-btn");
+      if (menu && menu.classList.contains("open")) {
+        menu.classList.remove("open");
+        if (btn) btn.setAttribute("aria-expanded", "false");
+      }
+    }
+  });
+  setTimeout(function(){ laSyncThemeUI(); }, 50);
+})();
+</script>';
+                    $respBody = str_ireplace('</body>', $themeJs . "\n</body>", $respBody);
+                }
             }
         }
     }

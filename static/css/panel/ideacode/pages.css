@@ -4784,3 +4784,269 @@ body.la-nav-open .la-header.la-header--fz .la-nav-scrim {
     height: 14px !important;
   }
 }
+
+
+/* ========================================================
+   EXECUTIVE THEME PICKER POPOVER COMPONENT (HIGH-END MODERN)
+   ======================================================== */
+
+.la-theme-dropdown {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+  z-index: 1200 !important;
+}
+
+/* 1. Sleek Glass Trigger Button */
+.la-theme-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 13px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  color: #f1f5f9 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  white-space: nowrap !important;
+  outline: none !important;
+}
+.la-theme-btn:hover,
+.la-theme-btn[aria-expanded="true"] {
+  background: rgba(142, 227, 31, 0.08) !important;
+  border-color: rgba(142, 227, 31, 0.4) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(142, 227, 31, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+.la-theme-btn .la-theme-ico {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  color: var(--pk-green, #8ee31f) !important;
+}
+.la-theme-btn .la-theme-dot {
+  width: 9px !important;
+  height: 9px !important;
+  border-radius: 50% !important;
+  background: var(--pk-green, #8ee31f) !important;
+  box-shadow: 0 0 8px var(--pk-green, #8ee31f) !important;
+  flex-shrink: 0 !important;
+  transition: all 0.22s ease !important;
+}
+.la-theme-btn .la-theme-name {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #e2e8f0 !important;
+  letter-spacing: -0.01em !important;
+}
+.la-theme-btn .la-theme-arrow {
+  font-size: 15px !important;
+  color: #94a3b8 !important;
+  transition: transform 0.22s ease !important;
+  margin-left: 2px !important;
+}
+.la-theme-btn[aria-expanded="true"] .la-theme-arrow {
+  transform: rotate(180deg) !important;
+  color: var(--pk-green, #8ee31f) !important;
+}
+
+/* 2. Modern Glass Popover Card */
+.la-theme-popover {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  right: 0 !important;
+  width: 290px !important;
+  background: rgba(2, 8, 4, 0.98) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(142, 227, 31, 0.25) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(142, 227, 31, 0.12) !important;
+  padding: 10px !important;
+  z-index: 99999 !important;
+  display: none;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  pointer-events: none;
+}
+.la-theme-popover.open {
+  display: block !important;
+  opacity: 1 !important;
+  transform: translateY(0) scale(1) !important;
+  pointer-events: auto !important;
+}
+
+.la-theme-popover-head {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 10px 10px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+.la-theme-popover-head i {
+  color: var(--pk-green, #8ee31f) !important;
+  font-size: 15px !important;
+}
+
+.la-theme-options {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  margin-top: 6px !important;
+}
+
+/* 3. Individual Theme Option Item */
+.la-theme-opt {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 9px 12px !important;
+  border-radius: 10px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #f1f5f9 !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: all 0.16s ease !important;
+  outline: none !important;
+}
+.la-theme-opt:hover {
+  background: rgba(142, 227, 31, 0.08) !important;
+  border-color: rgba(142, 227, 31, 0.2) !important;
+  transform: translateX(2px) !important;
+}
+.la-theme-opt.active {
+  background: rgba(142, 227, 31, 0.12) !important;
+  border-color: rgba(142, 227, 31, 0.35) !important;
+}
+
+.theme-swatch {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: conic-gradient(var(--sw) 50%, var(--sw2) 50%) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  border: 2px solid rgba(255, 255, 255, 0.18) !important;
+  flex-shrink: 0 !important;
+}
+.la-theme-opt.active .theme-swatch {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 10px var(--sw2) !important;
+}
+
+.theme-meta {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+.theme-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.25 !important;
+}
+.theme-badge-rec {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  padding: 1px 6px !important;
+  border-radius: 999px !important;
+  background: rgba(142, 227, 31, 0.18) !important;
+  color: var(--pk-green, #8ee31f) !important;
+  border: 1px solid rgba(142, 227, 31, 0.35) !important;
+  line-height: 1.1 !important;
+}
+.theme-sub {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  line-height: 1.35 !important;
+  margin-top: 1px !important;
+}
+
+.theme-chk {
+  font-size: 18px !important;
+  color: var(--pk-green, #8ee31f) !important;
+  opacity: 0 !important;
+  transform: scale(0.6) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  flex-shrink: 0 !important;
+}
+.la-theme-opt.active .theme-chk {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+}
+
+/* Light Theme overrides for the popover */
+html.la-light .la-theme-btn,
+html[data-la-pack="light"] .la-theme-btn {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+html.la-light .la-theme-btn .la-theme-name,
+html[data-la-pack="light"] .la-theme-btn .la-theme-name {
+  color: #0f172a !important;
+}
+html.la-light .la-theme-popover,
+html[data-la-pack="light"] .la-theme-popover {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12) !important;
+}
+html.la-light .theme-title,
+html[data-la-pack="light"] .theme-title {
+  color: #0f172a !important;
+}
+html.la-light .la-theme-opt:hover,
+html[data-la-pack="light"] .la-theme-opt:hover {
+  background: rgba(94, 181, 22, 0.08) !important;
+  border-color: rgba(94, 181, 22, 0.2) !important;
+}
+html.la-light .la-theme-opt.active,
+html[data-la-pack="light"] .la-theme-opt.active {
+  background: rgba(94, 181, 22, 0.12) !important;
+  border-color: rgba(94, 181, 22, 0.35) !important;
+}
+
+/* Ensure desktop top navigation links are hidden, leaving only brand & tools */
+.la-header .la-nav:not(.la-drawer-revamp):not(.pk-drawer) {
+  display: none !important;
+}
+
+/* Mobile Responsiveness for Theme Dropdown */
+@media (max-width: 767px) {
+  .la-theme-btn {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 9px !important;
+    gap: 5px !important;
+  }
+  .la-theme-btn .la-theme-name {
+    display: none !important; /* Hide long text on mobile to avoid horizontal overflow */
+  }
+  .la-theme-popover {
+    width: min(280px, calc(100vw - 20px)) !important;
+    right: 0 !important;
+  }
+}

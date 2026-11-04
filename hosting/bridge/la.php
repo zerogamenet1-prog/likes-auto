@@ -600,7 +600,7 @@ if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
                 $respBody = $pre . "\n" . $newDrawer . "\n" . $post;
                 
                 // Inject helper script for theme dropdown if not present
-                if (stripos($respBody, 'laSelectTheme') === false && stripos($respBody, '</body>') !== false) {
+                if (stripos($respBody, 'window.laSyncThemeUI') === false && stripos($respBody, '</body>') !== false) {
                     $themeJs = '<script>
 (function(){
   var themeNames = {"peak":"Peakerr Lime","violet":"Night Violet","navy":"Midnight Navy","light":"Peakerr Soft"};

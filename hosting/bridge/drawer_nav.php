@@ -17,8 +17,7 @@ $cur = $currentPage ?? '';
       <span class="la-brand-mark pk-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
       <span class="la-drawer-title pk-brand-text">Likes<span>Auto</span></span>
     </div>
-    <div class="la-drawer-top-actions">
-      <span class="la-drawer-status-pill pk-status-pill"><span class="la-live-pulse-dot pk-pulse-dot"></span> ออนไลน์ 24 ชม.</span>
+        <div class="la-drawer-top-actions">
       <button type="button" class="la-drawer-close pk-drawer-close" onclick="laCloseNav()" aria-label="ปิดเมนู">
         <i class="ri-close-line"></i>
       </button>
@@ -43,26 +42,6 @@ $cur = $currentPage ?? '';
         </div>
         <a href="/addfunds" class="la-btn pk-addfunds-btn">
           <i class="ri-wallet-3-line"></i> เติมเงิน
-        </a>
-      </div>
-    </div>
-    <?php else: ?>
-    <!-- Peakerr Guest Welcome Card (Guaranteed never to shrink or clip) -->
-    <div class="la-drawer-guest-card pk-guest-card" style="flex-shrink:0 !important; min-height:auto !important;">
-      <div class="la-drawer-guest-top">
-        <div class="la-drawer-guest-badge pk-guest-badge">
-          <span class="la-live-pulse-dot pk-pulse-dot"></span> แผงปั๊มไลค์อันดับ 1
-        </div>
-        <span class="la-drawer-guest-subtag pk-guest-subtag"><i class="ri-shield-check-fill"></i> ปลอดภัย 100%</span>
-      </div>
-      <h3 class="la-drawer-guest-h" style="font-size:15px; font-weight:800; color:#fff; margin:4px 0 6px;">ปั๊มไลค์ &amp; ฟอล ราคาถูกที่สุด</h3>
-      <p class="la-drawer-guest-p" style="font-size:12px; color:#94a3b8; line-height:1.45; margin:0 0 12px;">บริการปั๊มไลค์ทุกแพลตฟอร์ม ยอดขึ้นไว ปลอดภัย อัตโนมัติ 24 ชม. ไม่ใช้รหัสผ่าน</p>
-      <div class="la-drawer-cta-grid" style="display:flex; flex-direction:column; gap:8px;">
-        <a href="/signup" class="la-btn pk-drawer-signup-btn">
-          <i class="ri-rocket-fill"></i> <span>สมัครสมาชิกฟรี</span>
-        </a>
-        <a href="/signin" onclick="laOpenLogin(event)" class="la-btn pk-drawer-signin-btn">
-          <i class="ri-login-box-line"></i> <span>เข้าสู่ระบบ</span>
         </a>
       </div>
     </div>

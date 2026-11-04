@@ -5411,7 +5411,6 @@ html[data-la-pack="light"] .la-pack-switch button[aria-pressed="true"] {
   }
 }
 
-
 /* ==========================================================================
    STYLE 6: GOOGLE-FIRST FAST LOGIN CARD DESIGN (Peakerr & Multi-theme)
    ========================================================================== */
@@ -5426,6 +5425,10 @@ html[data-la-pack="light"] .la-pack-switch button[aria-pressed="true"] {
   -webkit-backdrop-filter: blur(28px) !important;
   padding: 32px 28px !important;
   transition: all 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.la-login-style-6::before {
+  display: none !important;
 }
 
 /* Light Theme Card */
@@ -5466,42 +5469,53 @@ html[data-la-pack="light"] .la-login-style-6 .la-login-hi .la-auth-card-lead {
   color: #64748b !important;
 }
 
-/* Google Spotlight Top Button */
-.la-google-spotlight {
+/* Google Spotlight Top Button (Overcoming all legacy selectors) */
+.la-login-style-6 .la-google-spotlight,
+.la-login-style-6 a.la-google-btn.la-google-spotlight,
+aside.la-login-style-6 .la-google-spotlight,
+div.la-login-style-6 .la-google-spotlight,
+a.la-google-spotlight {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 12px !important;
   width: 100% !important;
-  height: 52px !important;
+  min-height: 50px !important;
+  height: 50px !important;
   border-radius: 14px !important;
-  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important;
+  background: #ffffff !important;
   color: #0f172a !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
   font-size: 1rem !important;
   font-weight: 700 !important;
   text-decoration: none !important;
-  box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.35), inset 0 1px 0 #ffffff !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 #ffffff !important;
   margin-bottom: 18px !important;
   transition: all 0.22s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
-.la-google-spotlight:hover {
+.la-login-style-6 .la-google-spotlight:hover,
+a.la-google-spotlight:hover {
+  background: #f8fafc !important;
+  color: #0f172a !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.45), 0 0 20px rgba(255, 255, 255, 0.25) !important;
-  filter: brightness(1.03) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 20px rgba(255, 255, 255, 0.3) !important;
 }
 
-.la-google-spotlight:active {
-  transform: translateY(1px) !important;
+.la-login-style-6 .la-google-spotlight span,
+a.la-google-spotlight span {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  font-size: 0.98rem !important;
 }
 
-.la-google-spotlight svg {
+.la-login-style-6 .la-google-spotlight svg {
   flex-shrink: 0 !important;
 }
 
 /* Divider with label */
-.la-google-first-divider {
+.la-google-first-divider,
+.la-login-style-6 .la-google-first-divider {
   display: flex !important;
   align-items: center !important;
   text-align: center !important;
@@ -5534,32 +5548,37 @@ html[data-la-pack="light"] .la-google-first-divider::after {
 }
 
 /* Input start icons */
-.la-input-ico-start {
+.la-login-style-6 .la-input-ico-start,
+.la-input-ico.la-input-ico-start {
   position: relative !important;
 }
 
-.la-input-ico-start .la-field-ico {
+.la-login-style-6 .la-input-ico-start i.la-field-ico,
+.la-login-style-6 .la-input-ico-start .la-field-ico {
+  display: inline-flex !important;
   position: absolute !important;
   left: 14px !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  color: var(--text-dim, rgba(255, 255, 255, 0.45)) !important;
+  color: var(--text-dim, rgba(255, 255, 255, 0.5)) !important;
   font-size: 1.15rem !important;
   pointer-events: none !important;
-  z-index: 2 !important;
+  z-index: 5 !important;
 }
 
-html[data-la-pack="light"] .la-input-ico-start .la-field-ico,
-body.la-light .la-input-ico-start .la-field-ico {
+html[data-la-pack="light"] .la-login-style-6 .la-input-ico-start i.la-field-ico,
+body.la-light .la-login-style-6 .la-input-ico-start i.la-field-ico {
   color: #64748b !important;
 }
 
-.la-input-ico-start .la-input {
+.la-login-style-6 .la-input-ico-start .la-input,
+.la-login-style-6 .la-input-ico-start input.la-input {
   padding-left: 44px !important;
 }
 
 /* Input Fields styling */
-.la-login-style-6 .la-input {
+.la-login-style-6 .la-input,
+.la-login-style-6 input.la-input {
   height: 48px !important;
   border-radius: 12px !important;
   font-size: 0.98rem !important;
@@ -5581,9 +5600,12 @@ body.la-light .la-login-style-6 .la-input {
   box-shadow: 0 0 0 3px rgba(142, 227, 31, 0.25) !important;
 }
 
-/* Password submit button */
-.pk-submit-btn {
+/* Password submit button with theme adaptivity */
+.la-login-style-6 .pk-submit-btn,
+.la-login-style-6 button.la-login-submit.pk-submit-btn,
+button.pk-submit-btn {
   width: 100% !important;
+  min-height: 48px !important;
   height: 48px !important;
   display: flex !important;
   align-items: center !important;
@@ -5600,20 +5622,24 @@ body.la-light .la-login-style-6 .la-input {
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
-html[data-la-pack="violet"] .pk-submit-btn {
+html[data-la-pack="violet"] .la-login-style-6 .pk-submit-btn,
+html[data-la-pack="violet"] button.pk-submit-btn {
   background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%) !important;
   color: #ffffff !important;
   box-shadow: 0 4px 18px rgba(168, 85, 247, 0.4) !important;
 }
 
-html[data-la-pack="navy"] .pk-submit-btn {
+html[data-la-pack="navy"] .la-login-style-6 .pk-submit-btn,
+html[data-la-pack="navy"] button.pk-submit-btn {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
   color: #ffffff !important;
   box-shadow: 0 4px 18px rgba(59, 130, 246, 0.4) !important;
 }
 
-html[data-la-pack="light"] .pk-submit-btn,
-body.la-light .pk-submit-btn {
+html[data-la-pack="light"] .la-login-style-6 .pk-submit-btn,
+body.la-light .la-login-style-6 .pk-submit-btn,
+html[data-la-pack="light"] button.pk-submit-btn,
+body.la-light button.pk-submit-btn {
   background: #16a34a !important;
   color: #ffffff !important;
   box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3) !important;
@@ -5661,12 +5687,15 @@ html[data-la-pack="light"] .la-login-style-6 .la-login-foot a {
     padding: 24px 18px !important;
     border-radius: 20px !important;
   }
-  .la-google-spotlight {
+  .la-login-style-6 .la-google-spotlight,
+  a.la-google-spotlight {
     height: 48px !important;
+    min-height: 48px !important;
     font-size: 0.95rem !important;
   }
   .pk-submit-btn {
     height: 46px !important;
+    min-height: 46px !important;
     font-size: 0.96rem !important;
   }
 }

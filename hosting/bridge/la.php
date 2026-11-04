@@ -620,7 +620,7 @@ if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
 // ── STYLE 6: GOOGLE-FIRST LOGIN CARD ENHANCEMENT ──
 if ($code === 200 && stripos($respBody, 'la-login-style-6') === false && stripos($respBody, 'la-login-card') !== false) {
     // 1) Home page Hero Login aside
-    if (preg_match('#<aside class="la-hero-login la-login-card la-login-fz"[^>]*>(.*?)</aside>#s', $respBody, $mHome)) {
+    if (preg_match('#<aside class="la-hero-login la-login-card(?: la-login-fz)?"[^>]*>(.*?)</aside>#s', $respBody, $mHome)) {
         $oldHomeCard = $mHome[0];
         $inner = $mHome[1];
         
@@ -650,7 +650,7 @@ if ($code === 200 && stripos($respBody, 'la-login-style-6') === false && stripos
         <div class="la-or la-google-first-divider"><span>หรือใช้ชื่อผู้ใช้และรหัสผ่าน</span></div>';
         }
         
-        $newHomeCard = '<aside class="la-hero-login la-login-card la-login-fz la-login-style-6">
+        $newHomeCard = '<aside class="la-hero-login la-login-card la-login-style-6">
         <div class="la-login-hi">
           <h3>ยินดีต้อนรับกลับ</h3>
           <p>เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดใน 1 คลิก</p>
@@ -688,7 +688,7 @@ if ($code === 200 && stripos($respBody, 'la-login-style-6') === false && stripos
     }
     
     // 2) Dedicated Signin page card
-    if (preg_match('#<div class="la-auth-card la-login-card la-login-fz"[^>]*>(.*?)</div>\s*</div>\s*</div>\s*</main>#s', $respBody, $mSignin)) {
+    if (preg_match('#<div class="la-auth-card la-login-card(?: la-login-fz)?"[^>]*>(.*?)</div>\s*</div>\s*</div>\s*</main>#s', $respBody, $mSignin)) {
         $oldSigninCard = $mSignin[0];
         $inner = $mSignin[1];
         
@@ -723,7 +723,7 @@ if ($code === 200 && stripos($respBody, 'la-login-style-6') === false && stripos
         <div class="la-or la-google-first-divider"><span>หรือใช้ชื่อผู้ใช้และรหัสผ่าน</span></div>';
         }
         
-        $newSigninCard = '<div class="la-auth-card la-login-card la-login-fz la-login-style-6">
+        $newSigninCard = '<div class="la-auth-card la-login-card la-login-style-6">
         <div class="la-login-hi">
           <h1 class="la-auth-card-title">ยินดีต้อนรับกลับ</h1>
           <p class="la-auth-card-lead">เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดใน 1 คลิก</p>
@@ -764,6 +764,11 @@ if ($code === 200 && stripos($respBody, 'la-login-style-6') === false && stripos
 
         $respBody = str_replace($oldSigninCard, $newSigninCard, $respBody);
     }
+}
+
+// Bump pages.css to v=pro116 so browser/CDN bypasses cached CSS
+if ($code === 200 && stripos($respBody, 'pages.css?v=') !== false) {
+    $respBody = preg_replace('#pages\.css\?v=[a-zA-Z0-9_-]+#', 'pages.css?v=pro116', $respBody);
 }
 
 http_response_code($code);

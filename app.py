@@ -706,6 +706,11 @@ async def indexnow_key_file():
     return PlainTextResponse(INDEXNOW_KEY, media_type="text/plain; charset=utf-8")
 
 
+@app.get("/google{token}.html")
+async def google_verification_file(token: str):
+    return HTMLResponse(f"google-site-verification: google{token}.html")
+
+
 def _xml_resp(xml):
     return Response(xml, media_type="application/xml; charset=utf-8", headers={"Cache-Control": "public, max-age=300"})
 

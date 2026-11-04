@@ -59,6 +59,66 @@ $query = parse_url($uri, PHP_URL_QUERY);
 if ($path !== '/' && substr($path, -1) === '/') {
     $path = rtrim($path, '/');
 }
+
+// ── Google Search Console Verification File Handler ──
+if (preg_match('#^/google([a-zA-Z0-9_-]+)\.html$#', $path, $mG)) {
+    header('Content-Type: text/html; charset=utf-8');
+    echo 'google-site-verification: google' . $mG[1] . '.html';
+    exit;
+}
+
+// ── IndexNow Key File Handler ──
+if ($path === '/la7f3c9e2b1d8a4f6.txt') {
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'la7f3c9e2b1d8a4f6';
+    exit;
+}
+
+// ── One-Click IndexNow Push for Search Engines ──
+if ($path === '/admin/settings/seo/indexnow' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $urls = ['https://likes-auto.com/', 'https://likes-auto.com/services', 'https://likes-auto.com/blog', 'https://likes-auto.com/faq', 'https://likes-auto.com/terms', 'https://likes-auto.com/api'];
+    $sitemaps = ['sitemap-blog.xml', 'sitemap-pages.xml', 'sitemap-platforms.xml'];
+    foreach ($sitemaps as $sm) {
+        $p = __DIR__ . '/' . $sm;
+        if (file_exists($p)) {
+            $xml = file_get_contents($p);
+            if (preg_match_all('#<loc>([^<]+)</loc>#i', $xml, $matches)) {
+                $urls = array_merge($urls, $matches[1]);
+            }
+        }
+    }
+    $urls = array_values(array_unique($urls));
+    $cnt = count($urls);
+    
+    $payload = json_encode([
+        'host' => 'likes-auto.com',
+        'key' => 'la7f3c9e2b1d8a4f6',
+        'keyLocation' => 'https://likes-auto.com/la7f3c9e2b1d8a4f6.txt',
+        'urlList' => $urls
+    ], JSON_UNESCAPED_SLASHES);
+    
+    $ch = curl_init('https://api.indexnow.org/indexnow');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json; charset=utf-8']);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+    $res = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    $ok = ($code >= 200 && $code < 300);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'ok' => $ok,
+        'http_code' => $code,
+        'count' => $cnt,
+        'message' => $ok ? "ส่ง {$cnt} URLs ไปยัง IndexNow (Bing/Yandex/Naver) เรียบร้อยแล้ว!" : "IndexNow ตอบกลับสถานะ {$code}",
+        'submitted_at' => date('Y-m-d H:i:s')
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $forwardUri = $path . ($query !== null && $query !== '' ? ('?' . $query) : '');
 $url = $base . $forwardUri;
 $headers = [];
@@ -409,6 +469,29 @@ if ($code === 200 && strpos($path, '/admin/appearance/blog') === 0 && stripos($r
             $mainEnd = strpos($respBody, '</main>', $navEnd);
             if ($navEnd !== false && $mainEnd !== false) {
                 $respBody = substr($respBody, 0, $navEnd + 6) . "\n" . $newContent . "\n" . substr($respBody, $mainEnd);
+            }
+        }
+    }
+}
+
+
+if ($code === 200 && (strpos($path, '/admin/settings/integrations') === 0 || (strpos($path, '/admin/settings') === 0 && isset($_GET['tab']) && $_GET['tab'] === 'integrations')) && stripos($respBody, 'la-seo-hub-card') === false) {
+    $patchFile = __DIR__ . '/seo_card.php';
+    if (is_file($patchFile)) {
+        ob_start();
+        include $patchFile;
+        $seoHtml = ob_get_clean();
+        
+        if ($seoHtml !== false && $seoHtml !== '') {
+            $target = '<form method="post" class="adm-form" style="margin-top:16px">';
+            $pos = strpos($respBody, $target);
+            if ($pos !== false) {
+                $respBody = substr($respBody, 0, $pos) . $seoHtml . "\n" . substr($respBody, $pos);
+            } else {
+                $mainEnd = strrpos($respBody, '</main>');
+                if ($mainEnd !== false) {
+                    $respBody = substr($respBody, 0, $mainEnd) . "\n" . $seoHtml . "\n" . substr($respBody, $mainEnd);
+                }
             }
         }
     }

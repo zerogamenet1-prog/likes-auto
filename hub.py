@@ -811,3 +811,35 @@ async def provider_logs(request: Request):
         "rows": list_cron_logs(100),
         "log_kind": "providers",
     }))
+
+
+@router.post("/settings/seo/indexnow")
+async def seo_indexnow(request: Request):
+    g = ok(request)
+    if g:
+        return g
+    from seo import push_indexnow_urls
+    import urllib.request, xml.etree.ElementTree as ET
+    urls = ["https://likes-auto.com/", "https://likes-auto.com/services", "https://likes-auto.com/blog", "https://likes-auto.com/faq", "https://likes-auto.com/terms", "https://likes-auto.com/api"]
+    for sm in ["sitemap-blog.xml", "sitemap-pages.xml", "sitemap-platforms.xml"]:
+        try:
+            req = urllib.request.Request(f"https://likes-auto.com/{sm}", headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=5) as res:
+                xml_data = res.read()
+                root = ET.fromstring(xml_data)
+                for loc in root.iter("{http://www.sitemaps.org/schemas/sitemap/0.9}loc"):
+                    if loc.text:
+                        urls.append(loc.text.strip())
+        except Exception:
+            pass
+    urls = list(dict.fromkeys(urls))
+    ok_push, code, msg = push_indexnow_urls(urls)
+    from fastapi.responses import JSONResponse
+    from datetime import datetime
+    return JSONResponse({
+        "ok": ok_push,
+        "count": len(urls),
+        "http_code": code,
+        "message": f"ส่ง {len(urls)} URLs ไปยัง IndexNow เรียบร้อยแล้ว!" if ok_push else f"IndexNow ตอบกลับสถานะ {code}",
+        "submitted_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })

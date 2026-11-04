@@ -230,149 +230,108 @@
   </form>
 </details>
 
-{# ── ปรับราคาจากต้นทุน ── #}
+{# ── ปรับราคาจากต้นทุนจริง (Master Unified Rate Control) ── #}
 <section class="adm-card svc-rate-card">
+  <!-- Header -->
   <div class="svc-rate-head">
     <div>
       <h3 style="display:flex;align-items:center;gap:8px;font-size:1.15rem;margin:0 0 6px">
-        <i class="ri-percent-line" style="color:var(--primary,#0d6efd)"></i> ปรับราคาขายจากต้นทุนจริง
+        <i class="ri-percent-line" style="color:var(--primary,#0d6efd)"></i> ปรับราคาขายจากต้นทุนจริง (Cost-Plus Pricing)
       </h3>
       <p class="la-muted" style="margin:0;font-size:13.5px">
-        ระบบจะดึงต้นทุนผู้ให้บริการ (แปลงเป็นเงินบาท) แล้วบวกกำไร % + จำนวนเงินคงที่ตามที่กำหนด
+        คำนวณราคาขายอัตโนมัติจากต้นทุนผู้ให้บริการ (แปลงเป็นบาทตามเรท USD) แล้วบวกกำไรตามที่กำหนด
       </p>
     </div>
     <div class="svc-rate-meta">
       <span class="adm-badge active"><i class="ri-exchange-dollar-line"></i> เรทปัจจุบัน: 1 USD = {{ usd_rate }} บาท</span>
+      <span class="adm-badge active" style="background:#2563eb;color:#fff"><i class="ri-funds-line"></i> บวกกำไรระบบ: +{{ profit_percent|default(100) }}%</span>
     </div>
   </div>
 
-  {# ── อัตรากำไรปัจจุบันแบนเนอร์เด่นชัด ── #}
-  <div class="svc-rate-banner">
-    <div class="svc-rate-banner-left">
-      <div class="svc-rate-badge-main">
-        <i class="ri-funds-line"></i>
-        <span>อัตราบวกกำไรปัจจุบันที่ใช้งานอยู่</span>
-      </div>
-      <div class="svc-rate-value-wrap">
-        <span class="svc-rate-big-val">+{{ profit_percent|default(100) }}%</span>
-        <span class="svc-rate-val-sub">จากต้นทุนสินค้า</span>
-      </div>
-      <p class="svc-rate-hint-text">
-        <i class="ri-information-line"></i> ทุกรายการที่นำเข้าหรือปรับจากต้นทุนจะใช้เรทนี้เป็นค่าตั้งต้น (เปลี่ยนค่าเริ่มต้นได้ที่ <a href="/admin/settings">Settings</a>)
-      </p>
-    </div>
-    <div class="svc-rate-banner-right">
-      <div class="svc-rate-formula-title"><i class="ri-calculator-line"></i> ตัวอย่างสูตรคิดราคาขาย ณ ตอนนี้:</div>
-      <div class="svc-rate-formula-box">
-        <div class="svc-formula-step">
-          <span class="lbl">สมมุติต้นทุน</span>
-          <span class="val">10.00 ฿</span>
-        </div>
-        <i class="ri-add-line op"></i>
-        <div class="svc-formula-step">
-          <span class="lbl">กำไร +{{ profit_percent|default(100) }}%</span>
-          <span class="val profit">+{{ (10.0 * (profit_percent|default(100)|float) / 100)|round(2) }} ฿</span>
-        </div>
-        <i class="ri-arrow-right-line op"></i>
-        <div class="svc-formula-step final">
-          <span class="lbl">ราคาขายหน้าร้าน</span>
-          <span class="val sell">{{ (10.0 * (1 + (profit_percent|default(100)|float) / 100))|round(2) }} ฿</span>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Unified Form -->
+  <form id="svc-unified-rate-form" method="post" action="/admin/services/bulk-rate-all" onsubmit="return handleRateSubmit(this)">
+    <input type="hidden" name="ids" id="unified-ids" value="">
 
-  {# ── แยก 2 คอลัมน์ชัดเจน: ปรับทั้งร้าน vs ปรับเฉพาะที่เลือก ── #}
-  <div class="svc-rate-grid">
-    <!-- กล่อง 1: ปรับทั้งร้าน -->
-    <div class="svc-rate-box svc-rate-box-all">
-      <div class="svc-rate-box-header">
-        <span class="svc-scope-pill all"><i class="ri-store-3-line"></i> ทั้งร้าน</span>
-        <h4>ปรับทุกบริการในร้าน</h4>
-        <p class="la-muted">คำนวณและตั้งราคาขายใหม่ให้กับบริการทั้งหมด ({{ total }} รายการ) ที่มีต้นทุน</p>
-      </div>
-      <form method="post" action="/admin/services/bulk-rate-all"
-            onsubmit="return confirm('⚠️ ยืนยันปรับราคาขายทุกบริการในร้าน {{ total }} รายการ จากต้นทุน + ' + this.percent.value + '%?')">
-        <div class="svc-rate-inputs">
-          <div class="svc-rate-field-group">
-            <div class="svc-field-top">
-              <label class="la-field" for="profit-all">กำไรจากต้นทุน %</label>
-              <div class="svc-preset-btns">
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('all', 50)">+50%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('all', 100)">+100%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('all', 150)">+150%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('all', 200)">+200%</button>
-              </div>
-            </div>
-            <div class="svc-input-unit">
-              <input class="la-input adm-num" id="profit-all" type="number" step="0.1" name="percent" value="{{ profit_percent|default(100) }}" required oninput="calcPreview('all')">
-              <span class="unit">%</span>
+    <!-- Scope Selector Tabs (ขอบเขตการปรับราคา) -->
+    <div class="svc-scope-tabs">
+      <button type="button" class="svc-scope-tab is-active" id="scope-tab-all" onclick="setMasterScope('all')">
+        <i class="ri-store-3-line"></i>
+        <span>ปรับทุกบริการในร้าน (ทั้งร้าน {{ total }} รายการ)</span>
+      </button>
+      <button type="button" class="svc-scope-tab" id="scope-tab-sel" onclick="setMasterScope('sel')">
+        <i class="ri-checkbox-multiple-line"></i>
+        <span>ปรับเฉพาะบริการที่เลือก (<span class="js-sel-badge-text">ยังไม่ได้เลือก</span>)</span>
+      </button>
+    </div>
+
+    <!-- Inputs & Preview Grid -->
+    <div class="svc-unified-grid">
+      <!-- Left: Inputs & Preset Chips -->
+      <div class="svc-inputs-col">
+        <!-- Profit % -->
+        <div class="svc-rate-field-group">
+          <div class="svc-field-top">
+            <label class="la-field" for="master-profit" style="margin-bottom:0">กำหนดอัตราบวกกำไร (%)</label>
+            <div class="svc-preset-btns">
+              <button type="button" class="svc-preset-btn" onclick="setMasterPct(30)">+30%</button>
+              <button type="button" class="svc-preset-btn" onclick="setMasterPct(50)">+50%</button>
+              <button type="button" class="svc-preset-btn is-active" onclick="setMasterPct(100)">+100%</button>
+              <button type="button" class="svc-preset-btn" onclick="setMasterPct(150)">+150%</button>
+              <button type="button" class="svc-preset-btn" onclick="setMasterPct(200)">+200%</button>
             </div>
           </div>
-          <div class="svc-rate-field-group">
-            <label class="la-field" for="fixed-all">บวกเพิ่มคงที่ (บาท)</label>
-            <div class="svc-input-unit">
-              <input class="la-input adm-num" id="fixed-all" type="number" step="0.01" name="fixed" value="0" oninput="calcPreview('all')">
-              <span class="unit">บาท</span>
-            </div>
+          <div class="svc-input-unit">
+            <input class="la-input adm-num" id="master-profit" type="number" step="0.1" name="percent" value="{{ profit_percent|default(100) }}" required oninput="calcMasterPreview()">
+            <span class="unit">%</span>
           </div>
         </div>
 
-        <div class="svc-calc-preview" id="preview-box-all">
-          <i class="ri-eye-line"></i> ตัวอย่าง: ทุน 100 บาท ➔ ขาย <strong id="prev-sell-all">{{ (100 * (1 + (profit_percent|default(100)|float)/100))|round(2) }}</strong> บาท (ได้กำไร <span id="prev-profit-all">{{ (100 * (profit_percent|default(100)|float)/100)|round(2) }}</span> บาท)
+        <!-- Fixed Addition -->
+        <div class="svc-rate-field-group">
+          <label class="la-field" for="master-fixed">บวกเพิ่มคงที่ (บาทต่อ 1,000 ชิ้น)</label>
+          <div class="svc-input-unit">
+            <input class="la-input adm-num" id="master-fixed" type="number" step="0.01" name="fixed" value="0" oninput="calcMasterPreview()">
+            <span class="unit">บาท</span>
+          </div>
         </div>
-
-        <button class="la-btn svc-submit-btn all" type="submit">
-          <i class="ri-flashlight-line"></i> ยืนยันปรับทุกบริการ ({{ total }} รายการ)
-        </button>
-      </form>
-    </div>
-
-    <!-- กล่อง 2: ปรับเฉพาะที่เลือก -->
-    <div class="svc-rate-box svc-rate-box-sel">
-      <div class="svc-rate-box-header">
-        <span class="svc-scope-pill sel"><i class="ri-checkbox-multiple-line"></i> เฉพาะที่เลือก</span>
-        <h4>ปรับเฉพาะบริการที่ติ๊กเลือก</h4>
-        <p class="la-muted">ติ๊ก ☑️ บริการที่ต้องการในตารางด้านล่าง แล้วกำหนดราคาเฉพาะกลุ่มนั้น</p>
       </div>
-      <form method="post" action="/admin/services/bulk-rate"
-            onsubmit="this.ids.value=selectedIds(); if(!this.ids.value){alert('กรุณาติ๊กเลือกบริการในตารางด้านล่างก่อนครับ');return false;} return confirm('ยืนยันปรับราคาบริการที่เลือกจากต้นทุน + ' + this.percent.value + '%?')">
-        <input type="hidden" name="ids" value="">
-        <div class="svc-rate-inputs">
-          <div class="svc-rate-field-group">
-            <div class="svc-field-top">
-              <label class="la-field" for="profit-sel">กำไรจากต้นทุน %</label>
-              <div class="svc-preset-btns">
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('sel', 50)">+50%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('sel', 100)">+100%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('sel', 150)">+150%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('sel', 200)">+200%</button>
-              </div>
-            </div>
-            <div class="svc-input-unit">
-              <input class="la-input adm-num" id="profit-sel" type="number" step="0.1" name="percent" value="{{ profit_percent|default(100) }}" required oninput="calcPreview('sel')">
-              <span class="unit">%</span>
-            </div>
+
+      <!-- Right: Live Formula Preview Card -->
+      <div class="svc-preview-col">
+        <div class="svc-preview-header">
+          <span class="lbl"><i class="ri-calculator-line"></i> จำลองราคาขายจริง (Live Preview)</span>
+          <span class="badge">คำนวณสด</span>
+        </div>
+        <div class="svc-preview-steps">
+          <div class="step">
+            <span class="s-lbl">สมมุติต้นทุน</span>
+            <span class="s-val">10.00 ฿</span>
           </div>
-          <div class="svc-rate-field-group">
-            <label class="la-field" for="fixed-sel">บวกเพิ่มคงที่ (บาท)</label>
-            <div class="svc-input-unit">
-              <input class="la-input adm-num" id="fixed-sel" type="number" step="0.01" name="fixed" value="0" oninput="calcPreview('sel')">
-              <span class="unit">บาท</span>
-            </div>
+          <i class="ri-add-line op"></i>
+          <div class="step">
+            <span class="s-lbl">บวกกำไร (<span id="prev-pct-lbl">+{{ profit_percent|default(100) }}%</span>)</span>
+            <span class="s-val profit" id="prev-profit-add">+{{ (10.0 * (profit_percent|default(100)|float) / 100)|round(2) }} ฿</span>
+          </div>
+          <i class="ri-arrow-right-line op"></i>
+          <div class="step final">
+            <span class="s-lbl">ราคาขายหน้าร้าน</span>
+            <span class="s-val sell" id="prev-sell-total">{{ (10.0 * (1 + (profit_percent|default(100)|float) / 100))|round(2) }} ฿</span>
           </div>
         </div>
-
-        <div class="svc-calc-preview" id="preview-box-sel">
-          <i class="ri-eye-line"></i> ตัวอย่าง: ทุน 100 บาท ➔ ขาย <strong id="prev-sell-sel">{{ (100 * (1 + (profit_percent|default(100)|float)/100))|round(2) }}</strong> บาท (ได้กำไร <span id="prev-profit-sel">{{ (100 * (profit_percent|default(100)|float)/100)|round(2) }}</span> บาท)
+        <div class="svc-preview-summary">
+          <i class="ri-information-line"></i> เมื่อปรับแล้ว คุณจะได้กำไรสุทธิ <strong id="prev-net-sum" style="color:#16a34a">{{ (10.0 * (profit_percent|default(100)|float) / 100)|round(2) }} บาท</strong> ต่อ 1,000 ชิ้น
         </div>
-
-        <button class="la-btn la-btn-ghost svc-submit-btn sel" type="submit">
-          <i class="ri-checkbox-circle-line"></i> ยืนยันปรับราคาที่เลือก <span class="js-sel-badge-text">(ยังไม่ได้เลือก)</span>
-        </button>
-      </form>
+      </div>
     </div>
-  </div>
+
+    <!-- Submit Action Button -->
+    <div class="svc-action-row">
+      <button type="submit" class="la-btn svc-master-submit-btn all" id="master-submit-btn">
+        <i class="ri-flashlight-line"></i>
+        <span id="master-submit-label">ยืนยันปรับราคาขาย ทุกบริการในร้าน ({{ total }} รายการ)</span>
+      </button>
+    </div>
+  </form>
 </section>
 
 {# ── Bulk actions bar ── #}
@@ -490,31 +449,96 @@ function updateSelCount(){
   if(el) el.textContent = n ? "เลือกแล้ว " + n + " รายการ" : "";
   var badgeTexts = document.querySelectorAll(".js-sel-badge-text");
   badgeTexts.forEach(function(b){
-    b.textContent = n ? "(" + n + " รายการ)" : "(ยังไม่ได้เลือก)";
+    b.textContent = n ? n + " รายการ" : "ยังไม่ได้เลือก";
   });
+  if(window.masterScope === 'sel'){
+    var btnLbl = document.getElementById('master-submit-label');
+    if(btnLbl){
+      btnLbl.textContent = n ? 'ยืนยันปรับราคาขาย เฉพาะบริการที่เลือก (' + n + ' รายการ)' : 'ยืนยันปรับราคาขาย เฉพาะบริการที่เลือก (ยังไม่ได้เลือก)';
+    }
+  }
   var ca = document.getElementById("svc-check-all");
   var all = document.querySelectorAll(".js-sid");
   if(ca && all.length) ca.indeterminate = n > 0 && n < all.length;
 }
 document.querySelectorAll(".js-sid").forEach(x=>x.addEventListener("change", updateSelCount));
 
-function setRateVal(mode, val){
-  var el = document.getElementById(mode === 'all' ? 'profit-all' : 'profit-sel');
-  if(el){
-    el.value = val;
-    calcPreview(mode);
+window.masterScope = 'all';
+
+function setMasterScope(scope){
+  window.masterScope = scope;
+  var form = document.getElementById('svc-unified-rate-form');
+  var tabAll = document.getElementById('scope-tab-all');
+  var tabSel = document.getElementById('scope-tab-sel');
+  var btn = document.getElementById('master-submit-btn');
+  var btnLbl = document.getElementById('master-submit-label');
+  var n = document.querySelectorAll(".js-sid:checked").length;
+
+  if(scope === 'all'){
+    form.action = '/admin/services/bulk-rate-all';
+    tabAll.className = 'svc-scope-tab is-active';
+    tabSel.className = 'svc-scope-tab';
+    btn.className = 'la-btn svc-master-submit-btn all';
+    btnLbl.textContent = 'ยืนยันปรับราคาขาย ทุกบริการในร้าน ({{ total }} รายการ)';
+  } else {
+    form.action = '/admin/services/bulk-rate';
+    tabSel.className = 'svc-scope-tab is-active sel';
+    tabAll.className = 'svc-scope-tab';
+    btn.className = 'la-btn svc-master-submit-btn sel';
+    btnLbl.textContent = n ? 'ยืนยันปรับราคาขาย เฉพาะบริการที่เลือก (' + n + ' รายการ)' : 'ยืนยันปรับราคาขาย เฉพาะบริการที่เลือก (ยังไม่ได้เลือก)';
   }
 }
-function calcPreview(mode){
-  var pct = parseFloat(document.getElementById(mode === 'all' ? 'profit-all' : 'profit-sel').value) || 0;
-  var fix = parseFloat(document.getElementById(mode === 'all' ? 'fixed-all' : 'fixed-sel').value) || 0;
-  var cost = 100.0;
+
+function setMasterPct(val){
+  var inp = document.getElementById('master-profit');
+  if(inp){
+    inp.value = val;
+    calcMasterPreview();
+  }
+  document.querySelectorAll('.svc-preset-btn').forEach(function(b){
+    if(b.textContent.trim() === '+' + val + '%'){
+      b.classList.add('is-active');
+    } else {
+      b.classList.remove('is-active');
+    }
+  });
+}
+
+function calcMasterPreview(){
+  var inp = document.getElementById('master-profit');
+  var fixInp = document.getElementById('master-fixed');
+  if(!inp) return;
+  var pct = parseFloat(inp.value) || 0;
+  var fix = parseFloat(fixInp ? fixInp.value : 0) || 0;
+  var cost = 10.0;
   var profit = (cost * pct / 100) + fix;
   var sell = cost + profit;
-  var sellEl = document.getElementById(mode === 'all' ? 'prev-sell-all' : 'prev-sell-sel');
-  var profitEl = document.getElementById(mode === 'all' ? 'prev-profit-all' : 'prev-profit-sel');
-  if(sellEl) sellEl.textContent = sell.toFixed(2);
-  if(profitEl) profitEl.textContent = profit.toFixed(2);
+
+  var pctLbl = document.getElementById('prev-pct-lbl');
+  var profitAdd = document.getElementById('prev-profit-add');
+  var sellTotal = document.getElementById('prev-sell-total');
+  var netSum = document.getElementById('prev-net-sum');
+
+  if(pctLbl) pctLbl.textContent = (pct >= 0 ? '+' : '') + pct + '%';
+  if(profitAdd) profitAdd.textContent = (profit >= 0 ? '+' : '') + profit.toFixed(2) + ' ฿';
+  if(sellTotal) sellTotal.textContent = sell.toFixed(2) + ' ฿';
+  if(netSum) netSum.textContent = profit.toFixed(2) + ' บาท';
+}
+
+function handleRateSubmit(form){
+  var pct = document.getElementById('master-profit').value;
+  if(window.masterScope === 'all'){
+    return confirm('⚠️ ยืนยันปรับราคาขาย ทุกบริการในร้าน ({{ total }} รายการ) จากต้นทุน + ' + pct + '%?');
+  } else {
+    var ids = selectedIds();
+    document.getElementById('unified-ids').value = ids;
+    if(!ids){
+      alert('กรุณาติ๊กเลือกบริการในตารางด้านล่างก่อนครับ');
+      return false;
+    }
+    var count = ids.split(',').length;
+    return confirm('ยืนยันปรับราคาขาย บริการที่เลือก (' + count + ' รายการ) จากต้นทุน + ' + pct + '%?');
+  }
 }
 </script>
 
@@ -522,32 +546,231 @@ function calcPreview(mode){
 <style>
 /* KPI Bar */
 .svc-kpi-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
-.svc-kpi-item{display:flex;align-items:center;gap:8px;background:var(--adm-card-bg,#fff);border:1px solid var(--adm-border,#e5e7eb);border-radius:10px;padding:12px 18px;min-width:140px;flex:1}
-.svc-kpi-item i{font-size:1.4rem;opacity:.7}
-.svc-kpi-num{font-size:1.4rem;font-weight:700;line-height:1}
-.svc-kpi-label{font-size:.72rem;color:var(--adm-muted,#6b7280);white-space:nowrap}
-.svc-kpi-item>div{display:flex;flex-direction:column;gap:2px}
+.svc-kpi-item{display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:var(--adm-card-bg,#fff);border:1px solid var(--adm-border,#e5e7eb);border-radius:12px;padding:12px 18px;min-width:140px;flex:1;box-shadow:0 1px 2px rgba(0,0,0,.03);transition:transform .15s ease,box-shadow .15s ease}
+.svc-kpi-item:hover{transform:translateY(-1px);box-shadow:0 4px 6px -1px rgba(0,0,0,.08)}
+.svc-kpi-item i{font-size:1.25rem;opacity:.8}
+.svc-kpi-num{font-size:1.45rem;font-weight:800;line-height:1.1;letter-spacing:-0.02em}
+.svc-kpi-label{font-size:0.75rem;font-weight:600;color:var(--adm-muted,#6b7280);white-space:nowrap}
 .svc-kpi-active i,.svc-kpi-active .svc-kpi-num{color:#16a34a}
 .svc-kpi-paused i,.svc-kpi-paused .svc-kpi-num{color:#d97706}
 .svc-kpi-profit i,.svc-kpi-profit .svc-kpi-num{color:#2563eb}
 .svc-kpi-rate i,.svc-kpi-rate .svc-kpi-num{color:#7c3aed}
-/* KPI item ให้ flex-direction column */
-.svc-kpi-item{flex-direction:column;align-items:flex-start;gap:4px}
-.svc-kpi-item i{font-size:1.1rem}
 
-/* Rate card header */
-.svc-rate-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px}
-.svc-rate-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.svc-rate-form-head{display:flex;align-items:center;gap:6px;font-size:.9rem;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--adm-border,#e5e7eb)}
+/* Scope Tabs */
+.svc-scope-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: var(--bg-hover, #f3f4f6);
+  padding: 6px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  border: 1px solid var(--stroke, #e5e7eb);
+}
+.svc-scope-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--t-muted, #6b7280);
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.svc-scope-tab:hover {
+  color: var(--t-base, #111827);
+  background: rgba(0,0,0,.04);
+}
+.svc-scope-tab.is-active {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37,99,235,.25);
+}
+.svc-scope-tab.is-active.sel {
+  background: #7c3aed;
+  box-shadow: 0 4px 12px rgba(124,58,237,.25);
+}
 
-/* Bulk bar */
-.svc-bulk-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--adm-card-bg,#fff);border:1px solid var(--adm-border,#e5e7eb);border-radius:8px;padding:10px 14px;margin-bottom:12px}
-.svc-bulk-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.svc-bulk-info{margin-left:auto;font-size:.8rem}
+/* Preset buttons */
+.svc-preset-btns {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+.svc-preset-btn {
+  background: var(--bg-hover, #f3f4f6);
+  border: 1px solid var(--stroke, #e5e7eb);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t-muted, #4b5563);
+  cursor: pointer;
+  transition: all .15s ease;
+  line-height: 1.3;
+}
+.svc-preset-btn:hover, .svc-preset-btn.is-active {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
 
-/* Table */
+/* Unified Grid */
+.svc-unified-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.svc-inputs-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.svc-field-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.svc-input-unit {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.svc-input-unit .la-input {
+  width: 100%;
+  padding-right: 36px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.svc-input-unit .unit {
+  position: absolute;
+  right: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--t-muted, #9ca3af);
+  pointer-events: none;
+}
+
+/* Preview Col */
+.svc-preview-col {
+  background: linear-gradient(135deg, rgba(37,99,235,.06) 0%, rgba(124,58,237,.06) 100%);
+  border: 1px solid rgba(37,99,235,.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+.svc-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.svc-preview-header .lbl {
+  font-size: 12px;
+  font-weight: 800;
+  color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.svc-preview-header .badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(37,99,235,.15);
+  color: #2563eb;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.svc-preview-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--stroke, #e5e7eb);
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.03);
+}
+.svc-preview-steps .step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.svc-preview-steps .s-lbl {
+  font-size: 11px;
+  color: var(--t-muted, #6b7280);
+}
+.svc-preview-steps .s-val {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.svc-preview-steps .s-val.profit {
+  color: #16a34a;
+}
+.svc-preview-steps .s-val.sell {
+  color: #2563eb;
+  font-size: 16px;
+  font-weight: 800;
+}
+.svc-preview-steps .step.final {
+  background: rgba(37,99,235,.08);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.svc-preview-steps .op {
+  font-size: 15px;
+  color: var(--t-muted, #9ca3af);
+}
+.svc-preview-summary {
+  font-size: 12.5px;
+  color: var(--t-muted, #6b7280);
+}
+
+/* Master Submit Button */
+.svc-master-submit-btn {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 800;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all .2s ease;
+  cursor: pointer;
+}
+.svc-master-submit-btn.all {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 14px rgba(37,99,235,.3);
+}
+.svc-master-submit-btn.all:hover {
+  background: #1d4ed8;
+}
+.svc-master-submit-btn.sel {
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 14px rgba(124,58,237,.3);
+}
+.svc-master-submit-btn.sel:hover {
+  background: #6d28d9;
+}
+
+/* Table Profit Badges */
 .svc-table .svc-col-profit{text-align:center;white-space:nowrap}
-.svc-profit-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.78rem;font-weight:600;white-space:nowrap}
+.svc-profit-badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;letter-spacing:-0.2px}
 .svc-profit-hi{background:#dcfce7;color:#15803d}
 .svc-profit-ok{background:#dbeafe;color:#1d4ed8}
 .svc-profit-neg{background:#fee2e2;color:#dc2626}
@@ -557,264 +780,55 @@ function calcPreview(mode){
 .svc-name{max-width:240px}
 .svc-provider{max-width:160px;font-size:.82rem}
 
-/* Rate Card Upgraded Styles */
-.svc-rate-card {
-  border: 1px solid var(--stroke, #e5e7eb);
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-.svc-rate-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.svc-rate-banner {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 16px;
-  background: linear-gradient(135deg, rgba(37,99,235,.07) 0%, rgba(124,58,237,.07) 100%);
-  border: 1px solid rgba(37,99,235,.2);
-  border-radius: 12px;
-  padding: 18px 22px;
-  margin-bottom: 18px;
-}
-.svc-rate-banner-left {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.svc-rate-badge-main {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #2563eb;
-  text-transform: uppercase;
-  letter-spacing: .03em;
-}
-.svc-rate-value-wrap {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-.svc-rate-big-val {
-  font-size: 2.3rem;
-  font-weight: 900;
-  color: #2563eb;
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-.svc-rate-val-sub {
-  font-size: 14px;
-  color: var(--t-muted, #6b7280);
-  font-weight: 700;
-}
-.svc-rate-hint-text {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--t-muted, #6b7280);
-}
-.svc-rate-hint-text a {
-  color: #2563eb;
-  font-weight: 600;
-}
-.svc-rate-banner-right {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  background: var(--bg-card, #fff);
-  border: 1px solid rgba(0,0,0,.08);
-  border-radius: 10px;
-  padding: 12px 18px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.04);
-}
-.svc-rate-formula-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--t-muted, #6b7280);
-  margin-bottom: 8px;
-}
-.svc-rate-formula-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-.svc-formula-step {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.svc-formula-step .lbl {
-  font-size: 11px;
-  color: var(--t-muted, #6b7280);
-}
-.svc-formula-step .val {
-  font-size: 14px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.svc-formula-step .val.profit {
-  color: #16a34a;
-}
-.svc-formula-step .val.sell {
-  color: #2563eb;
-  font-weight: 800;
-  font-size: 15px;
-}
-.svc-formula-step.final {
-  background: rgba(37,99,235,.08);
-  padding: 4px 10px;
-  border-radius: 6px;
-}
-.svc-rate-formula-box .op {
-  font-size: 16px;
-  color: var(--t-muted, #9ca3af);
-}
+/* Bulk actions bar */
+.svc-bulk-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--adm-card-bg,#fff);border:1px solid var(--adm-border,#e5e7eb);border-radius:8px;padding:10px 14px;margin-bottom:12px}
+.svc-bulk-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.svc-bulk-info{margin-left:auto;font-size:.8rem}
 
-.svc-rate-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+:root[data-theme="dark"] .svc-kpi-item {
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.08);
 }
-.svc-rate-box {
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--stroke, #e5e7eb);
-  border-radius: 12px;
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-.svc-rate-box:hover {
-  border-color: rgba(37,99,235,.35);
-  box-shadow: 0 4px 14px rgba(0,0,0,.05);
-}
-.svc-rate-box-header {
-  margin-bottom: 14px;
-}
-.svc-rate-box-header h4 {
-  margin: 6px 0 4px;
-  font-size: 15px;
-  font-weight: 700;
-}
-.svc-rate-box-header p {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--t-muted, #6b7280);
-}
-.svc-scope-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-.svc-scope-pill.all {
-  background: rgba(37,99,235,.12);
-  color: #2563eb;
-}
-.svc-scope-pill.sel {
-  background: rgba(124,58,237,.12);
-  color: #7c3aed;
-}
-
-.svc-rate-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.svc-field-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-.svc-field-top .la-field {
-  margin-bottom: 0;
-}
-.svc-input-unit {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.svc-input-unit .la-input {
-  width: 100%;
-  padding-right: 32px;
-}
-.svc-input-unit .unit {
-  position: absolute;
-  right: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--t-muted, #9ca3af);
-  pointer-events: none;
-}
-
-.svc-calc-preview {
-  font-size: 12.5px;
-  color: var(--t-muted, #6b7280);
-  background: var(--bg-hover, #f9fafb);
-  border: 1px dashed var(--stroke, #e5e7eb);
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin-bottom: 14px;
-  line-height: 1.4;
-}
-.svc-calc-preview strong {
-  color: var(--t-base, #111827);
-}
-.svc-calc-preview span {
-  color: #16a34a;
-  font-weight: 700;
-}
-
-.svc-submit-btn {
-  width: 100%;
-  justify-content: center;
-  font-weight: 700;
-  padding: 10px 14px;
-}
-.svc-submit-btn.all {
-  background: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
-}
-.svc-submit-btn.all:hover {
-  background: #1d4ed8;
-}
-
-:root[data-theme="dark"] .svc-rate-banner {
-  background: linear-gradient(135deg, rgba(37,99,235,.15) 0%, rgba(124,58,237,.15) 100%);
-  border-color: rgba(37,99,235,.3);
-}
-:root[data-theme="dark"] .svc-rate-banner-right {
+:root[data-theme="dark"] .svc-scope-tabs {
   background: rgba(255,255,255,.04);
   border-color: rgba(255,255,255,.08);
 }
-:root[data-theme="dark"] .svc-rate-box {
-  background: rgba(255,255,255,.03);
+:root[data-theme="dark"] .svc-scope-tab {
+  color: #94a3b8;
+}
+:root[data-theme="dark"] .svc-scope-tab:hover {
+  color: #fff;
+  background: rgba(255,255,255,.06);
+}
+:root[data-theme="dark"] .svc-preset-btn {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.1);
+  color: #cbd5e1;
+}
+:root[data-theme="dark"] .svc-preview-col {
+  background: linear-gradient(135deg, rgba(37,99,235,.15) 0%, rgba(124,58,237,.15) 100%);
+  border-color: rgba(37,99,235,.3);
+}
+:root[data-theme="dark"] .svc-preview-steps {
+  background: rgba(255,255,255,.04);
   border-color: rgba(255,255,255,.08);
 }
-:root[data-theme="dark"] .svc-calc-preview {
-  background: rgba(255,255,255,.03);
-  border-color: rgba(255,255,255,.1);
+:root[data-theme="dark"] .svc-profit-hi {
+  background: rgba(34,197,94,.18);
+  color: #86efac;
 }
-@media (max-width: 900px) {
-  .svc-rate-banner { grid-template-columns: 1fr; }
-  .svc-rate-grid { grid-template-columns: 1fr; }
-  .svc-rate-inputs { grid-template-columns: 1fr; }
+:root[data-theme="dark"] .svc-profit-ok {
+  background: rgba(59,130,246,.18);
+  color: #93c5fd;
+}
+:root[data-theme="dark"] .svc-profit-neg {
+  background: rgba(239,68,68,.18);
+  color: #fca5a5;
 }
 
+@media (max-width: 900px) {
+  .svc-scope-tabs { grid-template-columns: 1fr; }
+  .svc-unified-grid { grid-template-columns: 1fr; }
+}
 </style>
 {% endblock %}

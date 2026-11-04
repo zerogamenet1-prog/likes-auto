@@ -2,111 +2,46 @@
 {% block title %}ผู้ให้บริการ{% endblock %}
 {% block subtitle %}<p class="adm-sub">ใส่ API ของแผงต้นทาง แล้วกดเลือกบริการเพื่อแปลงเป็นบาทและตั้งราคาขาย</p>{% endblock %}
 {% block content %}
-{% if saved %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> บันทึกแล้ว</div>{% endif %}
-{% if imported %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> ดึงบริการแล้ว {{ imported }} รายการ</div>{% endif %}
-{% if error %}<div class="adm-error"><i class="ri-error-warning-line"></i> {{ error }}</div>{% endif %}
-
-{# ── KPI Bar ── #}
-<div class="svc-kpi-bar">
-  <div class="svc-kpi-item">
-    <i class="ri-server-line"></i>
-    <span class="svc-kpi-num">{{ providers|length }}</span>
-    <span class="svc-kpi-label">ผู้ให้บริการทั้งหมด</span>
-  </div>
-  <div class="svc-kpi-item svc-kpi-active">
-    <i class="ri-checkbox-circle-line"></i>
-    <span class="svc-kpi-num">{{ providers|selectattr('balance')|list|length }}</span>
-    <span class="svc-kpi-label">เช็คยอดแล้ว</span>
-  </div>
-  <div class="svc-kpi-item svc-kpi-rate">
-    <i class="ri-store-2-line"></i>
-    <span class="svc-kpi-num"><a href="/admin/services" style="text-decoration:none;color:inherit"><i class="ri-arrow-right-line"></i> หน้าร้าน</a></span>
-    <span class="svc-kpi-label">บริการในร้าน</span>
-  </div>
-</div>
-
+{% if saved %}<div class="adm-ok">บันทึกแล้ว</div>{% endif %}
+{% if imported %}<div class="adm-ok">ดึงบริการแล้ว {{ imported }} รายการ</div>{% endif %}
+{% if error %}<div class="adm-error">{{ error }}</div>{% endif %}
 <details class="adm-more" {% if not providers or editing or error %}open{% endif %}>
-  <summary><i class="{% if editing %}ri-edit-line{% else %}ri-add-circle-line{% endif %}"></i> {% if editing %}แก้ผู้ให้บริการ «{{ editing.name }}»{% else %}เพิ่มผู้ให้บริการใหม่{% endif %}</summary>
-  <form method="post" action="/admin/providers" class="adm-form" style="margin-top:14px;max-width:none">
+  <summary>{% if editing %}แก้ผู้ให้บริการ{% else %}เพิ่มผู้ให้บริการ{% endif %}</summary>
+  <form method="post" action="/admin/providers" class="adm-form" style="margin-top:14px">
     <input type="hidden" name="pid" value="{{ editing.id if editing else '' }}">
-    <div class="adm-form-grid">
-      <div>
-        <label class="la-field">ชื่อผู้ให้บริการ</label>
-        <input class="la-input" type="text" name="name" value="{{ editing.name if editing else '' }}" placeholder="เช่น PerfectSMM, JAP" required>
-      </div>
-      <div>
-        <label class="la-field">API URL</label>
-        <input class="la-input" type="url" name="api_url" value="{{ editing.api_url if editing else '' }}" placeholder="https://provider.com/api/v2" required>
-      </div>
-    </div>
+    <label class="la-field">ชื่อ</label>
+    <input class="la-input" type="text" name="name" value="{{ editing.name if editing else '' }}" placeholder="เช่น PerfectSMM" required>
+    <label class="la-field">API URL</label>
+    <input class="la-input" type="url" name="api_url" value="{{ editing.api_url if editing else '' }}" placeholder="https://provider.com/api/v2" required>
     <label class="la-field">API Key</label>
     <input class="la-input" type="text" name="api_key" placeholder="{% if editing %}วางคีย์จริงใหม่ (ห้ามใส่ ****) หรือเว้นว่างถ้าไม่เปลี่ยน{% else %}คีย์เต็มจากแผงต้นทาง ห้ามคัดลอก ****{% endif %}" {% if not editing %}required{% endif %} autocomplete="off" spellcheck="false">
-    <p class="adm-hint"><i class="ri-information-line"></i> ต้องเป็นคีย์เต็มจากหน้า API ของผู้ให้บริการ — ถ้าเห็นเป็น **** แปลว่ายังไม่ใช่คีย์จริง</p>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="la-btn" type="submit">
-        <i class="{% if editing %}ri-save-line{% else %}ri-add-line{% endif %}"></i> {% if editing %}บันทึกการแก้ไข{% else %}เพิ่มผู้ให้บริการ{% endif %}
-      </button>
-      {% if editing %}<a class="la-btn la-btn-ghost" href="/admin/providers">ยกเลิก</a>{% endif %}
-    </div>
+    <p class="adm-hint">ต้องเป็นคีย์เต็มจากหน้า API ของผู้ให้บริการ — ถ้าเห็นเป็น **** แปลว่ายังไม่ใช่คีย์จริง</p>
+    <button class="la-btn" type="submit">{% if editing %}บันทึก{% else %}เพิ่ม{% endif %}</button>
+    {% if editing %}<a class="la-btn la-btn-ghost" href="/admin/providers">ยกเลิก</a>{% endif %}
   </form>
 </details>
-
 <div class="adm-table-wrap">
   <table class="adm-table">
     <thead>
-      <tr>
-        <th style="width:60px">ID</th>
-        <th>ชื่อ</th>
-        <th>API URL</th>
-        <th style="text-align:right">ยอดคงเหลือ</th>
-        <th>สร้างเมื่อ</th>
-        <th style="text-align:right">การทำงาน</th>
-      </tr>
+      <tr><th>ID</th><th>ชื่อ</th><th>API URL</th><th>ยอดคงเหลือ</th><th>เวลา</th><th></th></tr>
     </thead>
     <tbody>
     {% for p in providers %}
       <tr>
-        <td class="la-muted">{{ p.id }}</td>
-        <td><strong>{{ p.name }}</strong></td>
-        <td class="wrap"><code style="font-size:12px;opacity:.85">{{ p.api_url }}</code></td>
-        <td style="text-align:right;white-space:nowrap">
-          {% if p.balance is not none and p.balance != '' %}
-            <span class="adm-badge active" style="font-variant-numeric:tabular-nums">
-              {{ p.balance }} {{ p.currency or "USD" }}
-            </span>
-          {% else %}
-            <span class="la-muted">—</span>
-          {% endif %}
-        </td>
-        <td class="la-muted" style="font-size:12px">{{ p.created_at }}</td>
-        <td class="adm-actions" style="justify-content:flex-end">
-          <form method="post" action="/admin/providers/balance">
-            <input type="hidden" name="pid" value="{{ p.id }}">
-            <button class="la-btn la-btn-mini la-btn-ghost" type="submit" title="เช็คยอดคงเหลือล่าสุด">
-              <i class="ri-refresh-line"></i> เช็คยอด
-            </button>
-          </form>
-          <a class="la-btn la-btn-mini" href="/admin/services/import?pid={{ p.id }}">
-            <i class="ri-download-cloud-2-line"></i> เลือกบริการ
-          </a>
-          <a class="la-btn la-btn-mini la-btn-ghost" href="/admin/providers?edit={{ p.id }}" title="แก้ไข">
-            <i class="ri-edit-line"></i>
-          </a>
-          <form method="post" action="/admin/providers/delete" onsubmit="return confirm('ลบผู้ให้บริการ «{{ p.name }}» และบริการที่ผูกไว้ทั้งหมด?')">
-            <input type="hidden" name="pid" value="{{ p.id }}">
-            <button class="la-btn la-btn-mini la-btn-danger" type="submit" title="ลบ">
-              <i class="ri-delete-bin-line"></i>
-            </button>
-          </form>
+        <td>{{ p.id }}</td>
+        <td>{{ p.name }}</td>
+        <td class="wrap">{{ p.api_url }}</td>
+        <td>{{ p.balance }} {{ p.currency }}</td>
+        <td>{{ p.created_at }}</td>
+        <td class="adm-actions">
+          <form method="post" action="/admin/providers/balance"><input type="hidden" name="pid" value="{{ p.id }}"><button class="la-btn la-btn-mini" type="submit">เช็คยอด</button></form>
+          <a class="la-btn la-btn-mini" href="/admin/services/import?pid={{ p.id }}">เลือกบริการ</a>
+          <a class="la-btn la-btn-mini la-btn-ghost" href="/admin/providers?edit={{ p.id }}">แก้</a>
+          <form method="post" action="/admin/providers/delete" onsubmit="return confirm('ลบผู้ให้บริการนี้?')"><input type="hidden" name="pid" value="{{ p.id }}"><button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button></form>
         </td>
       </tr>
     {% else %}
-      <tr>
-        <td colspan="6" style="text-align:center;padding:36px 0">
-          <i class="ri-server-line" style="font-size:2rem;opacity:.3"></i>
-          <p class="la-muted" style="margin-top:8px">ยังไม่มีผู้ให้บริการ — กรอก API ด้านบนเพื่อเริ่มเชื่อมต่อ</p>
-        </td>
-      </tr>
+      <tr><td colspan="6">ยังไม่มีผู้ให้บริการ กรอก API ด้านบนเพื่อเริ่มดึงงาน</td></tr>
     {% endfor %}
     </tbody>
   </table>

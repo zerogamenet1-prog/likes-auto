@@ -475,25 +475,11 @@ async def services(request: Request, added: str = "", main: str = "", q: str = "
         page = pages
     rows_all = list_admin_services(q, main, per_page, (page - 1) * per_page)
     mains = list_shop_mains()
-    profit_percent = settings.get("profit_percent") or "100"
-    usd_rate = settings.get("usd_rate") or "35"
-    has_cost = [r for r in rows_all if r.get("cost_rate") and float(r["cost_rate"] or 0) > 0 and r.get("rate")]
-    if has_cost:
-        pcts = [((float(r["rate"]) - float(r["cost_rate"])) / float(r["cost_rate"])) * 100 for r in has_cost]
-        avg_profit = round(sum(pcts) / len(pcts), 1)
-    else:
-        avg_profit = None
-    active_n = sum(1 for r in rows_all if (r.get("status") or "") == "active")
-    paused_n = sum(1 for r in rows_all if (r.get("status") or "") == "paused")
     return render(request, "admin/services.html", {
         "page": "services",
         "rows": rows_all,
         "providers": list_providers(),
-        "usd_rate": usd_rate,
-        "profit_percent": profit_percent,
-        "avg_profit": avg_profit,
-        "active_n": active_n,
-        "paused_n": paused_n,
+        "usd_rate": settings.get("usd_rate") or "35",
         "added": added,
         "ok": ok,
         "priced_n": n,

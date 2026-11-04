@@ -586,7 +586,6 @@ async def services_import(
     pid = int(provider["id"]) if provider else 0
     settings = get_settings()
     usd_rate = settings.get("usd_rate") or "35"
-    profit_percent_cfg = float(settings.get("profit_percent") or 100)
     try:
         per_page = int(per or 80)
     except (TypeError, ValueError):
@@ -627,7 +626,7 @@ async def services_import(
         row_cur = norm_currency(row.get("currency") or currency, currency)
         row["currency"] = row_cur
         row["cost_thb"] = to_thb(row.get("rate") or 0, row_cur, usd_rate)
-        row["sell_thb"] = sell_thb(row.get("rate") or 0, row_cur, usd_rate, profit_percent_cfg, 0)
+        row["sell_thb"] = sell_thb(row.get("rate") or 0, row_cur, usd_rate, 100, 0)
         priced.append(row)
     return render(request, "admin/service_import.html", {
         "page": "services",
@@ -650,7 +649,6 @@ async def services_import(
         "pages": pages,
         "per_page": per_page,
         "usd_rate": usd_rate,
-        "profit_percent": settings.get("profit_percent") or "100",
         "currency": currency,
         "is_thb": is_thb_currency(currency),
         "imported": imported_api_ids(pid) if pid else set(),

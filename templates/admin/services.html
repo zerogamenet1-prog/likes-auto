@@ -2,47 +2,15 @@
 {% block title %}บริการ{% endblock %}
 {% block subtitle %}<p class="adm-sub">จัดหมวดหลัก/ย่อย เพิ่ม-ลบ-ลากเรียง แล้วค่อยติ๊กปรับราคาหรือพักขาย</p>{% endblock %}
 {% block content %}
-{% if added %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> เพิ่ม/อัปเดตแล้ว {{ added }} รายการ</div>{% endif %}
+{% if added %}<div class="adm-ok">เพิ่ม/อัปเดตแล้ว {{ added }} รายการ</div>{% endif %}
 {% if ok == 'renamed' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> บันทึกชื่อหมวดแล้ว</div>{% endif %}
 {% if ok == 'moved' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> ปรับลำดับหมวดแล้ว</div>{% endif %}
 {% if ok == 'added' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> เพิ่มหมวดแล้ว</div>{% endif %}
 {% if ok == 'deleted' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> ลบหมวดแล้ว (ระบบจะไม่สร้างหมวดนี้กลับจาก API อัตโนมัติ)</div>{% endif %}
 {% if ok == 'priced' %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> ปรับราคาจากต้นทุนแล้ว {{ priced_n }} รายการ</div>{% endif %}
-
-{# ── KPI bar ── #}
-<div class="svc-kpi-bar">
-  <div class="svc-kpi-item">
-    <i class="ri-store-2-line"></i>
-    <span class="svc-kpi-num">{{ total }}</span>
-    <span class="svc-kpi-label">บริการทั้งหมด</span>
-  </div>
-  <div class="svc-kpi-item svc-kpi-active">
-    <i class="ri-checkbox-circle-line"></i>
-    <span class="svc-kpi-num">{{ active_n }}</span>
-    <span class="svc-kpi-label">เปิดขาย</span>
-  </div>
-  <div class="svc-kpi-item svc-kpi-paused">
-    <i class="ri-pause-circle-line"></i>
-    <span class="svc-kpi-num">{{ paused_n }}</span>
-    <span class="svc-kpi-label">พักขาย</span>
-  </div>
-  <div class="svc-kpi-item svc-kpi-profit">
-    <i class="ri-line-chart-line"></i>
-    <span class="svc-kpi-num">
-      {% if avg_profit is not none %}+{{ avg_profit }}%{% else %}—{% endif %}
-    </span>
-    <span class="svc-kpi-label">เฉลี่ยกำไร (หน้านี้)</span>
-  </div>
-  <div class="svc-kpi-item svc-kpi-rate">
-    <i class="ri-exchange-dollar-line"></i>
-    <span class="svc-kpi-num">{{ usd_rate }} ฿</span>
-    <span class="svc-kpi-label">เรท 1 USD</span>
-  </div>
-</div>
-
 <div class="adm-actions" style="margin-bottom:16px">
-  <a class="la-btn" href="/admin/services/import"><i class="ri-download-cloud-2-line"></i> เลือกบริการจาก API</a>
-  <a class="la-btn la-btn-ghost" href="/admin/providers"><i class="ri-server-line"></i> ผู้ให้บริการ</a>
+  <a class="la-btn" href="/admin/services/import">เลือกบริการจาก API</a>
+  <a class="la-btn la-btn-ghost" href="/admin/providers">ผู้ให้บริการ</a>
 </div>
 
 <section class="adm-card svc-cat-card">
@@ -177,7 +145,6 @@
 </section>
 <script src="/static/js/admin-svc-cats.js?v=2"></script>
 
-{# ── ตัวกรอง ── #}
 <form method="get" class="adm-filter">
   <select class="la-input adm-select" name="main" onchange="this.form.submit()" style="max-width:360px">
     <option value="">ทุกหมวด</option>
@@ -186,12 +153,10 @@
     {% endfor %}
   </select>
   <input class="la-input adm-search" type="search" name="q" value="{{ q }}" placeholder="ค้นหาชื่อ รหัส หรือหมวดย่อย">
-  <button class="la-btn" type="submit"><i class="ri-search-line"></i> ค้นหา</button>
-  {% if main or q %}<a class="la-btn la-btn-ghost" href="/admin/services"><i class="ri-close-line"></i> ล้าง</a>{% endif %}
+  <button class="la-btn" type="submit">ค้นหา</button>
 </form>
-
 <details class="adm-more">
-  <summary><i class="ri-add-circle-line"></i> เพิ่มบริการเอง</summary>
+  <summary>เพิ่มบริการเอง</summary>
   <form method="post" action="/admin/services/save" class="adm-form" style="margin-top:14px;max-width:none">
     <input type="hidden" name="sid" value="">
     <div class="adm-form-grid">
@@ -226,595 +191,105 @@
     <label class="la-field">API Service ID</label>
     <input class="la-input" name="api_service" placeholder="รหัสบริการจากแผงต้นทาง">
     <input type="hidden" name="status" value="active">
-    <button class="la-btn" type="submit"><i class="ri-add-line"></i> เพิ่มบริการ</button>
+    <button class="la-btn" type="submit">เพิ่มบริการ</button>
   </form>
 </details>
-
-{# ── ปรับราคาจากต้นทุน ── #}
 <section class="adm-card svc-rate-card">
-  <div class="svc-rate-head">
-    <div>
-      <h3 style="display:flex;align-items:center;gap:8px;font-size:1.15rem;margin:0 0 6px">
-        <i class="ri-percent-line" style="color:var(--primary,#0d6efd)"></i> ปรับราคาขายจากต้นทุนจริง
-      </h3>
-      <p class="la-muted" style="margin:0;font-size:13.5px">
-        ระบบจะดึงต้นทุนผู้ให้บริการ (แปลงเป็นเงินบาท) แล้วบวกกำไร % + จำนวนเงินคงที่ตามที่กำหนด
-      </p>
-    </div>
-    <div class="svc-rate-meta">
-      <span class="adm-badge active"><i class="ri-exchange-dollar-line"></i> เรทปัจจุบัน: 1 USD = {{ usd_rate }} บาท</span>
-    </div>
-  </div>
-
-  {# ── อัตรากำไรปัจจุบันแบนเนอร์เด่นชัด ── #}
-  <div class="svc-rate-banner">
-    <div class="svc-rate-banner-left">
-      <div class="svc-rate-badge-main">
-        <i class="ri-funds-line"></i>
-        <span>อัตราบวกกำไรปัจจุบันที่ใช้งานอยู่</span>
+  <h3><i class="ri-percent-line"></i> ปรับราคาจากต้นทุนจริง</h3>
+  <p class="la-muted">คำนวณจากต้นทุน (แปลงเป็นบาทตามเรท USD) แล้วบวกกำไร % · 1 USD = {{ usd_rate }} บาท</p>
+  <div class="svc-rate-forms">
+    <form method="post" action="/admin/services/bulk-rate-all" class="adm-actions svc-rate-all"
+          onsubmit="return confirm('ปรับราคาขายทุกบริการในร้านจากต้นทุน + กำไร % ที่ตั้ง?')">
+      <div>
+        <label class="la-field" for="profit-all">กำไรจากต้นทุน %</label>
+        <input class="la-input adm-num" id="profit-all" type="number" step="0.1" name="percent" value="100" required>
       </div>
-      <div class="svc-rate-value-wrap">
-        <span class="svc-rate-big-val">+{{ profit_percent|default(100) }}%</span>
-        <span class="svc-rate-val-sub">จากต้นทุนสินค้า</span>
+      <div>
+        <label class="la-field" for="fixed-all">บวกเพิ่ม (บาท)</label>
+        <input class="la-input adm-num" id="fixed-all" type="number" step="0.01" name="fixed" value="0">
       </div>
-      <p class="svc-rate-hint-text">
-        <i class="ri-information-line"></i> ทุกรายการที่นำเข้าหรือปรับจากต้นทุนจะใช้เรทนี้เป็นค่าตั้งต้น (เปลี่ยนค่าเริ่มต้นได้ที่ <a href="/admin/settings">Settings</a>)
-      </p>
-    </div>
-    <div class="svc-rate-banner-right">
-      <div class="svc-rate-formula-title"><i class="ri-calculator-line"></i> ตัวอย่างสูตรคิดราคาขาย ณ ตอนนี้:</div>
-      <div class="svc-rate-formula-box">
-        <div class="svc-formula-step">
-          <span class="lbl">สมมุติต้นทุน</span>
-          <span class="val">10.00 ฿</span>
-        </div>
-        <i class="ri-add-line op"></i>
-        <div class="svc-formula-step">
-          <span class="lbl">กำไร +{{ profit_percent|default(100) }}%</span>
-          <span class="val profit">+{{ (10.0 * (profit_percent|default(100)|float) / 100)|round(2) }} ฿</span>
-        </div>
-        <i class="ri-arrow-right-line op"></i>
-        <div class="svc-formula-step final">
-          <span class="lbl">ราคาขายหน้าร้าน</span>
-          <span class="val sell">{{ (10.0 * (1 + (profit_percent|default(100)|float) / 100))|round(2) }} ฿</span>
-        </div>
+      <button class="la-btn" type="submit"><i class="ri-price-tag-3-line"></i> ปรับทุกบริการ</button>
+    </form>
+    <form method="post" action="/admin/services/bulk-rate" class="adm-actions svc-rate-sel"
+          onsubmit="this.ids.value=selectedIds(); if(!this.ids.value){alert('ติ๊กบริการในตารางก่อน');return false;} return confirm('ปรับราคาที่เลือกจากต้นทุน?')">
+      <input type="hidden" name="ids" value="">
+      <div>
+        <label class="la-field" for="profit-sel">กำไร %</label>
+        <input class="la-input adm-num" id="profit-sel" type="number" step="0.1" name="percent" value="100" required>
       </div>
-    </div>
-  </div>
-
-  {# ── แยก 2 คอลัมน์ชัดเจน: ปรับทั้งร้าน vs ปรับเฉพาะที่เลือก ── #}
-  <div class="svc-rate-grid">
-    <!-- กล่อง 1: ปรับทั้งร้าน -->
-    <div class="svc-rate-box svc-rate-box-all">
-      <div class="svc-rate-box-header">
-        <span class="svc-scope-pill all"><i class="ri-store-3-line"></i> ทั้งร้าน</span>
-        <h4>ปรับทุกบริการในร้าน</h4>
-        <p class="la-muted">คำนวณและตั้งราคาขายใหม่ให้กับบริการทั้งหมด ({{ total }} รายการ) ที่มีต้นทุน</p>
+      <div>
+        <label class="la-field" for="fixed-sel">บวกเพิ่ม (บาท)</label>
+        <input class="la-input adm-num" id="fixed-sel" type="number" step="0.01" name="fixed" value="0">
       </div>
-      <form method="post" action="/admin/services/bulk-rate-all"
-            onsubmit="return confirm('⚠️ ยืนยันปรับราคาขายทุกบริการในร้าน {{ total }} รายการ จากต้นทุน + ' + this.percent.value + '%?')">
-        <div class="svc-rate-inputs">
-          <div class="svc-rate-field-group">
-            <div class="svc-field-top">
-              <label class="la-field" for="profit-all">กำไรจากต้นทุน %</label>
-              <div class="svc-preset-btns">
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('all', 50)">+50%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('all', 100)">+100%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('all', 150)">+150%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('all', 200)">+200%</button>
-              </div>
-            </div>
-            <div class="svc-input-unit">
-              <input class="la-input adm-num" id="profit-all" type="number" step="0.1" name="percent" value="{{ profit_percent|default(100) }}" required oninput="calcPreview('all')">
-              <span class="unit">%</span>
-            </div>
-          </div>
-          <div class="svc-rate-field-group">
-            <label class="la-field" for="fixed-all">บวกเพิ่มคงที่ (บาท)</label>
-            <div class="svc-input-unit">
-              <input class="la-input adm-num" id="fixed-all" type="number" step="0.01" name="fixed" value="0" oninput="calcPreview('all')">
-              <span class="unit">บาท</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="svc-calc-preview" id="preview-box-all">
-          <i class="ri-eye-line"></i> ตัวอย่าง: ทุน 100 บาท ➔ ขาย <strong id="prev-sell-all">{{ (100 * (1 + (profit_percent|default(100)|float)/100))|round(2) }}</strong> บาท (ได้กำไร <span id="prev-profit-all">{{ (100 * (profit_percent|default(100)|float)/100)|round(2) }}</span> บาท)
-        </div>
-
-        <button class="la-btn svc-submit-btn all" type="submit">
-          <i class="ri-flashlight-line"></i> ยืนยันปรับทุกบริการ ({{ total }} รายการ)
-        </button>
-      </form>
-    </div>
-
-    <!-- กล่อง 2: ปรับเฉพาะที่เลือก -->
-    <div class="svc-rate-box svc-rate-box-sel">
-      <div class="svc-rate-box-header">
-        <span class="svc-scope-pill sel"><i class="ri-checkbox-multiple-line"></i> เฉพาะที่เลือก</span>
-        <h4>ปรับเฉพาะบริการที่ติ๊กเลือก</h4>
-        <p class="la-muted">ติ๊ก ☑️ บริการที่ต้องการในตารางด้านล่าง แล้วกำหนดราคาเฉพาะกลุ่มนั้น</p>
-      </div>
-      <form method="post" action="/admin/services/bulk-rate"
-            onsubmit="this.ids.value=selectedIds(); if(!this.ids.value){alert('กรุณาติ๊กเลือกบริการในตารางด้านล่างก่อนครับ');return false;} return confirm('ยืนยันปรับราคาบริการที่เลือกจากต้นทุน + ' + this.percent.value + '%?')">
-        <input type="hidden" name="ids" value="">
-        <div class="svc-rate-inputs">
-          <div class="svc-rate-field-group">
-            <div class="svc-field-top">
-              <label class="la-field" for="profit-sel">กำไรจากต้นทุน %</label>
-              <div class="svc-preset-btns">
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('sel', 50)">+50%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('sel', 100)">+100%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('sel', 150)">+150%</button>
-                <button type="button" class="svc-preset-btn" onclick="setRateVal('sel', 200)">+200%</button>
-              </div>
-            </div>
-            <div class="svc-input-unit">
-              <input class="la-input adm-num" id="profit-sel" type="number" step="0.1" name="percent" value="{{ profit_percent|default(100) }}" required oninput="calcPreview('sel')">
-              <span class="unit">%</span>
-            </div>
-          </div>
-          <div class="svc-rate-field-group">
-            <label class="la-field" for="fixed-sel">บวกเพิ่มคงที่ (บาท)</label>
-            <div class="svc-input-unit">
-              <input class="la-input adm-num" id="fixed-sel" type="number" step="0.01" name="fixed" value="0" oninput="calcPreview('sel')">
-              <span class="unit">บาท</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="svc-calc-preview" id="preview-box-sel">
-          <i class="ri-eye-line"></i> ตัวอย่าง: ทุน 100 บาท ➔ ขาย <strong id="prev-sell-sel">{{ (100 * (1 + (profit_percent|default(100)|float)/100))|round(2) }}</strong> บาท (ได้กำไร <span id="prev-profit-sel">{{ (100 * (profit_percent|default(100)|float)/100)|round(2) }}</span> บาท)
-        </div>
-
-        <button class="la-btn la-btn-ghost svc-submit-btn sel" type="submit">
-          <i class="ri-checkbox-circle-line"></i> ยืนยันปรับราคาที่เลือก <span class="js-sel-badge-text">(ยังไม่ได้เลือก)</span>
-        </button>
-      </form>
-    </div>
+      <button class="la-btn la-btn-ghost" type="submit"><i class="ri-checkbox-multiple-line"></i> ปรับที่เลือก</button>
+    </form>
   </div>
 </section>
-
-{# ── Bulk actions bar ── #}
-<div class="svc-bulk-bar">
-  <form method="post" action="/admin/services/bulk-category" class="svc-bulk-form"
-        onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
-    <input type="hidden" name="ids" value="">
-    <i class="ri-folder-2-line"></i>
-    <input class="la-input" name="category" placeholder="ตั้งหมวดย่อย…" style="max-width:200px">
-    <button class="la-btn la-btn-mini" type="submit">ตั้งหมวดย่อย</button>
-  </form>
-  <form method="post" action="/admin/services/bulk-status" class="svc-bulk-form"
-        onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
-    <input type="hidden" name="ids" value="">
-    <i class="ri-toggle-line"></i>
-    <select class="la-input adm-select" name="status" style="max-width:120px">
-      <option value="paused">พักขาย</option>
-      <option value="active">เปิดขาย</option>
-    </select>
-    <button class="la-btn la-btn-mini" type="submit">ตั้งสถานะ</button>
-  </form>
-  <span class="svc-bulk-info la-muted" id="svc-sel-count"></span>
-</div>
-
-{# ── ตาราง ── #}
-<p class="la-muted" style="margin-bottom:8px">
-  <i class="ri-list-check"></i>
-  {{ total }} รายการ · หน้า {{ page_no }}/{{ pages }}
-  {% if main %} · หมวด: <b>{{ main }}</b>{% endif %}
-  {% if q %} · ค้นหา: "<b>{{ q }}</b>"{% endif %}
-</p>
+<form method="post" action="/admin/services/bulk-category" class="adm-actions" style="margin-bottom:8px" onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
+  <input type="hidden" name="ids" value="">
+  <input class="la-input" name="category" placeholder="หมวดย่อย เช่น ผู้ติดตาม" style="max-width:220px">
+  <button class="la-btn la-btn-mini" type="submit">ตั้งหมวดย่อยที่เลือก</button>
+</form>
+<form method="post" action="/admin/services/bulk-status" class="adm-actions" style="margin-bottom:12px" onsubmit="this.ids.value=selectedIds(); return !!this.ids.value">
+  <input type="hidden" name="ids" value="">
+  <select class="la-input adm-select" name="status">
+    <option value="paused">พัก</option>
+    <option value="active">เปิดขาย</option>
+  </select>
+  <button class="la-btn la-btn-mini" type="submit">ตั้งสถานะที่เลือก</button>
+</form>
+<p class="la-muted">{{ total }} รายการ · หน้า {{ page_no }}/{{ pages }}</p>
 <div class="adm-table-wrap">
-  <table class="adm-table svc-table">
+  <table class="adm-table">
     <thead>
       <tr>
-        <th><input type="checkbox" id="svc-check-all" onclick="document.querySelectorAll('.js-sid').forEach(x=>x.checked=this.checked); updateSelCount()"></th>
-        <th>ID</th><th>หมวด</th><th>หมวดย่อย</th><th>บริการ</th>
-        <th>ทุน (฿)</th>
-        <th>ราคาขาย (฿)</th>
-        <th class="svc-col-profit">% กำไร</th>
-        <th>ช่วง</th><th>ต้นทาง</th><th>สถานะ</th><th></th>
+        <th><input type="checkbox" onclick="document.querySelectorAll('.js-sid').forEach(x=>x.checked=this.checked)"></th>
+        <th>ID</th><th>หมวด</th><th>หมวดย่อย</th><th>บริการ</th><th>ทุน</th><th>ราคาขาย (บาท)</th><th>ช่วง</th><th>ต้นทาง</th><th>สถานะ</th><th></th>
       </tr>
     </thead>
     <tbody>
     {% for r in rows %}
-      {% if r.cost_rate is not none and r.cost_rate|float > 0 and r.rate %}
-        {% set pct = ((r.rate|float - r.cost_rate|float) / r.cost_rate|float * 100)|round(1) %}
-        {% set profit_cls = 'svc-profit-hi' if pct >= 50 else ('svc-profit-ok' if pct >= 0 else 'svc-profit-neg') %}
-      {% else %}
-        {% set pct = none %}
-        {% set profit_cls = '' %}
-      {% endif %}
-      <tr class="{{ 'svc-row-paused' if r.status == 'paused' else '' }}">
-        <td><input class="js-sid" type="checkbox" value="{{ r.id }}" onchange="updateSelCount()"></td>
-        <td class="la-muted">{{ r.id }}</td>
+      <tr>
+        <td><input class="js-sid" type="checkbox" value="{{ r.id }}"></td>
+        <td>{{ r.id }}</td>
         <td class="wrap">{{ r.platform }}</td>
-        <td>{{ r.category or "—" }}</td>
-        <td class="wrap svc-name">{{ r.name }}</td>
-        <td class="svc-num">{% if r.cost_rate is not none %}{{ "%.2f"|format(r.cost_rate) }}{% else %}<span class="la-muted">—</span>{% endif %}</td>
+        <td>{{ r.category or "-" }}</td>
+        <td class="wrap">{{ r.name }}</td>
+        <td>{% if r.cost_rate is not none %}{{ "%.2f"|format(r.cost_rate) }}{% else %}-{% endif %}</td>
         <td>
           <form method="post" action="/admin/services/{{ r.id }}/rate" class="adm-inline">
             <input class="la-input adm-num" type="number" step="0.01" name="rate" value="{{ r.rate }}" required>
             <button class="la-btn la-btn-mini" type="submit">บันทึก</button>
           </form>
         </td>
-        <td class="svc-col-profit">
-          {% if pct is not none %}
-            <span class="svc-profit-badge {{ profit_cls }}">
-              {{ '+' if pct >= 0 else '' }}{{ pct }}%
-            </span>
-          {% else %}
-            <span class="la-muted">—</span>
-          {% endif %}
-        </td>
-        <td class="svc-num">{{ r.min_qty }}-{{ r.max_qty }}</td>
-        <td class="wrap svc-provider">{{ r.provider_name or "—" }} {% if r.api_service %}<span class="la-muted">/ {{ r.api_service }}</span>{% endif %}</td>
+        <td>{{ r.min_qty }}-{{ r.max_qty }}</td>
+        <td class="wrap">{{ r.provider_name or "-" }} / {{ r.api_service or "-" }}</td>
         <td><span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span></td>
         <td class="adm-actions">
           <form method="post" action="/admin/services/{{ r.id }}/status">
             <input type="hidden" name="status" value="{{ 'paused' if r.status=='active' else 'active' }}">
-            <button class="la-btn la-btn-mini {% if r.status=='active' %}la-btn-ghost{% endif %}" type="submit" title="{{ 'พักขาย' if r.status=='active' else 'เปิดขาย' }}">
-              {% if r.status=='active' %}<i class="ri-pause-line"></i> พัก{% else %}<i class="ri-play-line"></i> เปิด{% endif %}
-            </button>
+            <button class="la-btn la-btn-mini" type="submit">{{ 'พัก' if r.status=='active' else 'เปิด' }}</button>
           </form>
           <form method="post" action="/admin/services/{{ r.id }}/delete" onsubmit="return confirm('ลบบริการนี้?')">
-            <button class="la-btn la-btn-mini la-btn-danger" type="submit" title="ลบ"><i class="ri-delete-bin-line"></i></button>
+            <button class="la-btn la-btn-mini la-btn-danger" type="submit">ลบ</button>
           </form>
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="12" style="text-align:center;padding:32px 0">
-        <i class="ri-inbox-2-line" style="font-size:2rem;opacity:.3"></i>
-        <p class="la-muted">ยังไม่มีบริการ — กดเลือกจาก API เพื่อเริ่มขาย</p>
-      </td></tr>
+      <tr><td colspan="11">ยังไม่มีบริการ กดเลือกจาก API เพื่อเริ่มขาย</td></tr>
     {% endfor %}
     </tbody>
   </table>
 </div>
-
 {% if pages > 1 %}
 <p class="adm-pager">
-  {% if page_no > 1 %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services?main={{ main|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no-1 }}"><i class="ri-arrow-left-s-line"></i> ก่อนหน้า</a>{% endif %}
-  <span class="la-muted">หน้า {{ page_no }} / {{ pages }}</span>
-  {% if page_no < pages %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services?main={{ main|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no+1 }}">ถัดไป <i class="ri-arrow-right-s-line"></i></a>{% endif %}
+  {% if page_no > 1 %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services?main={{ main|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no-1 }}">ก่อนหน้า</a>{% endif %}
+  {% if page_no < pages %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/services?main={{ main|urlencode }}&amp;q={{ q|urlencode }}&amp;page={{ page_no+1 }}">ถัดไป</a>{% endif %}
 </p>
 {% endif %}
-
 <script>
 function selectedIds(){
   return Array.from(document.querySelectorAll(".js-sid:checked")).map(x=>x.value).join(",");
 }
-function updateSelCount(){
-  var n = document.querySelectorAll(".js-sid:checked").length;
-  var el = document.getElementById("svc-sel-count");
-  if(el) el.textContent = n ? "เลือกแล้ว " + n + " รายการ" : "";
-  var badgeTexts = document.querySelectorAll(".js-sel-badge-text");
-  badgeTexts.forEach(function(b){
-    b.textContent = n ? "(" + n + " รายการ)" : "(ยังไม่ได้เลือก)";
-  });
-  var ca = document.getElementById("svc-check-all");
-  var all = document.querySelectorAll(".js-sid");
-  if(ca && all.length) ca.indeterminate = n > 0 && n < all.length;
-}
-document.querySelectorAll(".js-sid").forEach(x=>x.addEventListener("change", updateSelCount));
-
-function setRateVal(mode, val){
-  var el = document.getElementById(mode === 'all' ? 'profit-all' : 'profit-sel');
-  if(el){
-    el.value = val;
-    calcPreview(mode);
-  }
-}
-function calcPreview(mode){
-  var pct = parseFloat(document.getElementById(mode === 'all' ? 'profit-all' : 'profit-sel').value) || 0;
-  var fix = parseFloat(document.getElementById(mode === 'all' ? 'fixed-all' : 'fixed-sel').value) || 0;
-  var cost = 100.0;
-  var profit = (cost * pct / 100) + fix;
-  var sell = cost + profit;
-  var sellEl = document.getElementById(mode === 'all' ? 'prev-sell-all' : 'prev-sell-sel');
-  var profitEl = document.getElementById(mode === 'all' ? 'prev-profit-all' : 'prev-profit-sel');
-  if(sellEl) sellEl.textContent = sell.toFixed(2);
-  if(profitEl) profitEl.textContent = profit.toFixed(2);
-}
 </script>
-
-{# ── Inline CSS เพิ่มเติม ── #}
-<style>
-/* KPI Bar */
-.svc-kpi-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px}
-.svc-kpi-item{display:flex;align-items:center;gap:8px;background:var(--adm-card-bg,#fff);border:1px solid var(--adm-border,#e5e7eb);border-radius:10px;padding:12px 18px;min-width:140px;flex:1}
-.svc-kpi-item i{font-size:1.4rem;opacity:.7}
-.svc-kpi-num{font-size:1.4rem;font-weight:700;line-height:1}
-.svc-kpi-label{font-size:.72rem;color:var(--adm-muted,#6b7280);white-space:nowrap}
-.svc-kpi-item>div{display:flex;flex-direction:column;gap:2px}
-.svc-kpi-active i,.svc-kpi-active .svc-kpi-num{color:#16a34a}
-.svc-kpi-paused i,.svc-kpi-paused .svc-kpi-num{color:#d97706}
-.svc-kpi-profit i,.svc-kpi-profit .svc-kpi-num{color:#2563eb}
-.svc-kpi-rate i,.svc-kpi-rate .svc-kpi-num{color:#7c3aed}
-/* KPI item ให้ flex-direction column */
-.svc-kpi-item{flex-direction:column;align-items:flex-start;gap:4px}
-.svc-kpi-item i{font-size:1.1rem}
-
-/* Rate card header */
-.svc-rate-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px}
-.svc-rate-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.svc-rate-form-head{display:flex;align-items:center;gap:6px;font-size:.9rem;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--adm-border,#e5e7eb)}
-
-/* Bulk bar */
-.svc-bulk-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--adm-card-bg,#fff);border:1px solid var(--adm-border,#e5e7eb);border-radius:8px;padding:10px 14px;margin-bottom:12px}
-.svc-bulk-form{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.svc-bulk-info{margin-left:auto;font-size:.8rem}
-
-/* Table */
-.svc-table .svc-col-profit{text-align:center;white-space:nowrap}
-.svc-profit-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.78rem;font-weight:600;white-space:nowrap}
-.svc-profit-hi{background:#dcfce7;color:#15803d}
-.svc-profit-ok{background:#dbeafe;color:#1d4ed8}
-.svc-profit-neg{background:#fee2e2;color:#dc2626}
-.svc-row-paused td{opacity:.6}
-.svc-row-paused .svc-name{text-decoration:line-through;text-decoration-color:#aaa}
-.svc-num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
-.svc-name{max-width:240px}
-.svc-provider{max-width:160px;font-size:.82rem}
-
-/* Rate Card Upgraded Styles */
-.svc-rate-card {
-  border: 1px solid var(--stroke, #e5e7eb);
-  border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-.svc-rate-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-.svc-rate-banner {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 16px;
-  background: linear-gradient(135deg, rgba(37,99,235,.07) 0%, rgba(124,58,237,.07) 100%);
-  border: 1px solid rgba(37,99,235,.2);
-  border-radius: 12px;
-  padding: 18px 22px;
-  margin-bottom: 18px;
-}
-.svc-rate-banner-left {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.svc-rate-badge-main {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #2563eb;
-  text-transform: uppercase;
-  letter-spacing: .03em;
-}
-.svc-rate-value-wrap {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-.svc-rate-big-val {
-  font-size: 2.3rem;
-  font-weight: 900;
-  color: #2563eb;
-  line-height: 1;
-  letter-spacing: -0.03em;
-}
-.svc-rate-val-sub {
-  font-size: 14px;
-  color: var(--t-muted, #6b7280);
-  font-weight: 700;
-}
-.svc-rate-hint-text {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--t-muted, #6b7280);
-}
-.svc-rate-hint-text a {
-  color: #2563eb;
-  font-weight: 600;
-}
-.svc-rate-banner-right {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  background: var(--bg-card, #fff);
-  border: 1px solid rgba(0,0,0,.08);
-  border-radius: 10px;
-  padding: 12px 18px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.04);
-}
-.svc-rate-formula-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--t-muted, #6b7280);
-  margin-bottom: 8px;
-}
-.svc-rate-formula-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-.svc-formula-step {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.svc-formula-step .lbl {
-  font-size: 11px;
-  color: var(--t-muted, #6b7280);
-}
-.svc-formula-step .val {
-  font-size: 14px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.svc-formula-step .val.profit {
-  color: #16a34a;
-}
-.svc-formula-step .val.sell {
-  color: #2563eb;
-  font-weight: 800;
-  font-size: 15px;
-}
-.svc-formula-step.final {
-  background: rgba(37,99,235,.08);
-  padding: 4px 10px;
-  border-radius: 6px;
-}
-.svc-rate-formula-box .op {
-  font-size: 16px;
-  color: var(--t-muted, #9ca3af);
-}
-
-.svc-rate-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.svc-rate-box {
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--stroke, #e5e7eb);
-  border-radius: 12px;
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-.svc-rate-box:hover {
-  border-color: rgba(37,99,235,.35);
-  box-shadow: 0 4px 14px rgba(0,0,0,.05);
-}
-.svc-rate-box-header {
-  margin-bottom: 14px;
-}
-.svc-rate-box-header h4 {
-  margin: 6px 0 4px;
-  font-size: 15px;
-  font-weight: 700;
-}
-.svc-rate-box-header p {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--t-muted, #6b7280);
-}
-.svc-scope-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-.svc-scope-pill.all {
-  background: rgba(37,99,235,.12);
-  color: #2563eb;
-}
-.svc-scope-pill.sel {
-  background: rgba(124,58,237,.12);
-  color: #7c3aed;
-}
-
-.svc-rate-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.svc-field-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-.svc-field-top .la-field {
-  margin-bottom: 0;
-}
-.svc-input-unit {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.svc-input-unit .la-input {
-  width: 100%;
-  padding-right: 32px;
-}
-.svc-input-unit .unit {
-  position: absolute;
-  right: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--t-muted, #9ca3af);
-  pointer-events: none;
-}
-
-.svc-calc-preview {
-  font-size: 12.5px;
-  color: var(--t-muted, #6b7280);
-  background: var(--bg-hover, #f9fafb);
-  border: 1px dashed var(--stroke, #e5e7eb);
-  border-radius: 8px;
-  padding: 8px 12px;
-  margin-bottom: 14px;
-  line-height: 1.4;
-}
-.svc-calc-preview strong {
-  color: var(--t-base, #111827);
-}
-.svc-calc-preview span {
-  color: #16a34a;
-  font-weight: 700;
-}
-
-.svc-submit-btn {
-  width: 100%;
-  justify-content: center;
-  font-weight: 700;
-  padding: 10px 14px;
-}
-.svc-submit-btn.all {
-  background: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
-}
-.svc-submit-btn.all:hover {
-  background: #1d4ed8;
-}
-
-:root[data-theme="dark"] .svc-rate-banner {
-  background: linear-gradient(135deg, rgba(37,99,235,.15) 0%, rgba(124,58,237,.15) 100%);
-  border-color: rgba(37,99,235,.3);
-}
-:root[data-theme="dark"] .svc-rate-banner-right {
-  background: rgba(255,255,255,.04);
-  border-color: rgba(255,255,255,.08);
-}
-:root[data-theme="dark"] .svc-rate-box {
-  background: rgba(255,255,255,.03);
-  border-color: rgba(255,255,255,.08);
-}
-:root[data-theme="dark"] .svc-calc-preview {
-  background: rgba(255,255,255,.03);
-  border-color: rgba(255,255,255,.1);
-}
-@media (max-width: 900px) {
-  .svc-rate-banner { grid-template-columns: 1fr; }
-  .svc-rate-grid { grid-template-columns: 1fr; }
-  .svc-rate-inputs { grid-template-columns: 1fr; }
-}
-
-</style>
 {% endblock %}

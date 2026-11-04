@@ -99,19 +99,6 @@
     var other = document.getElementById(map[fromEl.id] || "");
     if (other && other !== fromEl && other.value !== fromEl.value) other.value = fromEl.value;
   }
-  function updateProfitBadge(tr, cost, sell) {
-    var badge = tr.querySelector(".js-profit-pct");
-    if (!badge) return;
-    if (cost > 0) {
-      var pct = Math.round(((sell - cost) / cost * 100) * 10) / 10;
-      badge.textContent = (pct >= 0 ? "+" : "") + pct + "%";
-      badge.className = "js-profit-pct svc-profit-badge " + (pct >= 50 ? "svc-profit-hi" : (pct >= 0 ? "svc-profit-ok" : "svc-profit-neg"));
-    } else {
-      badge.textContent = "—";
-      badge.className = "js-profit-pct svc-profit-badge";
-    }
-  }
-
   function applyPrices(force) {
     var p = priceInputs();
     if (!p.usd) return;
@@ -125,8 +112,6 @@
       if (costEl) costEl.textContent = cost.toFixed(2);
       var inp = tr.querySelector(".js-sell");
       if (inp && (force || !inp.dataset.touched)) inp.value = sell.toFixed(2);
-      var actualSell = inp ? parseFloat(inp.value) || sell : sell;
-      updateProfitBadge(tr, cost, actualSell);
     });
   }
   function paintCount(n) {
@@ -199,25 +184,9 @@
   document.querySelectorAll(".js-sell").forEach(function (inp) {
     inp.addEventListener("input", function () {
       inp.dataset.touched = "1";
-      var tr = inp.closest("tr");
-      if (tr) {
-        var costEl = tr.querySelector(".js-cost");
-        var cost = costEl ? parseFloat(costEl.textContent) || 0 : 0;
-        var sell = parseFloat(inp.value) || 0;
-        updateProfitBadge(tr, cost, sell);
-      }
       sync();
     });
   });
-
-  window.setQuickPct = function (val) {
-    var p1 = document.getElementById("percent");
-    var p2 = document.getElementById("bulk_pct");
-    if (p1) p1.value = val;
-    if (p2) p2.value = val;
-    applyPrices(true);
-    sync();
-  };
   document.querySelectorAll(".js-pick").forEach(function (cb) {
     cb.addEventListener("change", sync);
   });

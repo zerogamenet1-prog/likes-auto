@@ -617,6 +617,22 @@ if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
     }
 }
 
+// Intercept home page hero to present bot-like quick-order link launcher
+if (stripos($respBody, '<section class="la-hero la-hero-v2') !== false && stripos($respBody, 'la-link-launcher-card') === false) {
+    $heroFile = __DIR__ . '/bot_like_hero.php';
+    if (file_exists($heroFile)) {
+        require_once $heroFile;
+        if (!empty($botLikeHeroHtml)) {
+            $respBody = preg_replace_callback('#<section class="la-hero la-hero-v2".*?</section>#s', function() use ($botLikeHeroHtml) {
+                return $botLikeHeroHtml;
+            }, $respBody, 1);
+            if (!empty($botLikeHeroJs) && stripos($respBody, 'laSelectPlatform') === false) {
+                $respBody = str_ireplace('</body>', $botLikeHeroJs . "\n</body>", $respBody);
+            }
+        }
+    }
+}
+
 http_response_code($code);
 foreach (preg_split("/\r\n|\n|\r/", $rawHeaders) as $line) {
     if ($line === '' || stripos($line, 'HTTP/') === 0) {

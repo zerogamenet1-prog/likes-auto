@@ -1,11 +1,17 @@
 {% extends "admin/base.html" %}
 {% block title %}เติมเงิน{% endblock %}
-{% block subtitle %}<p class="adm-sub">คิวรอตรวจอยู่ด้านบน กดดูสลิปแล้วอนุมัติหรือปฏิเสธได้ทันที</p>{% endblock %}
+{% block subtitle %}<p class="adm-sub">คิวรอตรวจ · ตรวจสลิปใหม่ · จับคู่ยอด · ปลดล็อกสลิปซ้ำ</p>{% endblock %}
 {% block content %}
 {% set payst = {"pending": "รอตรวจ", "paid": "อนุมัติแล้ว", "canceled": "ปฏิเสธ"} %}
 {% set s = pay_sum if pay_sum is defined else {} %}
+{% set sh = slip_health if slip_health is defined else {} %}
+{% set pf = pay_flags if pay_flags is defined else {} %}
 {% if ok == 'paid' %}<div class="adm-ok pay-flash">อนุมัติแล้ว เครดิตเข้ากระเป๋าลูกค้า</div>
 {% elif ok == 'canceled' %}<div class="adm-ok pay-flash">ปฏิเสธรายการแล้ว</div>
+{% elif ok == 'matched' %}<div class="adm-ok pay-flash">จับคู่ยอดสำเร็จ — เครดิตเข้าแล้ว</div>
+{% elif ok == 'recheck_ok' %}<div class="adm-ok pay-flash">ตรวจสลิปใหม่ผ่าน — เข้ากระเป๋าแล้ว</div>
+{% elif ok == 'unlock_ok' %}<div class="adm-ok pay-flash">ปลดล็อกสลิปแล้ว กดตรวจใหม่ได้</div>
+{% elif ok == 'note_ok' %}<div class="adm-ok pay-flash">บันทึกโน้ตแล้ว</div>
 {% elif err %}<div class="adm-error">{{ err }}</div>{% endif %}
 
 <div class="kpi-grid pay-kpis">
@@ -27,10 +33,66 @@
   </a>
 </div>
 
-<div class="pay-find">
-  <i class="ri-search-line"></i>
-  <input class="la-input" type="search" placeholder="ค้นหาลูกค้า ยอด รหัสอ้างอิง หรือหมายเหตุ" oninput="payFilter(this)">
-</div>
+<section class="pay-tools">
+  <div class="pay-tool-card {% if sh.ready %}is-ok{% else %}is-warn{% endif %}">
+    <div class="pay-tool-head">
+      <i class="ri-qr-scan-2-line"></i>
+      <div>
+        <strong>สถานะตรวจสลิป</strong>
+        <span>{% if sh.ready %}Mini-QR + OCR พร้อม{% else %}{{ sh.detail or 'OCR ไม่พร้อม' }}{% endif %}</span>
+      </div>
+    </div>
+    <ul class="pay-tool-meta">
+      <li>อนุมัติอัตโนมัติ: <b>{% if pf.auto_approve %}เปิด{% else %}ปิด{% endif %}</b></li>
+      <li>สุ่มสตางค์: <b>{% if pf.unique_satang %}เปิด{% else %}ปิด{% endif %}</b></li>
+      <li>พร้อมเพย์: <b>{{ pf.promptpay or '—' }}</b></li>
+      <li>ยอดเติม: <b>{{ pf.min_deposit or '1' }}–{{ pf.max_deposit or '5000' }}</b> บาท</li>
+      {% if sh.version %}<li class="wrap">{{ sh.version }}</li>{% endif %}
+    </ul>
+    <div class="pay-tool-links">
+      <a class="la-btn la-btn-mini la-btn-ghost" href="/admin/settings/payments"><i class="ri-settings-3-line"></i> ตั้งค่าช่องทาง</a>
+      <a class="la-btn la-btn-mini la-btn-ghost" href="/admin/payments/slip-diag" target="_blank" rel="noopener"><i class="ri-stethoscope-line"></i> Slip diag</a>
+      <a class="la-btn la-btn-mini la-btn-ghost" href="/addfunds" target="_blank" rel="noopener"><i class="ri-external-link-line"></i> หน้าลูกค้า</a>
+    </div>
+  </div>
+
+  <form class="pay-tool-card" method="post" action="/admin/payments/match">
+    <div class="pay-tool-head">
+      <i class="ri-focus-3-line"></i>
+      <div>
+        <strong>จับคู่ยอดจากธนาคาร</strong>
+        <span>ใส่ยอดที่โอนเข้า ระบบหาใบรอที่ตรงสตางค์แล้วอนุมัติ</span>
+      </div>
+    </div>
+    <input type="hidden" name="next" value="{{ status or 'pending' }}">
+    <div class="pay-match-row">
+      <input class="la-input" name="amount" inputmode="decimal" placeholder="เช่น 50.17" required>
+      <button class="la-btn" type="submit"><i class="ri-link"></i> จับคู่</button>
+    </div>
+  </form>
+
+  <form class="pay-tool-card" method="get" action="/admin/payments">
+    <div class="pay-tool-head">
+      <i class="ri-search-line"></i>
+      <div>
+        <strong>ค้นหา / กรอง</strong>
+        <span>ID · ลูกค้า · ยอด · trans_ref · โน้ต</span>
+      </div>
+    </div>
+    {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+    <div class="pay-match-row">
+      <input class="la-input" name="q" value="{{ q or '' }}" placeholder="ค้นหา…">
+      <select class="la-input" name="method" style="max-width:140px">
+        <option value="">ทุกช่องทาง</option>
+        {% for m in methods or [] %}
+        <option value="{{ m }}" {% if method==m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+      </select>
+      <button class="la-btn la-btn-ghost" type="submit">กรอง</button>
+    </div>
+  </form>
+</section>
+
 {% if not status or status == 'pending' %}
 <section class="pay-queue">
   <div class="pay-queue-head">
@@ -40,7 +102,7 @@
   {% if pending_rows %}
   <div class="pay-cards">
     {% for r in pending_rows %}
-    <article class="pay-card" data-q="#{{ r.id }} {{ r.client }} {{ r.method }} {{ r.ref_code }} {{ r.note }} {{ r.amount }}">
+    <article class="pay-card" data-q="#{{ r.id }} {{ r.client }} {{ r.method }} {{ r.ref_code }} {{ r.trans_ref }} {{ r.note }} {{ r.amount }}">
       <button class="pay-slip" type="button" {% if r.slip and not r.slip.lower().endswith('.pdf') %}data-slip="{{ r.slip }}"{% elif r.slip %}onclick="window.open('{{ r.slip }}','_blank')"{% endif %} {% if not r.slip %}disabled{% endif %}>
         {% if r.slip and not r.slip.lower().endswith('.pdf') %}
         <img src="{{ r.slip }}" alt="สลิป #{{ r.id }}">
@@ -55,20 +117,42 @@
           <b>#{{ r.id }}</b>
           <span class="adm-badge pending">รอตรวจ</span>
         </div>
-        <div class="pay-amt">{{ "%.2f"|format(r.amount or 0) }} <small>บาท</small></div>
-        <p class="pay-meta"><i class="ri-user-line"></i> {{ r.client }}</p>
+        <div class="pay-amt">{{ "%.2f"|format(r.amount or 0) }} <small>บาท</small>
+          <button class="pay-copy" type="button" data-copy="{{ '%.2f'|format(r.amount or 0) }}" title="คัดลอกยอด">คัดลอก</button>
+        </div>
+        <p class="pay-meta"><i class="ri-user-line"></i> <a href="/admin/clients?q={{ r.client }}">{{ r.client }}</a></p>
         <p class="pay-meta"><i class="ri-bank-card-line"></i> {{ r.method or '-' }}{% if r.ref_code %} · {{ r.ref_code }}{% endif %}</p>
-        <p class="pay-meta"><i class="ri-calendar-line"></i> {{ r.created_at or '-' }}</p>
+        {% if r.trans_ref %}<p class="pay-meta"><i class="ri-fingerprint-line"></i> <code>{{ r.trans_ref }}</code></p>{% endif %}
+        <p class="pay-meta"><i class="ri-calendar-line"></i> {{ r.created_at or '-' }}
+          {% if r.slip_tries %}<span class="pay-tries">ลอง {{ r.slip_tries }} ครั้ง</span>{% endif %}
+        </p>
         {% if r.note %}<p class="pay-note">{{ r.note }}</p>{% endif %}
         <div class="pay-acts">
+          {% if r.has_slip %}
+          <div class="pay-act-row">
+            <form method="post" action="/admin/payments/{{ r.id }}/recheck">
+              <input type="hidden" name="next" value="{{ status }}">
+              <button class="la-btn la-btn-ghost pay-ok-btn" type="submit"><i class="ri-refresh-line"></i> ตรวจสลิปใหม่</button>
+            </form>
+            <form method="post" action="/admin/payments/{{ r.id }}/unlock-slip" onsubmit="return confirm('ปลดล็อกสลิป #{{ r.id }} เพื่อตรวจซ้ำ?')">
+              <input type="hidden" name="next" value="{{ status }}">
+              <button class="la-btn la-btn-ghost" type="submit" title="ลบ hash / ref"><i class="ri-lock-unlock-line"></i></button>
+            </form>
+          </div>
+          {% endif %}
           <form method="post" action="/admin/payments/{{ r.id }}/approve">
             <input type="hidden" name="next" value="{{ status }}">
-            <button class="la-btn pay-ok-btn" type="submit"><i class="ri-check-line"></i> อนุมัติ</button>
+            <button class="la-btn pay-ok-btn" type="submit"><i class="ri-check-line"></i> อนุมัติมือ</button>
           </form>
           <form class="pay-reject" method="post" action="/admin/payments/{{ r.id }}/reject" onsubmit="return confirm('ปฏิเสธรายการ #{{ r.id }} ?')">
             <input type="hidden" name="next" value="{{ status }}">
-            <input class="la-input" name="note" placeholder="เหตุผล (ถ้ามี)">
+            <input class="la-input" name="note" placeholder="เหตุผล (ถ้ามี)" value="{{ r.note or '' }}">
             <button class="la-btn la-btn-danger" type="submit">ปฏิเสธ</button>
+          </form>
+          <form class="pay-note-form" method="post" action="/admin/payments/{{ r.id }}/note">
+            <input type="hidden" name="next" value="{{ status }}">
+            <input class="la-input" name="note" placeholder="โน้ตภายใน…" value="">
+            <button class="la-btn la-btn-mini la-btn-ghost" type="submit">บันทึกโน้ต</button>
           </form>
         </div>
       </div>
@@ -87,15 +171,16 @@
     <span class="pay-table-n">{{ rows|length }} รายการล่าสุด</span>
   </div>
   <table class="adm-table">
-    <thead><tr><th>ID</th><th>ลูกค้า</th><th>ช่องทาง</th><th>ยอด</th><th>อ้างอิง</th><th>สลิป</th><th>สถานะ</th><th>เวลา</th><th></th></tr></thead>
+    <thead><tr><th>ID</th><th>ลูกค้า</th><th>ช่องทาง</th><th>ยอด</th><th>อ้างอิง</th><th>Trans ref</th><th>สลิป</th><th>สถานะ</th><th>เวลา</th><th></th></tr></thead>
     <tbody>
     {% for r in rows if status or r.status != 'pending' %}
-      <tr class="pay-row is-{{ r.status }}" data-q="#{{ r.id }} {{ r.client }} {{ r.method }} {{ r.ref_code }} {{ r.note }} {{ r.amount }}">
+      <tr class="pay-row is-{{ r.status }}" data-q="#{{ r.id }} {{ r.client }} {{ r.method }} {{ r.ref_code }} {{ r.trans_ref }} {{ r.note }} {{ r.amount }}">
         <td>{{ r.id }}</td>
-        <td>{{ r.client }}</td>
+        <td><a href="/admin/clients?q={{ r.client }}">{{ r.client }}</a></td>
         <td>{{ r.method or '-' }}</td>
         <td class="pay-td-amt">{{ "%.2f"|format(r.amount or 0) }}</td>
         <td><code>{{ r.ref_code or '-' }}</code></td>
+        <td class="wrap"><code>{{ r.trans_ref or '-' }}</code></td>
         <td>
           {% if r.slip and not r.slip.lower().endswith('.pdf') %}
           <button class="adm-slip pay-slip-mini" type="button" data-slip="{{ r.slip }}"><img src="{{ r.slip }}" alt="slip"></button>
@@ -108,6 +193,12 @@
         <td>{{ r.created_at }}</td>
         <td class="adm-actions">
           {% if r.status == "pending" %}
+          {% if r.has_slip %}
+          <form method="post" action="/admin/payments/{{ r.id }}/recheck">
+            <input type="hidden" name="next" value="{{ status }}">
+            <button class="la-btn la-btn-mini" type="submit">ตรวจใหม่</button>
+          </form>
+          {% endif %}
           <form method="post" action="/admin/payments/{{ r.id }}/approve">
             <input type="hidden" name="next" value="{{ status }}">
             <button class="la-btn la-btn-mini" type="submit">อนุมัติ</button>
@@ -121,7 +212,7 @@
         </td>
       </tr>
     {% else %}
-      <tr><td colspan="9">ยังไม่มีรายการ</td></tr>
+      <tr><td colspan="10">ยังไม่มีรายการ</td></tr>
     {% endfor %}
     </tbody>
   </table>
@@ -136,14 +227,17 @@
 {% block scripts %}
 <script>
 (function(){
-  function payFilter(el){
-    var q = (el.value || '').toLowerCase();
-    document.querySelectorAll('.pay-card, .pay-row').forEach(function(n){
-      var hay = (n.getAttribute('data-q') || n.innerText || '').toLowerCase();
-      n.style.display = !q || hay.indexOf(q) >= 0 ? '' : 'none';
+  document.querySelectorAll('[data-copy]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var v = btn.getAttribute('data-copy') || '';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(v).then(function(){
+          btn.textContent = 'คัดลอกแล้ว';
+          setTimeout(function(){ btn.textContent = 'คัดลอก'; }, 1200);
+        });
+      }
     });
-  }
-  window.payFilter = payFilter;
+  });
   var box = document.getElementById('payLight');
   var img = document.getElementById('payLightImg');
   function openSlip(src){

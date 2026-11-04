@@ -206,19 +206,19 @@ $cur = $currentPage ?? '';
       <div class="la-drawer-theme-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
         <button type="button" class="pk-theme-card" onclick="laSelectTheme('peak', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
           <span style="width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg, #051408 0%, #4da813 60%, #8ee31f 100%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
-          <span style="font-size:12.5px; font-weight:600;">Peakerr</span>
+          <span style="font-size:12.5px; font-weight:600;">สีเขียว</span>
         </button>
         <button type="button" class="pk-theme-card" onclick="laSelectTheme('violet', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
           <span style="width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg, #120822 0%, #7c25d8 60%, #b862f8 100%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
-          <span style="font-size:12.5px; font-weight:600;">Violet</span>
+          <span style="font-size:12.5px; font-weight:600;">สีม่วง</span>
         </button>
         <button type="button" class="pk-theme-card" onclick="laSelectTheme('navy', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
           <span style="width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg, #071329 0%, #1d5ec9 60%, #3b82f6 100%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
-          <span style="font-size:12.5px; font-weight:600;">Navy</span>
+          <span style="font-size:12.5px; font-weight:600;">สีน้ำเงิน</span>
         </button>
         <button type="button" class="pk-theme-card" onclick="laSelectTheme('light', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
           <span style="width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg, #ffffff 0%, #86efac 55%, #38a11b 100%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
-          <span style="font-size:12.5px; font-weight:600;">Light</span>
+          <span style="font-size:12.5px; font-weight:600;">สีขาว</span>
         </button>
       </div>
     </div>

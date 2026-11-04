@@ -617,6 +617,155 @@ if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
     }
 }
 
+// ── STYLE 6: GOOGLE-FIRST LOGIN CARD ENHANCEMENT ──
+if ($code === 200 && stripos($respBody, 'la-login-style-6') === false && stripos($respBody, 'la-login-card') !== false) {
+    // 1) Home page Hero Login aside
+    if (preg_match('#<aside class="la-hero-login la-login-card la-login-fz"[^>]*>(.*?)</aside>#s', $respBody, $mHome)) {
+        $oldHomeCard = $mHome[0];
+        $inner = $mHome[1];
+        
+        $guardFields = '';
+        if (preg_match('#<input type="hidden" name="_csrf" value="([^"]+)">#', $inner, $mCsrf)) {
+            $guardFields .= $mCsrf[0] . "\n";
+        }
+        if (preg_match('#<p class="la-hp".*?</p>#s', $inner, $mHp)) {
+            $guardFields .= $mHp[0] . "\n";
+        }
+        
+        $hasGoogle = (stripos($inner, 'href="/google-login"') !== false);
+        $googleBlock = '';
+        if ($hasGoogle) {
+            $googleBlock = '
+        <!-- Style 6: Google-First Spotlight Button -->
+        <a class="la-google-btn la-google-spotlight" href="/google-login">
+          <svg viewBox="0 0 48 48" width="22" height="22" aria-hidden="true">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.8-6.7 7.3l6.3 5.2C37.5 38.4 44 33 44 24c0-1.3-.1-2.3-.4-3.5z"/>
+          </svg>
+          <span>เข้าสู่ระบบด้วย Google ทันที</span>
+        </a>
+
+        <div class="la-or la-google-first-divider"><span>หรือใช้ชื่อผู้ใช้และรหัสผ่าน</span></div>';
+        }
+        
+        $newHomeCard = '<aside class="la-hero-login la-login-card la-login-fz la-login-style-6">
+        <div class="la-login-hi">
+          <h3>ยินดีต้อนรับกลับ</h3>
+          <p>เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดใน 1 คลิก</p>
+        </div>' . $googleBlock . '
+
+        <form method="post" action="/signin/" id="laHomeLogin" class="la-login-fz-form">
+          ' . $guardFields . '
+          <label class="la-field" for="laHomeUser">ชื่อผู้ใช้</label>
+          <div class="la-input-ico la-input-ico-start">
+            <i class="ri-user-3-line la-field-ico"></i>
+            <input class="la-input" id="laHomeUser" type="text" name="username" required autocomplete="username" placeholder="ชื่อผู้ใช้" autocapitalize="off" spellcheck="false">
+          </div>
+
+          <label class="la-field" for="laHomePass">รหัสผ่าน</label>
+          <div class="la-input-ico la-input-ico-start la-input-ico-end">
+            <i class="ri-lock-line la-field-ico"></i>
+            <input class="la-input" type="password" name="password" required autocomplete="current-password" placeholder="รหัสผ่าน" id="laHomePass">
+            <button class="la-pass-eye" type="button" id="laHomeEye" aria-label="แสดงรหัสผ่าน"><i class="ri-eye-line"></i></button>
+          </div>
+
+          <div class="la-login-row">
+            <label><input type="checkbox" name="remember" value="1"> จดจำฉัน</label>
+            <a href="/forgot">ลืมรหัสผ่าน?</a>
+          </div>
+
+          <button class="la-btn la-login-submit pk-submit-btn" type="submit">
+            <i class="ri-login-circle-fill"></i> เข้าสู่ระบบด้วยรหัสผ่าน
+          </button>
+        </form>
+
+        <p class="la-login-foot">ยังไม่มีบัญชี? <a href="/signup">สมัครสมาชิกฟรี</a></p>
+      </aside>';
+
+        $respBody = str_replace($oldHomeCard, $newHomeCard, $respBody);
+    }
+    
+    // 2) Dedicated Signin page card
+    if (preg_match('#<div class="la-auth-card la-login-card la-login-fz"[^>]*>(.*?)</div>\s*</div>\s*</div>\s*</main>#s', $respBody, $mSignin)) {
+        $oldSigninCard = $mSignin[0];
+        $inner = $mSignin[1];
+        
+        $errorHtml = '';
+        if (preg_match('#<div class="adm-error">(.*?)</div>#s', $inner, $mErr)) {
+            $errorHtml = $mErr[0];
+        }
+        
+        $guardFields = '';
+        if (preg_match('#<input type="hidden" name="_csrf" value="([^"]+)">#', $inner, $mCsrf)) {
+            $guardFields .= $mCsrf[0] . "\n";
+        }
+        if (preg_match('#<p class="la-hp".*?</p>#s', $inner, $mHp)) {
+            $guardFields .= $mHp[0] . "\n";
+        }
+        
+        $hasGoogle = (stripos($inner, 'href="/google-login"') !== false);
+        $googleBlock = '';
+        if ($hasGoogle) {
+            $googleBlock = '
+        <!-- Style 6: Google-First Spotlight Button -->
+        <a class="la-google-btn la-google-spotlight" href="/google-login">
+          <svg viewBox="0 0 48 48" width="22" height="22" aria-hidden="true">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.2 6.1 29.4 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.1 3.2-3.5 5.8-6.7 7.3l6.3 5.2C37.5 38.4 44 33 44 24c0-1.3-.1-2.3-.4-3.5z"/>
+          </svg>
+          <span>เข้าสู่ระบบด้วย Google ทันที</span>
+        </a>
+
+        <div class="la-or la-google-first-divider"><span>หรือใช้ชื่อผู้ใช้และรหัสผ่าน</span></div>';
+        }
+        
+        $newSigninCard = '<div class="la-auth-card la-login-card la-login-fz la-login-style-6">
+        <div class="la-login-hi">
+          <h1 class="la-auth-card-title">ยินดีต้อนรับกลับ</h1>
+          <p class="la-auth-card-lead">เข้าสู่ระบบเพื่อใช้งานแดชบอร์ดใน 1 คลิก</p>
+        </div>
+        ' . $errorHtml . '
+        ' . $googleBlock . '
+
+        <form method="post" action="/signin/" id="laSigninForm" class="la-login-fz-form la-auth-form">
+          ' . $guardFields . '
+          <label class="la-field" for="siUser">ชื่อผู้ใช้</label>
+          <div class="la-input-ico la-input-ico-start">
+            <i class="ri-user-3-line la-field-ico"></i>
+            <input class="la-input" id="siUser" type="text" name="username" required autocomplete="username" placeholder="ชื่อผู้ใช้" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+          </div>
+
+          <label class="la-field" for="siPass">รหัสผ่าน</label>
+          <div class="la-input-ico la-input-ico-start la-input-ico-end">
+            <i class="ri-lock-line la-field-ico"></i>
+            <input class="la-input" id="siPass" type="password" name="password" required autocomplete="current-password" placeholder="รหัสผ่าน" enterkeyhint="done">
+            <button class="la-pass-eye" type="button" id="siEye" aria-label="แสดงรหัสผ่าน"><i class="ri-eye-line"></i></button>
+          </div>
+
+          <div class="la-login-row">
+            <label><input type="checkbox" name="remember" value="1"> จดจำฉัน</label>
+            <a href="/forgot">ลืมรหัสผ่าน?</a>
+          </div>
+
+          <button class="la-btn la-login-submit pk-submit-btn" type="submit">
+            <i class="ri-login-circle-fill"></i> เข้าสู่ระบบด้วยรหัสผ่าน
+          </button>
+        </form>
+
+        <p class="la-login-foot">ยังไม่มีบัญชี? <a href="/signup">สมัครสมาชิกฟรี</a></p>
+      </div>
+    </div>
+  </div>
+</main>';
+
+        $respBody = str_replace($oldSigninCard, $newSigninCard, $respBody);
+    }
+}
+
 http_response_code($code);
 foreach (preg_split("/\r\n|\n|\r/", $rawHeaders) as $line) {
     if ($line === '' || stripos($line, 'HTTP/') === 0) {

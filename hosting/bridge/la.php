@@ -541,10 +541,10 @@ if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
                 // Enhance Theme Switcher to Sleek Executive Swatch Strip (แทบสีแบบเดิม สวยโมเดิร์น)
                 $themeStripHtml = '<div class="la-pack-switch pk-theme-strip" role="group" aria-label="เลือกธีม">
   <span class="pk-theme-icon" title="เลือกธีมการแสดงผล"><i class="ri-palette-line"></i></span>
-  <button type="button" class="pk-swatch-btn" data-pack="peak" onclick="laSetPack(\'peak\')" title="Peakerr Lime" aria-label="Peakerr Lime" style="background:linear-gradient(135deg,#051408 0%,#4da813 60%,#8ee31f 100%);--sw2:#8ee31f;"></button>
-  <button type="button" class="pk-swatch-btn" data-pack="violet" onclick="laSetPack(\'violet\')" title="Night Violet" aria-label="Night Violet" style="background:linear-gradient(135deg,#120822 0%,#7c25d8 60%,#b862f8 100%);--sw2:#a855f7;"></button>
-  <button type="button" class="pk-swatch-btn" data-pack="navy" onclick="laSetPack(\'navy\')" title="Midnight Navy" aria-label="Midnight Navy" style="background:linear-gradient(135deg,#071329 0%,#1d5ec9 60%,#3b82f6 100%);--sw2:#3b82f6;"></button>
-  <button type="button" class="pk-swatch-btn" data-pack="light" onclick="laSetPack(\'light\')" title="Peakerr Soft (Light)" aria-label="Peakerr Soft (Light)" style="background:linear-gradient(135deg,#ffffff 0%,#86efac 55%,#38a11b 100%);--sw2:#5eb516;"></button>
+  <button type="button" class="pk-swatch-btn pk-swatch-peak" data-pack="peak" onclick="laSetPack(\'peak\')" title="Peakerr Lime" aria-label="Peakerr Lime" style="--sw:#051408;--sw2:#8ee31f;background:linear-gradient(135deg,#051408 0%,#369c0d 55%,#8ee31f 100%) !important;"></button>
+  <button type="button" class="pk-swatch-btn pk-swatch-violet" data-pack="violet" onclick="laSetPack(\'violet\')" title="Night Violet" aria-label="Night Violet" style="--sw:#100622;--sw2:#a855f7;background:linear-gradient(135deg,#100622 0%,#6d1ec7 55%,#b45cf8 100%) !important;"></button>
+  <button type="button" class="pk-swatch-btn pk-swatch-navy" data-pack="navy" onclick="laSetPack(\'navy\')" title="Midnight Navy" aria-label="Midnight Navy" style="--sw:#061228;--sw2:#3b82f6;background:linear-gradient(135deg,#061228 0%,#1a56bc 55%,#3b82f6 100%) !important;"></button>
+  <button type="button" class="pk-swatch-btn pk-swatch-light" data-pack="light" onclick="laSetPack(\'light\')" title="Peakerr Soft (Light)" aria-label="Peakerr Soft (Light)" style="--sw:#e2f8dc;--sw2:#5eb516;background:linear-gradient(135deg,#ffffff 0%,#7ee634 50%,#2f9414 100%) !important;"></button>
 </div>';
 
                 if (stripos($post, 'pk-theme-strip') === false) {

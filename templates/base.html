@@ -111,9 +111,9 @@
     <div class="la-header-inner">
       <div class="la-header-left">
         <button class="la-iconbtn la-menu-btn" type="button" onclick="laToggleNav()" aria-label="{{ t.menu }}" aria-expanded="false" aria-controls="laNav"><i class="ri-menu-line"></i></button>
-        <a class="la-brand" href="/">
-          <span class="la-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
-          <span class="la-brand-text">Likes<em>Auto</em></span>
+        <a class="la-brand pk-brand" href="/">
+          <span class="la-brand-mark pk-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
+          <span class="la-brand-text pk-brand-text">Likes<span>Auto</span></span>
         </a>
       </div>
       {% if user %}
@@ -413,7 +413,7 @@
       <div class="la-tools">
         {% include "_pack_switch.html" %}
         <a class="la-nav-login" href="/signin" onclick="laOpenLogin(event)">{{ t.nav_login }}</a>
-        <a class="la-btn la-btn-mini" href="/signup">{{ t.nav_signup }}</a>
+        <a class="la-btn la-btn-mini pk-signup-btn" href="/signup"><i class="ri-rocket-fill"></i> {{ t.nav_signup }}</a>
       </div>
       {% endif %}
     </div>
@@ -517,9 +517,9 @@
     </div>
     <div class="la-wrap la-foot-shell">
       <div class="la-foot-brand">
-        <a class="la-brand" href="/">
-          <span class="la-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
-          <span class="la-brand-text">Likes<em>Auto</em></span>
+        <a class="la-brand pk-brand" href="/">
+          <span class="la-brand-mark pk-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
+          <span class="la-brand-text pk-brand-text">Likes<span>Auto</span></span>
         </a>
         <p class="la-foot-lead">{{ t.foot_lead }}</p>
         <p class="la-foot-live"><i></i> {{ t.foot_live }}</p>

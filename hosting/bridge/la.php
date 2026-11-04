@@ -523,6 +523,21 @@ if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
             if (preg_match($pattern, $respBody, $mNav, PREG_OFFSET_CAPTURE)) {
                 $pre = substr($respBody, 0, $mNav[2][1]);
                 $post = substr($respBody, $mNav[2][1] + strlen($mNav[2][0]));
+                
+                // Enhance brand logo with Peakerr styling & skew in $pre
+                $pre = preg_replace(
+                    '#<a class="la-brand"[^>]*>.*?</a>#s',
+                    '<a class="la-brand pk-brand" href="/"><span class="la-brand-mark pk-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span><span class="la-brand-text pk-brand-text">Likes<span>Auto</span></span></a>',
+                    $pre
+                );
+                
+                // Enhance Sign Up button with Peakerr rocket icon in $post
+                $post = preg_replace(
+                    '#<a class="la-btn la-btn-mini"[^>]*href="/signup"[^>]*>(?:<i[^>]*></i>\s*)?([^<]+)</a>#s',
+                    '<a class="la-btn la-btn-mini pk-signup-btn" href="/signup"><i class="ri-rocket-fill"></i> $1</a>',
+                    $post
+                );
+                
                 $respBody = $pre . "\n" . $newDrawer . "\n" . $post;
             }
         }

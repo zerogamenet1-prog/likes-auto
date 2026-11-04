@@ -5699,3 +5699,76 @@ html[data-la-pack="light"] .la-login-style-6 .la-login-foot a {
     font-size: 0.96rem !important;
   }
 }
+
+
+/* Field labels */
+.la-login-style-6 .la-field {
+  color: var(--text, #f8fafc) !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+html[data-la-pack="light"] .la-login-style-6 .la-field,
+body.la-light .la-login-style-6 .la-field {
+  color: #334155 !important;
+}
+
+/* Remember me & Forgot row */
+.la-login-style-6 .la-login-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 12px 0 18px !important;
+  font-size: 0.85rem !important;
+  color: var(--text-dim, rgba(255, 255, 255, 0.7)) !important;
+}
+
+.la-login-style-6 .la-login-row label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  color: var(--text-dim, rgba(255, 255, 255, 0.75)) !important;
+}
+
+html[data-la-pack="light"] .la-login-style-6 .la-login-row,
+html[data-la-pack="light"] .la-login-style-6 .la-login-row label,
+body.la-light .la-login-style-6 .la-login-row,
+body.la-light .la-login-style-6 .la-login-row label {
+  color: #475569 !important;
+}
+
+.la-login-style-6 .la-login-row a {
+  color: var(--primary, #8ee31f) !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+}
+
+html[data-la-pack="violet"] .la-login-style-6 .la-login-row a {
+  color: #c084fc !important;
+}
+
+html[data-la-pack="navy"] .la-login-style-6 .la-login-row a {
+  color: #60a5fa !important;
+}
+
+html[data-la-pack="light"] .la-login-style-6 .la-login-row a,
+body.la-light .la-login-style-6 .la-login-row a {
+  color: #16a34a !important;
+}
+
+.la-login-style-6 .la-login-row a:hover {
+  text-decoration: underline !important;
+}
+
+/* Eye toggle button */
+.la-login-style-6 .la-pass-eye {
+  color: var(--text-dim, rgba(255, 255, 255, 0.5)) !important;
+}
+
+html[data-la-pack="light"] .la-login-style-6 .la-pass-eye,
+body.la-light .la-login-style-6 .la-pass-eye {
+  color: #64748b !important;
+}

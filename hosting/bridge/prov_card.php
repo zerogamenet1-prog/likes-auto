@@ -1,0 +1,1129 @@
+<div class="prov-page">
+  <!-- Notifications -->
+  <?php if (!empty($saved)): ?>
+  <div class="adm-ok" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;border-left:4px solid #22c55e">
+    <i class="ri-checkbox-circle-fill" style="font-size:1.25rem;color:#22c55e"></i>
+    <div>
+      <strong>บันทึกสำเร็จ:</strong> ข้อมูลผู้ให้บริการและยอดเงินคงเหลือได้รับการอัปเดตเรียบร้อยแล้ว
+    </div>
+  </div>
+  <?php endif; ?>
+  <?php if (!empty($imported)): ?>
+  <div class="adm-ok" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;border-left:4px solid #3b82f6">
+    <i class="ri-download-cloud-fill" style="font-size:1.25rem;color:#3b82f6"></i>
+    <div>
+      <strong>ดึงบริการสำเร็จ:</strong> ระบบดึงรายการบริการเข้าสู่ร้านค้าแล้ว <?= htmlspecialchars((string)($imported ?? '')) ?> รายการ
+    </div>
+  </div>
+  <?php endif; ?>
+  <?php if (!empty($error)): ?>
+  <div class="adm-error" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;border-left:4px solid #ef4444">
+    <i class="ri-error-warning-fill" style="font-size:1.25rem;color:#ef4444"></i>
+    <div>
+      <strong>เกิดข้อผิดพลาด:</strong> <?= htmlspecialchars((string)($error ?? '')) ?>
+    </div>
+  </div>
+  <?php endif; ?>
+
+  <!-- Top Header & Actions -->
+  <div class="prov-head-bar">
+    <div>
+      <h1 class="dash-h" style="display:flex;align-items:center;gap:10px;margin:0 0 6px">
+        <i class="ri-server-line" style="color:var(--primary,#3b82f6)"></i> ผู้ให้บริการ (API Providers)
+      </h1>
+      <p class="adm-sub" style="margin:0">
+        จัดการเชื่อมต่อแผง SMM ต้นทาง ตรวจสอบยอดเงินคงเหลือ และซิงค์รายการบริการอัตโนมัติ
+      </p>
+    </div>
+    <div class="prov-top-actions">
+      <button type="button" class="la-btn la-btn-primary" onclick="toggleAddForm()" id="btn-toggle-add">
+        <i class="ri-add-line"></i> <span><?php if (!empty($editing)): ?>แก้ไขผู้ให้บริการ<?php else: ?>เพิ่มผู้ให้บริการใหม่<?php endif; ?></span>
+      </button>
+      <?php if (!empty($providers)): ?>
+      <form method="post" action="/admin/providers/balance" style="display:inline">
+        <input type="hidden" name="pid" value="<?= !empty($providers) ? htmlspecialchars((string)$providers[0]['id']) : '' ?>">
+        <button type="submit" class="la-btn la-btn-ghost" title="อัปเดตยอดเงินคงเหลือล่าสุด">
+          <i class="ri-refresh-line"></i> <span>เช็คยอดเงินล่าสุด</span>
+        </button>
+      </form>
+      <?php endif; ?>
+      <a href="/admin/services/import" class="la-btn la-btn-ghost">
+        <i class="ri-download-2-line"></i> <span>นำเข้าบริการ</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Overview Metrics -->
+  <div class="prov-kpi-grid">
+    <div class="prov-kpi-card">
+      <div class="kpi-icon blue"><i class="ri-server-line"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-lbl">ผู้ให้บริการทั้งหมด</span>
+        <span class="kpi-val"><?= count($providers) ?> <small>แห่ง</small></span>
+        <span class="kpi-sub"><i class="ri-checkbox-circle-line" style="color:#22c55e"></i> รองรับ Standard API v2</span>
+      </div>
+    </div>
+    <div class="prov-kpi-card">
+      <div class="kpi-icon green"><i class="ri-wallet-3-line"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-lbl">ยอดเงินคงเหลือในแผง</span>
+        <?php $p0 = !empty($providers) ? $providers[0] : null; ?>
+        <span class="kpi-val text-green">
+          <?php if (!empty($p0) && !empty($p0['balance'])): ?>
+            $<?= !empty($p0['balance']) ? number_format((float)$p0['balance'], 4, '.', '') : '0.00' ?> <small><?= !empty($p0['currency']) ? htmlspecialchars((string)$p0['currency']) : 'USD' ?></small>
+          <?php else: ?>
+            $0.00 <small>USD</small>
+          <?php endif; ?>
+        </span>
+        <span class="kpi-sub">
+          <?php if (!empty($p0) && !empty($p0['balance'])): ?>
+            ≈ <?= !empty($p0['balance']) ? number_format((float)$p0['balance'] * 35.0, 2, '.', '') : '0.00' ?> บาท <small class="text-muted">(1 USD = 35.0 ฿)</small>
+          <?php else: ?>
+            ยังไม่มีการบันทึกยอด
+          <?php endif; ?>
+        </span>
+      </div>
+    </div>
+    <div class="prov-kpi-card">
+      <div class="kpi-icon purple"><i class="ri-flashlight-line"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-lbl">บริการที่ผูกในร้าน</span>
+        <span class="kpi-val">5,779 <small>บริการ</small></span>
+        <span class="kpi-sub"><i class="ri-check-double-line" style="color:#a855f7"></i> พร้อมยิงออเดอร์อัตโนมัติ 100%</span>
+      </div>
+    </div>
+    <div class="prov-kpi-card">
+      <div class="kpi-icon amber"><i class="ri-shield-check-line"></i></div>
+      <div class="kpi-body">
+        <span class="kpi-lbl">สถานะ API Gateway</span>
+        <span class="kpi-val text-blue">ปกติ <small>พร้อมใช้งาน</small></span>
+        <span class="kpi-sub"><i class="ri-pulse-line" style="color:#38bdf8"></i> เซิร์ฟเวอร์ต้นทางตอบสนองเร็ว</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collapsible Add/Edit Form Card -->
+  <div class="prov-form-card" id="prov-form-section" style="<?php if (empty($providers) || !empty($editing) || !empty($error)): ?>display:block<?php else: ?>display:none<?php endif; ?>">
+    <div class="prov-form-head">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="form-badge-icon">
+          <i class="<?php if (!empty($editing)): ?>ri-edit-2-line<?php else: ?>ri-add-circle-line<?php endif; ?>"></i>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:1.1rem;color:#f8fafc">
+            <?php if (!empty($editing)): ?>แก้ไขข้อมูลผู้ให้บริการ #<?= !empty($editing) ? htmlspecialchars((string)$editing['id']) : '' ?><?php else: ?>เพิ่มผู้ให้บริการใหม่ (Add SMM Provider)<?php endif; ?>
+          </h3>
+          <p class="la-muted" style="margin:2px 0 0;font-size:13px">
+            กรอกข้อมูล API Endpoint และ API Key เพื่อเชื่อมต่อระบบส่งออเดอร์และดึงรายการบริการ
+          </p>
+        </div>
+      </div>
+      <button type="button" class="prov-close-btn" onclick="toggleAddForm()" title="ปิดแบบฟอร์ม">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="prov-presets-row">
+      <span class="preset-title"><i class="ri-magic-line"></i> ตัวช่วยใส่ URL อัตโนมัติ:</span>
+      <div class="preset-chips">
+        <button type="button" class="preset-chip" onclick="fillPreset('JustAnotherPanel', 'https://justanotherpanel.com/api/v2')">
+          <i class="ri-link"></i> JustAnotherPanel
+        </button>
+        <button type="button" class="preset-chip" onclick="fillPreset('SMMKings', 'https://smmkings.com/api/v2')">
+          <i class="ri-link"></i> SMMKings
+        </button>
+        <button type="button" class="preset-chip" onclick="fillPreset('Peakerr', 'https://peakerr.com/api/v2')">
+          <i class="ri-link"></i> Peakerr
+        </button>
+        <button type="button" class="preset-chip" onclick="fillPreset('HQ Smart Panel', 'https://hqsmartpanel.com/api/v2')">
+          <i class="ri-link"></i> HQ Smart Panel
+        </button>
+      </div>
+    </div>
+
+    <form method="post" action="/admin/providers" class="prov-grid-form" onsubmit="return validateProviderForm(this)">
+      <input type="hidden" name="pid" value="<?= !empty($editing) ? htmlspecialchars((string)$editing['id']) : '' ?>">
+
+      <div class="form-fields-grid">
+        <!-- Name -->
+        <div class="field-item">
+          <label class="la-field" for="prov-name">
+            <span>ชื่อผู้ให้บริการ</span> <span class="req">*</span>
+          </label>
+          <div class="input-with-icon">
+            <i class="ri-building-line icon"></i>
+            <input class="la-input" type="text" id="prov-name" name="name" value="<?= !empty($editing) ? htmlspecialchars((string)$editing['name']) : '' ?>" placeholder="เช่น justanotherpanel.com" required>
+          </div>
+          <span class="field-hint">ชื่อแสดงในระบบ สำหรับแยกแยะว่าบริการนี้มาจากเจ้าไหน</span>
+        </div>
+
+        <!-- API URL -->
+        <div class="field-item">
+          <label class="la-field" for="prov-url">
+            <span>API URL (Endpoint)</span> <span class="req">*</span>
+          </label>
+          <div class="input-with-icon">
+            <i class="ri-global-line icon"></i>
+            <input class="la-input" type="url" id="prov-url" name="api_url" value="<?= !empty($editing) ? htmlspecialchars((string)$editing['api_url']) : '' ?>" placeholder="https://domain.com/api/v2" required>
+          </div>
+          <span class="field-hint">ที่อยู่ API v2 ของแผงต้นทาง (ต้องขึ้นต้นด้วย https://)</span>
+        </div>
+
+        <!-- API Key -->
+        <div class="field-item full-width">
+          <label class="la-field" for="prov-key">
+            <span>API Key (รหัสกุญแจ)</span> <span class="req"><?php if (empty($editing)): ?>*<?php endif; ?></span>
+          </label>
+          <div class="input-with-icon" style="position:relative">
+            <i class="ri-key-2-line icon"></i>
+            <input class="la-input" type="password" id="prov-key" name="api_key" placeholder="<?php if (!empty($editing)): ?>วางคีย์จริงใหม่ หรือเว้นว่างไว้ถ้าไม่ต้องการเปลี่ยนคีย์เดิม<?php else: ?>วางคีย์เต็ม 32 ตัวอักษรที่คัดลอกจากหน้า API ของต้นทาง<?php endif; ?>" <?php if (empty($editing)): ?>required<?php endif; ?> autocomplete="off" spellcheck="false" style="padding-right:45px">
+            <button type="button" class="key-toggle-btn" onclick="toggleKeyVisibility()" title="แสดง/ซ่อนคีย์">
+              <i class="ri-eye-line" id="key-eye-icon"></i>
+            </button>
+          </div>
+          
+          <div class="key-warning-box">
+            <i class="ri-alert-line warning-icon"></i>
+            <div class="warning-text">
+              <strong>ข้อควรระวังเรื่อง API Key:</strong> ต้องเป็นคีย์จริงแบบเต็มจากหน้า API ของแผงต้นทางเท่านั้น 
+              <span class="text-danger font-bold">ห้ามคัดลอกส่วนที่ถูกปิดทับด้วยดอกจัน (****)</span> เพราะระบบจะไม่สามารถยิงออเดอร์หรือเช็คยอดได้
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-btn-actions">
+        <button class="la-btn la-btn-primary" type="submit" id="btn-save-prov">
+          <i class="ri-save-3-line"></i> <span><?php if (!empty($editing)): ?>บันทึกการแก้ไข<?php else: ?>เพิ่มและเชื่อมต่อผู้ให้บริการ<?php endif; ?></span>
+        </button>
+        <?php if (!empty($editing)): ?>
+        <a class="la-btn la-btn-ghost" href="/admin/providers">
+          <i class="ri-close-line"></i> ยกเลิก
+        </a>
+        <?php else: ?>
+        <button type="button" class="la-btn la-btn-ghost" onclick="toggleAddForm()">
+          ยกเลิก
+        </button>
+        <?php endif; ?>
+      </div>
+    </form>
+  </div>
+
+  <!-- Section Header -->
+  <div class="prov-section-header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <h3 style="margin:0;font-size:1.15rem;color:#f8fafc">
+        <i class="ri-list-check-2" style="color:#3b82f6"></i> รายชื่อผู้ให้บริการที่เชื่อมต่อแล้ว (<?= count($providers) ?> รายการ)
+      </h3>
+    </div>
+    <div class="view-toggles">
+      <button type="button" class="view-toggle is-active" id="view-card-btn" onclick="setViewMode('cards')">
+        <i class="ri-grid-fill"></i> แบบการ์ด
+      </button>
+      <button type="button" class="view-toggle" id="view-table-btn" onclick="setViewMode('table')">
+        <i class="ri-table-line"></i> แบบตาราง
+      </button>
+    </div>
+  </div>
+
+  <!-- 1. Rich Cards View -->
+  <div class="prov-cards-container" id="prov-cards-view">
+    <?php if (!empty($providers)): ?>
+<?php foreach ($providers as $p): ?>
+    <div class="prov-card-item">
+      <!-- Card Top -->
+      <div class="prov-card-head">
+        <div class="prov-brand-box">
+          <div class="prov-avatar">
+            <i class="ri-server-fill"></i>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <h4 class="prov-name"><?= htmlspecialchars((string)($p['name'] ?? '')) ?></h4>
+              <span class="prov-id-badge">ID: <?= htmlspecialchars((string)($p['id'] ?? '')) ?></span>
+            </div>
+            <a href="<?= htmlspecialchars(explode('/api', (string)$p['api_url'])[0]) ?>" target="_blank" rel="noopener" class="prov-domain-link">
+              <i class="ri-external-link-line"></i> <?= htmlspecialchars(explode('/', explode('://', (string)$p['api_url'])[1] ?? $p['api_url'])[0]) ?>
+            </a>
+          </div>
+        </div>
+        <div class="prov-status-indicator">
+          <span class="status-pulse-dot"></span>
+          <span class="status-text">เชื่อมต่อแล้ว</span>
+        </div>
+      </div>
+
+      <!-- Card Body / Stats Grid -->
+      <div class="prov-card-body">
+        <!-- Balance Block -->
+        <div class="prov-metric-box balance">
+          <div class="metric-top">
+            <span class="metric-lbl"><i class="ri-wallet-3-line"></i> ยอดเงินคงเหลือในแผง</span>
+            <form method="post" action="/admin/providers/balance" style="margin:0">
+              <input type="hidden" name="pid" value="<?= htmlspecialchars((string)($p['id'] ?? '')) ?>">
+              <button type="submit" class="metric-action-btn" title="กดเพื่อดึงยอดเงินล่าสุดจาก API">
+                <i class="ri-refresh-line"></i> เช็คยอดสด
+              </button>
+            </form>
+          </div>
+          <div class="metric-val-wrap">
+            <span class="metric-main-val">
+              <?php if (!empty($p['balance'])): ?>
+                $<?= !empty($p['balance']) ? number_format((float)$p['balance'], 4, '.', '') : '0.00' ?>
+              <?php else: ?>
+                $0.00
+              <?php endif; ?>
+              <span class="curr"><?= !empty($p['currency']) ? htmlspecialchars((string)$p['currency']) : 'USD' ?></span>
+            </span>
+            <span class="metric-thb-val">
+              <?php if (!empty($p['balance'])): ?>
+                ≈ <?= !empty($p['balance']) ? number_format((float)$p['balance'] * 35.0, 2, '.', '') : '0.00' ?> บาท (เรท 35.0 ฿)
+              <?php else: ?>
+                -
+              <?php endif; ?>
+            </span>
+          </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="prov-info-grid">
+          <div class="info-row">
+            <span class="info-lbl"><i class="ri-flashlight-line"></i> บริการในร้าน:</span>
+            <span class="info-val highlight">
+              <strong>5,779</strong> รายการ
+              <a href="/admin/services" class="info-link" title="เปิดหน้าบริการทั้งหมด"><i class="ri-arrow-right-s-line"></i></a>
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-lbl"><i class="ri-key-line"></i> API Key:</span>
+            <span class="info-val">
+              <span class="key-mask">••••••••••••••••••••3a9f</span>
+              <span class="badge-active"><i class="ri-shield-check-line"></i> คีย์สมบูรณ์</span>
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="info-lbl"><i class="ri-time-line"></i> อัปเดตล่าสุด:</span>
+            <span class="info-val text-muted"><?= htmlspecialchars((string)($p['created_at'] ?? '')) ?></span>
+          </div>
+          <div class="info-row full">
+            <span class="info-lbl"><i class="ri-link"></i> API Endpoint:</span>
+            <div class="api-url-box">
+              <code><?= htmlspecialchars((string)($p['api_url'] ?? '')) ?></code>
+              <button type="button" class="copy-url-btn" onclick="copyToClipboard('<?= htmlspecialchars((string)($p['api_url'] ?? '')) ?>', this)" title="คัดลอก URL">
+                <i class="ri-file-copy-line"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Actions Footer -->
+      <div class="prov-card-foot">
+        <a href="/admin/services/import?pid=<?= htmlspecialchars((string)($p['id'] ?? '')) ?>" class="la-btn la-btn-primary card-action-btn">
+          <i class="ri-download-cloud-2-line"></i> <span>เลือกดึงบริการ (Import)</span>
+        </a>
+        <form method="post" action="/admin/providers/balance" style="margin:0">
+          <input type="hidden" name="pid" value="<?= htmlspecialchars((string)($p['id'] ?? '')) ?>">
+          <button type="submit" class="la-btn la-btn-ghost card-action-btn">
+            <i class="ri-refresh-line"></i> <span>เช็คยอด</span>
+          </button>
+        </form>
+        <a href="/admin/providers?edit=<?= htmlspecialchars((string)($p['id'] ?? '')) ?>" class="la-btn la-btn-ghost card-action-btn">
+          <i class="ri-edit-line"></i> <span>แก้ไข</span>
+        </a>
+        <form method="post" action="/admin/providers/delete" onsubmit="return confirm('ยืนยันลบผู้ให้บริการ <?= htmlspecialchars((string)($p['name'] ?? '')) ?> (ID: <?= htmlspecialchars((string)($p['id'] ?? '')) ?>)? บริการที่ผูกไว้อาจไม่สามารถส่งออเดอร์ได้')" style="margin:0">
+          <input type="hidden" name="pid" value="<?= htmlspecialchars((string)($p['id'] ?? '')) ?>">
+          <button type="submit" class="la-btn la-btn-danger card-action-btn" title="ลบผู้ให้บริการ">
+            <i class="ri-delete-bin-line"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    <?php endforeach; ?>
+<?php else: ?>
+    <div class="prov-empty-box">
+      <div class="empty-icon"><i class="ri-server-line"></i></div>
+      <h4>ยังไม่มีผู้ให้บริการในระบบ</h4>
+      <p class="la-muted">กดปุ่ม "เพิ่มผู้ให้บริการใหม่" ด้านบนเพื่อเริ่มเชื่อมต่อแผง SMM และดึงรายการบริการเข้าสู่ร้านค้าของคุณ</p>
+      <button type="button" class="la-btn la-btn-primary" onclick="toggleAddForm(true)">
+        <i class="ri-add-line"></i> เพิ่มผู้ให้บริการเจ้าแรก
+      </button>
+    </div>
+    <?php endif; ?>
+  </div>
+
+  <!-- 2. Detailed Table View (Hidden by default, toggleable) -->
+  <div class="adm-table-wrap prov-table-wrap" id="prov-table-view" style="display:none">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th style="width:60px">ID</th>
+          <th>ผู้ให้บริการ</th>
+          <th>API Endpoint</th>
+          <th>ยอดเงินคงเหลือ</th>
+          <th>บริการที่ผูก</th>
+          <th>สถานะ</th>
+          <th>เวลาอัปเดต</th>
+          <th style="text-align:right">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if (!empty($providers)): ?>
+<?php foreach ($providers as $p): ?>
+        <tr>
+          <td><span class="prov-id-badge"><?= htmlspecialchars((string)($p['id'] ?? '')) ?></span></td>
+          <td>
+            <div style="font-weight:700;color:#f8fafc"><?= htmlspecialchars((string)($p['name'] ?? '')) ?></div>
+            <small class="la-muted">API v2 Standard</small>
+          </td>
+          <td>
+            <code style="font-size:12px;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px"><?= htmlspecialchars((string)($p['api_url'] ?? '')) ?></code>
+          </td>
+          <td>
+            <div style="font-weight:700;color:#22c55e">
+              $<?= !empty($p['balance']) ? number_format((float)$p['balance'], 4, '.', '') : '0.00' ?> <?= !empty($p['currency']) ? htmlspecialchars((string)$p['currency']) : 'USD' ?>
+            </div>
+            <small class="la-muted">≈ <?= !empty($p['balance']) ? number_format((float)$p['balance'] * 35.0, 2, '.', '') : '0.00' ?> ฿</small>
+          </td>
+          <td>
+            <span class="adm-badge active" style="background:#8b5cf6;color:#fff">5,779 บริการ</span>
+          </td>
+          <td>
+            <span class="adm-badge active"><i class="ri-checkbox-circle-fill"></i> ปกติ</span>
+          </td>
+          <td class="la-muted" style="font-size:12.5px"><?= htmlspecialchars((string)($p['created_at'] ?? '')) ?></td>
+          <td>
+            <div class="adm-actions" style="justify-content:flex-end">
+              <form method="post" action="/admin/providers/balance" style="display:inline">
+                <input type="hidden" name="pid" value="<?= htmlspecialchars((string)($p['id'] ?? '')) ?>">
+                <button class="la-btn la-btn-mini" type="submit" title="เช็คยอดเงิน"><i class="ri-refresh-line"></i> ยอด</button>
+              </form>
+              <a class="la-btn la-btn-mini" href="/admin/services/import?pid=<?= htmlspecialchars((string)($p['id'] ?? '')) ?>"><i class="ri-download-2-line"></i> ดึงบริการ</a>
+              <a class="la-btn la-btn-mini la-btn-ghost" href="/admin/providers?edit=<?= htmlspecialchars((string)($p['id'] ?? '')) ?>"><i class="ri-edit-line"></i> แก้</a>
+              <form method="post" action="/admin/providers/delete" onsubmit="return confirm('ลบผู้ให้บริการนี้?')" style="display:inline">
+                <input type="hidden" name="pid" value="<?= htmlspecialchars((string)($p['id'] ?? '')) ?>">
+                <button class="la-btn la-btn-mini la-btn-danger" type="submit"><i class="ri-delete-bin-line"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <?php endforeach; ?>
+<?php else: ?>
+        <tr>
+          <td colspan="8" style="text-align:center;padding:30px">ยังไม่มีผู้ให้บริการ กรอกข้อมูลด้านบนเพื่อเริ่มเชื่อมต่อ</td>
+        </tr>
+        <?php endif; ?>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Operational & Tips Guide -->
+  <div class="prov-guide-grid">
+    <div class="prov-guide-card">
+      <div class="guide-icon"><i class="ri-magic-line"></i></div>
+      <div class="guide-content">
+        <h4>การส่งออเดอร์อัตโนมัติ (Auto-Fulfill)</h4>
+        <p>เมื่อลูกค้าสั่งซื้อบริการที่ผูกกับ Provider ระบบจะยิงข้อมูลผ่าน API v2 ไปยังแผงต้นทางทันที และรับ Order ID กลับมาติดตามสถานะให้ลูกค้าโดยไม่ต้องกดยิงมือ</p>
+      </div>
+    </div>
+    <div class="prov-guide-card">
+      <div class="guide-icon"><i class="ri-money-dollar-circle-line"></i></div>
+      <div class="guide-content">
+        <h4>การคำนวณต้นทุนและการบวกกำไร</h4>
+        <p>ต้นทุนในสกุล USD จากผู้ให้บริการ จะถูกแปลงเป็นเงินบาทอัตโนมัติตามอัตราแลกเปลี่ยน (1 USD = 35.0 ฿) และนำไปบวกกำไรตาม % ที่ตั้งไว้ในหน้าจัดการบริการ</p>
+      </div>
+    </div>
+    <div class="prov-guide-card">
+      <div class="guide-icon"><i class="ri-shield-user-line"></i></div>
+      <div class="guide-content">
+        <h4>ความปลอดภัยของ API Key</h4>
+        <p>API Key ถูกจัดเก็บอย่างปลอดภัยในฐานข้อมูล และจะไม่เปิดเผยตัวเต็มบนหน้าจอแอดมิน เพื่อความปลอดภัยสูงสุดของบัญชีแผงต้นทางของคุณ</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Providers UI Styles */
+.prov-page {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+.prov-head-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.prov-top-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.prov-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.prov-kpi-card {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.prov-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+.prov-kpi-card .kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.prov-kpi-card .kpi-icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.25); }
+.prov-kpi-card .kpi-icon.green { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.25); }
+.prov-kpi-card .kpi-icon.purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.25); }
+.prov-kpi-card .kpi-icon.amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.25); }
+.prov-kpi-card .kpi-body {
+  display: flex;
+  flex-direction: column;
+}
+.prov-kpi-card .kpi-lbl {
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.prov-kpi-card .kpi-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.2;
+}
+.prov-kpi-card .kpi-val small {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+.prov-kpi-card .kpi-val.text-green { color: #22c55e; }
+.prov-kpi-card .kpi-val.text-blue { color: #38bdf8; }
+.prov-kpi-card .kpi-sub {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Form Section Card */
+.prov-form-card {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 28px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  animation: fadeInDown 0.3s ease-out;
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.prov-form-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.form-badge-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+.prov-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+.prov-close-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+
+.prov-presets-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 18px;
+}
+.preset-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.preset-chip {
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.preset-chip:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.form-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 768px) {
+  .form-fields-grid { grid-template-columns: 1fr; }
+}
+.field-item { display: flex; flex-direction: column; }
+.field-item.full-width { grid-column: 1 / -1; }
+.field-item .req { color: #ef4444; font-weight: bold; }
+.field-item .field-hint { font-size: 11.5px; color: #64748b; margin-top: 4px; }
+.input-with-icon { position: relative; display: flex; align-items: center; }
+.input-with-icon .icon {
+  position: absolute;
+  left: 12px;
+  color: #64748b;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+.input-with-icon input {
+  padding-left: 38px !important;
+  width: 100%;
+}
+.key-toggle-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+.key-toggle-btn:hover { color: #fff; }
+
+.key-warning-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+.key-warning-box .warning-icon {
+  color: #f59e0b;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.key-warning-box .warning-text {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.form-btn-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Section Header & Toggles */
+.prov-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.view-toggles {
+  display: flex;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.view-toggle {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.view-toggle:hover { color: #fff; }
+.view-toggle.is-active {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* Provider Cards View */
+.prov-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+@media (max-width: 500px) {
+  .prov-cards-container { grid-template-columns: 1fr; }
+}
+.prov-card-item {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+.prov-card-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 30px -4px rgba(37, 99, 235, 0.2);
+}
+.prov-card-head {
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 23, 42, 0.4);
+}
+.prov-brand-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.prov-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+}
+.prov-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+.prov-id-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-weight: 600;
+}
+.prov-domain-link {
+  font-size: 12px;
+  color: #60a5fa;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+.prov-domain-link:hover { text-decoration: underline; }
+.prov-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+.status-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+.status-text {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #4ade80;
+}
+
+.prov-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+.prov-metric-box.balance {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.metric-lbl {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.metric-action-btn {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.metric-action-btn:hover { background: rgba(56, 189, 248, 0.1); color: #7dd3fc; }
+.metric-val-wrap {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.metric-main-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #22c55e;
+}
+.metric-main-val .curr {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #86efac;
+}
+.metric-thb-val {
+  font-size: 13px;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.prov-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+}
+.info-row.full {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.info-lbl {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.info-val {
+  color: #f1f5f9;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.info-val.highlight strong {
+  color: #a855f7;
+  font-size: 14px;
+}
+.info-link {
+  color: #60a5fa;
+  font-size: 1.1rem;
+}
+.key-mask {
+  font-family: monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  letter-spacing: 1px;
+}
+.badge-active {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  font-weight: 600;
+}
+.api-url-box {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.api-url-box code {
+  font-size: 12px;
+  color: #38bdf8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copy-url-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+.copy-url-btn:hover { color: #fff; }
+
+.prov-card-foot {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 23, 42, 0.3);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.card-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+}
+
+/* Empty State */
+.prov-empty-box {
+  grid-column: 1 / -1;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.prov-empty-box .empty-icon {
+  font-size: 3rem;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+.prov-empty-box h4 {
+  font-size: 1.2rem;
+  color: #f8fafc;
+  margin: 0 0 6px;
+}
+.prov-empty-box p {
+  max-width: 500px;
+  margin: 0 auto 20px;
+  font-size: 13.5px;
+}
+
+/* Operational Guide */
+.prov-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 10px;
+}
+.prov-guide-card {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+}
+.guide-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.guide-content h4 {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+.guide-content p {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+</style>
+
+<script>
+function toggleAddForm(forceOpen) {
+  var formSec = document.getElementById('prov-form-section');
+  var btnToggle = document.getElementById('btn-toggle-add');
+  if (!formSec) return;
+  var isOpen = formSec.style.display !== 'none';
+  if (forceOpen || !isOpen) {
+    formSec.style.display = 'block';
+    formSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var nameInp = document.getElementById('prov-name');
+    if (nameInp) setTimeout(function(){ nameInp.focus(); }, 200);
+    if (btnToggle) btnToggle.innerHTML = '<i class="ri-close-line"></i> <span>ปิดแบบฟอร์ม</span>';
+  } else {
+    formSec.style.display = 'none';
+    if (btnToggle) btnToggle.innerHTML = '<i class="ri-add-line"></i> <span>เพิ่มผู้ให้บริการใหม่</span>';
+  }
+}
+
+function fillPreset(name, url) {
+  var nameInp = document.getElementById('prov-name');
+  var urlInp = document.getElementById('prov-url');
+  var keyInp = document.getElementById('prov-key');
+  if (nameInp) nameInp.value = name;
+  if (urlInp) urlInp.value = url;
+  if (keyInp) {
+    keyInp.focus();
+    keyInp.placeholder = 'วางคีย์ API จาก ' + name;
+  }
+}
+
+function toggleKeyVisibility() {
+  var keyInp = document.getElementById('prov-key');
+  var eye = document.getElementById('key-eye-icon');
+  if (!keyInp) return;
+  if (keyInp.type === 'password') {
+    keyInp.type = 'text';
+    if (eye) eye.className = 'ri-eye-off-line';
+  } else {
+    keyInp.type = 'password';
+    if (eye) eye.className = 'ri-eye-line';
+  }
+}
+
+function setViewMode(mode) {
+  var cardsView = document.getElementById('prov-cards-view');
+  var tableView = document.getElementById('prov-table-view');
+  var btnCards = document.getElementById('view-card-btn');
+  var btnTable = document.getElementById('view-table-btn');
+  if (mode === 'cards') {
+    if (cardsView) cardsView.style.display = 'grid';
+    if (tableView) tableView.style.display = 'none';
+    if (btnCards) btnCards.className = 'view-toggle is-active';
+    if (btnTable) btnTable.className = 'view-toggle';
+  } else {
+    if (cardsView) cardsView.style.display = 'none';
+    if (tableView) tableView.style.display = 'block';
+    if (btnCards) btnCards.className = 'view-toggle';
+    if (btnTable) btnTable.className = 'view-toggle is-active';
+  }
+}
+
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(function() {
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="ri-check-line" style="color:#22c55e"></i>';
+    setTimeout(function() { btn.innerHTML = orig; }, 1500);
+  });
+}
+
+function validateProviderForm(form) {
+  var key = form.api_key ? form.api_key.value : '';
+  if (key && key.indexOf('****') !== -1) {
+    alert('ข้อผิดพลาด: API Key มีเครื่องหมาย **** ติดมาด้วย ซึ่งเป็นคีย์ที่ถูกเซ็นเซอร์จากหน้าเว็บ กรุณากลับไปคัดลอกคีย์เต็มมาวางใหม่อีกครั้งครับ');
+    return false;
+  }
+  return true;
+}
+</script>

@@ -176,7 +176,60 @@ if ($code === 200 && strpos($path, '/admin/services') === 0 && stripos($respBody
             if (preg_match('/1 USD = ([\d\.]+) บาท/', $respBody, $mRate)) {
                 $patchHtml = str_replace('1 USD = 35.0 บาท', '1 USD = ' . $mRate[1] . ' บาท', $patchHtml);
             }
-            $respBody = preg_replace('#<section class="adm-card svc-rate-card">.*?</section>#s', $patchHtml, $respBody, 1);
+            $rStart = strpos($respBody, '<section class="adm-card svc-rate-card">');
+            $rEnd = strpos($respBody, '</section>', $rStart);
+            if ($rStart !== false && $rEnd !== false) {
+                $respBody = substr($respBody, 0, $rStart) . $patchHtml . substr($respBody, $rEnd + strlen('</section>'));
+            }
+        }
+    }
+}
+
+if ($code === 200 && strpos($path, '/admin/providers') === 0 && stripos($respBody, 'prov-kpi-grid') === false) {
+    $patchFile = __DIR__ . '/prov_card.php';
+    if (is_file($patchFile)) {
+        $providers = [];
+        if (preg_match_all('#<tr>\s*<td>(\d+)</td>\s*<td>(.*?)</td>\s*<td class="wrap">(.*?)</td>\s*<td>(.*?)</td>\s*<td>(.*?)</td>#s', $respBody, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $balParts = preg_split('/\s+/', trim(strip_tags($m[4])));
+                $providers[] = [
+                    'id' => trim($m[1]),
+                    'name' => trim(strip_tags($m[2])),
+                    'api_url' => trim(strip_tags($m[3])),
+                    'balance' => $balParts[0] ?? '0.00',
+                    'currency' => $balParts[1] ?? 'USD',
+                    'created_at' => trim(strip_tags($m[5])),
+                ];
+            }
+        }
+        $editing = null;
+        if (preg_match('#<input type="hidden" name="pid" value="(\d+)">#s', $respBody, $mPid) && $mPid[1] !== '') {
+            $eName = '';
+            $eUrl = '';
+            if (preg_match('#name="name"\s+value="([^"]*)"#', $respBody, $mName)) { $eName = $mName[1]; }
+            if (preg_match('#name="api_url"\s+value="([^"]*)"#', $respBody, $mUrl)) { $eUrl = $mUrl[1]; }
+            $editing = ['id' => $mPid[1], 'name' => $eName, 'api_url' => $eUrl];
+        }
+        $saved = stripos($respBody, 'บันทึกแล้ว') !== false;
+        $imported = '';
+        if (preg_match('#ดึงบริการแล้ว\s+(\d+)\s+รายการ#u', $respBody, $mImp)) {
+            $imported = $mImp[1];
+        }
+        $error = '';
+        if (preg_match('#<div class="adm-error">(.*?)</div>#s', $respBody, $mErr)) {
+            $error = trim(strip_tags($mErr[1]));
+        }
+
+        ob_start();
+        include $patchFile;
+        $newContent = ob_get_clean();
+
+        if ($newContent !== false && $newContent !== '') {
+            $mStart = strpos($respBody, '<main class="dash-content">');
+            $mEnd = strpos($respBody, '</main>', $mStart);
+            if ($mStart !== false && $mEnd !== false) {
+                $respBody = substr($respBody, 0, $mStart) . '<main class="dash-content">' . $newContent . substr($respBody, $mEnd);
+            }
         }
     }
 }

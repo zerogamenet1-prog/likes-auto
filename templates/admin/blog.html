@@ -1,189 +1,238 @@
 {% extends "admin/base.html" %}
-{% block title %}บล็อกบทความ{% endblock %}
-{% block subtitle %}<p class="adm-sub">ศูนย์จัดการบทความ Content Marketing, ข่าวสาร และการตลาดโซเชียลมีเดีย เพื่อเพิ่มยอดผู้เข้าชมและสร้างความน่าเชื่อถือ</p>{% endblock %}
+{% block title %}บทความบล็อก{% endblock %}
+{% block subtitle %}<p class="adm-sub">ศูนย์จัดการบทความ Content Marketing, ข่าวสาร และกลยุทธ์ SEO ดันยอดขายและสร้างความน่าเชื่อถือ</p>{% endblock %}
 
 {% block content %}
 <style>
-/* === LIKES AUTO BLOG ADMIN REVAMP 2026 === */
-.blog-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+/* ========================================================
+   LIKES AUTO ORGANIZED BLOG ADMIN (TIDY & PROFESSIONAL UI)
+   ======================================================== */
+
+.blog-admin-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 10px;
 }
-.blog-kpi-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
+
+/* 1. Compact KPI Header */
+.blog-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.blog-kpi-box {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.85));
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 18px 20px;
+  border-radius: 12px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  gap: 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.blog-kpi-card:hover {
+.blog-kpi-box:hover {
   transform: translateY(-2px);
   border-color: rgba(99, 102, 241, 0.4);
 }
-.kpi-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+.blog-kpi-box.is-active {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(15, 23, 42, 0.9));
+}
+.kpi-icon-mini {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 20px;
   flex-shrink: 0;
 }
-.kpi-icon.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-.kpi-icon.green { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-.kpi-icon.amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
-.kpi-icon.purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
-.kpi-body { display: flex; flex-direction: column; }
-.kpi-lbl { font-size: 13px; color: #94a3b8; font-weight: 500; }
-.kpi-val { font-size: 24px; font-weight: 700; color: #f8fafc; margin: 2px 0; }
-.kpi-val small { font-size: 14px; font-weight: 400; color: #94a3b8; margin-left: 4px; }
-.kpi-sub { font-size: 12px; color: #64748b; }
+.kpi-icon-mini.blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+.kpi-icon-mini.green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.kpi-icon-mini.amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+.kpi-icon-mini.purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+.kpi-info-mini { display: flex; flex-direction: column; }
+.kpi-lbl-mini { font-size: 11.5px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+.kpi-val-mini { font-size: 22px; font-weight: 800; color: #f8fafc; line-height: 1.2; }
+.kpi-sub-mini { font-size: 11px; color: #64748b; }
 
-/* Alert Messages */
-.blog-alert-ok {
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  color: #86efac;
-  padding: 12px 18px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-}
-
-/* Control & Filter Bar */
-.blog-control-bar {
-  background: rgba(15, 23, 42, 0.6);
+/* 2. Organized Control & Filter Bar */
+.blog-panel-card {
+  background: rgba(18, 24, 38, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 16px 20px;
-  margin-bottom: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
-.blog-filter-row {
+.blog-toolbar-top {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-.blog-search-box {
+.blog-status-tabs {
+  display: flex;
+  gap: 6px;
+  background: rgba(10, 14, 26, 0.6);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.blog-status-tab {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+.blog-status-tab:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+.blog-status-tab.is-active {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
+}
+.tab-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.blog-toolbar-actions {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1;
-  min-width: 280px;
 }
-.search-input-wrap {
+.view-switch-btns {
+  display: flex;
+  background: rgba(10, 14, 26, 0.6);
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.view-btn {
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+.view-btn:hover { color: #fff; }
+.view-btn.is-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #38bdf8;
+}
+
+/* Secondary Filter & Search Row */
+.blog-toolbar-search {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 14px;
+}
+.search-wrapper {
   position: relative;
+  min-width: 280px;
   flex: 1;
+  max-width: 440px;
 }
-.search-input-wrap i {
+.search-wrapper i {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: #64748b;
-  font-size: 16px;
+  font-size: 15px;
 }
-.search-input-wrap input {
+.search-wrapper input {
   padding-left: 36px !important;
+  height: 38px;
+  font-size: 13.5px;
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  color: #f8fafc !important;
   width: 100%;
 }
-.blog-actions-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.search-wrapper input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
 }
-.view-toggles {
-  display: inline-flex;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 2px;
-}
-.view-toggle {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  padding: 6px 12px;
-  font-size: 13px;
-  border-radius: 6px;
-  cursor: pointer;
+
+.category-chips-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.15s ease;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
 }
-.view-toggle.is-active {
-  background: #3b82f6;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-/* Category Filter Chips */
-.blog-chips-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-.chips-lbl {
+.category-chips-row::-webkit-scrollbar { display: none; }
+.cat-chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 12px;
-  color: #64748b;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.filter-chip {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #cbd5e1;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
   cursor: pointer;
-  transition: all 0.15s ease;
-  text-decoration: none;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  transition: all 0.18s ease;
 }
-.filter-chip:hover, .filter-chip.active {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: #3b82f6;
-  color: #93c5fd;
+.cat-chip:hover, .cat-chip.is-active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
 }
 
-/* Add / Edit Drawer Card */
-.blog-form-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
-  border: 1px solid rgba(99, 102, 241, 0.35);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 28px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  animation: slideDown 0.25s ease-out;
+/* 3. Editor Drawer Form */
+.blog-editor-drawer {
+  background: linear-gradient(135deg, rgba(22, 28, 45, 0.95), rgba(15, 23, 42, 0.98));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
 }
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+.blog-editor-drawer::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
 }
-.blog-form-head {
+.drawer-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -191,1001 +240,1067 @@
   padding-bottom: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.form-badge-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: rgba(99, 102, 241, 0.2);
-  color: #818cf8;
+.drawer-title-group h3 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 20px;
+  gap: 8px;
 }
-.blog-close-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.drawer-title-group p {
+  margin: 0;
+  font-size: 13px;
   color: #94a3b8;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
 }
-.blog-close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+.drawer-close-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+.drawer-close-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
 }
 
-/* Form Two-Column Grid */
-.blog-editor-grid {
+.editor-grid-2col {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 2fr 1fr;
   gap: 24px;
 }
-@media (max-width: 1024px) {
-  .blog-editor-grid { grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+  .editor-grid-2col { grid-template-columns: 1fr; }
 }
-.field-item {
+
+/* 4. Table View (Clean, Tidy, Super Organized) */
+.blog-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+}
+.blog-tidy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+.blog-tidy-table th {
+  background: rgba(30, 41, 59, 0.8);
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+}
+.blog-tidy-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  vertical-align: middle;
+}
+.blog-tidy-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cell-thumb {
+  width: 52px;
+  height: 34px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #1e293b;
+  display: block;
+}
+.cell-title-wrap {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 3px;
+  max-width: 440px;
 }
-.field-hint {
-  font-size: 12px;
-  color: #64748b;
+.cell-title-link {
+  color: #f8fafc;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  line-height: 1.35;
+  display: inline;
 }
-.slug-live-preview {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 4px;
-}
-.slug-live-preview code {
+.cell-title-link:hover {
   color: #38bdf8;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 2px 6px;
-  border-radius: 4px;
+  text-decoration: underline;
 }
-
-/* Preset Tag Chips in Form */
-.preset-tag-chips {
+.cell-slug {
+  font-size: 11.5px;
+  color: #64748b;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 6px 0 12px;
-}
-.ptag-chip {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.ptag-chip:hover {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: #818cf8;
-  color: #ffffff;
-}
-
-/* Formatting Toolbar */
-.format-toolbar {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  padding: 6px 10px;
 }
-.format-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  color: #cbd5e1;
-  padding: 4px 8px;
-  border-radius: 5px;
+.cell-slug code {
+  color: #38bdf8;
+  background: transparent;
+  padding: 0;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.status-pill.published {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.status-pill.draft {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.tag-pill {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  margin: 1px;
+}
+
+.action-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.btn-act {
+  padding: 5px 9px;
+  border-radius: 6px;
   font-size: 12px;
+  font-weight: 600;
+  text-decoration: none !important;
   cursor: pointer;
+  border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   transition: all 0.15s ease;
 }
-.format-btn:hover {
-  background: rgba(59, 130, 246, 0.25);
-  border-color: #3b82f6;
-  color: #ffffff;
+.btn-act.edit {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
 }
-.blog-textarea {
-  border-top-left-radius: 0 !important;
-  border-top-right-radius: 0 !important;
-  min-height: 440px !important;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 13.5px;
-  line-height: 1.6;
+.btn-act.edit:hover { background: #2563eb; color: #fff; }
+.btn-act.view {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
 }
-.textarea-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 6px;
-  font-size: 12px;
-  color: #64748b;
+.btn-act.view:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.btn-act.del {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #f87171;
 }
+.btn-act.del:hover { background: #dc2626; color: #fff; }
 
-/* Media Sidebar in Form */
-.blog-side-box {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-.blog-side-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #e2e8f0;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.blog-gallery-grid {
+/* 5. Cards View (Structured 3-column Grid) */
+.blog-cards-grid-tidy {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  max-height: 280px;
-  overflow-y: auto;
-  padding-right: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
 }
-.blog-thumb-btn {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 3px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  aspect-ratio: 16/9;
-  overflow: hidden;
-}
-.blog-thumb-btn:hover {
-  border-color: #3b82f6;
-  transform: scale(1.05);
-}
-.blog-thumb-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 5px;
-}
-
-/* === RICH BLOG CARDS GRID === */
-.blog-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-.blog-card-item {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
+.blog-card-item-tidy {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.85));
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
 }
-.blog-card-item:hover {
-  transform: translateY(-4px);
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+.blog-card-item-tidy:hover {
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
-.blog-card-cover-wrap {
-  position: relative;
+.card-thumb-wrap {
   width: 100%;
   aspect-ratio: 16/9;
-  background: linear-gradient(135deg, #1e1b4b, #0f172a);
+  background: #0f172a;
+  position: relative;
   overflow: hidden;
 }
-.blog-card-cover {
+.card-thumb-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
-.blog-card-item:hover .blog-card-cover {
-  transform: scale(1.04);
+.blog-card-item-tidy:hover .card-thumb-img {
+  transform: scale(1.03);
 }
-.blog-card-fallback-cover {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40px;
-  color: rgba(255, 255, 255, 0.2);
-  background: linear-gradient(135deg, #1e293b, #0f172a);
-}
-.blog-badge-overlay {
+.card-id-badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  display: flex;
-  gap: 6px;
-}
-.status-pill {
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  color: #fff;
   font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
-  backdrop-filter: blur(8px);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.status-pill.published {
-  background: rgba(34, 197, 94, 0.25);
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  color: #86efac;
-}
-.status-pill.draft {
-  background: rgba(148, 163, 184, 0.25);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  color: #e2e8f0;
-}
-.card-id-pill {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #94a3b8;
-  font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 3px 8px;
   border-radius: 6px;
-  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
-
-.blog-card-content {
-  padding: 18px 20px;
+.card-status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+.card-content-tidy {
+  padding: 14px;
   display: flex;
   flex-direction: column;
   flex: 1;
 }
-.blog-card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-.tag-badge {
-  font-size: 11px;
-  background: rgba(59, 130, 246, 0.15);
-  color: #93c5fd;
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-.blog-card-title {
-  margin: 0 0 10px;
-  font-size: 1.05rem;
+.card-title-tidy {
+  font-size: 14.5px;
   font-weight: 700;
-  line-height: 1.4;
   color: #f8fafc;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.4;
+  margin: 0 0 6px;
 }
-.blog-card-title:hover {
-  color: #60a5fa;
-}
-.blog-card-url {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #94a3b8;
-  margin-bottom: 12px;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
-}
-.blog-card-url code {
+.card-url-tidy {
+  font-size: 11.5px;
   color: #38bdf8;
+  margin-bottom: 10px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
 }
-.blog-card-excerpt {
-  font-size: 13px;
-  color: #94a3b8;
-  line-height: 1.5;
-  margin: 0 0 14px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  flex: 1;
-}
-.blog-card-meta {
+.card-footer-tidy {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
-  color: #64748b;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.blog-card-actions {
+/* 6. Smart Pagination Bar */
+.blog-pagination-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 12px 20px;
-  background: rgba(15, 23, 42, 0.5);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-.blog-card-actions .la-btn {
-  flex: 1;
-  text-align: center;
-  justify-content: center;
-}
-
-/* Detailed Table View */
-.blog-table-cover {
-  width: 54px;
-  height: 34px;
-  border-radius: 4px;
-  object-fit: cover;
-  margin-right: 10px;
-  vertical-align: middle;
-}
-
-/* Guide Cards */
-.blog-guide-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-  margin-top: 24px;
-}
-.blog-guide-card {
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 18px;
-  display: flex;
-  gap: 14px;
+  font-size: 13px;
+  color: #94a3b8;
 }
-.blog-guide-card .guide-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+.pagination-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
+  gap: 4px;
 }
-.blog-guide-card h4 { margin: 0 0 6px; font-size: 14px; color: #f1f5f9; }
-.blog-guide-card p { margin: 0; font-size: 13px; color: #94a3b8; line-height: 1.5; }
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.page-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.page-btn.is-active {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+}
+.page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Media Thumbnails Mini Grid */
+.media-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+.media-mini-thumb {
+  aspect-ratio: 16/9;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.media-mini-thumb:hover {
+  transform: scale(1.05);
+  border-color: #38bdf8;
+}
+.media-mini-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 </style>
 
-<!-- Top KPI Overview -->
-<div class="blog-kpi-grid">
-  <div class="blog-kpi-card">
-    <div class="kpi-icon blue"><i class="ri-article-line"></i></div>
-    <div class="kpi-body">
-      <span class="kpi-lbl">บทความทั้งหมด</span>
-      <span class="kpi-val">{{ all_n }} <small>บทความ</small></span>
-      <span class="kpi-sub">คลังคอนเทนต์รวมในระบบ</span>
-    </div>
-  </div>
-  <div class="blog-kpi-card">
-    <div class="kpi-icon green"><i class="ri-checkbox-circle-line"></i></div>
-    <div class="kpi-body">
-      <span class="kpi-lbl">เผยแพร่ออนไลน์</span>
-      <span class="kpi-val text-green" style="color:#4ade80">{{ pub_n }} <small>บทความ</small></span>
-      <span class="kpi-sub"><i class="ri-wifi-line" style="color:#22c55e"></i> เปิดให้บุคคลภายนอกเข้าอ่าน</span>
-    </div>
-  </div>
-  <div class="blog-kpi-card">
-    <div class="kpi-icon amber"><i class="ri-draft-line"></i></div>
-    <div class="kpi-body">
-      <span class="kpi-lbl">ฉบับร่าง / ซ่อน</span>
-      <span class="kpi-val" style="color:#fbbf24">{{ draft_n }} <small>ฉบับ</small></span>
-      <span class="kpi-sub">กำลังเขียนหรือปิดชั่วคราว</span>
-    </div>
-  </div>
-  <div class="blog-kpi-card">
-    <div class="kpi-icon purple"><i class="ri-search-eye-line"></i></div>
-    <div class="kpi-body">
-      <span class="kpi-lbl">การจัดทำดัชนี (SEO)</span>
-      <span class="kpi-val" style="color:#c084fc">SEO Ready</span>
-      <span class="kpi-sub">Clean URL + Meta + Sitemap</span>
-    </div>
-  </div>
-</div>
+<div class="blog-admin-container">
 
-{% if saved %}
-<div class="blog-alert-ok">
-  <i class="ri-checkbox-circle-fill" style="font-size:20px;color:#22c55e"></i>
-  <span><strong>สำเร็จ!</strong> บันทึกข้อมูลบทความเรียบร้อยแล้ว</span>
-</div>
-{% endif %}
+  <!-- 1. Compact KPI Header -->
+  <div class="blog-kpi-row">
+    <div class="blog-kpi-box is-active" onclick="filterByStatus('all', this)">
+      <div class="kpi-icon-mini blue"><i class="ri-article-line"></i></div>
+      <div class="kpi-info-mini">
+        <span class="kpi-lbl-mini">บทความทั้งหมด</span>
+        <span class="kpi-val-mini">{{ posts|length }}</span>
+        <span class="kpi-sub-mini">ในฐานข้อมูลระบบ</span>
+      </div>
+    </div>
 
-<!-- Action & Filter Control Bar -->
-<div class="blog-control-bar">
-  <div class="blog-filter-row">
-    <!-- Search Form -->
-    <form method="get" class="blog-search-box" style="margin:0">
-      <div class="search-input-wrap">
+    <div class="blog-kpi-box" onclick="filterByStatus('published', this)">
+      <div class="kpi-icon-mini green"><i class="ri-checkbox-circle-line"></i></div>
+      <div class="kpi-info-mini">
+        <span class="kpi-lbl-mini">เผยแพร่แล้ว (Live)</span>
+        <span class="kpi-val-mini" style="color:#34d399">{{ pub_n|default(posts|selectattr('published')|list|length) }}</span>
+        <span class="kpi-sub-mini">พร้อมขึ้น Google</span>
+      </div>
+    </div>
+
+    <div class="blog-kpi-box" onclick="filterByStatus('draft', this)">
+      <div class="kpi-icon-mini amber"><i class="ri-draft-line"></i></div>
+      <div class="kpi-info-mini">
+        <span class="kpi-lbl-mini">ฉบับร่าง (Draft)</span>
+        <span class="kpi-val-mini" style="color:#fbbf24">{{ draft_n|default(0) }}</span>
+        <span class="kpi-sub-mini">รอตรวจสอบ/แก้ไข</span>
+      </div>
+    </div>
+
+    <div class="blog-kpi-box" onclick="window.open('/sitemap-blog.xml', '_blank')">
+      <div class="kpi-icon-mini purple"><i class="ri-route-line"></i></div>
+      <div class="kpi-info-mini">
+        <span class="kpi-lbl-mini">Sitemap Blog</span>
+        <span class="kpi-val-mini" style="color:#c084fc">100%</span>
+        <span class="kpi-sub-mini">เชื่อมต่อบอทค้นหา ↗</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Reorganized Toolbar Panel -->
+  <div class="blog-panel-card">
+    <!-- Top Toolbar Row -->
+    <div class="blog-toolbar-top">
+      <!-- Status Tabs -->
+      <div class="blog-status-tabs">
+        <button type="button" class="blog-status-tab is-active" id="tab-stat-all" onclick="filterByStatus('all', this)">
+          <span>ทั้งหมด</span> <span class="tab-badge">{{ posts|length }}</span>
+        </button>
+        <button type="button" class="blog-status-tab" id="tab-stat-pub" onclick="filterByStatus('published', this)">
+          <span>เผยแพร่แล้ว</span> <span class="tab-badge" style="background:#10b981;color:#fff">{{ pub_n|default(posts|selectattr('published')|list|length) }}</span>
+        </button>
+        <button type="button" class="blog-status-tab" id="tab-stat-draft" onclick="filterByStatus('draft', this)">
+          <span>ฉบับร่าง</span> <span class="tab-badge" style="background:#f59e0b;color:#fff">{{ draft_n|default(0) }}</span>
+        </button>
+      </div>
+
+      <!-- Right Actions: View Toggles & Add Button -->
+      <div class="blog-toolbar-actions">
+        <div class="view-switch-btns">
+          <button type="button" class="view-btn is-active" id="btn-view-table" onclick="switchTidyView('table')">
+            <i class="ri-table-line"></i> <span>ตาราง</span>
+          </button>
+          <button type="button" class="view-btn" id="btn-view-cards" onclick="switchTidyView('cards')">
+            <i class="ri-grid-fill"></i> <span>การ์ด</span>
+          </button>
+        </div>
+
+        <button type="button" class="la-btn la-btn-primary" onclick="toggleEditorDrawer(true)" style="gap:6px">
+          <i class="ri-add-line"></i> <span>เขียนบทความใหม่</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Secondary Filter & Search Row -->
+    <div class="blog-toolbar-search">
+      <div class="search-wrapper">
         <i class="ri-search-line"></i>
-        <input class="la-input" name="q" value="{{ q or '' }}" placeholder="ค้นหาชื่อเรื่อง, แท็ก หรือสลัก URL...">
+        <input type="text" id="live-blog-search" oninput="handleInstantSearch(this.value)" placeholder="ค้นหาบทความด้วยชื่อ, แท็ก หรือ URL...">
       </div>
-      <select class="la-input" name="st" onchange="this.form.submit()" style="width:140px">
-        <option value="" {% if not st %}selected{% endif %}>ทุกสถานะ</option>
-        <option value="on" {% if st=='on' %}selected{% endif %}>🟢 เผยแพร่แล้ว</option>
-        <option value="off" {% if st=='off' %}selected{% endif %}>⚪ ฉบับร่าง</option>
-      </select>
-      <button class="la-btn la-btn-mini" type="submit">ค้นหา</button>
-      {% if q or st %}
-      <a class="la-btn la-btn-mini la-btn-ghost" href="/admin/appearance/blog">ล้างค่า</a>
-      {% endif %}
-    </form>
 
-    <!-- Actions Right -->
-    <div class="blog-actions-right">
-      <div class="view-toggles">
-        <button type="button" class="view-toggle is-active" id="view-card-btn" onclick="setBlogViewMode('cards')">
-          <i class="ri-grid-fill"></i> แบบการ์ด
-        </button>
-        <button type="button" class="view-toggle" id="view-table-btn" onclick="setBlogViewMode('table')">
-          <i class="ri-table-line"></i> แบบตาราง
-        </button>
+      <!-- Category Filter Chips -->
+      <div class="category-chips-row">
+        <span style="font-size:12px;color:#64748b;font-weight:600;"><i class="ri-filter-3-line"></i> แท็ก:</span>
+        <div class="cat-chip is-active" onclick="filterByTag('', this)">ทั้งหมด</div>
+        <div class="cat-chip" onclick="filterByTag('TikTok', this)"><i class="ri-tiktok-fill"></i> TikTok</div>
+        <div class="cat-chip" onclick="filterByTag('Instagram', this)"><i class="ri-instagram-fill" style="color:#e1306c"></i> Instagram</div>
+        <div class="cat-chip" onclick="filterByTag('Facebook', this)"><i class="ri-facebook-circle-fill" style="color:#1877f2"></i> Facebook</div>
+        <div class="cat-chip" onclick="filterByTag('YouTube', this)"><i class="ri-youtube-fill" style="color:#ef4444"></i> YouTube</div>
+        <div class="cat-chip" onclick="filterByTag('SEO', this)">SEO &amp; การตลาด</div>
+        <div class="cat-chip" onclick="filterByTag('เคล็ดลับ', this)">เทคนิค</div>
       </div>
-      <button type="button" class="la-btn la-btn-primary" onclick="toggleBlogForm(true)">
-        <i class="ri-add-line"></i> เขียนบทความใหม่
-      </button>
     </div>
   </div>
 
-  <!-- Quick Category Filter Chips -->
-  <div class="blog-chips-row">
-    <span class="chips-lbl"><i class="ri-filter-3-line"></i> หมวดหมู่:</span>
-    <a href="/admin/appearance/blog" class="filter-chip {% if not q %}active{% endif %}">ทั้งหมด</a>
-    <a href="/admin/appearance/blog?q=Facebook" class="filter-chip {% if q=='Facebook' %}active{% endif %}">
-      <i class="ri-facebook-circle-fill" style="color:#1877f2"></i> Facebook
-    </a>
-    <a href="/admin/appearance/blog?q=TikTok" class="filter-chip {% if q=='TikTok' %}active{% endif %}">
-      <i class="ri-tiktok-fill"></i> TikTok
-    </a>
-    <a href="/admin/appearance/blog?q=Instagram" class="filter-chip {% if q=='Instagram' %}active{% endif %}">
-      <i class="ri-instagram-fill" style="color:#e1306c"></i> Instagram
-    </a>
-    <a href="/admin/appearance/blog?q=YouTube" class="filter-chip {% if q=='YouTube' %}active{% endif %}">
-      <i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube
-    </a>
-    <a href="/admin/appearance/blog?q=การตลาด" class="filter-chip {% if q=='การตลาด' %}active{% endif %}">
-      <i class="ri-line-chart-line" style="color:#38bdf8"></i> การตลาดออนไลน์
-    </a>
-    <a href="/admin/appearance/blog?q=ปั้มไลค์" class="filter-chip {% if q=='ปั้มไลค์' %}active{% endif %}">
-      <i class="ri-thumb-up-fill" style="color:#f59e0b"></i> ปั้มไลค์
-    </a>
-    <a href="/admin/appearance/blog?q=SMM" class="filter-chip {% if q=='SMM' %}active{% endif %}">
-      <i class="ri-server-line" style="color:#a855f7"></i> SMM Panel
-    </a>
-  </div>
-</div>
-
-<!-- Add / Edit Article Drawer Form -->
-<div class="blog-form-card" id="blog-form-section" style="{% if show_form %}display:block{% else %}display:none{% endif %}">
-  <div class="blog-form-head">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div class="form-badge-icon">
-        <i class="{% if editing %}ri-edit-2-line{% else %}ri-edit-box-line{% endif %}"></i>
-      </div>
-      <div>
-        <h3 style="margin:0;font-size:1.15rem;color:#f8fafc">
-          {% if editing %}แก้ไขบทความ: {{ editing.title }}{% else %}เขียนบทความใหม่ (New Blog Article){% endif %}
+  <!-- 3. Collapsible Editor Drawer (Open only when needed) -->
+  <div id="blog-editor-drawer" class="blog-editor-drawer" style="{% if editing or show_form %}display:block;{% else %}display:none;{% endif %}">
+    <div class="drawer-head">
+      <div class="drawer-title-group">
+        <h3>
+          <i class="ri-edit-box-line" style="color:#38bdf8"></i>
+          <span>{% if editing %}แก้ไขบทความ #{{ editing.id }}{% else %}เขียนบทความใหม่ (New Article){% endif %}</span>
         </h3>
-        <p class="la-muted" style="margin:3px 0 0;font-size:13px">
-          สร้างเนื้อหาคุณภาพสำหรับ Search Engine, ลูกค้า และการตลาดโซเชียลมีเดีย
-        </p>
+        <p>สร้างคอนเทนต์คุณภาพเพื่อดันคีย์เวิร์ด SEO และเพิ่มความน่าเชื่อถือให้กับร้านค้า</p>
       </div>
-    </div>
-    <button type="button" class="blog-close-btn" onclick="toggleBlogForm(false)" title="ปิดฟอร์ม">
-      <i class="ri-close-line"></i>
-    </button>
-  </div>
-
-  <form method="post" action="/admin/appearance/blog" onsubmit="return validateBlogForm(this)">
-    <input type="hidden" name="pid" id="blogPid" value="{{ editing.id if editing else '' }}">
-    
-    <div class="blog-editor-grid">
-      <!-- Main Content Column -->
-      <div class="blog-main-col">
-        <!-- Title -->
-        <div class="field-item">
-          <label class="la-field" for="blogTitle">
-            <span>หัวข้อบทความ (Title)</span> <span style="color:#ef4444">*</span>
-          </label>
-          <input class="la-input" name="title" id="blogTitle" value="{{ editing.title if editing else '' }}" placeholder="เช่น 10 เทคนิคเพิ่มยอด Reach และ Engagement บน Facebook ปี 2026" required oninput="autoSuggestSlug(this.value)">
-          <span class="field-hint">ชื่อเรื่องที่ดึงดูดสายตาและมีคีย์เวิร์ดที่คนค้นหาบ่อย</span>
-        </div>
-
-        <!-- Slug & Live URL Preview -->
-        <div class="field-item">
-          <label class="la-field" for="blogSlug">
-            <span>สลัก URL (Slug)</span>
-          </label>
-          <input class="la-input" name="slug" id="blogSlug" value="{{ editing.slug if editing else '' }}" placeholder="facebook-reach-tips-2026" oninput="updateSlugPreview(this.value)">
-          <div class="slug-live-preview">
-            <span>ที่อยู่บทความจริง:</span>
-            <code id="slug-preview-text">https://likes-auto.com/blog/{{ editing.slug if editing else '...' }}</code>
-          </div>
-        </div>
-
-        <!-- Tags & Preset Chips -->
-        <div class="field-item">
-          <label class="la-field" for="blogTags">
-            <span>แท็กและหมวดหมู่ (คั่นด้วยจุลภาค)</span>
-          </label>
-          <input class="la-input" name="tags" id="blogTags" value="{{ editing.tags if editing else '' }}" placeholder="Facebook, เพิ่มไลค์, การตลาดออนไลน์">
-          
-          <div class="preset-tag-chips">
-            <span style="font-size:12px;color:#64748b;align-self:center;margin-right:4px">+ คลิกเพื่อเพิ่มแท็ก:</span>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('Facebook')"><i class="ri-facebook-circle-fill" style="color:#1877f2"></i> Facebook</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('TikTok')"><i class="ri-tiktok-fill"></i> TikTok</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('Instagram')"><i class="ri-instagram-fill" style="color:#e1306c"></i> Instagram</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('YouTube')"><i class="ri-youtube-fill" style="color:#ff0000"></i> YouTube</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('ปั้มไลค์')">ปั้มไลค์</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('ปั้มฟอล')">ปั้มฟอล</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('ปั้มวิว')">ปั้มวิว</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('การตลาด')">การตลาด</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('ยิงแอด')">ยิงแอด</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('SEO')">SEO</button>
-            <button type="button" class="ptag-chip" onclick="blogAddTag('พร้อมเพย์')">พร้อมเพย์</button>
-          </div>
-        </div>
-
-        <!-- Excerpt -->
-        <div class="field-item">
-          <label class="la-field" for="blogExcerpt">
-            <span>คำโปรยสรุปย่อ (Excerpt)</span>
-          </label>
-          <input class="la-input" name="excerpt" id="blogExcerpt" value="{{ editing.excerpt if editing else '' }}" placeholder="สรุปเนื้อหาสั้นๆ 1-2 ประโยคสำหรับแสดงบนการ์ดและผลการค้นหา Google">
-          <span class="field-hint">หากเว้นว่างไว้ ระบบจะตัดเนื้อหาย่อหน้าแรกไปเป็นคำโปรยให้อัตโนมัติ</span>
-        </div>
-
-        <!-- Editor with Formatting Toolbar -->
-        <div class="field-item" style="margin-bottom:0">
-          <label class="la-field" for="blogBody">
-            <span>เนื้อหาบทความ (HTML / Text)</span> <span style="color:#ef4444">*</span>
-          </label>
-          
-          <div class="format-toolbar">
-            <button type="button" class="format-btn" onclick="insertFormat('<h3>','</h3>','หัวข้อย่อย H3')" title="หัวข้อย่อย"><b>H3</b></button>
-            <button type="button" class="format-btn" onclick="insertFormat('<p>','</p>','ข้อความย่อหน้า')" title="ย่อหน้า"><i class="ri-paragraph"></i> P</button>
-            <button type="button" class="format-btn" onclick="insertFormat('<strong>','</strong>','ข้อความหนา')" title="ตัวหนา"><b>B</b></button>
-            <button type="button" class="format-btn" onclick="insertFormat('<em>','</em>','ข้อความเอียง')" title="ตัวเอียง"><i>I</i></button>
-            <button type="button" class="format-btn" onclick="blogLinkPrompt()" title="แทรก URL ลิงก์"><i class="ri-link"></i> ลิงก์</button>
-            <button type="button" class="format-btn" onclick="insertFormat('<ul>\n  <li>','</li>\n  <li>รายการ</li>\n</ul>','ประเด็นสำคัญ')" title="รายการแบบจุด"><i class="ri-list-unordered"></i> รายการ</button>
-            <button type="button" class="format-btn" onclick="insertFormat('<div class=\"blog-callout\">\n  <strong>💡 เคล็ดลับจาก LIKES AUTO:</strong> ','\n</div>','คำแนะนำสำคัญ')" title="กล่องไฮไลต์ข้อความ"><i class="ri-lightbulb-line"></i> กล่องทริค</button>
-            <button type="button" class="format-btn" onclick="blogImgPrompt()" title="แทรกรูปลิงก์ภายนอก"><i class="ri-image-line"></i> ใส่รูป</button>
-          </div>
-
-          <textarea class="la-input blog-textarea" name="body" id="blogBody" placeholder="เขียนเนื้อหาบทความที่นี่..." oninput="updateWordCount()">{{ editing.body if editing else '' }}</textarea>
-          
-          <div class="textarea-footer">
-            <span id="word-counter">0 ตัวอักษร · 0 คำ</span>
-            <span id="reading-time">เวลาอ่านโดยประมาณ: ~1 นาที</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings Sidebar Column -->
-      <div class="blog-sidebar-col">
-        <!-- Publishing Status -->
-        <div class="blog-side-box">
-          <div class="blog-side-title"><i class="ri-settings-4-line" style="color:#38bdf8"></i> การตั้งค่าเผยแพร่</div>
-          
-          <label class="adm-check" style="margin-bottom:14px;display:flex;align-items:center;gap:10px;cursor:pointer">
-            <input type="checkbox" name="published" value="1" {% if not editing or editing.published != 0 %}checked{% endif %} style="width:18px;height:18px">
-            <div>
-              <strong style="color:#f8fafc;display:block">เผยแพร่บนเว็บทันที</strong>
-              <span style="font-size:12px;color:#94a3b8">เปิดให้ผู้ใช้งานทั่วไปสามารถเข้าอ่านได้</span>
-            </div>
-          </label>
-
-          <div class="field-item" style="margin-bottom:0">
-            <label class="la-field" for="blogCreated">วันเวลาที่ลงบทความ</label>
-            <input class="la-input" name="created_at" id="blogCreated" value="{{ editing.created_at if editing else '' }}" placeholder="2026-11-04 10:00">
-          </div>
-        </div>
-
-        <!-- Media Gallery -->
-        <div class="blog-side-box">
-          <div class="blog-side-title" style="justify-content:space-between">
-            <span><i class="ri-gallery-line" style="color:#a855f7"></i> คลังภาพบทความ</span>
-            <span style="font-size:11px;color:#64748b">{{ media|length }} ภาพ</span>
-          </div>
-          <p style="font-size:12px;color:#94a3b8;margin:0 0 10px">คลิกภาพเพื่อแทรกแท็กรูปภาพลงในตำแหน่งเคอร์เซอร์</p>
-          
-          <div class="blog-gallery-grid">
-            {% for src in media %}
-            <button type="button" class="blog-thumb-btn" onclick="blogImg('{{ src }}')" title="{{ src }}">
-              <img src="{{ src }}" alt="" loading="lazy">
-            </button>
-            {% else %}
-            <p class="la-muted" style="grid-column:1/-1;text-align:center;padding:15px">ยังไม่มีภาพในคลัง</p>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- Quick Upload Image -->
-        <div class="blog-side-box" style="margin-bottom:0">
-          <div class="blog-side-title"><i class="ri-upload-cloud-line" style="color:#22c55e"></i> อัปโหลดรูปภาพใหม่</div>
-          <form method="post" action="/admin/appearance/blog/upload" enctype="multipart/form-data" style="margin:0">
-            <input type="hidden" name="pid" value="{{ editing.id if editing else '' }}">
-            <input class="la-input" type="file" name="upload" accept="image/*" required style="padding:6px;font-size:12px;margin-bottom:8px">
-            <button class="la-btn la-btn-mini la-btn-ghost" type="submit" style="width:100%;justify-content:center">
-              <i class="ri-upload-2-line"></i> อัปโหลดเข้าบทความ
-            </button>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Form Footer Actions -->
-    <div class="adm-actions" style="margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px">
-      <button class="la-btn la-btn-primary" type="submit" style="padding:10px 24px;font-size:14px">
-        <i class="ri-save-line"></i> {% if editing %}บันทึกการแก้ไข{% else %}บันทึกและเผยแพร่บทความ{% endif %}
+      <button type="button" class="drawer-close-btn" onclick="toggleEditorDrawer(false)">
+        <i class="ri-close-line"></i> <span>ปิดหน้าต่าง</span>
       </button>
-      <button type="button" class="la-btn la-btn-ghost" onclick="toggleBlogForm(false)">ยกเลิก</button>
-      
-      {% if editing and editing.slug %}
-      <a class="la-btn la-btn-ghost" href="/blog/{{ editing.slug }}" target="_blank" rel="noopener" style="margin-left:auto">
-        <i class="ri-external-link-line"></i> เปิดดูบนหน้าเว็บจริง
-      </a>
+    </div>
+
+    <form method="post" action="{% if editing %}/admin/appearance/blog/{{ editing.id }}/edit{% else %}/admin/appearance/blog/add{% endif %}">
+      {% if editing %}
+      <input type="hidden" name="pid" value="{{ editing.id }}">
       {% endif %}
-    </div>
-  </form>
-</div>
 
-<!-- 1. Rich Blog Cards View (Active by default) -->
-<div class="blog-cards-grid" id="blog-cards-view">
-  {% for r in posts %}
-  <div class="blog-card-item">
-    <!-- Card Cover -->
-    <div class="blog-card-cover-wrap">
-      <span class="card-id-pill">#{{ r.id }}</span>
-      <div class="blog-badge-overlay">
-        {% if r.published == 0 %}
-        <span class="status-pill draft"><i class="ri-draft-line"></i> ฉบับร่าง</span>
-        {% else %}
-        <span class="status-pill published"><i class="ri-checkbox-circle-fill"></i> เผยแพร่</span>
-        {% endif %}
-      </div>
-      {% if r.cover %}
-      <img class="blog-card-cover" src="{{ r.cover }}" alt="{{ r.title }}" loading="lazy">
-      {% else %}
-      <div class="blog-card-fallback-cover">
-        <i class="ri-article-line"></i>
-      </div>
-      {% endif %}
-    </div>
+      <div class="editor-grid-2col">
+        <!-- Left: Main Content -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <label class="la-field" style="font-weight:700">ชื่อบทความ (Title) *</label>
+            <input class="la-input" id="ed-title" name="title" required value="{{ editing.title if editing else '' }}" placeholder="เช่น อัลกอริทึม TikTok 2026 ดันคลิปขึ้นหน้าฟีด FYP ไวที่สุด" oninput="autoGenSlug(this.value)">
+          </div>
 
-    <!-- Card Content -->
-    <div class="blog-card-content">
-      <div class="blog-card-tags">
-        {% if r.tags %}
-          {% for t in r.tags.split(',') %}
-          <span class="tag-badge">{{ t.strip() }}</span>
-          {% endfor %}
-        {% else %}
-          <span class="tag-badge" style="background:rgba(255,255,255,0.05);color:#94a3b8">บทความทั่วไป</span>
-        {% endif %}
-      </div>
-
-      <a href="{{ r.href }}" target="_blank" rel="noopener" style="text-decoration:none">
-        <h4 class="blog-card-title" title="{{ r.title }}">{{ r.title }}</h4>
-      </a>
-
-      <div class="blog-card-url">
-        <i class="ri-link" style="color:#64748b"></i>
-        <code>{{ r.href }}</code>
-        <button type="button" class="la-btn la-btn-mini la-btn-ghost" style="padding:2px 6px;height:auto" onclick="copyBlogUrl('https://likes-auto.com{{ r.href }}', this)" title="คัดลอกลิงก์">
-          <i class="ri-file-copy-line"></i>
-        </button>
-      </div>
-
-      <p class="blog-card-excerpt">
-        {{ r.excerpt or 'บทความคุณภาพจาก LIKES AUTO ผู้ให้บริการระบบการตลาดโซเชียลมีเดียอันดับ 1 ในไทย' }}
-      </p>
-
-      <div class="blog-card-meta">
-        <span><i class="ri-calendar-line"></i> {{ r.created_at or 'เพิ่งอัปเดต' }}</span>
-        <span><i class="ri-time-line"></i> อ่าน ~2 นาที</span>
-      </div>
-    </div>
-
-    <!-- Card Actions Footer -->
-    <div class="blog-card-actions">
-      <a class="la-btn la-btn-mini la-btn-primary" href="{{ r.href }}" target="_blank" rel="noopener" title="เปิดดูหน้าจริง">
-        <i class="ri-external-link-line"></i> เปิด
-      </a>
-      <a class="la-btn la-btn-mini la-btn-ghost" href="/admin/appearance/blog?edit={{ r.id }}" title="แก้ไขบทความ">
-        <i class="ri-edit-line"></i> แก้
-      </a>
-      <form method="post" action="/admin/appearance/blog/{{ r.id }}/toggle" style="margin:0;flex:1;display:flex">
-        <button class="la-btn la-btn-mini la-btn-ghost" type="submit" style="width:100%" title="สลับสถานะ">
-          {% if r.published == 0 %}<i class="ri-eye-line"></i> แสดง{% else %}<i class="ri-eye-off-line"></i> ซ่อน{% endif %}
-        </button>
-      </form>
-      <form method="post" action="/admin/appearance/blog/{{ r.id }}/copy" style="margin:0">
-        <button class="la-btn la-btn-mini la-btn-ghost" type="submit" title="ทำสำเนาบทความ">
-          <i class="ri-file-copy-line"></i>
-        </button>
-      </form>
-      <form method="post" action="/admin/appearance/blog/{{ r.id }}/delete" onsubmit="return confirm('ยืนยันลบบทความ {{ r.title }} ถาวร?')" style="margin:0">
-        <button class="la-btn la-btn-mini la-btn-danger" type="submit" title="ลบถาวร">
-          <i class="ri-delete-bin-line"></i>
-        </button>
-      </form>
-    </div>
-  </div>
-  {% else %}
-  <div style="grid-column:1/-1;text-align:center;padding:50px 20px;background:rgba(15,23,42,0.5);border:1px dashed rgba(255,255,255,0.1);border-radius:14px">
-    <i class="ri-file-search-line" style="font-size:42px;color:#64748b"></i>
-    <h4 style="margin:12px 0 6px;color:#f8fafc">ไม่พบบทความ{% if q %} ที่ตรงกับคำค้น "{{ q }}"{% endif %}</h4>
-    <p class="la-muted" style="margin-bottom:16px">ลองค้นหาด้วยคำอื่น หรือกดปุ่มเขียนบทความใหม่ด้านบน</p>
-    <a href="/admin/appearance/blog" class="la-btn la-btn-ghost">ดูบทความทั้งหมด</a>
-  </div>
-  {% endfor %}
-</div>
-
-<!-- 2. Detailed Table View (Hidden by default, toggleable) -->
-<div class="adm-table-wrap" id="blog-table-view" style="display:none;margin-bottom:30px">
-  <table class="adm-table">
-    <thead>
-      <tr>
-        <th style="width:70px">ID</th>
-        <th>บทความ</th>
-        <th>แท็ก / หมวดหมู่</th>
-        <th>สถานะ</th>
-        <th>วันที่สร้าง</th>
-        <th style="text-align:right">จัดการ</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in posts %}
-      <tr>
-        <td><span class="card-id-pill" style="position:static">#{{ r.id }}</span></td>
-        <td class="wrap">
-          <div style="display:flex;align-items:center">
-            {% if r.cover %}
-            <img class="blog-table-cover" src="{{ r.cover }}" alt="">
-            {% endif %}
-            <div>
-              <strong style="color:#f8fafc;display:block">{{ r.title }}</strong>
-              <code style="font-size:11px;color:#38bdf8">{{ r.href }}</code>
+          <div>
+            <label class="la-field" style="font-weight:700">URL Slug (ภาษาอังกฤษคั่นด้วยขีดกลาง) *</label>
+            <input class="la-input" id="ed-slug" name="slug" required value="{{ editing.slug if editing else '' }}" placeholder="tiktok-algorithm-fyp-guide-2026" oninput="updateUrlPreview(this.value)">
+            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">
+              ลิงก์หน้าเว็บจริง: <code id="live-slug-preview" style="color:#38bdf8">https://likes-auto.com/blog/{{ editing.slug if editing else 'example-slug' }}</code>
             </div>
           </div>
-        </td>
-        <td class="wrap">
-          {% if r.tags %}
-            {% for t in r.tags.split(',') %}
-            <span class="tag-badge" style="font-size:10px">{{ t.strip() }}</span>
-            {% endfor %}
+
+          <div>
+            <label class="la-field" style="font-weight:700">แท็ก / หมวดหมู่ (คั่นด้วยจุลภาค)</label>
+            <input class="la-input" id="ed-tags" name="tags" value="{{ editing.tags if editing else '' }}" placeholder="TikTok, ปั้มวิว, ดันคลิป, เทคนิคการตลาด">
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;">
+              <span style="font-size:11px;color:#64748b;">คลิกเพื่อเพิ่ม:</span>
+              <button type="button" class="cat-chip" style="font-size:10.5px;padding:2px 7px" onclick="appendTag('TikTok')">+ TikTok</button>
+              <button type="button" class="cat-chip" style="font-size:10.5px;padding:2px 7px" onclick="appendTag('Instagram')">+ Instagram</button>
+              <button type="button" class="cat-chip" style="font-size:10.5px;padding:2px 7px" onclick="appendTag('Facebook')">+ Facebook</button>
+              <button type="button" class="cat-chip" style="font-size:10.5px;padding:2px 7px" onclick="appendTag('YouTube')">+ YouTube</button>
+              <button type="button" class="cat-chip" style="font-size:10.5px;padding:2px 7px" onclick="appendTag('ปั้มไลค์')">+ ปั้มไลค์</button>
+              <button type="button" class="cat-chip" style="font-size:10.5px;padding:2px 7px" onclick="appendTag('SEO')">+ SEO</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="la-field" style="font-weight:700">คำโปรยสั้น (Excerpt)</label>
+            <input class="la-input" name="excerpt" value="{{ editing.excerpt if editing else '' }}" placeholder="สรุปเนื้อหาสั้น 1-2 บรรทัด สำหรับแสดงในการ์ดและ Google Meta Description">
+          </div>
+
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label class="la-field" style="font-weight:700;margin:0">เนื้อหาบทความ (HTML / Markdown) *</label>
+              <div style="display:flex;gap:4px;">
+                <button type="button" class="la-btn la-btn-mini la-btn-ghost" style="padding:2px 8px;font-size:11px" onclick="insertFmt('<h3>', '</h3>')">H3</button>
+                <button type="button" class="la-btn la-btn-mini la-btn-ghost" style="padding:2px 8px;font-size:11px" onclick="insertFmt('<strong>', '</strong>')"><b>B</b></button>
+                <button type="button" class="la-btn la-btn-mini la-btn-ghost" style="padding:2px 8px;font-size:11px" onclick="insertFmt('<em>', '</em>')"><i>I</i></button>
+                <button type="button" class="la-btn la-btn-mini la-btn-ghost" style="padding:2px 8px;font-size:11px" onclick="insertFmt('<ul>\n  <li>', '</li>\n</ul>')">List</button>
+                <button type="button" class="la-btn la-btn-mini la-btn-ghost" style="padding:2px 8px;font-size:11px" onclick="insertFmt('<div class="blog-callout">\n  ', '\n</div>')">Callout</button>
+              </div>
+            </div>
+            <textarea class="la-input" id="ed-body" name="body" rows="12" style="font-family:monospace;font-size:13px;line-height:1.5" required placeholder="เขียนเนื้อหาบทความที่นี่...">{{ editing.body if editing else '' }}</textarea>
+          </div>
+        </div>
+
+        <!-- Right: Settings Sidebar -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Status Switch -->
+          <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0">
+              <input type="checkbox" name="published" value="1" {% if not editing or editing.published %}checked{% endif %} style="width:18px;height:18px;accent-color:#10b981;">
+              <div>
+                <strong style="display:block;font-size:13.5px;color:#f8fafc">เผยแพร่ทันที (Published)</strong>
+                <span style="font-size:11.5px;color:#94a3b8">ถ้าเอาเครื่องหมายออก จะบันทึกเป็นแบบร่าง</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Cover Image -->
+          <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;">
+            <label class="la-field" style="font-weight:700">URL ภาพหน้าปก (Cover Image)</label>
+            <input class="la-input" id="ed-cover" name="cover" value="{{ editing.cover if editing and editing.cover else '/static/assets/blog/blog-facebook.jpg' }}" oninput="updateCoverPreview(this.value)">
+            
+            <div style="margin-top:10px;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:#0f172a;border:1px solid rgba(255,255,255,0.1)">
+              <img id="ed-cover-preview" src="{{ editing.cover if editing and editing.cover else '/static/assets/blog/blog-facebook.jpg' }}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='/static/assets/blog/blog-facebook.jpg'">
+            </div>
+
+            <!-- Media Gallery Thumbnails -->
+            <label class="la-field" style="margin-top:12px;font-size:11.5px;">เลือกรูปภาพจากคลังด่วน (คลิกเพื่อใช้):</label>
+            <div class="media-mini-grid">
+              {% for mPath in media or [] %}
+              <div class="media-mini-thumb" onclick="pickCoverImg('{{ mPath }}')">
+                <img src="{{ mPath }}" alt="thumb" loading="lazy">
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="la-btn la-btn-primary" type="submit" style="width:100%;height:44px;font-size:14.5px;font-weight:700">
+              <i class="ri-save-3-line"></i> <span>{% if editing %}บันทึกการแก้ไข{% else %}บันทึกและเผยแพร่{% endif %}</span>
+            </button>
+            {% if editing %}
+            <a href="/admin/appearance/blog" class="la-btn la-btn-ghost" style="width:100%;justify-content:center;text-decoration:none">
+              ยกเลิกการแก้ไข
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- 4. Table View (Clean, Tidy, Super Organized - Default View) -->
+  <div id="blog-view-table-wrapper" class="blog-table-container">
+    <table class="blog-tidy-table" id="blog-master-table">
+      <thead>
+        <tr>
+          <th style="width:50px">ID</th>
+          <th style="width:65px">ภาพปก</th>
+          <th>ชื่อบทความ / URL Slug</th>
+          <th style="width:180px">หมวดหมู่ &amp; แท็ก</th>
+          <th style="width:110px">สถานะ</th>
+          <th style="width:120px">วันที่สร้าง</th>
+          <th style="width:170px;text-align:right">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody id="blog-table-tbody">
+        {% for p in posts %}
+        {% set isPub = p.published|default(1) %}
+        {% set pCover = p.cover if p.cover else '/static/assets/blog/blog-facebook.jpg' %}
+        {% set pSlug = p.slug|default('') %}
+        {% set pId = p.id|default(loop.index) %}
+        <tr class="blog-row-item" 
+            data-index="{{ loop.index0 }}"
+            data-id="{{ pId }}" 
+            data-status="{% if isPub %}published{% else %}draft{% endif %}"
+            data-title="{{ (p.title|default(''))|lower }}"
+            data-tags="{{ (p.tags|default(''))|lower }}"
+            data-slug="{{ pSlug|lower }}">
+          <td>
+            <strong style="color:#64748b">#{{ pId }}</strong>
+          </td>
+          <td>
+            <img class="cell-thumb" src="{{ pCover }}" alt="thumb" loading="lazy" onerror="this.src='/static/assets/blog/blog-facebook.jpg'">
+          </td>
+          <td>
+            <div class="cell-title-wrap">
+              <a href="/admin/appearance/blog?edit={{ pId }}" class="cell-title-link">
+                {{ p.title|default('ไม่มีชื่อบทความ') }}
+              </a>
+              <div class="cell-slug">
+                <i class="ri-link"></i>
+                <a href="/blog/{{ pSlug }}" target="_blank" rel="noopener" style="color:#38bdf8;text-decoration:none;">
+                  /blog/{{ pSlug }} <i class="ri-external-link-line" style="font-size:10px"></i>
+                </a>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div>
+              {% if p.tags %}
+                {% for tg in p.tags.split(',')[:3] %}
+                <span class="tag-pill">{{ tg.strip() }}</span>
+                {% endfor %}
+              {% else %}
+                <span style="color:#64748b;font-size:11px">-</span>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            {% if isPub %}
+            <span class="status-pill published"><i class="ri-checkbox-circle-fill"></i> เผยแพร่แล้ว</span>
+            {% else %}
+            <span class="status-pill draft"><i class="ri-draft-line"></i> ฉบับร่าง</span>
+            {% endif %}
+          </td>
+          <td>
+            <span style="font-size:12px;color:#94a3b8;white-space:nowrap;">
+              {{ (p.created_at|default(''))[:10] }}
+            </span>
+          </td>
+          <td style="text-align:right">
+            <div class="action-btn-group" style="justify-content:flex-end">
+              <a href="/admin/appearance/blog?edit={{ pId }}" class="btn-act edit" title="แก้ไขบทความ">
+                <i class="ri-edit-line"></i> <span>แก้ไข</span>
+              </a>
+              <a href="/blog/{{ pSlug }}" target="_blank" rel="noopener" class="btn-act view" title="ดูหน้าเว็บจริง">
+                <i class="ri-external-link-line"></i>
+              </a>
+              <form method="post" action="/admin/appearance/blog/{{ pId }}/delete" style="margin:0;display:inline" onsubmit="return confirm('ยืนยันลบบทความนี้?')">
+                <button type="submit" class="btn-act del" title="ลบบทความ">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 5. Cards View (Structured 3-column Grid - Alternative View) -->
+  <div id="blog-view-cards-wrapper" class="blog-cards-grid-tidy" style="display:none;">
+    {% for p in posts %}
+    {% set isPub = p.published|default(1) %}
+    {% set pCover = p.cover if p.cover else '/static/assets/blog/blog-facebook.jpg' %}
+    {% set pSlug = p.slug|default('') %}
+    {% set pId = p.id|default(loop.index) %}
+    <div class="blog-card-item-tidy blog-card-element"
+         data-index="{{ loop.index0 }}"
+         data-id="{{ pId }}" 
+         data-status="{% if isPub %}published{% else %}draft{% endif %}"
+         data-title="{{ (p.title|default(''))|lower }}"
+         data-tags="{{ (p.tags|default(''))|lower }}"
+         data-slug="{{ pSlug|lower }}">
+      <div class="card-thumb-wrap">
+        <span class="card-id-badge">#{{ pId }}</span>
+        <div class="card-status-badge">
+          {% if isPub %}
+          <span class="status-pill published"><i class="ri-checkbox-circle-fill"></i> เผยแพร่แล้ว</span>
           {% else %}
-            <span class="la-muted">-</span>
-          {% endif %}
-        </td>
-        <td>
-          {% if r.published == 0 %}
           <span class="status-pill draft"><i class="ri-draft-line"></i> ฉบับร่าง</span>
-          {% else %}
-          <span class="status-pill published"><i class="ri-checkbox-circle-fill"></i> เผยแพร่</span>
           {% endif %}
-        </td>
-        <td style="font-size:12px;color:#94a3b8">{{ r.created_at }}</td>
-        <td>
-          <div class="adm-actions" style="justify-content:flex-end">
-            <a class="la-btn la-btn-mini" href="{{ r.href }}" target="_blank" rel="noopener"><i class="ri-external-link-line"></i></a>
-            <a class="la-btn la-btn-mini la-btn-ghost" href="/admin/appearance/blog?edit={{ r.id }}"><i class="ri-edit-line"></i></a>
-            <form method="post" action="/admin/appearance/blog/{{ r.id }}/toggle" style="display:inline">
-              <button class="la-btn la-btn-mini la-btn-ghost" type="submit">{% if r.published == 0 %}แสดง{% else %}ซ่อน{% endif %}</button>
-            </form>
-            <form method="post" action="/admin/appearance/blog/{{ r.id }}/copy" style="display:inline">
-              <button class="la-btn la-btn-mini la-btn-ghost" type="submit" title="ทำสำเนา"><i class="ri-file-copy-line"></i></button>
-            </form>
-            <form method="post" action="/admin/appearance/blog/{{ r.id }}/delete" onsubmit="return confirm('ยืนยันลบ?')" style="display:inline">
-              <button class="la-btn la-btn-mini la-btn-danger" type="submit"><i class="ri-delete-bin-line"></i></button>
+        </div>
+        <img class="card-thumb-img" src="{{ pCover }}" alt="cover" loading="lazy" onerror="this.src='/static/assets/blog/blog-facebook.jpg'">
+      </div>
+
+      <div class="card-content-tidy">
+        <div style="margin-bottom:6px;">
+          {% if p.tags %}
+            {% for tg in p.tags.split(',')[:3] %}
+            <span class="tag-pill">{{ tg.strip() }}</span>
+            {% endfor %}
+          {% endif %}
+        </div>
+
+        <h4 class="card-title-tidy">
+          <a href="/admin/appearance/blog?edit={{ pId }}" style="color:#f8fafc;text-decoration:none">
+            {{ p.title|default('ไม่มีชื่อบทความ') }}
+          </a>
+        </h4>
+
+        <div class="card-url-tidy">
+          <i class="ri-link"></i> /blog/{{ pSlug }}
+        </div>
+
+        <div class="card-footer-tidy">
+          <span style="font-size:11.5px;color:#64748b;">
+            <i class="ri-calendar-line"></i> {{ (p.created_at|default(''))[:10] }}
+          </span>
+          <div class="action-btn-group">
+            <a href="/admin/appearance/blog?edit={{ pId }}" class="btn-act edit">
+              <i class="ri-edit-line"></i> <span>แก้ไข</span>
+            </a>
+            <a href="/blog/{{ pSlug }}" target="_blank" rel="noopener" class="btn-act view">
+              <i class="ri-external-link-line"></i>
+            </a>
+            <form method="post" action="/admin/appearance/blog/{{ pId }}/delete" style="margin:0;display:inline" onsubmit="return confirm('ยืนยันลบบทความนี้?')">
+              <button type="submit" class="btn-act del">
+                <i class="ri-delete-bin-line"></i>
+              </button>
             </form>
           </div>
-        </td>
-      </tr>
-      {% else %}
-      <tr><td colspan="6" style="text-align:center;padding:30px">ยังไม่มีบทความในระบบ</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 
-<!-- Operational & SEO Strategy Guide Cards -->
-<div class="blog-guide-grid">
-  <div class="blog-guide-card">
-    <div class="guide-icon"><i class="ri-search-2-line"></i></div>
+  <!-- 6. Smart Pagination Bar -->
+  <div class="blog-pagination-bar">
     <div>
-      <h4>กลยุทธ์ Social SEO & Search Engine</h4>
-      <p>การใส่คีย์เวิร์ดในหัวข้อ ย่อหน้าแรก และแท็ก จะช่วยให้บทความติดอันดับหน้าแรกของการค้นหาบน Google, TikTok และ Instagram ดึงดูดลูกค้าเป้าหมายเข้ามาอย่างต่อเนื่องโดยไม่ต้องเสียเงินยิงแอด</p>
+      <span id="page-summary-text">แสดง 1-15 จาก {{ posts|length }} รายการ</span>
+    </div>
+
+    <div class="pagination-controls" id="pagination-controls">
+      <!-- Generated dynamically by JavaScript -->
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span>แสดงหน้าละ:</span>
+      <select id="page-size-select" onchange="changePageSize(this.value)" style="background:rgba(10,14,26,0.6);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:6px;padding:3px 8px;font-size:12px;">
+        <option value="15" selected>15</option>
+        <option value="30">30</option>
+        <option value="50">50</option>
+        <option value="100">ทั้งหมด</option>
+      </select>
     </div>
   </div>
-  <div class="blog-guide-card">
-    <div class="guide-icon"><i class="ri-links-line"></i></div>
-    <div>
-      <h4>การทำ Internal Link เชื่อมโยงบริการ</h4>
-      <p>ในทุกบทความควรมีการแทรกลิงก์แนะนำบริการ เช่น ลิงก์ไปยังหน้า <a href="/services" style="color:#60a5fa">บริการทั้งหมด (/services)</a> หรือ <a href="/faq" style="color:#60a5fa">คำถามที่พบบ่อย (/faq)</a> เพื่อเปลี่ยนผู้อ่านให้กลายเป็นลูกค้าสั่งซื้อทันที</p>
-    </div>
-  </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
+  <!-- 7. Collapsible SEO & Content Strategy Guide (Tucked away neatly) -->
+  <details style="background:rgba(18,24,38,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:12px 18px;">
+    <summary style="cursor:pointer;font-weight:600;color:#94a3b8;font-size:13px;display:flex;align-items:center;gap:8px;">
+      <i class="ri-lightbulb-line" style="color:#f59e0b"></i>
+      <span>คำแนะนำกลยุทธ์ Content &amp; SEO ดันอันดับค้นหา (คลิกเพื่อเปิดดู)</span>
+      <i class="ri-arrow-down-s-line" style="margin-left:auto"></i>
+    </summary>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:14px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
+      <div style="font-size:12.5px;color:#cbd5e1;line-height:1.5;">
+        <strong style="color:#38bdf8;display:block;margin-bottom:4px">🎯 1. ใส่คีย์เวิร์ดใน 100 คำแรก</strong>
+        เปิดบทความด้วยการระบุปัญหาและใส่คำค้นหาหลัก เช่น "ปั้มไลค์เฟส", "เพิ่มวิว TikTok", "SMM Panel" ในย่อหน้าแรก
+      </div>
+      <div style="font-size:12.5px;color:#cbd5e1;line-height:1.5;">
+        <strong style="color:#10b981;display:block;margin-bottom:4px">🔗 2. ทำ Internal Links</strong>
+        ใส่ลิงก์ชวนคลิกไปหน้าบริการ <code>/services</code> หรือหน้าแพลตฟอร์ม <code>/tiktok</code> เพื่อเปลี่ยนผู้อ่านเป็นลูกค้า
+      </div>
+      <div style="font-size:12.5px;color:#f59e0b;display:block;margin-bottom:4px">
+        <strong style="color:#f59e0b;display:block;margin-bottom:4px">⚡ 3. ใช้รูปภาพอัตราส่วน 16:9</strong>
+        เลือกภาพหน้าปกที่มีความคมชัด ไม่เบลอ เพื่อให้แสดงบนหน้าผลการค้นหาของ Google อย่างโดดเด่น
+      </div>
+    </div>
+  </details>
+
+</div>
+
 <script>
-function blogBody() { return document.getElementById("blogBody"); }
+// === LIKES AUTO ORGANIZED BLOG SCRIPT 2026 ===
+var currentStatusFilter = 'all';
+var currentTagFilter = '';
+var currentSearchQuery = '';
+var currentPage = 1;
+var pageSize = 15;
+var currentViewMode = localStorage.getItem('la_blog_view') || 'table';
 
-function toggleBlogForm(show) {
-  var formSec = document.getElementById("blog-form-section");
-  if (!formSec) return;
-  if (show === undefined) {
-    show = formSec.style.display === "none";
-  }
-  formSec.style.display = show ? "block" : "none";
-  if (show) {
-    formSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    var tInp = document.getElementById("blogTitle");
-    if (tInp && !tInp.value) tInp.focus();
-  }
+function initBlogAdmin() {
+  switchTidyView(currentViewMode, false);
+  applyFiltersAndPaginate();
 }
 
-function setBlogViewMode(mode) {
-  var cardsView = document.getElementById("blog-cards-view");
-  var tableView = document.getElementById("blog-table-view");
-  var btnCards = document.getElementById("view-card-btn");
-  var btnTable = document.getElementById("view-table-btn");
+function switchTidyView(mode, save) {
+  currentViewMode = mode;
+  if (save !== false) {
+    try { localStorage.setItem('la_blog_view', mode); } catch(e){}
+  }
+  var tblWrap = document.getElementById('blog-view-table-wrapper');
+  var crdWrap = document.getElementById('blog-view-cards-wrapper');
+  var btnTbl = document.getElementById('btn-view-table');
+  var btnCrd = document.getElementById('btn-view-cards');
+
   if (mode === 'cards') {
-    if (cardsView) cardsView.style.display = 'grid';
-    if (tableView) tableView.style.display = 'none';
-    if (btnCards) btnCards.className = 'view-toggle is-active';
-    if (btnTable) btnTable.className = 'view-toggle';
+    if (tblWrap) tblWrap.style.display = 'none';
+    if (crdWrap) crdWrap.style.display = 'grid';
+    if (btnTbl) btnTbl.classList.remove('is-active');
+    if (btnCrd) btnCrd.classList.add('is-active');
   } else {
-    if (cardsView) cardsView.style.display = 'none';
-    if (tableView) tableView.style.display = 'block';
-    if (btnCards) btnCards.className = 'view-toggle';
-    if (btnTable) btnTable.className = 'view-toggle is-active';
+    if (tblWrap) tblWrap.style.display = 'block';
+    if (crdWrap) crdWrap.style.display = 'none';
+    if (btnTbl) btnTbl.classList.add('is-active');
+    if (btnCrd) btnCrd.classList.remove('is-active');
+  }
+  applyFiltersAndPaginate();
+}
+
+function filterByStatus(st, el) {
+  currentStatusFilter = st;
+  currentPage = 1;
+  document.querySelectorAll('.blog-status-tab').forEach(function(b){ b.classList.remove('is-active'); });
+  document.querySelectorAll('.blog-kpi-box').forEach(function(b){ b.classList.remove('is-active'); });
+  
+  if (st === 'all') {
+    var t = document.getElementById('tab-stat-all'); if(t) t.classList.add('is-active');
+  } else if (st === 'published') {
+    var t = document.getElementById('tab-stat-pub'); if(t) t.classList.add('is-active');
+  } else if (st === 'draft') {
+    var t = document.getElementById('tab-stat-draft'); if(t) t.classList.add('is-active');
+  }
+  if (el && el.classList.contains('blog-kpi-box')) el.classList.add('is-active');
+
+  applyFiltersAndPaginate();
+}
+
+function filterByTag(tag, el) {
+  currentTagFilter = tag.toLowerCase().trim();
+  currentPage = 1;
+  document.querySelectorAll('.cat-chip').forEach(function(c){ c.classList.remove('is-active'); });
+  if (el) el.classList.add('is-active');
+  applyFiltersAndPaginate();
+}
+
+function handleInstantSearch(val) {
+  currentSearchQuery = val.toLowerCase().trim();
+  currentPage = 1;
+  applyFiltersAndPaginate();
+}
+
+function changePageSize(size) {
+  pageSize = parseInt(size, 10) || 15;
+  currentPage = 1;
+  applyFiltersAndPaginate();
+}
+
+function applyFiltersAndPaginate() {
+  var rows = document.querySelectorAll('.blog-row-item');
+  var cards = document.querySelectorAll('.blog-card-element');
+
+  var matchedIndices = [];
+
+  rows.forEach(function(row) {
+    var idx = row.getAttribute('data-index');
+    var st = row.getAttribute('data-status');
+    var tit = row.getAttribute('data-title') || '';
+    var tags = row.getAttribute('data-tags') || '';
+    var slug = row.getAttribute('data-slug') || '';
+
+    // Status check
+    var passStatus = (currentStatusFilter === 'all') || (st === currentStatusFilter);
+
+    // Tag check
+    var passTag = (!currentTagFilter) || (tags.indexOf(currentTagFilter) !== -1) || (tit.indexOf(currentTagFilter) !== -1);
+
+    // Search query check
+    var passSearch = true;
+    if (currentSearchQuery) {
+      passSearch = (tit.indexOf(currentSearchQuery) !== -1) || 
+                   (slug.indexOf(currentSearchQuery) !== -1) || 
+                   (tags.indexOf(currentSearchQuery) !== -1);
+    }
+
+    if (passStatus && passTag && passSearch) {
+      matchedIndices.push(idx);
+    }
+  });
+
+  var totalMatched = matchedIndices.length;
+  var totalPages = Math.ceil(totalMatched / pageSize) || 1;
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  var startIndex = (currentPage - 1) * pageSize;
+  var endIndex = startIndex + pageSize;
+  var visibleSet = new Set(matchedIndices.slice(startIndex, endIndex));
+
+  // Update Table Rows
+  rows.forEach(function(row) {
+    var idx = row.getAttribute('data-index');
+    row.style.display = visibleSet.has(idx) ? '' : 'none';
+  });
+
+  // Update Cards
+  cards.forEach(function(card) {
+    var idx = card.getAttribute('data-index');
+    card.style.display = visibleSet.has(idx) ? 'flex' : 'none';
+  });
+
+  // Update Summary text
+  var sumText = document.getElementById('page-summary-text');
+  if (sumText) {
+    if (totalMatched === 0) {
+      sumText.textContent = 'ไม่พบบทความที่ตรงกับเงื่อนไขการค้นหา';
+    } else {
+      var fromN = startIndex + 1;
+      var toN = Math.min(endIndex, totalMatched);
+      sumText.textContent = 'แสดง ' + fromN + '-' + toN + ' จากทั้งหมด ' + totalMatched + ' รายการ';
+    }
+  }
+
+  // Render Pagination Buttons
+  renderPaginationButtons(totalPages);
+}
+
+function renderPaginationButtons(totalPages) {
+  var container = document.getElementById('pagination-controls');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (totalPages <= 1) return;
+
+  // Prev Button
+  var prevBtn = document.createElement('button');
+  prevBtn.className = 'page-btn';
+  prevBtn.innerHTML = '<i class="ri-arrow-left-s-line"></i>';
+  prevBtn.disabled = (currentPage === 1);
+  prevBtn.onclick = function() { if (currentPage > 1) { currentPage--; applyFiltersAndPaginate(); } };
+  container.appendChild(prevBtn);
+
+  // Page Numbers
+  var startP = Math.max(1, currentPage - 2);
+  var endP = Math.min(totalPages, currentPage + 2);
+
+  if (startP > 1) {
+    var p1 = createPageBtn(1);
+    container.appendChild(p1);
+    if (startP > 2) {
+      var dots = document.createElement('span');
+      dots.style.padding = '0 4px';
+      dots.style.color = '#64748b';
+      dots.textContent = '...';
+      container.appendChild(dots);
+    }
+  }
+
+  for (var p = startP; p <= endP; p++) {
+    container.appendChild(createPageBtn(p));
+  }
+
+  if (endP < totalPages) {
+    if (endP < totalPages - 1) {
+      var dots = document.createElement('span');
+      dots.style.padding = '0 4px';
+      dots.style.color = '#64748b';
+      dots.textContent = '...';
+      container.appendChild(dots);
+    }
+    container.appendChild(createPageBtn(totalPages));
+  }
+
+  // Next Button
+  var nextBtn = document.createElement('button');
+  nextBtn.className = 'page-btn';
+  nextBtn.innerHTML = '<i class="ri-arrow-right-s-line"></i>';
+  nextBtn.disabled = (currentPage === totalPages);
+  nextBtn.onclick = function() { if (currentPage < totalPages) { currentPage++; applyFiltersAndPaginate(); } };
+  container.appendChild(nextBtn);
+}
+
+function createPageBtn(pageNum) {
+  var b = document.createElement('button');
+  b.className = 'page-btn' + (pageNum === currentPage ? ' is-active' : '');
+  b.textContent = pageNum;
+  b.onclick = function() {
+    currentPage = pageNum;
+    applyFiltersAndPaginate();
+  };
+  return b;
+}
+
+// Drawer & Editor Helpers
+function toggleEditorDrawer(open) {
+  var d = document.getElementById('blog-editor-drawer');
+  if (!d) return;
+  d.style.display = open ? 'block' : 'none';
+  if (open) {
+    d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var t = document.getElementById('ed-title');
+    if (t && !t.value) t.focus();
   }
 }
 
-function autoSuggestSlug(title) {
-  var sInp = document.getElementById("blogSlug");
-  if (!sInp || sInp.getAttribute('data-touched') === 'true') return;
-  if (!title) { updateSlugPreview(''); return; }
-  var slug = title.toLowerCase().trim()
-    .replace(/[^\w\s\u0E00-\u0E7F-]/g, '')
+function autoGenSlug(title) {
+  var slugEl = document.getElementById('ed-slug');
+  if (!slugEl || slugEl.dataset.touched === '1') return;
+  var s = title.trim().toLowerCase()
+    .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  sInp.value = slug;
-  updateSlugPreview(slug);
-}
-
-function updateSlugPreview(val) {
-  var preview = document.getElementById("slug-preview-text");
-  if (preview) {
-    var clean = (val || '').trim();
-    preview.textContent = 'https://likes-auto.com/blog/' + (clean || '...');
+  if (s) {
+    slugEl.value = s;
+    updateUrlPreview(s);
   }
 }
 
-function copyBlogUrl(url, btn) {
-  navigator.clipboard.writeText(url).then(function() {
-    var orig = btn.innerHTML;
-    btn.innerHTML = '<i class="ri-check-line" style="color:#22c55e"></i>';
-    setTimeout(function() { btn.innerHTML = orig; }, 1500);
-  });
-}
-
-function blogAddTag(tag) {
-  var el = document.getElementById("blogTags");
-  if (!el) return;
-  var cur = (el.value || "").split(",").map(function(x){ return x.trim(); }).filter(Boolean);
-  if (cur.indexOf(tag) < 0) cur.push(tag);
-  el.value = cur.join(", ");
-}
-
-function insertFormat(openTag, closeTag, placeholder) {
-  var t = blogBody();
-  if (!t) return;
-  var s = t.selectionStart, e = t.selectionEnd;
-  var sel = t.value.substring(s, e) || placeholder;
-  t.value = t.value.slice(0, s) + openTag + sel + closeTag + t.value.slice(e);
-  t.focus();
-  t.setSelectionRange(s + openTag.length, s + openTag.length + sel.length);
-  updateWordCount();
-}
-
-function blogLinkPrompt() {
-  var href = prompt("กรอกที่อยู่ URL ลิงก์ปลายทาง:", "/services");
-  if (!href) return;
-  insertFormat('<a href="' + href + '">', '</a>', 'ข้อความลิงก์');
-}
-
-function blogImg(src) {
-  if (!src) return;
-  var t = document.getElementById("blogTitle");
-  var alt = t ? t.value : "ภาพประกอบบทความ";
-  var html = '\n<figure class="la-blog-fig">\n  <img src="' + src + '" alt="' + alt + '" width="1280" height="720" loading="lazy">\n</figure>\n';
-  var box = blogBody();
-  if (!box) return;
-  box.value = box.value + html;
-  box.focus();
-  updateWordCount();
-}
-
-function blogImgPrompt() {
-  var src = prompt("ระบุที่อยู่รูปภาพ URL:", "/static/assets/blog/blog-likes.jpg");
-  if (src) blogImg(src);
-}
-
-function updateWordCount() {
-  var t = blogBody();
-  var counter = document.getElementById("word-counter");
-  var reading = document.getElementById("reading-time");
-  if (!t || !counter) return;
-  var val = t.value || '';
-  var chars = val.length;
-  var words = val.trim() ? val.trim().split(/\s+/).length : 0;
-  counter.textContent = chars.toLocaleString() + ' ตัวอักษร · ' + words.toLocaleString() + ' คำ';
-  if (reading) {
-    var mins = Math.max(1, Math.round(words / 200));
-    reading.textContent = 'เวลาอ่านโดยประมาณ: ~' + mins + ' นาที';
+function updateUrlPreview(slug) {
+  var prev = document.getElementById('live-slug-preview');
+  if (prev) {
+    prev.textContent = 'https://likes-auto.com/blog/' + (slug || 'example-slug');
   }
 }
 
-function validateBlogForm(form) {
-  var title = form.title ? form.title.value.trim() : '';
-  if (!title) {
-    alert('กรุณากรอกหัวข้อบทความ (Title)');
-    return false;
-  }
-  return true;
+function updateCoverPreview(url) {
+  var img = document.getElementById('ed-cover-preview');
+  if (img) img.src = url || '/static/assets/blog/blog-facebook.jpg';
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  var sInp = document.getElementById("blogSlug");
-  if (sInp) {
-    sInp.addEventListener('input', function() {
-      sInp.setAttribute('data-touched', 'true');
-    });
+function pickCoverImg(url) {
+  var inp = document.getElementById('ed-cover');
+  if (inp) {
+    inp.value = url;
+    updateCoverPreview(url);
   }
-  updateWordCount();
+}
+
+function appendTag(tag) {
+  var inp = document.getElementById('ed-tags');
+  if (!inp) return;
+  var cur = inp.value.trim();
+  if (!cur) {
+    inp.value = tag;
+  } else {
+    var parts = cur.split(',').map(function(s){ return s.trim(); });
+    if (parts.indexOf(tag) === -1) {
+      inp.value = cur + ', ' + tag;
+    }
+  }
+}
+
+function insertFmt(before, after) {
+  var ta = document.getElementById('ed-body');
+  if (!ta) return;
+  var start = ta.selectionStart;
+  var end = ta.selectionEnd;
+  var sel = ta.value.substring(start, end);
+  var rep = before + (sel || '') + after;
+  ta.value = ta.value.substring(0, start) + rep + ta.value.substring(end);
+  ta.focus();
+  ta.selectionStart = start + before.length;
+  ta.selectionEnd = start + before.length + (sel ? sel.length : 0);
+}
+
+// Mark slug as touched if edited manually
+document.addEventListener('DOMContentLoaded', function(){
+  initBlogAdmin();
+  var slugEl = document.getElementById('ed-slug');
+  if (slugEl) {
+    slugEl.addEventListener('input', function(){ slugEl.dataset.touched = '1'; });
+  }
 });
+if (document.readyState !== 'loading') {
+  initBlogAdmin();
+}
 </script>
 {% endblock %}

@@ -5772,3 +5772,530 @@ html[data-la-pack="light"] .la-login-style-6 .la-pass-eye,
 body.la-light .la-login-style-6 .la-pass-eye {
   color: #64748b !important;
 }
+
+
+/* ========================================================
+   DRAWER THEME SWITCHER GRID & UNIVERSAL MOBILE POLISH
+   ======================================================== */
+.la-drawer-theme-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+}
+.pk-theme-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 9px 12px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: all 0.18s ease !important;
+  font-family: inherit !important;
+}
+.pk-theme-card:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+.pk-theme-card.is-active,
+.pk-theme-card.active {
+  border-color: var(--pk-green, #8ee31f) !important;
+  box-shadow: 0 0 10px rgba(142, 227, 31, 0.2) !important;
+}
+.pk-theme-swatch {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+.pk-theme-name {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: inherit !important;
+}
+
+/* Light Theme Adaptations for Mobile Drawer (.pk-drawer) */
+html.la-light .pk-drawer,
+html[data-la-pack="light"] .pk-drawer,
+html.la-light .la-header.la-header--fz .la-nav.pk-drawer,
+html[data-la-pack="light"] .la-header.la-header--fz .la-nav.pk-drawer {
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 20px 0 50px rgba(15, 23, 42, 0.12) !important;
+}
+html.la-light .la-header.la-header--fz .la-nav-scrim,
+html[data-la-pack="light"] .la-header.la-header--fz .la-nav-scrim {
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+html.la-light .pk-drawer-top,
+html[data-la-pack="light"] .pk-drawer-top {
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+html.la-light .pk-brand-text,
+html[data-la-pack="light"] .pk-brand-text,
+html.la-light .la-drawer-title,
+html[data-la-pack="light"] .la-drawer-title {
+  color: #0f172a !important;
+}
+html.la-light .pk-brand-text span,
+html[data-la-pack="light"] .pk-brand-text span {
+  color: #16a34a !important;
+}
+html.la-light .pk-drawer-close,
+html[data-la-pack="light"] .pk-drawer-close {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+html.la-light .pk-drawer-close:hover,
+html[data-la-pack="light"] .pk-drawer-close:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html.la-light .la-drawer-sec-header span,
+html[data-la-pack="light"] .la-drawer-sec-header span,
+html.la-light .pk-theme-box .theme-lbl,
+html[data-la-pack="light"] .pk-theme-box .theme-lbl {
+  color: #64748b !important;
+}
+html.la-light .pk-sec-link,
+html[data-la-pack="light"] .pk-sec-link {
+  color: #16a34a !important;
+}
+html.la-light .pk-plat-item,
+html[data-la-pack="light"] .pk-plat-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.la-light .pk-plat-item:hover,
+html[data-la-pack="light"] .pk-plat-item:hover {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+html.la-light .pk-plat-item .plat-name,
+html[data-la-pack="light"] .pk-plat-item .plat-name {
+  color: #0f172a !important;
+}
+html.la-light .pk-plat-item .plat-sub,
+html[data-la-pack="light"] .pk-plat-item .plat-sub {
+  color: #64748b !important;
+}
+html.la-light .pk-chip,
+html[data-la-pack="light"] .pk-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+html.la-light .pk-chip:hover,
+html[data-la-pack="light"] .pk-chip:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html.la-light .pk-nav-item,
+html[data-la-pack="light"] .pk-nav-item {
+  color: #334155 !important;
+}
+html.la-light .pk-nav-item:hover,
+html[data-la-pack="light"] .pk-nav-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+html.la-light .pk-nav-item.active,
+html[data-la-pack="light"] .pk-nav-item.active {
+  background: #ecfdf5 !important;
+  color: #15803d !important;
+  border-left: 3px solid #16a34a !important;
+}
+html.la-light .pk-trust-box,
+html[data-la-pack="light"] .pk-trust-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.la-light .la-drawer-trust-item strong,
+html[data-la-pack="light"] .la-drawer-trust-item strong {
+  color: #0f172a !important;
+}
+html.la-light .la-drawer-trust-item span,
+html[data-la-pack="light"] .la-drawer-trust-item span {
+  color: #64748b !important;
+}
+html.la-light .pk-support-card,
+html[data-la-pack="light"] .pk-support-card {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+  border: 1px solid #bbf7d0 !important;
+}
+html.la-light .pk-support-card .support-text strong,
+html[data-la-pack="light"] .pk-support-card .support-text strong {
+  color: #14532d !important;
+}
+html.la-light .pk-support-card .support-text span,
+html[data-la-pack="light"] .pk-support-card .support-text span {
+  color: #15803d !important;
+}
+html.la-light .pk-support-btn,
+html[data-la-pack="light"] .pk-support-btn {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border: 1px solid #15803d !important;
+}
+html.la-light .pk-support-btn:hover,
+html[data-la-pack="light"] .pk-support-btn:hover {
+  background: #15803d !important;
+}
+html.la-light .pk-theme-box,
+html[data-la-pack="light"] .pk-theme-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.la-light .pk-theme-card,
+html[data-la-pack="light"] .pk-theme-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+html.la-light .pk-theme-card:hover,
+html[data-la-pack="light"] .pk-theme-card:hover {
+  border-color: #94a3b8 !important;
+  background: #f8fafc !important;
+}
+html.la-light .pk-theme-name,
+html[data-la-pack="light"] .pk-theme-name {
+  color: #0f172a !important;
+}
+html.la-light .la-drawer-foot,
+html[data-la-pack="light"] .la-drawer-foot {
+  border-top: 1px solid #e2e8f0 !important;
+  color: #94a3b8 !important;
+}
+html.la-light .la-drawer-legal-links a,
+html[data-la-pack="light"] .la-drawer-legal-links a {
+  color: #64748b !important;
+}
+html.la-light .la-drawer-legal-links a:hover,
+html[data-la-pack="light"] .la-drawer-legal-links a:hover {
+  color: #0f172a !important;
+}
+
+/* Universal Mobile Smooth Scrolling & Overflow Defense */
+.la-table-wrap,
+.la-svc-wrap,
+.svc-table-wrap,
+.table-responsive {
+  -webkit-overflow-scrolling: touch !important;
+  overflow-x: auto !important;
+  scrollbar-width: thin !important;
+  max-width: 100% !important;
+}
+pre, code {
+  -webkit-overflow-scrolling: touch !important;
+  max-width: 100% !important;
+}
+.la-drawer-legal-links {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+.la-drawer-legal-links a {
+  white-space: nowrap !important;
+}
+
+@media (max-width: 480px) {
+  .pk-nav-item {
+    min-height: 44px !important;
+    padding: 11px 14px !important;
+  }
+  .pk-plat-item {
+    min-height: 48px !important;
+    padding: 10px 12px !important;
+  }
+  .pk-chip {
+    min-height: 34px !important;
+    padding: 7px 11px !important;
+  }
+  .pk-theme-card {
+    min-height: 42px !important;
+    padding: 10px 12px !important;
+  }
+}
+
+
+/* ========================================================
+   DRAWER THEME SWITCHER GRID & UNIVERSAL MOBILE POLISH
+   ======================================================== */
+.la-drawer-theme-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+}
+.pk-theme-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 9px 12px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  transition: all 0.18s ease !important;
+  font-family: inherit !important;
+}
+.pk-theme-card:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+.pk-theme-card.is-active,
+.pk-theme-card.active {
+  border-color: var(--pk-green, #8ee31f) !important;
+  box-shadow: 0 0 10px rgba(142, 227, 31, 0.2) !important;
+}
+.pk-theme-swatch {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+.pk-theme-name {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: inherit !important;
+}
+
+/* Light Theme Adaptations for Mobile Drawer (.pk-drawer) */
+html.la-light .pk-drawer,
+html[data-la-pack="light"] .pk-drawer,
+html.la-light .la-header.la-header--fz .la-nav.pk-drawer,
+html[data-la-pack="light"] .la-header.la-header--fz .la-nav.pk-drawer {
+  background: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 20px 0 50px rgba(15, 23, 42, 0.12) !important;
+}
+html.la-light .la-header.la-header--fz .la-nav-scrim,
+html[data-la-pack="light"] .la-header.la-header--fz .la-nav-scrim {
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+html.la-light .pk-drawer-top,
+html[data-la-pack="light"] .pk-drawer-top {
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+html.la-light .pk-brand-text,
+html[data-la-pack="light"] .pk-brand-text,
+html.la-light .la-drawer-title,
+html[data-la-pack="light"] .la-drawer-title {
+  color: #0f172a !important;
+}
+html.la-light .pk-brand-text span,
+html[data-la-pack="light"] .pk-brand-text span {
+  color: #16a34a !important;
+}
+html.la-light .pk-drawer-close,
+html[data-la-pack="light"] .pk-drawer-close {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+html.la-light .pk-drawer-close:hover,
+html[data-la-pack="light"] .pk-drawer-close:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html.la-light .la-drawer-sec-header span,
+html[data-la-pack="light"] .la-drawer-sec-header span,
+html.la-light .pk-theme-box .theme-lbl,
+html[data-la-pack="light"] .pk-theme-box .theme-lbl {
+  color: #64748b !important;
+}
+html.la-light .pk-sec-link,
+html[data-la-pack="light"] .pk-sec-link {
+  color: #16a34a !important;
+}
+html.la-light .pk-plat-item,
+html[data-la-pack="light"] .pk-plat-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.la-light .pk-plat-item:hover,
+html[data-la-pack="light"] .pk-plat-item:hover {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+}
+html.la-light .pk-plat-item .plat-name,
+html[data-la-pack="light"] .pk-plat-item .plat-name {
+  color: #0f172a !important;
+}
+html.la-light .pk-plat-item .plat-sub,
+html[data-la-pack="light"] .pk-plat-item .plat-sub {
+  color: #64748b !important;
+}
+html.la-light .pk-chip,
+html[data-la-pack="light"] .pk-chip {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+html.la-light .pk-chip:hover,
+html[data-la-pack="light"] .pk-chip:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html.la-light .pk-nav-item,
+html[data-la-pack="light"] .pk-nav-item {
+  color: #334155 !important;
+}
+html.la-light .pk-nav-item:hover,
+html[data-la-pack="light"] .pk-nav-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+html.la-light .pk-nav-item.active,
+html[data-la-pack="light"] .pk-nav-item.active {
+  background: #ecfdf5 !important;
+  color: #15803d !important;
+  border-left: 3px solid #16a34a !important;
+}
+html.la-light .pk-trust-box,
+html[data-la-pack="light"] .pk-trust-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.la-light .la-drawer-trust-item strong,
+html[data-la-pack="light"] .la-drawer-trust-item strong {
+  color: #0f172a !important;
+}
+html.la-light .la-drawer-trust-item span,
+html[data-la-pack="light"] .la-drawer-trust-item span {
+  color: #64748b !important;
+}
+html.la-light .pk-support-card,
+html[data-la-pack="light"] .pk-support-card {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+  border: 1px solid #bbf7d0 !important;
+}
+html.la-light .pk-support-card .support-text strong,
+html[data-la-pack="light"] .pk-support-card .support-text strong {
+  color: #14532d !important;
+}
+html.la-light .pk-support-card .support-text span,
+html[data-la-pack="light"] .pk-support-card .support-text span {
+  color: #15803d !important;
+}
+html.la-light .pk-support-btn,
+html[data-la-pack="light"] .pk-support-btn {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  border: 1px solid #15803d !important;
+}
+html.la-light .pk-support-btn:hover,
+html[data-la-pack="light"] .pk-support-btn:hover {
+  background: #15803d !important;
+}
+html.la-light .pk-theme-box,
+html[data-la-pack="light"] .pk-theme-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.la-light .pk-theme-card,
+html[data-la-pack="light"] .pk-theme-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+html.la-light .pk-theme-card:hover,
+html[data-la-pack="light"] .pk-theme-card:hover {
+  border-color: #94a3b8 !important;
+  background: #f8fafc !important;
+}
+html.la-light .pk-theme-name,
+html[data-la-pack="light"] .pk-theme-name {
+  color: #0f172a !important;
+}
+html.la-light .la-drawer-foot,
+html[data-la-pack="light"] .la-drawer-foot {
+  border-top: 1px solid #e2e8f0 !important;
+  color: #94a3b8 !important;
+}
+html.la-light .la-drawer-legal-links a,
+html[data-la-pack="light"] .la-drawer-legal-links a {
+  color: #64748b !important;
+}
+html.la-light .la-drawer-legal-links a:hover,
+html[data-la-pack="light"] .la-drawer-legal-links a:hover {
+  color: #0f172a !important;
+}
+
+/* Specific resets for small links inside Drawer */
+.la-drawer-sec-link,
+.pk-sec-link {
+  display: inline-flex !important;
+  width: auto !important;
+  min-height: unset !important;
+  padding: 2px 4px !important;
+}
+.la-drawer-foot .la-drawer-legal-links {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 4px !important;
+  flex-wrap: wrap !important;
+}
+.la-drawer-foot .la-drawer-legal-links a {
+  display: inline !important;
+  width: auto !important;
+  min-height: unset !important;
+  padding: 2px 4px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  border-radius: 4px !important;
+}
+
+/* Universal Mobile Smooth Scrolling & Overflow Defense */
+.la-table-wrap,
+.la-svc-wrap,
+.svc-table-wrap,
+.table-responsive {
+  -webkit-overflow-scrolling: touch !important;
+  overflow-x: auto !important;
+  scrollbar-width: thin !important;
+  max-width: 100% !important;
+}
+pre, code {
+  -webkit-overflow-scrolling: touch !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 480px) {
+  .pk-nav-item {
+    min-height: 44px !important;
+    padding: 11px 14px !important;
+  }
+  .pk-plat-item {
+    min-height: 48px !important;
+    padding: 10px 12px !important;
+  }
+  .pk-chip {
+    min-height: 34px !important;
+    padding: 7px 11px !important;
+  }
+  .pk-theme-card {
+    min-height: 42px !important;
+    padding: 10px 12px !important;
+  }
+}

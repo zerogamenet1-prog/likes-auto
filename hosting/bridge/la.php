@@ -768,7 +768,7 @@ if ($code === 200 && stripos($respBody, 'la-login-style-6') === false && stripos
 
 // Bump pages.css to v=pro116 so browser/CDN bypasses cached CSS
 if ($code === 200 && stripos($respBody, 'pages.css?v=') !== false) {
-    $respBody = preg_replace('#pages\.css\?v=[a-zA-Z0-9_-]+#', 'pages.css?v=pro116', $respBody);
+    $respBody = preg_replace('#pages\.css\?v=[a-zA-Z0-9_-]+#', 'pages.css?v=pro117', $respBody);
 }
 
 http_response_code($code);

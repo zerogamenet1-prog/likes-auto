@@ -497,6 +497,39 @@ if ($code === 200 && (strpos($path, '/admin/settings/integrations') === 0 || (st
     }
 }
 
+
+if ($code === 200 && stripos($respBody, '<nav class="la-nav" id="laNav"') !== false && stripos($respBody, 'la-drawer-revamp') === false) {
+    $drawerFile = __DIR__ . '/drawer_nav.php';
+    if (is_file($drawerFile)) {
+        $isUser = (stripos($respBody, 'la-dash-av') !== false || stripos($respBody, '/logout') !== false);
+        $username = '';
+        if (preg_match('#<span class="la-dash-av">([^<]+)</span>#', $respBody, $mU)) {
+            $username = $mU[1];
+        } elseif (preg_match('#href="/account">([^<]+)</a>#', $respBody, $mU2)) {
+            $username = $mU2[1];
+        }
+        $balance = '0.00';
+        if (preg_match('#(?:฿|&#3647;)\\s*([\\d,]+\\.?\\d*)#', $respBody, $mB)) {
+            $balance = str_replace(',', '', $mB[1]);
+        }
+        $currentPage = trim($path, '/');
+        
+        ob_start();
+        include $drawerFile;
+        $newDrawer = ob_get_clean();
+        
+        if ($newDrawer !== false && $newDrawer !== '') {
+            $navStart = strpos($respBody, '<nav class="la-nav" id="laNav"');
+            if ($navStart !== false) {
+                $navEnd = strpos($respBody, '</nav>', $navStart);
+                if ($navEnd !== false) {
+                    $respBody = substr($respBody, 0, $navStart) . $newDrawer . substr($respBody, $navEnd + strlen('</nav>'));
+                }
+            }
+        }
+    }
+}
+
 http_response_code($code);
 foreach (preg_split("/\r\n|\n|\r/", $rawHeaders) as $line) {
     if ($line === '' || stripos($line, 'HTTP/') === 0) {

@@ -234,6 +234,57 @@ if ($code === 200 && strpos($path, '/admin/providers') === 0 && stripos($respBod
     }
 }
 
+
+if ($code === 200 && strpos($path, '/admin/appearance/pages') === 0 && stripos($respBody, 'page-kpi-grid') === false) {
+    $patchFile = __DIR__ . '/pages_card.php';
+    if (is_file($patchFile)) {
+        $defaultSnippets = [
+            'faq' => 'รวมคำถามที่พบบ่อยเกี่ยวกับการสั่งซื้อ การเติมเงิน อัตราค่าบริการ และการใช้งานระบบ',
+            'terms' => 'ข้อกำหนดและเงื่อนไขการใช้บริการของ LIKES AUTO เพื่อความเข้าใจที่ถูกต้องระหว่างผู้ให้บริการและผู้ใช้บริการ',
+            'privacy' => 'นโยบายการคุ้มครองข้อมูลส่วนบุคคลและการรักษาความลับของลูกค้า LIKES AUTO',
+            'about' => 'ผู้ให้บริการระบบการตลาดโซเชียลมีเดียอันดับ 1 ในไทย ด้วยระบบอัตโนมัติ 24 ชั่วโมง',
+            'contact' => 'ช่องทางการติดต่อทีมงาน LIKES AUTO เพื่อช่วยเหลือและตอบคำถามตลอด 24 ชม.',
+            'guide' => 'คู่มือขั้นตอนการเติมเงินและสั่งซื้อบริการต่างๆ บนระบบอย่างละเอียด',
+        ];
+        $pages = [];
+        if (preg_match_all('#<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*<td><a href="/p/([^"]*)"[^>]*>.*?</a></td>\s*<td class="adm-actions">\s*<a[^>]*edit=(\d+)#s', $respBody, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $pSlug = trim(strip_tags($m[1]));
+                $pTitle = trim(strip_tags($m[2]));
+                $pId = trim($m[4]);
+                $pages[] = [
+                    'id' => $pId,
+                    'slug' => $pSlug,
+                    'title' => $pTitle,
+                    'body' => $defaultSnippets[$pSlug] ?? 'หน้าเว็บคงที่สำหรับข้อมูลบริการและนโยบายของเว็บไซต์',
+                ];
+            }
+        }
+        $editing = null;
+        if (preg_match('#<input type="hidden" name="pid" value="(\d+)">#s', $respBody, $mPid) && $mPid[1] !== '') {
+            $eSlug = '';
+            $eTitle = '';
+            $eBody = '';
+            if (preg_match('#name="slug"[^>]*value="([^"]*)"#', $respBody, $mS)) { $eSlug = $mS[1]; }
+            if (preg_match('#name="title"[^>]*value="([^"]*)"#', $respBody, $mT)) { $eTitle = $mT[1]; }
+            if (preg_match('#<textarea[^>]*name="body"[^>]*>(.*?)</textarea>#s', $respBody, $mB)) { $eBody = $mB[1]; }
+            $editing = ['id' => $mPid[1], 'slug' => $eSlug, 'title' => $eTitle, 'body' => $eBody];
+        }
+
+        ob_start();
+        include $patchFile;
+        $newContent = ob_get_clean();
+
+        if ($newContent !== false && $newContent !== '') {
+            $navEnd = strpos($respBody, '</nav>');
+            $mainEnd = strpos($respBody, '</main>', $navEnd);
+            if ($navEnd !== false && $mainEnd !== false) {
+                $respBody = substr($respBody, 0, $navEnd + 6) . "\n" . $newContent . "\n" . substr($respBody, $mainEnd);
+            }
+        }
+    }
+}
+
 http_response_code($code);
 foreach (preg_split("/\r\n|\n|\r/", $rawHeaders) as $line) {
     if ($line === '' || stripos($line, 'HTTP/') === 0) {

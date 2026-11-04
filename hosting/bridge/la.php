@@ -541,10 +541,10 @@ if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
                 // Enhance Theme Switcher to Sleek Executive Swatch Strip (แทบสีแบบเดิม สวยโมเดิร์น)
                 $themeStripHtml = '<div class="la-pack-switch pk-theme-strip" role="group" aria-label="เลือกธีม">
   <span class="pk-theme-icon" title="เลือกธีมการแสดงผล"><i class="ri-palette-line"></i></span>
-  <button type="button" class="pk-swatch-btn" data-pack="peak" onclick="laSetPack(\'peak\')" title="Peakerr Lime" aria-label="Peakerr Lime" style="--sw:#020804;--sw2:#8ee31f;"></button>
-  <button type="button" class="pk-swatch-btn" data-pack="violet" onclick="laSetPack(\'violet\')" title="Night Violet" aria-label="Night Violet" style="--sw:#080614;--sw2:#a855f7;"></button>
-  <button type="button" class="pk-swatch-btn" data-pack="navy" onclick="laSetPack(\'navy\')" title="Midnight Navy" aria-label="Midnight Navy" style="--sw:#0b1020;--sw2:#3b82f6;"></button>
-  <button type="button" class="pk-swatch-btn" data-pack="light" onclick="laSetPack(\'light\')" title="Peakerr Soft (Light)" aria-label="Peakerr Soft (Light)" style="--sw:#f4f7f2;--sw2:#5eb516;"></button>
+  <button type="button" class="pk-swatch-btn" data-pack="peak" onclick="laSetPack(\'peak\')" title="Peakerr Lime" aria-label="Peakerr Lime" style="background:linear-gradient(135deg,#051408 0%,#4da813 60%,#8ee31f 100%);--sw2:#8ee31f;"></button>
+  <button type="button" class="pk-swatch-btn" data-pack="violet" onclick="laSetPack(\'violet\')" title="Night Violet" aria-label="Night Violet" style="background:linear-gradient(135deg,#120822 0%,#7c25d8 60%,#b862f8 100%);--sw2:#a855f7;"></button>
+  <button type="button" class="pk-swatch-btn" data-pack="navy" onclick="laSetPack(\'navy\')" title="Midnight Navy" aria-label="Midnight Navy" style="background:linear-gradient(135deg,#071329 0%,#1d5ec9 60%,#3b82f6 100%);--sw2:#3b82f6;"></button>
+  <button type="button" class="pk-swatch-btn" data-pack="light" onclick="laSetPack(\'light\')" title="Peakerr Soft (Light)" aria-label="Peakerr Soft (Light)" style="background:linear-gradient(135deg,#ffffff 0%,#86efac 55%,#38a11b 100%);--sw2:#5eb516;"></button>
 </div>';
 
                 if (stripos($post, 'pk-theme-strip') === false) {

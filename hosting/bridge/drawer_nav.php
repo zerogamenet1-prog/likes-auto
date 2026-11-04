@@ -226,19 +226,19 @@ $cur = $currentPage ?? '';
       </div>
       <div class="la-drawer-theme-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
         <button type="button" class="pk-theme-card" onclick="laSelectTheme('peak', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
-          <span style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#020804 50%, #8ee31f 50%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
+          <span style="width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg, #051408 0%, #4da813 60%, #8ee31f 100%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
           <span style="font-size:12.5px; font-weight:600;">Peakerr</span>
         </button>
         <button type="button" class="pk-theme-card" onclick="laSelectTheme('violet', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
-          <span style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#080614 50%, #a855f7 50%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
+          <span style="width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg, #120822 0%, #7c25d8 60%, #b862f8 100%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
           <span style="font-size:12.5px; font-weight:600;">Violet</span>
         </button>
         <button type="button" class="pk-theme-card" onclick="laSelectTheme('navy', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
-          <span style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#0b1020 50%, #3b82f6 50%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
+          <span style="width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg, #071329 0%, #1d5ec9 60%, #3b82f6 100%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
           <span style="font-size:12.5px; font-weight:600;">Navy</span>
         </button>
         <button type="button" class="pk-theme-card" onclick="laSelectTheme('light', event)" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); color:#fff; cursor:pointer; text-align:left;">
-          <span style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#f4f7f2 50%, #5eb516 50%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
+          <span style="width:18px; height:18px; border-radius:50%; background:linear-gradient(135deg, #ffffff 0%, #86efac 55%, #38a11b 100%); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>
           <span style="font-size:12.5px; font-weight:600;">Light</span>
         </button>
       </div>

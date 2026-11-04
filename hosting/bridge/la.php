@@ -498,7 +498,7 @@ if ($code === 200 && (strpos($path, '/admin/settings/integrations') === 0 || (st
 }
 
 
-if ($code === 200 && stripos($respBody, '<nav class="la-nav" id="laNav"') !== false && stripos($respBody, 'la-drawer-revamp') === false) {
+if ($code === 200 && stripos($respBody, '<header class="la-header') !== false) {
     $drawerFile = __DIR__ . '/drawer_nav.php';
     if (is_file($drawerFile)) {
         $isUser = (stripos($respBody, 'la-dash-av') !== false || stripos($respBody, '/logout') !== false);
@@ -519,12 +519,11 @@ if ($code === 200 && stripos($respBody, '<nav class="la-nav" id="laNav"') !== fa
         $newDrawer = ob_get_clean();
         
         if ($newDrawer !== false && $newDrawer !== '') {
-            $navStart = strpos($respBody, '<nav class="la-nav" id="laNav"');
-            if ($navStart !== false) {
-                $navEnd = strpos($respBody, '</nav>', $navStart);
-                if ($navEnd !== false) {
-                    $respBody = substr($respBody, 0, $navStart) . $newDrawer . substr($respBody, $navEnd + strlen('</nav>'));
-                }
+            $pattern = '#(<div class="la-header-left">.*?</div>\\s*)(.*?)(\\s*<div class="la-tools">)#s';
+            if (preg_match($pattern, $respBody, $mNav, PREG_OFFSET_CAPTURE)) {
+                $pre = substr($respBody, 0, $mNav[2][1]);
+                $post = substr($respBody, $mNav[2][1] + strlen($mNav[2][0]));
+                $respBody = $pre . "\n" . $newDrawer . "\n" . $post;
             }
         }
     }

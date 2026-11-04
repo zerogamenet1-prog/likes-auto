@@ -1,27 +1,101 @@
 <?php
 /**
- * Modern Responsive Navigation Drawer Component for Likes Auto
- * High-converting, feature-rich, beautiful mobile & desktop navigation drawer
+ * Modern Responsive Navigation & Drawer Component for Likes Auto
+ * Seamless Desktop Navbar + Mobile Drawer System
  */
 $isLoggedIn = !empty($isUser);
 $userInitial = !empty($username) ? mb_strtoupper(mb_substr($username, 0, 1, 'UTF-8')) : 'U';
 $userBalFormatted = isset($balance) ? number_format((float)$balance, 2) : '0.00';
 $cur = $currentPage ?? '';
 ?>
-<nav class="la-nav la-drawer-revamp" id="laNav" aria-label="เมนูหลัก">
-  <!-- 1. Drawer Header -->
+<!-- 1. Desktop Horizontal Navigation Bar (>= 1024px) -->
+<nav class="la-desktop-nav" aria-label="เมนูหลักสำหรับคอมพิวเตอร์">
+  <?php if ($isLoggedIn): ?>
+  <a href="/neworder" class="la-dlink <?= ($cur==='neworder')?'active':'' ?>">
+    <i class="ri-add-circle-fill" style="color:var(--la-accent, #10b981);"></i>
+    <span>สั่งซื้อใหม่</span>
+    <span class="la-dpill hot">ด่วน</span>
+  </a>
+  <a href="/orders" class="la-dlink <?= ($cur==='orders')?'active':'' ?>">
+    <i class="ri-file-list-3-line"></i>
+    <span>ประวัติคำสั่งซื้อ</span>
+  </a>
+  <a href="/services" class="la-dlink <?= ($cur==='services')?'active':'' ?>">
+    <span>บริการและราคา</span>
+  </a>
+  <div class="la-ddrop">
+    <button type="button" class="la-dlink la-ddrop-btn" aria-haspopup="true" aria-expanded="false">
+      <span>แพลตฟอร์ม</span>
+      <i class="ri-arrow-down-s-line"></i>
+    </button>
+    <div class="la-ddrop-menu">
+      <a href="/tiktok" class="la-ddrop-item"><i class="ri-tiktok-fill" style="color:#25f4ee;"></i> <span>TikTok</span> <small>วิว / ฟอล / ไลค์</small></a>
+      <a href="/instagram" class="la-ddrop-item"><i class="ri-instagram-fill" style="color:#e1306c;"></i> <span>Instagram</span> <small>ไลค์ / ผู้ติดตาม</small></a>
+      <a href="/facebook" class="la-ddrop-item"><i class="ri-facebook-fill" style="color:#1877f2;"></i> <span>Facebook</span> <small>เพจ / ปั้มโพสต์</small></a>
+      <a href="/youtube" class="la-ddrop-item"><i class="ri-youtube-fill" style="color:#ff0000;"></i> <span>YouTube</span> <small>วิว / ซับสไครบ์</small></a>
+      <a href="/twitter" class="la-ddrop-item"><i class="ri-twitter-x-fill" style="color:#cbd5e1;"></i> <span>X (Twitter)</span> <small>รีทวีต / ฟอล</small></a>
+      <a href="/shopee" class="la-ddrop-item"><i class="ri-shopping-bag-2-line" style="color:#ee4d2d;"></i> <span>Shopee</span> <small>ติดตามร้านค้า</small></a>
+      <a href="/telegram" class="la-ddrop-item"><i class="ri-telegram-fill" style="color:#24a1de;"></i> <span>Telegram</span> <small>สมาชิกกลุ่ม</small></a>
+    </div>
+  </div>
+  <a href="/addfunds" class="la-dlink <?= ($cur==='addfunds')?'active':'' ?>">
+    <i class="ri-wallet-3-line"></i>
+    <span>เติมเงิน</span>
+  </a>
+  <a href="/tickets" class="la-dlink <?= ($cur==='tickets')?'active':'' ?>">
+    <span>ตั๋วช่วยเหลือ</span>
+  </a>
+  <a href="/blog" class="la-dlink <?= ($cur==='blog')?'active':'' ?>">
+    <span>บทความ</span>
+  </a>
+  <?php else: ?>
+  <a href="/" class="la-dlink <?= ($cur===''||$cur==='home')?'active':'' ?>">หน้าแรก</a>
+  <a href="/services" class="la-dlink <?= ($cur==='services')?'active':'' ?>">
+    <span>บริการและราคา</span>
+    <span class="la-dpill hot">ยอดนิยม</span>
+  </a>
+  <div class="la-ddrop">
+    <button type="button" class="la-dlink la-ddrop-btn" aria-haspopup="true" aria-expanded="false">
+      <span>หมวดหมู่โซเชียล</span>
+      <i class="ri-arrow-down-s-line"></i>
+    </button>
+    <div class="la-ddrop-menu">
+      <a href="/tiktok" class="la-ddrop-item"><i class="ri-tiktok-fill" style="color:#25f4ee;"></i> <span>TikTok</span> <small>วิว / ฟอล / ไลค์</small></a>
+      <a href="/instagram" class="la-ddrop-item"><i class="ri-instagram-fill" style="color:#e1306c;"></i> <span>Instagram</span> <small>ไลค์ / ผู้ติดตาม</small></a>
+      <a href="/facebook" class="la-ddrop-item"><i class="ri-facebook-fill" style="color:#1877f2;"></i> <span>Facebook</span> <small>เพจ / ปั้มโพสต์</small></a>
+      <a href="/youtube" class="la-ddrop-item"><i class="ri-youtube-fill" style="color:#ff0000;"></i> <span>YouTube</span> <small>วิว / ซับสไครบ์</small></a>
+      <a href="/twitter" class="la-ddrop-item"><i class="ri-twitter-x-fill" style="color:#cbd5e1;"></i> <span>X (Twitter)</span> <small>รีทวีต / ฟอล</small></a>
+      <a href="/shopee" class="la-ddrop-item"><i class="ri-shopping-bag-2-line" style="color:#ee4d2d;"></i> <span>Shopee</span> <small>ติดตามร้านค้า</small></a>
+      <a href="/telegram" class="la-ddrop-item"><i class="ri-telegram-fill" style="color:#24a1de;"></i> <span>Telegram</span> <small>สมาชิกกลุ่ม</small></a>
+    </div>
+  </div>
+  <a href="/blog" class="la-dlink <?= ($cur==='blog')?'active':'' ?>">
+    <span>บทความ</span>
+    <span class="la-dpill blog">68 บทความ</span>
+  </a>
+  <a href="/faq" class="la-dlink <?= ($cur==='faq')?'active':'' ?>">คำถามที่พบบ่อย</a>
+  <a href="/#contact" class="la-dlink">ติดต่อเรา</a>
+  <?php endif; ?>
+</nav>
+
+<!-- 2. Responsive Mobile Drawer Navigation -->
+<nav class="la-nav la-drawer-revamp" id="laNav" aria-label="เมนูหลักบนมือถือ">
+  <!-- Drawer Top Bar -->
   <div class="la-drawer-top">
     <div class="la-drawer-brand">
       <span class="la-brand-mark" aria-hidden="true"><i class="ri-flashlight-fill"></i></span>
       <span class="la-drawer-title">Likes<em>Auto</em></span>
     </div>
-    <button type="button" class="la-drawer-close" onclick="laCloseNav()" aria-label="ปิดเมนู">
-      <i class="ri-close-line"></i>
-    </button>
+    <div class="la-drawer-top-actions">
+      <span class="la-drawer-status-pill"><span class="la-live-pulse-dot"></span> ออนไลน์ 24 ชม.</span>
+      <button type="button" class="la-drawer-close" onclick="laCloseNav()" aria-label="ปิดเมนู">
+        <i class="ri-close-line"></i>
+      </button>
+    </div>
   </div>
 
   <div class="la-drawer-scroll">
-    <!-- 2. Profile or Welcome Card -->
+    <!-- Profile or Welcome Card (Guaranteed never to shrink or clip) -->
     <?php if ($isLoggedIn): ?>
     <div class="la-drawer-user-card">
       <div class="la-drawer-user-row">
@@ -41,11 +115,14 @@ $cur = $currentPage ?? '';
     </div>
     <?php else: ?>
     <div class="la-drawer-guest-card">
-      <div class="la-drawer-guest-badge">
-        <span class="la-live-pulse-dot"></span> ระบบอัตโนมัติ 24 ชม.
+      <div class="la-drawer-guest-top">
+        <div class="la-drawer-guest-badge">
+          <span class="la-live-pulse-dot"></span> ระบบอัตโนมัติ 24 ชม.
+        </div>
+        <span class="la-drawer-guest-subtag"><i class="ri-shield-check-fill"></i> ปลอดภัย 100%</span>
       </div>
       <h3 class="la-drawer-guest-h">เพิ่มยอดไลค์ ฟอล วิว อันดับ 1</h3>
-      <p class="la-drawer-guest-p">บริการปั้มไลค์โซเชียลทุกแพลตฟอร์ม เริ่มต้นเพียงหลักสตางค์ ปลอดภัย 100% ไม่ขอรหัสผ่าน</p>
+      <p class="la-drawer-guest-p">บริการปั้มไลค์โซเชียลทุกแพลตฟอร์ม เริ่มต้นเพียงหลักสตางค์ ไม่ขอรหัสผ่าน</p>
       <div class="la-drawer-cta-grid">
         <a href="/signup" class="la-btn la-drawer-btn-primary">
           <i class="ri-user-add-fill"></i> <span>สมัครสมาชิกฟรี</span>
@@ -57,7 +134,7 @@ $cur = $currentPage ?? '';
     </div>
     <?php endif; ?>
 
-    <!-- 3. Quick Social Platform Shortcuts -->
+    <!-- Quick Social Platform Shortcuts -->
     <div class="la-drawer-section">
       <div class="la-drawer-sec-header">
         <span>แพลตฟอร์มยอดนิยม</span>
@@ -102,7 +179,7 @@ $cur = $currentPage ?? '';
       </div>
     </div>
 
-    <!-- 4. Navigation Menu List -->
+    <!-- Navigation Menu List -->
     <div class="la-drawer-section">
       <div class="la-drawer-sec-header">
         <span>เมนูนำทาง</span>
@@ -173,7 +250,7 @@ $cur = $currentPage ?? '';
       </div>
     </div>
 
-    <!-- 5. Trust & Guarantees -->
+    <!-- Trust & Guarantees -->
     <div class="la-drawer-trust-box">
       <div class="la-drawer-trust-item">
         <i class="ri-flashlight-line"></i>
@@ -198,7 +275,7 @@ $cur = $currentPage ?? '';
       </div>
     </div>
 
-    <!-- 6. Direct Support CTA -->
+    <!-- Direct Support CTA -->
     <div class="la-drawer-support-card">
       <div class="support-icon"><i class="ri-customer-service-2-line"></i></div>
       <div class="support-text">
@@ -210,7 +287,7 @@ $cur = $currentPage ?? '';
       </a>
     </div>
 
-    <!-- 7. Theme Switcher -->
+    <!-- Theme Switcher -->
     <div class="la-drawer-theme-box">
       <span class="theme-lbl">ธีมการแสดงผล</span>
       <div class="la-pack-switch" role="group" aria-label="เปลี่ยนธีม">
@@ -221,7 +298,7 @@ $cur = $currentPage ?? '';
       </div>
     </div>
 
-    <!-- 8. Footer Info -->
+    <!-- Footer Info -->
     <div class="la-drawer-foot">
       <span>Likes-Auto.com © 2026 · แผงปั้มไลค์อันดับ 1 ในไทย</span>
       <div class="la-drawer-legal-links">

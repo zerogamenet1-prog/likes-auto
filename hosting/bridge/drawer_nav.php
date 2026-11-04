@@ -9,71 +9,39 @@ $userInitial = !empty($username) ? mb_strtoupper(mb_substr($username, 0, 1, 'UTF
 $userBalFormatted = isset($balance) ? number_format((float)$balance, 2) : '0.00';
 $cur = $currentPage ?? '';
 ?>
-<!-- 1. Desktop Horizontal Navigation Bar (Peakerr Style >= 1024px) -->
+<!-- 1. Desktop Horizontal Navigation Bar (Clean, Spacious & Ultra-Modern) -->
 <nav class="la-desktop-nav pk-desktop-nav" aria-label="เมนูหลัก">
   <?php if ($isLoggedIn): ?>
   <a href="/neworder" class="la-dlink pk-dlink <?= ($cur==='neworder')?'active':'' ?>">
-    <i class="ri-add-circle-fill pk-icon-accent"></i>
     <span>สั่งซื้อใหม่</span>
-    <span class="la-dpill pk-pill-hot">ด่วน</span>
   </a>
   <a href="/orders" class="la-dlink pk-dlink <?= ($cur==='orders')?'active':'' ?>">
-    <i class="ri-file-list-3-line"></i>
     <span>ประวัติคำสั่งซื้อ</span>
   </a>
   <a href="/services" class="la-dlink pk-dlink <?= ($cur==='services')?'active':'' ?>">
     <span>บริการและราคา</span>
   </a>
-  <div class="la-ddrop pk-ddrop">
-    <button type="button" class="la-dlink pk-dlink la-ddrop-btn" aria-haspopup="true" aria-expanded="false">
-      <span>แพลตฟอร์ม</span>
-      <i class="ri-arrow-down-s-line"></i>
-    </button>
-    <div class="la-ddrop-menu pk-ddrop-menu">
-      <a href="/tiktok" class="la-ddrop-item"><i class="ri-tiktok-fill" style="color:#25f4ee;"></i> <span>TikTok</span> <small>วิว / ฟอล / ไลค์</small></a>
-      <a href="/instagram" class="la-ddrop-item"><i class="ri-instagram-fill" style="color:#f43f5e;"></i> <span>Instagram</span> <small>ไลค์ / ผู้ติดตาม</small></a>
-      <a href="/facebook" class="la-ddrop-item"><i class="ri-facebook-fill" style="color:#3b82f6;"></i> <span>Facebook</span> <small>เพจ / ปั้มโพสต์</small></a>
-      <a href="/youtube" class="la-ddrop-item"><i class="ri-youtube-fill" style="color:#ef4444;"></i> <span>YouTube</span> <small>วิว / ซับสไครบ์</small></a>
-      <a href="/twitter" class="la-ddrop-item"><i class="ri-twitter-x-fill" style="color:#cbd5e1;"></i> <span>X (Twitter)</span> <small>รีทวีต / ฟอล</small></a>
-      <a href="/shopee" class="la-ddrop-item"><i class="ri-shopping-bag-2-line" style="color:#ee4d2d;"></i> <span>Shopee</span> <small>ติดตามร้านค้า</small></a>
-      <a href="/telegram" class="la-ddrop-item"><i class="ri-telegram-fill" style="color:#24a1de;"></i> <span>Telegram</span> <small>สมาชิกกลุ่ม</small></a>
-    </div>
-  </div>
   <a href="/addfunds" class="la-dlink pk-dlink <?= ($cur==='addfunds')?'active':'' ?>">
-    <i class="ri-wallet-3-line"></i>
     <span>เติมเงิน</span>
   </a>
-  <a href="/tickets" class="la-dlink pk-dlink <?= ($cur==='tickets')?'active':'' ?>">ตั๋วช่วยเหลือ</a>
-  <a href="/blog" class="la-dlink pk-dlink <?= ($cur==='blog')?'active':'' ?>">บทความ</a>
+  <a href="/tickets" class="la-dlink pk-dlink <?= ($cur==='tickets')?'active':'' ?>">
+    <span>ตั๋วช่วยเหลือ</span>
+  </a>
+  <a href="/blog" class="la-dlink pk-dlink <?= ($cur==='blog')?'active':'' ?>">
+    <span>บทความ</span>
+  </a>
   <?php else: ?>
   <a href="/" class="la-dlink pk-dlink <?= ($cur===''||$cur==='home')?'active':'' ?>">
     <span>หน้าแรก</span>
   </a>
   <a href="/services" class="la-dlink pk-dlink <?= ($cur==='services')?'active':'' ?>">
     <span>บริการและราคา</span>
-    <span class="la-dpill pk-pill-hot">ยอดนิยม</span>
   </a>
-  <div class="la-ddrop pk-ddrop">
-    <button type="button" class="la-dlink pk-dlink la-ddrop-btn" aria-haspopup="true" aria-expanded="false">
-      <span>แพลตฟอร์มยอดนิยม</span>
-      <i class="ri-arrow-down-s-line"></i>
-    </button>
-    <div class="la-ddrop-menu pk-ddrop-menu">
-      <a href="/tiktok" class="la-ddrop-item"><i class="ri-tiktok-fill" style="color:#25f4ee;"></i> <span>TikTok</span> <small>วิว / ฟอล / ไลค์</small></a>
-      <a href="/instagram" class="la-ddrop-item"><i class="ri-instagram-fill" style="color:#f43f5e;"></i> <span>Instagram</span> <small>ไลค์ / ผู้ติดตาม</small></a>
-      <a href="/facebook" class="la-ddrop-item"><i class="ri-facebook-fill" style="color:#3b82f6;"></i> <span>Facebook</span> <small>เพจ / ปั้มโพสต์</small></a>
-      <a href="/youtube" class="la-ddrop-item"><i class="ri-youtube-fill" style="color:#ef4444;"></i> <span>YouTube</span> <small>วิว / ซับสไครบ์</small></a>
-      <a href="/twitter" class="la-ddrop-item"><i class="ri-twitter-x-fill" style="color:#cbd5e1;"></i> <span>X (Twitter)</span> <small>รีทวีต / ฟอล</small></a>
-      <a href="/shopee" class="la-ddrop-item"><i class="ri-shopping-bag-2-line" style="color:#ee4d2d;"></i> <span>Shopee</span> <small>ติดตามร้านค้า</small></a>
-      <a href="/telegram" class="la-ddrop-item"><i class="ri-telegram-fill" style="color:#24a1de;"></i> <span>Telegram</span> <small>สมาชิกกลุ่ม</small></a>
-    </div>
-  </div>
   <a href="/blog" class="la-dlink pk-dlink <?= ($cur==='blog')?'active':'' ?>">
-    <span>บทความ & สาระน่ารู้</span>
-    <span class="la-dpill pk-pill-blog">68 บทความ</span>
+    <span>บทความ</span>
   </a>
   <a href="/faq" class="la-dlink pk-dlink <?= ($cur==='faq')?'active':'' ?>">
-    <span>คำถามที่พบบ่อย (FAQ)</span>
+    <span>คำถามที่พบบ่อย</span>
   </a>
   <a href="/#contact" class="la-dlink pk-dlink">
     <span>ติดต่อเรา</span>

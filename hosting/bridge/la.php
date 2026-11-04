@@ -285,6 +285,135 @@ if ($code === 200 && strpos($path, '/admin/appearance/pages') === 0 && stripos($
     }
 }
 
+
+if ($code === 200 && strpos($path, '/admin/appearance/blog') === 0 && stripos($respBody, 'blog-kpi-grid') === false) {
+    $patchFile = __DIR__ . '/blog_card.php';
+    if (is_file($patchFile)) {
+        $q = $_GET['q'] ?? '';
+        $st = $_GET['st'] ?? '';
+
+        $all_n = 0; $pub_n = 0; $draft_n = 0;
+        if (preg_match('#(\d+)\s*·[^\d]+(\d+)\s*·[^\d]+(\d+)#u', $respBody, $mCounts)) {
+            $all_n = (int)$mCounts[1];
+            $pub_n = (int)$mCounts[2];
+            $draft_n = (int)$mCounts[3];
+        }
+
+        $posts = [];
+        $rowPattern = '#<tr>\s*<td class="wrap" data-label="[^"]*">(.*?)</td>\s*<td class="wrap" data-label="[^"]*">(.*?)</td>\s*<td data-label="[^"]*">(.*?)</td>\s*<td data-label="[^"]*">(.*?)</td>\s*<td class="adm-actions"[^>]*>(.*?)</td>\s*</tr>#s';
+        if (preg_match_all($rowPattern, $respBody, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $col1 = $m[1];
+                $colTags = trim(strip_tags($m[2]));
+                if ($colTags === '-') { $colTags = ''; }
+                $colSt = $m[3];
+                $colTime = trim(strip_tags($m[4]));
+                $colAct = $m[5];
+
+                $pCover = '';
+                if (preg_match('#<img [^>]*src="([^"]*)"#', $col1, $mCov)) {
+                    $pCover = $mCov[1];
+                }
+                $pTitle = '';
+                if (preg_match('#<b>(.*?)</b>#s', $col1, $mTit)) {
+                    $pTitle = trim(strip_tags($mTit[1]));
+                }
+                $pSlug = '';
+                if (preg_match('#href="/blog/([^"]*)"#', $colAct, $mSlg)) {
+                    $pSlug = trim($mSlg[1]);
+                } elseif (preg_match('#<div class="la-muted">/blog/([^<]+)</div>#', $col1, $mSlg2)) {
+                    $pSlug = trim($mSlg2[1]);
+                }
+                $pId = '';
+                if (preg_match('#edit=(\d+)#', $colAct, $mId)) {
+                    $pId = $mId[1];
+                }
+                $isPub = (stripos($colSt, 'completed') !== false || stripos($colSt, 'เผยแพร่') !== false) ? 1 : 0;
+
+                $posts[] = [
+                    'id' => $pId,
+                    'title' => $pTitle,
+                    'slug' => $pSlug,
+                    'cover' => $pCover,
+                    'tags' => $colTags,
+                    'published' => $isPub,
+                    'created_at' => $colTime,
+                    'excerpt' => '',
+                ];
+            }
+        }
+
+        $editing = null;
+        if (preg_match('#<input type="hidden" name="pid" [^>]*value="(\d+)"#s', $respBody, $mPid) && $mPid[1] !== '') {
+            $eTitle = ''; $eSlug = ''; $eTags = ''; $eExcerpt = ''; $eCreated = ''; $eBody = ''; $ePub = 1;
+            if (preg_match('#name="title"[^>]*value="([^"]*)"#', $respBody, $mT)) $eTitle = $mT[1];
+            if (preg_match('#name="slug"[^>]*value="([^"]*)"#', $respBody, $mS)) $eSlug = $mS[1];
+            if (preg_match('#name="tags"[^>]*value="([^"]*)"#', $respBody, $mTag)) $eTags = $mTag[1];
+            if (preg_match('#name="excerpt"[^>]*value="([^"]*)"#', $respBody, $mExc)) $eExcerpt = $mExc[1];
+            if (preg_match('#name="created_at"[^>]*value="([^"]*)"#', $respBody, $mCre)) $eCreated = $mCre[1];
+            if (preg_match('#<textarea[^>]*name="body"[^>]*>(.*?)</textarea>#s', $respBody, $mB)) $eBody = $mB[1];
+            if (preg_match('#name="published"[^>]*checked#', $respBody)) $ePub = 1;
+            $editing = [
+                'id' => $mPid[1],
+                'title' => $eTitle,
+                'slug' => $eSlug,
+                'tags' => $eTags,
+                'excerpt' => $eExcerpt,
+                'created_at' => $eCreated,
+                'body' => $eBody,
+                'published' => $ePub
+            ];
+        }
+        $show_form = (!empty($editing) || (isset($_GET['new']) && $_GET['new'] === '1'));
+        $saved = (stripos($respBody, 'บันทึกบทความแล้ว') !== false || (isset($_GET['saved']) && $_GET['saved'] === '1'));
+
+        $media = [];
+        if (preg_match_all('#blogImg\(\'([^\']*)\'\)#', $respBody, $mMedia)) {
+            $media = array_values(array_unique($mMedia[1]));
+        }
+        if (empty($media)) {
+            $media = [
+                '/static/assets/blog/blog-facebook.jpg',
+                '/static/assets/blog/blog-tiktok.jpg',
+                '/static/assets/blog/blog-instagram.jpg',
+                '/static/assets/blog/blog-youtube.jpg',
+                '/static/assets/blog/blog-ads.jpg',
+                '/static/assets/blog/blog-brand.jpg',
+                '/static/assets/blog/blog-likes.jpg',
+                '/static/assets/blog/blog-live.jpg',
+                '/static/assets/blog/blog-chart.jpg',
+                '/static/assets/blog/blog-shop.jpg',
+                '/static/assets/blog/blog-cafe.jpg',
+                '/static/assets/blog/blog-beauty.jpg',
+                '/static/assets/blog/blog-api.jpg',
+                '/static/assets/blog/blog-plan.jpg',
+                '/static/assets/blog/blog-student.jpg',
+                '/static/assets/blog/blog-check.jpg',
+                '/static/assets/blog/blog-comments.jpg',
+                '/static/assets/blog/blog-restaurant.jpg',
+                '/static/assets/blog/blog-budget.jpg',
+                '/static/assets/blog/blog-order.jpg',
+                '/static/assets/blog/blog-team.jpg',
+                '/static/assets/blog/blog-funnel.jpg',
+                '/static/assets/blog/blog-secure.jpg',
+                '/static/assets/blog/blog-pay.jpg',
+            ];
+        }
+
+        ob_start();
+        include $patchFile;
+        $newContent = ob_get_clean();
+
+        if ($newContent !== false && $newContent !== '') {
+            $navEnd = strpos($respBody, '</nav>');
+            $mainEnd = strpos($respBody, '</main>', $navEnd);
+            if ($navEnd !== false && $mainEnd !== false) {
+                $respBody = substr($respBody, 0, $navEnd + 6) . "\n" . $newContent . "\n" . substr($respBody, $mainEnd);
+            }
+        }
+    }
+}
+
 http_response_code($code);
 foreach (preg_split("/\r\n|\n|\r/", $rawHeaders) as $line) {
     if ($line === '' || stripos($line, 'HTTP/') === 0) {

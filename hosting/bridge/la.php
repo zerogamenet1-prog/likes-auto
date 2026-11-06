@@ -60,6 +60,16 @@ if ($path !== '/' && substr($path, -1) === '/') {
     $path = rtrim($path, '/');
 }
 
+// ── Dedicated Updates Page Handler (/updates) ──
+if ($path === '/updates') {
+    $updatesFile = __DIR__ . '/updates_card.php';
+    if (is_file($updatesFile)) {
+        header('Content-Type: text/html; charset=utf-8');
+        include $updatesFile;
+        exit;
+    }
+}
+
 // ── Google Search Console Verification File Handler ──
 if (preg_match('#^/google([a-zA-Z0-9_-]+)\.html$#', $path, $mG)) {
     header('Content-Type: text/html; charset=utf-8');
@@ -76,7 +86,7 @@ if ($path === '/la7f3c9e2b1d8a4f6.txt') {
 
 // ── One-Click IndexNow Push for Search Engines ──
 if ($path === '/admin/settings/seo/indexnow' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $urls = ['https://likes-auto.com/', 'https://likes-auto.com/services', 'https://likes-auto.com/blog', 'https://likes-auto.com/faq', 'https://likes-auto.com/terms', 'https://likes-auto.com/api'];
+    $urls = ['https://likes-auto.com/', 'https://likes-auto.com/services', 'https://likes-auto.com/updates', 'https://likes-auto.com/blog', 'https://likes-auto.com/faq', 'https://likes-auto.com/terms', 'https://likes-auto.com/api'];
     $sitemaps = ['sitemap-blog.xml', 'sitemap-pages.xml', 'sitemap-platforms.xml'];
     foreach ($sitemaps as $sm) {
         $p = __DIR__ . '/' . $sm;
@@ -294,6 +304,14 @@ if ($code === 200 && strpos($path, '/admin/providers') === 0 && stripos($respBod
     }
 }
 
+// ── Admin Orders Accordion Cards Transform ──
+if ($code === 200 && strpos($path, '/admin/orders') === 0 && stripos($respBody, 'ord-card') === false && stripos($respBody, 'ord-wrap') !== false) {
+    $patchFile = __DIR__ . '/orders_card.php';
+    if (is_file($patchFile)) {
+        require_once $patchFile;
+        $respBody = la_patch_admin_orders($respBody);
+    }
+}
 
 if ($code === 200 && strpos($path, '/admin/appearance/pages') === 0 && stripos($respBody, 'page-kpi-grid') === false) {
     $patchFile = __DIR__ . '/pages_card.php';
@@ -769,6 +787,11 @@ if ($code === 200 && stripos($respBody, 'la-login-style-6') === false && stripos
 // Bump pages.css to v=pro116 so browser/CDN bypasses cached CSS
 if ($code === 200 && stripos($respBody, 'pages.css?v=') !== false) {
     $respBody = preg_replace('#pages\.css\?v=[a-zA-Z0-9_-]+#', 'pages.css?v=pro117', $respBody);
+}
+
+// Bump admin.css to v=dash28 so browser/CDN bypasses cached CSS
+if ($code === 200 && stripos($respBody, 'admin.css?v=') !== false) {
+    $respBody = preg_replace('#admin\.css\?v=[a-zA-Z0-9_-]+#', 'admin.css?v=dash28', $respBody);
 }
 
 http_response_code($code);

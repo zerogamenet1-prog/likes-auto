@@ -366,3 +366,24 @@ def get_updates_data(update_type: str = "", platform: str = "", q: str = "") -> 
         "faqs": UPDATES_FAQS,
     }
 
+
+def get_updates(type_filter: str = "", platform_filter: str = "", search: str = ""):
+    data = get_updates_data(type_filter, platform_filter, search)
+    return data["updates"], data["active_type"], data["active_plat"]
+
+
+def get_updates_stats() -> Dict[str, Any]:
+    data = get_updates_data()
+    return {
+        "price_drops": data["price_drops"],
+        "new_services": data["new_services"],
+        "speed_boosts": data["speed_boosts"],
+        "thai_services": data["thai_services"],
+        "total_count": data["total_count"],
+    }
+
+
+def get_updates_faqs() -> List[Dict[str, str]]:
+    return UPDATES_FAQS
+
+

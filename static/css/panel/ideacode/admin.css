@@ -1395,10 +1395,17 @@ details.adm-more summary { cursor: pointer; font-weight: 700; }
   .ord-user { display: inline-flex; }
   .ord-svc { flex: 1 1 100%; white-space: normal; line-height: 1.35; }
   .ord-head-meta {
-    justify-content: space-between;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
     width: 100%;
     padding-top: 8px;
     border-top: 1px dashed var(--stroke);
+  }
+  .ord-btn-manage {
+    margin-left: auto;
   }
   .ord-grid {
     grid-template-columns: 1fr;

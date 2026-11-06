@@ -2425,6 +2425,17 @@ def update_service_rate(sid, rate):
     shop_cache_clear()
 
 
+def update_service_api(sid, api_service, cost_rate=None):
+    con = connect()
+    if cost_rate is not None:
+        con.execute("UPDATE services SET api_service=?, cost_rate=? WHERE id=?", (str(api_service), float(cost_rate), int(sid)))
+    else:
+        con.execute("UPDATE services SET api_service=? WHERE id=?", (str(api_service), int(sid)))
+    con.commit()
+    con.close()
+    shop_cache_clear()
+
+
 def bump_service_rates(ids, percent):
     pct = float(percent or 0)
     con = connect()

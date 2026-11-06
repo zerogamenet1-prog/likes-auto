@@ -394,17 +394,19 @@ async def orders_status(request: Request, oid: int, status: str = Form(...), q: 
     gate = require_admin(request)
     if gate:
         return gate
-    allowed = {"pending", "processing", "completed", "partial", "canceled"}
-    if status not in allowed:
-        return _ord_back(q, filter_status, err="สถานะไม่ถูกต้อง", page=page)
-    row = get_order(oid)
-    if not row:
-        return _ord_back(q, filter_status, err="ไม่พบออเดอร์", page=page)
-    if str(row.get("status") or "") == status:
-        return _ord_back(q, filter_status, page=page)
-    update_order(oid, status=status)
-    add_log("เปลี่ยนสถานะออเดอร์ #%s เป็น %s" % (oid, status), request.client.host if request.client else "-")
-    return _ord_back(q, filter_status, ok="อัปเดตสถานะแล้ว", page=page)
+    try:
+        allowed = {"pending", "processing", "completed", "partial", "canceled"}
+        if status not in allowed:
+            return _ord_back(q, filter_status, err="สถานะไม่ถูกต้อง", page=page)
+        row = get_order(oid)
+        if not row:
+            return _ord_back(q, filter_status, err="ไม่พบออเดอร์", page=page)
+        if str(row.get("status") or "") != status:
+            update_order(oid, status=status)
+            add_log("เปลี่ยนสถานะออเดอร์ #%s เป็น %s" % (oid, status), request.client.host if request.client else "-")
+        return _ord_back(q, filter_status, ok="อัปเดตสถานะแล้ว", page=page)
+    except Exception as exc:
+        return _ord_back(q, filter_status, err=str(exc)[:100], page=page)
 
 
 @router.post("/orders/{oid}/resend")
@@ -412,12 +414,15 @@ async def orders_resend(request: Request, oid: int, q: str = Form(""), filter_st
     gate = require_admin(request)
     if gate:
         return gate
-    from cron_jobs import send_one_order
-    ok, msg = send_one_order(oid)
-    add_log("ส่งออเดอร์ #%s ไป API %s" % (oid, "สำเร็จ" if ok else "ไม่สำเร็จ"), request.client.host if request.client else "-")
-    if ok:
-        return _ord_back(q, filter_status, ok="ส่งไป API แล้ว รหัส " + str(msg), page=page)
-    return _ord_back(q, filter_status, err="ส่ง API ไม่สำเร็จ: " + str(msg), page=page)
+    try:
+        from cron_jobs import send_one_order
+        ok, msg = send_one_order(oid)
+        add_log("ส่งออเดอร์ #%s ไป API %s" % (oid, "สำเร็จ" if ok else "ไม่สำเร็จ"), request.client.host if request.client else "-")
+        if ok:
+            return _ord_back(q, filter_status, ok="ส่งไป API แล้ว รหัส " + str(msg), page=page)
+        return _ord_back(q, filter_status, err="ส่ง API ไม่สำเร็จ: " + str(msg)[:100], page=page)
+    except Exception as exc:
+        return _ord_back(q, filter_status, err=str(exc)[:100], page=page)
 
 
 @router.post("/orders/{oid}/sync")
@@ -425,12 +430,15 @@ async def orders_sync(request: Request, oid: int, q: str = Form(""), filter_stat
     gate = require_admin(request)
     if gate:
         return gate
-    from cron_jobs import check_one_order
-    ok, msg = check_one_order(oid)
-    add_log("ดึงสถานะออเดอร์ #%s %s" % (oid, msg), request.client.host if request.client else "-")
-    if ok:
-        return _ord_back(q, filter_status, ok="อัปเดตจากผู้ให้บริการแล้ว", page=page)
-    return _ord_back(q, filter_status, err="ดึงสถานะไม่สำเร็จ: " + str(msg), page=page)
+    try:
+        from cron_jobs import check_one_order
+        ok, msg = check_one_order(oid)
+        add_log("ดึงสถานะออเดอร์ #%s %s" % (oid, msg), request.client.host if request.client else "-")
+        if ok:
+            return _ord_back(q, filter_status, ok="อัปเดตจากผู้ให้บริการแล้ว", page=page)
+        return _ord_back(q, filter_status, err="ดึงสถานะไม่สำเร็จ: " + str(msg)[:100], page=page)
+    except Exception as exc:
+        return _ord_back(q, filter_status, err=str(exc)[:100], page=page)
 
 
 @router.post("/orders/{oid}/refund")
@@ -438,10 +446,13 @@ async def orders_refund(request: Request, oid: int, q: str = Form(""), filter_st
     gate = require_admin(request)
     if gate:
         return gate
-    if not refund_order(oid):
-        return _ord_back(q, filter_status, err="คืนเงินไม่ได้ อาจคืนไปแล้ว", page=page)
-    update_order(oid, status="canceled")
-    return _ord_back(q, filter_status, ok="คืนเงินและยกเลิกออเดอร์แล้ว", page=page)
+    try:
+        if not refund_order(oid):
+            return _ord_back(q, filter_status, err="คืนเงินไม่ได้ อาจคืนไปแล้ว", page=page)
+        update_order(oid, status="canceled")
+        return _ord_back(q, filter_status, ok="คืนเงินและยกเลิกออเดอร์แล้ว", page=page)
+    except Exception as exc:
+        return _ord_back(q, filter_status, err=str(exc)[:100], page=page)
 
 
 @router.get("/clients", response_class=HTMLResponse)

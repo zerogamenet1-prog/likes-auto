@@ -1375,6 +1375,126 @@ details.adm-more summary { cursor: pointer; font-weight: 700; }
   }
 }
 
+/* ── Modern Ergonomic Order Action Tools (บันทึก, ส่ง API, ดึงสถานะ, คืนเงิน) ── */
+.ord-actions-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+.ord-field-lbl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t-muted);
+  margin-bottom: 6px;
+}
+.ord-field-lbl i {
+  color: var(--primary);
+}
+.ord-st-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-card);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--stroke);
+}
+.ord-field-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.ord-field-row .ord-select {
+  flex: 1 1 auto;
+  height: 38px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  background: var(--bg-hover);
+  color: var(--t-base);
+  border: 1px solid var(--stroke);
+  padding: 0 10px;
+}
+.ord-field-row .ord-btn-save {
+  flex: 0 0 auto;
+  height: 38px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ord-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+.ord-action-form {
+  margin: 0;
+  display: flex;
+  width: 100%;
+}
+.ord-action-form button {
+  width: 100%;
+  height: 38px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.ord-btn-sync {
+  background: rgba(56, 189, 248, 0.12) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+}
+.ord-btn-sync:hover {
+  background: rgba(56, 189, 248, 0.22) !important;
+  border-color: #38bdf8 !important;
+  transform: translateY(-1px);
+}
+.ord-btn-resend {
+  background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+.ord-btn-resend:hover {
+  background: linear-gradient(135deg, #1d4ed8, #2563eb) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+.ord-btn-refund {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+.ord-btn-refund:hover {
+  background: rgba(239, 68, 68, 0.22) !important;
+  border-color: #ef4444 !important;
+  transform: translateY(-1px);
+}
+.la-spin {
+  animation: ordSpin 1s linear infinite;
+  display: inline-block;
+}
+@keyframes ordSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 860px) {
   .ord-user, .ord-qty { display: none; }
   .ord-amt { flex-basis: 54px; }

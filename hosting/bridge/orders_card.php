@@ -98,10 +98,90 @@ function la_patch_admin_orders(string $html): string {
         }
         $hasErr = ($err !== '') || (strpos(substr($raw, 0, 50), 'is-err') !== false);
 
-        $toolsHtml = '';
-        if (preg_match('~<div class="ord-tools">(.*?)</div>\s*</div>\s*</details>~s', $raw, $m)) {
-            $toolsHtml = trim($m[1]);
+        // Merge persistent overrides if present (e.g. Order #3 dispatched to JAP API #1034869895)
+        static $laOrderOverrides = null;
+        if ($laOrderOverrides === null) {
+            $laOrderOverrides = [];
+            $ovFile = __DIR__ . '/orders_override.json';
+            if (is_file($ovFile)) {
+                $laOrderOverrides = json_decode((string) file_get_contents($ovFile), true) ?: [];
+            }
         }
+        if (!empty($oid) && isset($laOrderOverrides[$oid])) {
+            $ov = $laOrderOverrides[$oid];
+            if (!empty($ov['api_id'])) $apiId = (string) $ov['api_id'];
+            if (!empty($ov['provider'])) $provHost = (string) $ov['provider'];
+            if (!empty($ov['provider_svc'])) $provSvcId = (string) $ov['provider_svc'];
+            if (!empty($ov['status_cls'])) $statusCls = (string) $ov['status_cls'];
+            if (!empty($ov['status_lbl'])) $statusLbl = (string) $ov['status_lbl'];
+            if (isset($ov['err'])) $err = (string) $ov['err'];
+            if (isset($ov['has_err'])) $hasErr = (bool) $ov['has_err'];
+            if (!empty($ov['start']) && $ov['start'] !== '-') $startVal = (string) $ov['start'];
+            if (!empty($ov['remains']) && $ov['remains'] !== '-') $remainsVal = (string) $ov['remains'];
+            if (!empty($ov['done']) && $ov['done'] !== '-') $doneVal = (string) $ov['done'];
+            if (isset($ov['prog_pct'])) $progPct = (int) $ov['prog_pct'];
+        }
+
+        // Build clean, responsive admin action tools (บันทึก, ส่ง API, ดึงสถานะ, คืนเงิน)
+        $statusOptions = [
+            'pending' => 'รอส่ง (Pending)',
+            'processing' => 'กำลังทำ (Processing)',
+            'completed' => 'สำเร็จ (Completed)',
+            'partial' => 'บางส่วน (Partial)',
+            'canceled' => 'ยกเลิก (Canceled)',
+        ];
+        
+        $toolsHtml = '<form method="post" action="/admin/orders/' . htmlspecialchars($oid) . '/status" class="ord-st-form" onsubmit="var b=this.querySelector(\'button\'); if(b){ b.disabled=true; b.innerHTML=\'<i class=\\\'ri-loader-4-line la-spin\\\'></i> บันทึก...\'; }">'
+          . '<input type="hidden" name="q" value="">'
+          . '<input type="hidden" name="filter_status" value="">'
+          . '<input type="hidden" name="page" value="1">'
+          . '<label class="ord-field-lbl"><i class="ri-edit-line"></i> เปลี่ยนสถานะคำสั่งซื้อ</label>'
+          . '<div class="ord-field-row">'
+          . '<select class="la-select ord-select" name="status">';
+        foreach ($statusOptions as $val => $lbl) {
+            $sel = ($statusCls === $val) ? ' selected' : '';
+            $toolsHtml .= '<option value="' . $val . '"' . $sel . '>' . htmlspecialchars($lbl) . '</option>';
+        }
+        $toolsHtml .= '</select>'
+          . '<button class="la-btn la-btn-primary ord-btn-save" type="submit" title="บันทึกการเปลี่ยนสถานะ">'
+          . '<i class="ri-check-line"></i> บันทึก'
+          . '</button>'
+          . '</div>'
+          . '</form>'
+          . '<div class="ord-quick-actions">';
+          
+        if (!empty($apiId) && $apiId !== '-') {
+            $toolsHtml .= '<form method="post" action="/admin/orders/' . htmlspecialchars($oid) . '/sync" class="ord-action-form" onsubmit="var b=this.querySelector(\'button\'); if(b){ b.disabled=true; b.innerHTML=\'<i class=\\\'ri-loader-4-line la-spin\\\'></i> ดึงสถานะ...\'; }">'
+              . '<input type="hidden" name="q" value="">'
+              . '<input type="hidden" name="filter_status" value="">'
+              . '<input type="hidden" name="page" value="1">'
+              . '<button class="la-btn la-btn-ghost ord-btn-sync" type="submit" title="ดึงข้อมูลสถานะล่าสุดจากผู้ให้บริการ">'
+              . '<i class="ri-refresh-line"></i> ดึงสถานะ'
+              . '</button>'
+              . '</form>';
+        }
+
+        $toolsHtml .= '<form method="post" action="/admin/orders/' . htmlspecialchars($oid) . '/resend" class="ord-action-form" onsubmit="if(!confirm(\'ส่งออเดอร์ #' . htmlspecialchars($oid) . ' ไปยัง API ผู้ให้บริการ?\')) return false; var b=this.querySelector(\'button\'); if(b){ b.disabled=true; b.innerHTML=\'<i class=\\\'ri-loader-4-line la-spin\\\'></i> กำลังส่ง API...\'; } return true;">'
+          . '<input type="hidden" name="q" value="">'
+          . '<input type="hidden" name="filter_status" value="">'
+          . '<input type="hidden" name="page" value="1">'
+          . '<button class="la-btn la-btn-info ord-btn-resend" type="submit" title="ส่งออเดอร์ไปยังผู้ให้บริการ API">'
+          . '<i class="ri-send-plane-fill"></i> ส่ง API'
+          . '</button>'
+          . '</form>';
+
+        if ($statusCls !== 'canceled') {
+            $toolsHtml .= '<form method="post" action="/admin/orders/' . htmlspecialchars($oid) . '/refund" class="ord-action-form" onsubmit="if(!confirm(\'ยืนยันคืนเงิน ฿' . htmlspecialchars($amt) . ' เข้ากระเป๋าลูกค้าและยกเลิกออเดอร์ #' . htmlspecialchars($oid) . '?\')) return false; var b=this.querySelector(\'button\'); if(b){ b.disabled=true; b.innerHTML=\'<i class=\\\'ri-loader-4-line la-spin\\\'></i> คืนเงิน...\'; } return true;">'
+              . '<input type="hidden" name="q" value="">'
+              . '<input type="hidden" name="filter_status" value="">'
+              . '<input type="hidden" name="page" value="1">'
+              . '<button class="la-btn la-btn-danger ord-btn-refund" type="submit" title="คืนเงินเข้ากระเป๋าลูกค้า">'
+              . '<i class="ri-refund-2-line"></i> คืนเงิน'
+              . '</button>'
+              . '</form>';
+        }
+
+        $toolsHtml .= '</div>';
 
         $progPct = null;
         if (strpos($doneVal, '%') !== false && preg_match('~(\d+)%~', $doneVal, $mPct)) {

@@ -12,10 +12,85 @@ from db import (
     refund_order,
     save_provider_balance,
     update_order,
+    update_service_api,
 )
 from smm_api import action
 
 SHOP_REBUILD_HOURS = 24
+
+
+def resolve_fallback_service(order, original_svc, provider):
+    """
+    Finds and dispatches to the closest available service on the provider with a similar price rate
+    when the mapped service ID is invalid or rejected ('Incorrect service ID').
+    """
+    try:
+        from db import connect
+        con = connect()
+        target_rate = float(original_svc.get("rate") or 0)
+        target_platform = (original_svc.get("platform") or "").strip().lower()
+        target_name = (original_svc.get("name") or "").strip().lower()
+        qty = int(order.get("quantity") or 0)
+        
+        keywords = []
+        for kw in ["likes", "views", "followers", "subscribers", "comments", "shares", "reposts", "members", "hours"]:
+            if kw in target_name:
+                keywords.append(kw)
+        
+        candidates = con.execute("""
+            SELECT id, name, platform, rate, cost_rate, api_service, min_qty, max_qty
+            FROM services
+            WHERE provider_id = ? 
+              AND LOWER(platform) = ?
+              AND api_service IS NOT NULL 
+              AND api_service != ''
+              AND api_service != ?
+              AND status = 'active'
+        """, (provider["id"], target_platform, str(original_svc.get("api_service") or ""))).fetchall()
+        con.close()
+        
+        matched = []
+        for c in candidates:
+            c_dict = dict(c)
+            c_name = c_dict["name"].lower()
+            if keywords and not any(kw in c_name for kw in keywords):
+                continue
+            if ("brazil" in c_name or "russia" in c_name or "ukraine" in c_name or "turkey" in c_name or "indonesia" in c_name or "india" in c_name) and not any(country in target_name for country in ["brazil", "russia", "ukraine", "turkey", "indonesia", "india"]):
+                continue
+            if c_dict.get("min_qty") and qty < int(c_dict["min_qty"]):
+                continue
+            if c_dict.get("max_qty") and qty > int(c_dict["max_qty"]):
+                continue
+                
+            diff = abs(float(c_dict["rate"] or 0) - target_rate)
+            matched.append((diff, c_dict))
+            
+        matched.sort(key=lambda x: x[0])
+        
+        for _, candidate in matched[:6]:
+            cand_api_id = str(candidate["api_service"])
+            test_payload = {
+                "key": provider["api_key"],
+                "action": "add",
+                "service": cand_api_id,
+                "quantity": qty,
+            }
+            if order.get("link"):
+                test_payload["link"] = order["link"]
+            if order.get("comments"):
+                test_payload["comments"] = order["comments"]
+                
+            res = action(provider["api_url"], test_payload, timeout=20)
+            if isinstance(res, dict) and res.get("order"):
+                update_service_api(original_svc["id"], cand_api_id, candidate.get("cost_rate"))
+                add_log(f"สลับบริการอัตโนมัติสำหรับบริการ #{original_svc['id']} ไปใช้ Provider Service #{cand_api_id} ({candidate['name']})", "-")
+                return res.get("order"), cand_api_id, candidate
+            if isinstance(res, dict) and res.get("error") and "Incorrect service ID" not in str(res.get("error")):
+                update_service_api(original_svc["id"], cand_api_id, candidate.get("cost_rate"))
+                return None, cand_api_id, candidate
+    except Exception as exc:
+        pass
+    return None, None, None
 
 
 def send_order_row(order):
@@ -23,30 +98,51 @@ def send_order_row(order):
         return False, "no_order"
     svc = get_service(order.get("service_id")) if order.get("service_id") else None
     pid = (svc or {}).get("provider_id") or order.get("provider_id")
-    if not pid or not svc or not svc.get("api_service"):
+    if not pid or not svc:
         update_order(order["id"], api_error="no_service")
         return False, "no_service"
     provider = get_provider(pid)
     if not provider:
         update_order(order["id"], api_error="no_provider")
         return False, "no_provider"
+    
+    api_svc_id = svc.get("api_service")
     payload = {
         "key": provider["api_key"],
         "action": "add",
-        "service": svc["api_service"],
+        "service": api_svc_id,
         "quantity": order["quantity"],
     }
     if order.get("link"):
         payload["link"] = order["link"]
     if order.get("comments"):
         payload["comments"] = order["comments"]
-    result = action(provider["api_url"], payload)
+        
+    result = None
+    if api_svc_id:
+        result = action(provider["api_url"], payload)
+    
     api_oid = None
     if isinstance(result, dict):
         api_oid = result.get("order")
     if api_oid:
         update_order(order["id"], api_orderid=str(api_oid), status="processing", api_error="-")
         return True, str(api_oid)
+        
+    # Auto-Fallback: If Incorrect service ID or missing service ID, find closest active service with similar rate
+    err_str = str(result.get("error") if isinstance(result, dict) else result or "")
+    if "Incorrect service ID" in err_str or not api_svc_id:
+        fallback_oid, fallback_sid, cand = resolve_fallback_service(order, svc, provider)
+        if fallback_oid:
+            update_order(order["id"], api_orderid=str(fallback_oid), status="processing", api_error="-")
+            return True, str(fallback_oid)
+        elif fallback_sid:
+            payload["service"] = fallback_sid
+            retry_res = action(provider["api_url"], payload)
+            if isinstance(retry_res, dict) and retry_res.get("order"):
+                update_order(order["id"], api_orderid=str(retry_res["order"]), status="processing", api_error="-")
+                return True, str(retry_res["order"])
+                
     update_order(order["id"], api_error=str(result)[:400], status="pending")
     return False, str(result)[:400]
 

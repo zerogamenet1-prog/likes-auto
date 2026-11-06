@@ -112,6 +112,11 @@ $cur = $currentPage ?? '';
           <i class="ri-store-2-line"></i>
           <span>บริการและราคา</span>
         </a>
+        <a href="/updates" class="la-drawer-nav-item pk-nav-item <?= ($cur==='updates')?'active':'' ?>">
+          <i class="ri-sparkling-fill pk-icon-accent"></i>
+          <span>อัปเดตบริการ</span>
+          <span class="la-nav-pill-badge new">มาใหม่</span>
+        </a>
         <a href="/addfunds" class="la-drawer-nav-item pk-nav-item <?= ($cur==='addfunds')?'active':'' ?>">
           <i class="ri-wallet-3-line"></i>
           <span>เติมเงิน</span>
@@ -146,6 +151,11 @@ $cur = $currentPage ?? '';
           <i class="ri-store-2-line"></i>
           <span>บริการและราคา</span>
           <span class="la-nav-pill-badge hot">ยอดนิยม</span>
+        </a>
+        <a href="/updates" class="la-drawer-nav-item pk-nav-item <?= ($cur==='updates')?'active':'' ?>">
+          <i class="ri-sparkling-fill pk-icon-accent"></i>
+          <span>อัปเดตบริการ</span>
+          <span class="la-nav-pill-badge new">มาใหม่</span>
         </a>
         <a href="/blog" class="la-drawer-nav-item pk-nav-item <?= ($cur==='blog')?'active':'' ?>">
           <i class="ri-article-line"></i>

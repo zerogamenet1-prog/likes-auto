@@ -1,90 +1,297 @@
 {% extends "admin/base.html" %}
 {% block title %}ออเดอร์{% endblock %}
-{% block subtitle %}<p class="adm-sub">แถวเดียวต่อรายการ กดจัดการเมื่อต้องดูรายละเอียด</p>{% endblock %}
+{% block subtitle %}<p class="adm-sub">รายการออเดอร์ทั้งหมด คลิกที่แถวหรือปุ่ม "จัดการ" เพื่อดูรายละเอียดและความคืบหน้า</p>{% endblock %}
 {% block content %}
 {% set s = ord_sum if ord_sum is defined else {} %}
-{% if ok %}<div class="adm-ok">{{ ok }}</div>{% endif %}
-{% if err %}<div class="adm-error">{{ err }}</div>{% endif %}
+{% if ok %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> {{ ok }}</div>{% endif %}
+{% if err %}<div class="adm-error"><i class="ri-error-warning-line"></i> {{ err }}</div>{% endif %}
 
 <nav class="ord-pills">
-  <a class="{% if not status %}is-on{% endif %}" href="/admin/orders{% if q %}?q={{ q|urlencode }}{% endif %}">ทั้งหมด {{ s.all_n or 0 }}</a>
-  <a class="{% if status=='pending' %}is-on{% endif %}" href="/admin/orders?status=pending{% if q %}&amp;q={{ q|urlencode }}{% endif %}">รอส่ง {{ s.pending_n or 0 }}</a>
-  <a class="{% if status=='processing' %}is-on{% endif %}" href="/admin/orders?status=processing{% if q %}&amp;q={{ q|urlencode }}{% endif %}">กำลังทำ {{ s.processing_n or 0 }}</a>
-  <a class="{% if status=='completed' %}is-on{% endif %}" href="/admin/orders?status=completed{% if q %}&amp;q={{ q|urlencode }}{% endif %}">สำเร็จ {{ s.completed_n or 0 }}</a>
-  <a class="{% if status=='partial' %}is-on{% endif %}" href="/admin/orders?status=partial{% if q %}&amp;q={{ q|urlencode }}{% endif %}">บางส่วน {{ s.partial_n or 0 }}</a>
-  <a class="{% if status=='canceled' %}is-on{% endif %}" href="/admin/orders?status=canceled{% if q %}&amp;q={{ q|urlencode }}{% endif %}">ยกเลิก {{ s.canceled_n or 0 }}</a>
+  <a class="{% if not status %}is-on{% endif %}" href="/admin/orders{% if q %}?q={{ q|urlencode }}{% endif %}">
+    ทั้งหมด <span class="ord-pill-cnt">{{ s.all_n or 0 }}</span>
+  </a>
+  <a class="{% if status=='pending' %}is-on{% endif %}" href="/admin/orders?status=pending{% if q %}&amp;q={{ q|urlencode }}{% endif %}">
+    <i class="ri-time-line"></i> รอส่ง <span class="ord-pill-cnt">{{ s.pending_n or 0 }}</span>
+  </a>
+  <a class="{% if status=='processing' %}is-on{% endif %}" href="/admin/orders?status=processing{% if q %}&amp;q={{ q|urlencode }}{% endif %}">
+    <i class="ri-loader-4-line"></i> กำลังทำ <span class="ord-pill-cnt">{{ s.processing_n or 0 }}</span>
+  </a>
+  <a class="{% if status=='completed' %}is-on{% endif %}" href="/admin/orders?status=completed{% if q %}&amp;q={{ q|urlencode }}{% endif %}">
+    <i class="ri-checkbox-circle-line"></i> สำเร็จ <span class="ord-pill-cnt">{{ s.completed_n or 0 }}</span>
+  </a>
+  <a class="{% if status=='partial' %}is-on{% endif %}" href="/admin/orders?status=partial{% if q %}&amp;q={{ q|urlencode }}{% endif %}">
+    <i class="ri-pie-chart-line"></i> บางส่วน <span class="ord-pill-cnt">{{ s.partial_n or 0 }}</span>
+  </a>
+  <a class="{% if status=='canceled' %}is-on{% endif %}" href="/admin/orders?status=canceled{% if q %}&amp;q={{ q|urlencode }}{% endif %}">
+    <i class="ri-close-circle-line"></i> ยกเลิก <span class="ord-pill-cnt">{{ s.canceled_n or 0 }}</span>
+  </a>
 </nav>
 
 <form method="get" class="adm-filter ord-filter">
-  <input class="la-input" type="search" name="q" value="{{ q }}" placeholder="ค้นหา ID ลูกค้า ลิงก์ หรือรหัส API">
+  <div class="ord-search-box">
+    <i class="ri-search-line ord-search-icon"></i>
+    <input class="la-input" type="search" name="q" value="{{ q }}" placeholder="ค้นหาด้วย เลข ID, ชื่อลูกค้า, ลิงก์ หรือรหัส API...">
+  </div>
   {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
-  <button class="la-btn" type="submit">ค้นหา</button>
+  <button class="la-btn" type="submit"><i class="ri-search-2-line"></i> ค้นหา</button>
+  {% if q or status %}
+  <a class="la-btn la-btn-ghost" href="/admin/orders" title="ล้างตัวกรอง"><i class="ri-close-line"></i> ล้าง</a>
+  {% endif %}
 </form>
 
 {% if rows %}
-<div class="ord-wrap">
+<div class="ord-list">
   {% for r in rows %}
-  <div class="ord-row is-{{ r.status }}{% if r.has_error %} is-err{% endif %}">
-    <span class="ord-id">#{{ r.id }}</span>
-    <span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span>
-    <span class="ord-amt">{{ "%.2f"|format(r.charge or 0) }}</span>
-    <span class="ord-user" title="{{ r.client }}">{{ r.client }}</span>
-    <span class="ord-svc" title="{{ r.service }}">{{ r.service }}</span>
-    <span class="ord-qty">{{ "{:,}".format(r.quantity or 0) }}</span>
-    {% if r.link %}
-    <a class="ord-link" href="{{ r.link }}" target="_blank" rel="noopener" title="เปิดลิงก์">ลิงก์</a>
-    {% else %}
-    <span class="ord-link is-off">-</span>
-    {% endif %}
-    <details class="ord-menu">
-      <summary>จัดการ</summary>
-      <div class="ord-pop">
-        <p>{{ r.created_at or '-' }} · {{ r.client }}</p>
-        <p>เริ่ม {{ r.start_count or '-' }} · คง {{ r.remains_n if r.remains_n is not none else (r.remains or '-') }} · ทำ {{ r.done if r.done is not none else '-' }}{% if r.progress is not none %} ({{ r.progress }}%){% endif %}</p>
-        <p>API {{ r.api_orderid or '-' }}{% if r.provider_name %} · {{ r.provider_name }}{% endif %}{% if r.service_id %} · บริการ #{{ r.service_id }}{% endif %}{% if not r.can_refund %} · คืนแล้ว{% endif %}</p>
-        {% if r.has_error %}<p class="ord-err">{{ r.api_error }}</p>{% endif %}
-        <div class="ord-tools">
-          <form method="post" action="/admin/orders/{{ r.id }}/status" class="ord-st">
-            <input type="hidden" name="q" value="{{ q }}">
-            <input type="hidden" name="filter_status" value="{{ status }}">
-            <input type="hidden" name="page" value="{{ page_no }}">
-            <select class="la-input" name="status">
-              {% for sname in ['pending','processing','completed','partial','canceled'] %}
-              <option value="{{ sname }}" {% if r.status==sname %}selected{% endif %}>{{ st.get(sname, sname) }}</option>
-              {% endfor %}
-            </select>
-            <button class="la-btn la-btn-mini" type="submit">บันทึก</button>
-          </form>
-          {% if r.can_send %}
-          <form method="post" action="/admin/orders/{{ r.id }}/resend" onsubmit="return confirm('ส่งออเดอร์ #{{ r.id }} ไป API?')">
-            <input type="hidden" name="q" value="{{ q }}">
-            <input type="hidden" name="filter_status" value="{{ status }}">
-            <input type="hidden" name="page" value="{{ page_no }}">
-            <button class="la-btn la-btn-mini" type="submit">ส่ง API</button>
-          </form>
+  <details class="ord-card is-{{ r.status }}{% if r.has_error %} is-err{% endif %}" id="order-{{ r.id }}">
+    <summary class="ord-head">
+      <div class="ord-head-main">
+        <span class="ord-id">#{{ r.id }}</span>
+        
+        <span class="adm-badge {{ r.status }}">
+          {% if r.status == 'completed' %}
+          <i class="ri-checkbox-circle-fill"></i>
+          {% elif r.status in ('processing', 'inprogress') %}
+          <i class="ri-loader-4-line ord-spin"></i>
+          {% elif r.status == 'pending' %}
+          <i class="ri-time-line"></i>
+          {% elif r.status == 'partial' %}
+          <i class="ri-pie-chart-line"></i>
+          {% elif r.status == 'canceled' %}
+          <i class="ri-close-circle-line"></i>
           {% endif %}
-          {% if r.can_sync %}
-          <form method="post" action="/admin/orders/{{ r.id }}/sync">
-            <input type="hidden" name="q" value="{{ q }}">
-            <input type="hidden" name="filter_status" value="{{ status }}">
-            <input type="hidden" name="page" value="{{ page_no }}">
-            <button class="la-btn la-btn-mini la-btn-ghost" type="submit">ดึงสถานะ</button>
-          </form>
-          {% endif %}
-          {% if r.can_refund %}
-          <form method="post" action="/admin/orders/{{ r.id }}/refund" onsubmit="return confirm('คืนเงินและยกเลิกออเดอร์ #{{ r.id }}?')">
-            <input type="hidden" name="q" value="{{ q }}">
-            <input type="hidden" name="filter_status" value="{{ status }}">
-            <input type="hidden" name="page" value="{{ page_no }}">
-            <button class="la-btn la-btn-mini la-btn-danger" type="submit">คืนเงิน</button>
-          </form>
+          {{ st.get(r.status, r.status) }}
+        </span>
+
+        <span class="ord-amt">฿{{ "%.2f"|format(r.charge or 0) }}</span>
+
+        <span class="ord-user" title="ผู้สั่งซื้อ: {{ r.client }}">
+          <i class="ri-user-3-line"></i> {{ r.client }}
+        </span>
+
+        <span class="ord-svc" title="{{ r.service }}">
+          {{ r.service }}
+        </span>
+      </div>
+
+      <div class="ord-head-meta">
+        <span class="ord-qty" title="จำนวน">
+          <i class="ri-stack-line"></i> {{ "{:,}".format(r.quantity or 0) }}
+        </span>
+
+        {% if r.link %}
+        <a class="ord-quick-link" href="{{ r.link }}" target="_blank" rel="noopener" title="เปิดลิงก์ปลายทางในแท็บใหม่" onclick="event.stopPropagation()">
+          <i class="ri-external-link-line"></i> ลิงก์
+        </a>
+        {% else %}
+        <span class="ord-quick-link is-empty">-</span>
+        {% endif %}
+
+        {% if r.progress is not none and r.progress > 0 %}
+        <span class="ord-kpi-pill kpi-prog" title="ความคืบหน้า {{ r.progress }}% (ส่งแล้ว {{ r.done or 0 }}/{{ r.quantity or 0 }})">
+          {{ r.progress }}%
+        </span>
+        {% elif r.api_orderid %}
+        <span class="ord-kpi-pill kpi-api" title="ส่ง API แล้ว (รหัส #{{ r.api_orderid }})">
+          API #{{ r.api_orderid }}
+        </span>
+        {% endif %}
+
+        {% if r.has_error %}
+        <span class="ord-kpi-pill kpi-err" title="{{ r.api_error }}">
+          <i class="ri-error-warning-fill"></i> มีข้อผิดพลาด
+        </span>
+        {% endif %}
+
+        <span class="ord-btn-manage">
+          จัดการ <i class="ri-arrow-down-s-line ord-chevron"></i>
+        </span>
+      </div>
+    </summary>
+
+    <div class="ord-body">
+      <div class="ord-grid">
+        <!-- การ์ดที่ 1: ข้อมูลคำสั่งซื้อ -->
+        <div class="ord-box ord-box-info">
+          <div class="ord-box-header">
+            <i class="ri-shopping-cart-2-line"></i> ข้อมูลคำสั่งซื้อ
+          </div>
+          <div class="ord-info-list">
+            <div class="ord-info-row">
+              <span class="ord-label">วันที่/เวลาสั่ง:</span>
+              <span class="ord-val">{{ r.created_at or '-' }}</span>
+            </div>
+            <div class="ord-info-row">
+              <span class="ord-label">ผู้สั่งซื้อ:</span>
+              <span class="ord-val ord-val-user">
+                <i class="ri-user-line"></i> <strong>{{ r.client }}</strong>
+              </span>
+            </div>
+            <div class="ord-info-row ord-info-stacked">
+              <span class="ord-label">บริการ:</span>
+              <div class="ord-val-svc">{{ r.service }}</div>
+            </div>
+            <div class="ord-info-row">
+              <span class="ord-label">จำนวน:</span>
+              <span class="ord-val ord-val-qty"><strong>{{ "{:,}".format(r.quantity or 0) }}</strong> ชิ้น</span>
+            </div>
+            <div class="ord-info-row">
+              <span class="ord-label">ยอดเงินตัดชำระ:</span>
+              <span class="ord-val ord-val-charge">฿{{ "%.2f"|format(r.charge or 0) }}</span>
+            </div>
+            <div class="ord-info-row ord-info-stacked">
+              <span class="ord-label">ลิงก์ปลายทาง:</span>
+              <div class="ord-link-action">
+                <input class="la-input ord-link-input" type="text" value="{{ r.link or '' }}" readonly id="link-field-{{ r.id }}">
+                {% if r.link %}
+                <button type="button" class="la-btn la-btn-mini la-btn-ghost" onclick="navigator.clipboard.writeText('{{ r.link }}'); this.innerHTML='<i class=\'ri-check-line\'></i> คัดลอกแล้ว'; var b=this; setTimeout(function(){ b.innerHTML='<i class=\'ri-file-copy-line\'></i> คัดลอก'; }, 1500);" title="คัดลอกลิงก์">
+                  <i class="ri-file-copy-line"></i> คัดลอก
+                </button>
+                <a href="{{ r.link }}" target="_blank" rel="noopener" class="la-btn la-btn-mini la-btn-ghost" title="เปิดในแท็บใหม่">
+                  <i class="ri-external-link-line"></i> เปิด
+                </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- การ์ดที่ 2: ข้อมูลผู้ให้บริการ & ความคืบหน้า -->
+        <div class="ord-box ord-box-api">
+          <div class="ord-box-header">
+            <i class="ri-server-line"></i> สถานะผู้ให้บริการ (API)
+          </div>
+          <div class="ord-info-list">
+            <div class="ord-info-row">
+              <span class="ord-label">ผู้ให้บริการ:</span>
+              <span class="ord-val">
+                <strong>{{ r.provider_name or 'ระบบภายนอก' }}</strong>
+                {% if r.service_id %}<span class="adm-muted">(บริการ #{{ r.service_id }})</span>{% endif %}
+              </span>
+            </div>
+            <div class="ord-info-row">
+              <span class="ord-label">API Order ID:</span>
+              <span class="ord-val">
+                {% if r.api_orderid %}
+                <code class="ord-code">{{ r.api_orderid }}</code>
+                <button type="button" class="la-btn la-btn-mini la-btn-ghost" onclick="navigator.clipboard.writeText('{{ r.api_orderid }}'); this.innerHTML='<i class=\'ri-check-line\'></i>'; var b=this; setTimeout(function(){ b.innerHTML='<i class=\'ri-file-copy-line\'></i>'; }, 1200);" title="คัดลอกรหัส API" style="padding: 2px 7px; margin-left: 4px;">
+                  <i class="ri-file-copy-line"></i>
+                </button>
+                {% else %}
+                <span class="adm-muted">ยังไม่ได้ส่งไป API</span>
+                {% endif %}
+              </span>
+            </div>
+            <div class="ord-info-row">
+              <span class="ord-label">สถานะปัจจุบัน:</span>
+              <span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span>
+            </div>
+          </div>
+
+          <!-- KPI Counters Grid -->
+          <div class="ord-kpi-row">
+            <div class="ord-kpi-box">
+              <div class="ord-kpi-sub">เริ่มนับ</div>
+              <div class="ord-kpi-num">{{ r.start_count if r.start_count not in (none, '', '-') else '-' }}</div>
+            </div>
+            <div class="ord-kpi-box">
+              <div class="ord-kpi-sub">คงเหลือ</div>
+              <div class="ord-kpi-num">{{ r.remains_n if r.remains_n is not none else (r.remains or '-') }}</div>
+            </div>
+            <div class="ord-kpi-box">
+              <div class="ord-kpi-sub">ทำแล้ว</div>
+              <div class="ord-kpi-num">{{ r.done if r.done is not none else '-' }}</div>
+            </div>
+            <div class="ord-kpi-box ord-kpi-highlight">
+              <div class="ord-kpi-sub">ความคืบหน้า</div>
+              <div class="ord-kpi-num">{{ r.progress if r.progress is not none else 0 }}%</div>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="ord-meter" title="ส่งแล้ว {{ r.progress or 0 }}%">
+            <div class="ord-meter-bar is-{{ r.status }}" style="width: {{ r.progress or 0 }}%;"></div>
+          </div>
+
+          {% if r.has_error %}
+          <div class="ord-alert-box">
+            <i class="ri-alert-line"></i>
+            <div>
+              <strong>ข้อผิดพลาดจากระบบ/ผู้ให้บริการ:</strong>
+              <div class="ord-err-txt">{{ r.api_error }}</div>
+            </div>
+          </div>
           {% endif %}
         </div>
+
+        <!-- การ์ดที่ 3: แผงควบคุมและสั่งการ -->
+        <div class="ord-box ord-box-act">
+          <div class="ord-box-header">
+            <i class="ri-settings-5-line"></i> การสั่งการ & จัดการ
+          </div>
+
+          <!-- Form เปลี่ยนสถานะ -->
+          <form method="post" action="/admin/orders/{{ r.id }}/status" class="ord-act-group">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="filter_status" value="{{ status }}">
+            <input type="hidden" name="page" value="{{ page_no }}">
+            <label class="ord-act-label">เปลี่ยนสถานะออเดอร์:</label>
+            <div class="ord-status-row">
+              <select class="la-input ord-select" name="status">
+                {% for sname in ['pending','processing','completed','partial','canceled'] %}
+                <option value="{{ sname }}" {% if r.status==sname %}selected{% endif %}>{{ st.get(sname, sname) }}</option>
+                {% endfor %}
+              </select>
+              <button class="la-btn la-btn-mini la-btn-primary" type="submit">
+                <i class="ri-save-line"></i> บันทึก
+              </button>
+            </div>
+          </form>
+
+          <div class="ord-act-buttons">
+            {% if r.can_sync %}
+            <form method="post" action="/admin/orders/{{ r.id }}/sync" class="ord-full-form">
+              <input type="hidden" name="q" value="{{ q }}">
+              <input type="hidden" name="filter_status" value="{{ status }}">
+              <input type="hidden" name="page" value="{{ page_no }}">
+              <button class="la-btn la-btn-ghost ord-full-btn" type="submit" title="ดึงข้อมูลสถานะล่าสุดจากผู้ให้บริการ">
+                <i class="ri-refresh-line"></i> ดึงสถานะล่าสุด (Sync)
+              </button>
+            </form>
+            {% endif %}
+
+            {% if r.can_send %}
+            <form method="post" action="/admin/orders/{{ r.id }}/resend" class="ord-full-form" onsubmit="return confirm('ยืนยันส่งออเดอร์ #{{ r.id }} ไปยังผู้ให้บริการ API ทันที?')">
+              <input type="hidden" name="q" value="{{ q }}">
+              <input type="hidden" name="filter_status" value="{{ status }}">
+              <input type="hidden" name="page" value="{{ page_no }}">
+              <button class="la-btn la-btn-primary ord-full-btn" type="submit" title="ส่งออเดอร์ไปยังผู้ให้บริการ">
+                <i class="ri-send-plane-fill"></i> ส่งไป API ทันที
+              </button>
+            </form>
+            {% endif %}
+
+            {% if r.can_refund %}
+            <form method="post" action="/admin/orders/{{ r.id }}/refund" class="ord-full-form" onsubmit="return confirm('ยืนยันการคืนเงิน ฿{{ '%.2f'|format(r.charge or 0) }} เข้ากระเป๋าลูกค้า @{{ r.client }} และยกเลิกออเดอร์ #{{ r.id }} หรือไม่?')">
+              <input type="hidden" name="q" value="{{ q }}">
+              <input type="hidden" name="filter_status" value="{{ status }}">
+              <input type="hidden" name="page" value="{{ page_no }}">
+              <button class="la-btn la-btn-danger ord-full-btn" type="submit" title="คืนเงินให้ลูกค้าและยกเลิกออเดอร์">
+                <i class="ri-refund-line"></i> คืนเงินเข้ากระเป๋า
+              </button>
+            </form>
+            {% else %}
+            <div class="ord-refund-done">
+              <i class="ri-checkbox-circle-fill"></i> คืนเงินให้ลูกค้าแล้ว
+            </div>
+            {% endif %}
+          </div>
+        </div>
       </div>
-    </details>
-  </div>
+    </div>
+  </details>
   {% endfor %}
 </div>
+
 {% if pages and pages > 1 %}
 <p class="adm-pager">
   {% if page_no > 1 %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/orders?page={{ page_no-1 }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if status %}&amp;status={{ status }}{% endif %}">ก่อนหน้า</a>{% endif %}
@@ -92,7 +299,16 @@
   {% if page_no < pages %}<a class="la-btn la-btn-mini la-btn-ghost" href="/admin/orders?page={{ page_no+1 }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if status %}&amp;status={{ status }}{% endif %}">ถัดไป</a>{% endif %}
 </p>
 {% endif %}
+
 {% else %}
-<p class="adm-empty">ไม่พบออเดอร์</p>
+<div class="adm-card adm-empty-wrap" style="text-align: center; padding: 48px 20px;">
+  <div style="font-size: 42px; color: var(--t-muted); margin-bottom: 12px;"><i class="ri-inbox-line"></i></div>
+  <h3 style="margin: 0 0 6px; font-weight: 700;">ไม่พบรายการออเดอร์</h3>
+  <p class="adm-muted" style="margin: 0;">{% if q or status %}ลองเปลี่ยนคำค้นหา หรือคลิกดูรายการทั้งหมด{% else %}ยังไม่มีรายการสั่งซื้อเข้ามาในระบบ{% endif %}</p>
+  {% if q or status %}
+  <a href="/admin/orders" class="la-btn la-btn-mini la-btn-ghost" style="margin-top: 14px;"><i class="ri-arrow-go-back-line"></i> ดูออเดอร์ทั้งหมด</a>
+  {% endif %}
+</div>
 {% endif %}
+
 {% endblock %}

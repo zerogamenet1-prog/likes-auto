@@ -1,3 +1,4 @@
+from urllib.parse import quote_plus
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -1154,7 +1155,7 @@ async def crons_run(request: Request):
     if gate:
         return gate
     detail = run_all()
-    return RedirectResponse("/admin/crons?ran=" + detail.replace(" ", "_"), status_code=303)
+    return RedirectResponse("/admin/crons?ran=" + quote_plus(detail), status_code=303)
 
 
 @router.post("/crons/shop")

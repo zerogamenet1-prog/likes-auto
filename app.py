@@ -130,6 +130,56 @@ def startup():
             schedule_backup("startup")
         except Exception:
             pass
+    try:
+        start_auto_worker()
+    except Exception:
+        pass
+
+
+def start_auto_worker():
+    """Background worker that continuously dispatches pending orders,
+    syncs order statuses from providers, and refreshes balances.
+    Ensures 100% automated ordering without requiring manual admin approval.
+    """
+    import threading
+    import time
+
+    def _loop():
+        time.sleep(8)
+        last_heavy_check = 0.0
+        while True:
+            try:
+                from cron_jobs import send_orders, check_statuses
+                sent, errors = send_orders()
+                if sent > 0:
+                    try:
+                        from db_backup import schedule_backup
+                        schedule_backup("auto_send_orders")
+                    except Exception:
+                        pass
+                check_statuses()
+                now_ts = time.time()
+                if now_ts - last_heavy_check > 900:
+                    last_heavy_check = now_ts
+                    try:
+                        from cron_jobs import refresh_balances
+                        refresh_balances()
+                        from store import process_dripfeeds, process_subscriptions, process_tasks
+                        process_dripfeeds()
+                        process_subscriptions()
+                        process_tasks()
+                    except Exception:
+                        pass
+            except Exception as e:
+                try:
+                    from db import add_cron_log
+                    add_cron_log("auto_worker", "error: " + str(e)[:200])
+                except Exception:
+                    pass
+            time.sleep(30)
+
+    t = threading.Thread(target=_loop, daemon=True, name="la_auto_worker")
+    t.start()
 
 
 @app.on_event("shutdown")
@@ -555,6 +605,22 @@ async def alias_thai_likes(request: Request):
     return RedirectResponse("/thai-likes", status_code=301)
 
 
+@app.get("/updates", response_class=HTMLResponse)
+async def updates_page(request: Request, type: str = "", platform: str = "", q: str = ""):
+    from updates_data import get_updates, get_updates_stats, get_updates_faqs
+    updates, active_type, active_plat = get_updates(type_filter=type, platform_filter=platform, search=q)
+    u_stats = get_updates_stats()
+    faqs = get_updates_faqs()
+    return page(request, "updates.html", "updates", {
+        "updates": updates,
+        "active_type": active_type,
+        "active_plat": active_plat,
+        "q": q,
+        "stats": u_stats,
+        "faqs": faqs,
+    })
+
+
 @app.get("/faq", response_class=HTMLResponse)
 async def faq(request: Request):
     blocked = _mod_gate(request, "mod_faq")
@@ -730,6 +796,7 @@ def _sitemap_pages():
         urls.append({"loc": site_url() + "/" + slug, "priority": pri, "changefreq": "daily"})
     urls.extend([
         {"loc": site_url() + "/services", "priority": "0.9", "changefreq": "daily"},
+        {"loc": site_url() + "/updates", "priority": "0.85", "changefreq": "daily"},
         {"loc": site_url() + "/faq", "priority": "0.8", "changefreq": "weekly"},
         {"loc": site_url() + "/terms", "priority": "0.4", "changefreq": "monthly"},
         {"loc": site_url() + "/privacy", "priority": "0.4", "changefreq": "monthly"},

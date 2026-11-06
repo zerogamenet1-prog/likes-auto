@@ -64,6 +64,10 @@ META = {
         "Likes Auto",
         COPY.get("meta_desc") or "",
     ),
+    "updates": (
+        "อัปเดตบริการ ปรับลดราคา และบริการมาใหม่ | Likes Auto",
+        "ติดตามประกาศอัปเดตบริการปั้มไลค์ ปั้มฟอล ปั้มวิว ล่าสุดของ Likes Auto บริการมาใหม่ ปรับลดราคาพิเศษ เพิ่มความเร็วส่งยอด และบริการแนะนำ อัปเดตแบบเรียลไทม์ 24 ชม.",
+    ),
 }
 
 
@@ -175,6 +179,8 @@ def crumbs_for(name, extra, canonical):
         return [home, {"name": "ข้อกำหนด", "url": abs_url("/terms")}]
     if name == "api":
         return [home, {"name": "API", "url": abs_url("/api")}]
+    if name == "updates":
+        return [home, {"name": "อัปเดตบริการ", "url": abs_url("/updates")}]
     if name == "blog" and extra.get("post"):
         return [home, {"name": "บล็อก", "url": abs_url("/blog")}, {"name": extra["post"].get("title") or "บทความ", "url": canonical}]
     if name == "blog" and extra.get("tag"):
@@ -369,6 +375,36 @@ def json_ld(name, extra, title, desc, canonical, crumbs):
                 {"@type": "HowToStep", "position": 4, "name": "ใส่ลิงก์สาธารณะแล้วส่งออเดอร์", "url": abs_url("/faq") + "#howto"},
             ],
         })
+    if name == "updates":
+        faqs = extra.get("faqs") or []
+        if faqs:
+            graph.append({
+                "@type": "FAQPage",
+                "mainEntity": [
+                    {
+                        "@type": "Question",
+                        "name": item["q"],
+                        "acceptedAnswer": {"@type": "Answer", "text": item["a"]},
+                    }
+                    for item in faqs
+                ],
+            })
+        updates_items = extra.get("updates") or []
+        if updates_items:
+            graph.append({
+                "@type": "ItemList",
+                "name": "รายการอัปเดตบริการล่าสุด Likes Auto",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": i + 1,
+                        "name": u["name"],
+                        "description": u.get("note") or "",
+                        "url": abs_url("/updates"),
+                    }
+                    for i, u in enumerate(updates_items[:10])
+                ],
+            })
     if name == "blog" and extra.get("post"):
         post = extra["post"]
         tags = [t.strip() for t in (post.get("tags") or "").split(",") if t.strip()]

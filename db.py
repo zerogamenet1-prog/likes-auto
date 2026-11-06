@@ -1588,7 +1588,39 @@ def create_order(client, service_id, link, quantity, comments=None):
     oid = cur.lastrowid
     con.close()
     add_log("สั่งซื้อ #%s" % oid, "-")
+    try:
+        from db_backup import schedule_backup
+        schedule_backup("create_order")
+    except Exception:
+        pass
+    dispatch_order_async(oid)
     return oid, None
+
+
+def dispatch_order_async(oid: int) -> None:
+    """Dispatches order to provider API immediately in a background daemon thread."""
+    import threading
+
+    def _worker():
+        try:
+            import time
+            time.sleep(0.3)
+            from cron_jobs import send_one_order
+            ok, msg = send_one_order(oid)
+            if ok:
+                try:
+                    from db_backup import schedule_backup
+                    schedule_backup("order_sent")
+                except Exception:
+                    pass
+        except Exception as e:
+            try:
+                update_order(oid, api_error=str(e)[:400])
+            except Exception:
+                pass
+
+    t = threading.Thread(target=_worker, daemon=True, name="la_order_%s" % oid)
+    t.start()
 
 
 def client_orders(username):

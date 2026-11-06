@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="la-page la-updates-page">
+  <div class="la-wrap">
+    
+    <!-- Breadcrumb Navigation -->
+    <nav class="la-crumbs pk-crumbs" aria-label="Breadcrumb">
+      <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <a itemprop="item" href="/"><span itemprop="name">หน้าแรก</span></a>
+          <meta itemprop="position" content="1" />
+        </li>
+        <li class="sep">/</li>
+        <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+          <span itemprop="name" class="current">อัปเดตบริการ</span>
+          <meta itemprop="position" content="2" />
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Page Header / Hero -->
+    <header class="la-page-head la-updates-head">
+      <div class="la-kicker pk-kicker-live">
+        <span class="live-dot"></span> LIVE UPDATES · อัปเดตสดใหม่ 24 ชม.
+      </div>
+      <h1 class="la-updates-title">
+        <i class="ri-refresh-line pk-icon-accent"></i> อัปเดตบริการ &amp; ปรับลดราคาล่าสุด
+      </h1>
+      <p class="sub">
+        ติดตามการเปลี่ยนแปลงราคา บริการเปิดใหม่ และการอัปเกรดความเร็วระบบ เพื่อให้คุณได้รับบริการ SMM Panel ที่ดีที่สุด คุ้มค่าที่สุด
+      </p>
+
+      <!-- Quick Metrics Grid -->
+      <div class="la-updates-kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-ico kpi-ico-drop"><i class="ri-price-tag-3-fill"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-num">{{ price_drops }} รายการ</span>
+            <span class="kpi-lbl">ปรับลดราคาลง</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-ico kpi-ico-new"><i class="ri-sparkling-fill"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-num">{{ new_services }} บริการ</span>
+            <span class="kpi-lbl">เปิดตัวใหม่สัปดาห์นี้</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-ico kpi-ico-speed"><i class="ri-flashlight-fill"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-num">{{ speed_boosts }} เซิร์ฟเวอร์</span>
+            <span class="kpi-lbl">อัปเกรดความเร็วส่งยอด</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-ico kpi-ico-thai"><i class="ri-vip-crown-fill"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-num">{{ thai_services }} บริการ</span>
+            <span class="kpi-lbl">บัญชีคนไทยแท้ 100%</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filter & Search Controls -->
+    <section class="la-updates-controls" aria-label="ตัวกรองและค้นหา">
+      
+      <!-- Type Filter Tabs -->
+      <div class="la-updates-tabs" role="tablist">
+        <a href="/updates" class="updates-tab {% if active_type == 'all' %}active{% endif %}" data-filter-type="all">
+          <i class="ri-apps-line"></i> ทั้งหมด ({{ total_count }})
+        </a>
+        <a href="/updates?type=price_down{% if active_plat != 'all' %}&plat={{ active_plat }}{% endif %}" 
+           class="updates-tab {% if active_type == 'price_down' %}active{% endif %}" data-filter-type="price_down">
+          <i class="ri-price-tag-3-line"></i> ปรับลดราคา ({{ price_drops }})
+        </a>
+        <a href="/updates?type=new{% if active_plat != 'all' %}&plat={{ active_plat }}{% endif %}" 
+           class="updates-tab {% if active_type == 'new' %}active{% endif %}" data-filter-type="new">
+          <i class="ri-sparkling-line"></i> บริการมาใหม่ ({{ new_services }})
+        </a>
+        <a href="/updates?type=speed_up{% if active_plat != 'all' %}&plat={{ active_plat }}{% endif %}" 
+           class="updates-tab {% if active_type == 'speed_up' %}active{% endif %}" data-filter-type="speed_up">
+          <i class="ri-flashlight-line"></i> เพิ่มความเร็ว ({{ speed_boosts }})
+        </a>
+        <a href="/updates?type=thai{% if active_plat != 'all' %}&plat={{ active_plat }}{% endif %}" 
+           class="updates-tab {% if active_type == 'thai' %}active{% endif %}" data-filter-type="thai">
+          <i class="ri-vip-crown-line"></i> คนไทยแท้ ({{ thai_services }})
+        </a>
+      </div>
+
+      <!-- Platform Filter Pills & Instant Search -->
+      <div class="la-updates-subbar">
+        <div class="la-updates-plats">
+          {% for p in platforms %}
+          <a href="/updates?{% if active_type != 'all' %}type={{ active_type }}&{% endif %}plat={{ p.slug }}" 
+             class="plat-pill {% if active_plat == p.slug %}active{% endif %}" 
+             data-filter-plat="{{ p.slug }}">
+            {{ p.name }} <span class="p-cnt">{{ p.count }}</span>
+          </a>
+          {% endfor %}
+        </div>
+
+        <div class="la-updates-search-box">
+          <i class="ri-search-line"></i>
+          <input type="search" id="updatesSearchInput" class="la-input" 
+                 value="{{ search_query or '' }}" 
+                 placeholder="ค้นหาชื่อบริการ หรือ ID..." 
+                 aria-label="ค้นหาอัปเดต">
+        </div>
+      </div>
+    </section>
+
+    <!-- Updates Feed List -->
+    <section class="la-updates-feed" id="updatesFeed" aria-label="รายการอัปเดตบริการ">
+      <div class="la-updates-feed-head">
+        <span class="feed-count">พบ <strong id="visibleCount">{{ updates|length }}</strong> รายการอัปเดต</span>
+        <span class="feed-notice"><i class="ri-information-line"></i> ราคาและสถานะมีผลกับสมาชิกทุกคนทันที</span>
+      </div>
+
+      <div class="la-updates-list" id="updatesList">
+        {% for u in updates %}
+        <article class="la-update-card {{ u.badge_class }}" 
+                 data-type="{{ u.type }}" 
+                 data-plat="{{ u.platform|lower }}" 
+                 data-id="{{ u.id }}" 
+                 data-thai="{{ '1' if u.is_thai else '0' }}">
+          
+          <div class="card-top-row">
+            <div class="card-meta-left">
+              <span class="update-date"><i class="ri-calendar-line"></i> {{ u.date_th }}</span>
+              <span class="update-id">#{{ u.id }}</span>
+              <span class="update-plat" style="--pcolor: {{ u.plat_color }};">
+                <i class="{{ u.plat_icon }}"></i> {{ u.platform }}
+              </span>
+            </div>
+            
+            <div class="card-badge {{ u.badge_class }}">
+              <i class="{{ u.badge_icon }}"></i> {{ u.type_label }}
+              {% if u.discount_pct %}
+              <strong class="discount-pill">{{ u.discount_pct }}</strong>
+              {% endif %}
+            </div>
+          </div>
+
+          <h2 class="update-name">
+            <a href="/services?q={{ u.id }}">{{ u.name }}</a>
+          </h2>
+
+          <p class="update-note">
+            {{ u.note }}
+          </p>
+
+          <div class="card-bottom-row">
+            <div class="card-specs">
+              <span class="spec-pill"><i class="ri-speed-line"></i> ความเร็ว: {{ u.speed }}</span>
+              <span class="spec-pill"><i class="ri-shield-check-line"></i> {{ u.refill }}</span>
+              <span class="spec-pill"><i class="ri-sort-asc"></i> ขั้นต่ำ: {{ u.min_qty }} - {{ u.max_qty }}</span>
+            </div>
+
+            <div class="card-price-action">
+              <div class="price-box">
+                {% if u.old_rate %}
+                <span class="old-price">฿{{ "%.2f"|format(u.old_rate) }}</span>
+                {% endif %}
+                <span class="new-price">
+                  ฿{{ "%.2f"|format(u.new_rate) }}
+                  <small>/ 1,000</small>
+                </span>
+              </div>
+
+              <a href="/services?q={{ u.id }}" class="la-btn pk-update-order-btn">
+                <i class="ri-shopping-cart-2-line"></i> สั่งซื้อ
+              </a>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+
+        <!-- Empty State (Shown when search/filter has 0 results) -->
+        <div class="la-updates-empty" id="emptyState" style="display: none;">
+          <div class="empty-icon"><i class="ri-search-line"></i></div>
+          <h3>ไม่พบรายการอัปเดตที่ค้นหา</h3>
+          <p>ลองเปลี่ยนคำค้นหา หรือกดเลือกประเภท "ทั้งหมด" เพื่อดูอัปเดตทั้งหมด</p>
+          <button type="button" class="la-btn" onclick="resetFilters()">ดูอัปเดตทั้งหมด</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEO FAQ Section with Structured Data Microdata -->
+    <section class="la-updates-faq-sec" aria-labelledby="faq-sec-title">
+      <div class="sec-title-wrap">
+        <div class="la-kicker">FAQ</div>
+        <h2 id="faq-sec-title">คำถามที่พบบ่อยเกี่ยวกับการอัปเดตบริการ</h2>
+        <p class="sub">ข้อควรรู้เกี่ยวกับเรทราคาบริการมาใหม่ การปรับลดราคา และการเชื่อมต่อ API</p>
+      </div>
+
+      <div class="la-faq-accordion" itemscope itemtype="https://schema.org/FAQPage">
+        {% for faq in faqs %}
+        <details class="la-faq-item" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+          <summary itemprop="name">
+            <span>{{ faq.q }}</span>
+            <i class="ri-arrow-down-s-line"></i>
+          </summary>
+          <div class="la-faq-body" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+            <p itemprop="text">{{ faq.a }}</p>
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Bottom CTA Banner -->
+    <section class="la-updates-cta-banner">
+      <div class="cta-inner">
+        <div class="cta-text">
+          <h2>พร้อมเริ่มใช้งานในราคาที่ดีที่สุดหรือยัง?</h2>
+          <p>สมัครสมาชิกฟรีใน 1 นาที หรือล็อกอินด้วย Google ทันที เติมเครดิตผ่าน QR พร้อมเพย์ได้ 24 ชั่วโมง</p>
+        </div>
+        <div class="cta-actions">
+          <a href="/signup" class="la-btn la-btn-primary pk-cta-btn"><i class="ri-rocket-fill"></i> สมัครสมาชิกฟรี</a>
+          <a href="/services" class="la-btn pk-cta-sec-btn"><i class="ri-store-2-line"></i> ดูบริการทั้งหมด</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- Client-side Fast Live Filtering Script -->
+<script>
+(function(){
+  var searchInput = document.getElementById('updatesSearchInput');
+  var cards = document.querySelectorAll('.la-update-card');
+  var visibleCountEl = document.getElementById('visibleCount');
+  var emptyState = document.getElementById('emptyState');
+
+  function filterCards() {
+    var q = (searchInput ? searchInput.value : '').trim().toLowerCase();
+    var visible = 0;
+
+    cards.forEach(function(card){
+      var text = card.textContent.toLowerCase();
+      var id = card.getAttribute('data-id') || '';
+      var match = !q || text.indexOf(q) !== -1 || id === q;
+
+      if (match) {
+        card.style.display = '';
+        visible++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (visibleCountEl) visibleCountEl.textContent = visible;
+    if (emptyState) emptyState.style.display = (visible === 0) ? 'block' : 'none';
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterCards);
+  }
+
+  window.resetFilters = function() {
+    if (searchInput) searchInput.value = '';
+    window.location.href = '/updates';
+  };
+})();
+</script>
+{% endblock %}
+

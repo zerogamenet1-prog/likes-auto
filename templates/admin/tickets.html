@@ -29,38 +29,38 @@
 
   <!-- KPI Overview Cards -->
   <div class="ticket-kpi-grid">
-    <a href="/admin/tickets" class="ticket-kpi-card {% if not status %}active{% endif %}">
+    <a href="/admin/tickets" id="kpi-all" data-kpi-status="all" onclick="filterTicketsTab('all'); return false;" class="ticket-kpi-card {% if not status %}active{% endif %}">
       <div class="ticket-kpi-icon is-all"><i class="ri-ticket-2-line"></i></div>
       <div class="ticket-kpi-info">
         <em>ตั๋วทั้งหมด</em>
-        <strong>{{ counts.all }}</strong>
+        <strong id="kpi-count-all">{{ counts.all }}</strong>
         <p>ประวัติตั๋วทั้งหมดในระบบ</p>
       </div>
     </a>
-    <a href="/admin/tickets?status=open" class="ticket-kpi-card is-pending {% if status=='open' %}active{% endif %}">
+    <a href="/admin/tickets?status=open" id="kpi-open" data-kpi-status="open" onclick="filterTicketsTab('open'); return false;" class="ticket-kpi-card is-pending {% if status=='open' %}active{% endif %}">
       <div class="ticket-kpi-icon is-open">
         <i class="ri-time-line"></i>
         {% if counts.open > 0 %}<span class="ticket-pulse-dot"></span>{% endif %}
       </div>
       <div class="ticket-kpi-info">
         <em>รอแอดมินตอบ</em>
-        <strong class="text-amber">{{ counts.open }}</strong>
+        <strong class="text-amber" id="kpi-count-open">{{ counts.open }}</strong>
         <p>{% if counts.open > 0 %}ลูกค้ากำลังรอการช่วยเหลือ{% else %}ไม่มีตั๋วค้างตอบ{% endif %}</p>
       </div>
     </a>
-    <a href="/admin/tickets?status=answered" class="ticket-kpi-card {% if status=='answered' %}active{% endif %}">
+    <a href="/admin/tickets?status=answered" id="kpi-answered" data-kpi-status="answered" onclick="filterTicketsTab('answered'); return false;" class="ticket-kpi-card {% if status=='answered' %}active{% endif %}">
       <div class="ticket-kpi-icon is-answered"><i class="ri-chat-check-line"></i></div>
       <div class="ticket-kpi-info">
         <em>ตอบแล้ว</em>
-        <strong class="text-indigo">{{ counts.answered }}</strong>
+        <strong class="text-indigo" id="kpi-count-answered">{{ counts.answered }}</strong>
         <p>ส่งคำตอบแล้ว รอลูกค้า</p>
       </div>
     </a>
-    <a href="/admin/tickets?status=closed" class="ticket-kpi-card {% if status=='closed' %}active{% endif %}">
+    <a href="/admin/tickets?status=closed" id="kpi-closed" data-kpi-status="closed" onclick="filterTicketsTab('closed'); return false;" class="ticket-kpi-card {% if status=='closed' %}active{% endif %}">
       <div class="ticket-kpi-icon is-closed"><i class="ri-checkbox-circle-line"></i></div>
       <div class="ticket-kpi-info">
         <em>ปิดแล้ว</em>
-        <strong class="text-emerald">{{ counts.closed }}</strong>
+        <strong class="text-emerald" id="kpi-count-closed">{{ counts.closed }}</strong>
         <p>แก้ไขและจบเรื่องแล้ว</p>
       </div>
     </a>
@@ -69,22 +69,22 @@
   <!-- Control & Filter Bar -->
   <div class="ticket-control-bar">
     <div class="ticket-tabs">
-      <a href="/admin/tickets" class="ticket-tab {% if not status %}active{% endif %}">
+      <a href="/admin/tickets" id="tab-all" data-tab-status="all" onclick="filterTicketsTab('all'); return false;" class="ticket-tab {% if not status %}active{% endif %}">
         ทั้งหมด <span class="ticket-tab-count">{{ counts.all }}</span>
       </a>
-      <a href="/admin/tickets?status=open" class="ticket-tab {% if status=='open' %}active{% endif %}">
+      <a href="/admin/tickets?status=open" id="tab-open" data-tab-status="open" onclick="filterTicketsTab('open'); return false;" class="ticket-tab {% if status=='open' %}active{% endif %}">
         รอแอดมินตอบ <span class="ticket-tab-count text-amber">{{ counts.open }}</span>
       </a>
-      <a href="/admin/tickets?status=answered" class="ticket-tab {% if status=='answered' %}active{% endif %}">
+      <a href="/admin/tickets?status=answered" id="tab-answered" data-tab-status="answered" onclick="filterTicketsTab('answered'); return false;" class="ticket-tab {% if status=='answered' %}active{% endif %}">
         ตอบแล้ว <span class="ticket-tab-count">{{ counts.answered }}</span>
       </a>
-      <a href="/admin/tickets?status=closed" class="ticket-tab {% if status=='closed' %}active{% endif %}">
+      <a href="/admin/tickets?status=closed" id="tab-closed" data-tab-status="closed" onclick="filterTicketsTab('closed'); return false;" class="ticket-tab {% if status=='closed' %}active{% endif %}">
         ปิดแล้ว <span class="ticket-tab-count">{{ counts.closed }}</span>
       </a>
     </div>
     <div class="ticket-search-box">
       <i class="ri-search-line"></i>
-      <input type="search" id="ticketSearchInput" placeholder="ค้นหารหัสตั๋ว, ลูกค้า, ออเดอร์, ข้อความ..." value="{{ q or '' }}" oninput="filterTicketsLive(this.value)">
+      <input type="search" id="ticketSearchInput" placeholder="ค้นหารหัสตั๋ว, ลูกค้า, ออเดอร์, ข้อความ..." value="{{ q or '' }}" oninput="filterTicketsLive()">
     </div>
   </div>
 
@@ -244,13 +244,14 @@
               <div class="ticket-textarea-wrap">
                 <textarea class="la-input ticket-textarea" id="reply-text-{{ r.id }}" name="message" rows="3" placeholder="พิมพ์ข้อความตอบกลับลูกค้าที่นี่..." required></textarea>
               </div>
+              <input type="hidden" name="and_close" id="and-close-{{ r.id }}" value="0">
 
               <div class="ticket-form-footer">
                 <div class="ticket-footer-left">
-                  <button type="submit" class="la-btn ticket-btn-send">
+                  <button type="submit" class="la-btn ticket-btn-send" onclick="document.getElementById('and-close-{{ r.id }}').value='0'">
                     <i class="ri-send-plane-fill"></i> ส่งคำตอบ
                   </button>
-                  <button type="submit" name="and_close" value="1" class="la-btn la-btn-ghost ticket-btn-reply-close">
+                  <button type="submit" name="and_close" value="1" class="la-btn la-btn-ghost ticket-btn-reply-close" onclick="document.getElementById('and-close-{{ r.id }}').value='1'">
                     <i class="ri-checkbox-circle-fill"></i> ตอบพร้อมปิดตั๋ว
                   </button>
                 </div>
@@ -276,13 +277,12 @@
 
         </div>
       </article>
-    {% else %}
-      <div class="ticket-empty-state">
-        <div class="ticket-empty-icon"><i class="ri-chat-smile-2-line"></i></div>
-        <h3>ไม่มีรายการตั๋วสนับสนุน</h3>
-        <p class="adm-sub">ไม่มีตั๋วที่ตรงกับเงื่อนไขการค้นหาในขณะนี้</p>
-      </div>
     {% endfor %}
+    <div class="ticket-empty-state" id="ticketEmptyState" style="display: {% if rows|length == 0 %}flex{% else %}none{% endif %};">
+      <div class="ticket-empty-icon"><i class="ri-chat-smile-2-line"></i></div>
+      <h3>ไม่มีรายการตั๋วสนับสนุน</h3>
+      <p class="adm-sub">ไม่มีตั๋วที่ตรงกับเงื่อนไขการค้นหาในขณะนี้</p>
+    </div>
   </div>
 
 </div>
@@ -321,6 +321,8 @@
 </div>
 
 <script>
+var currentStatusFilter = '{{ status or "all" }}';
+
 function toggleTicketDrawer(id) {
   var drawer = document.getElementById('ticket-drawer-' + id);
   var card = document.getElementById('ticket-item-' + id);
@@ -366,20 +368,66 @@ function closeCreateTicketModal() {
   if (m) m.style.display = 'none';
 }
 
-function filterTicketsLive(val) {
-  var query = (val || '').toLowerCase().trim();
+function filterTicketsTab(status) {
+  currentStatusFilter = status || 'all';
+
+  document.querySelectorAll('.ticket-tab').forEach(function(t) {
+    var tSt = t.getAttribute('data-tab-status') || '';
+    if (tSt === currentStatusFilter || (!currentStatusFilter && tSt === 'all')) {
+      t.classList.add('active');
+    } else {
+      t.classList.remove('active');
+    }
+  });
+
+  document.querySelectorAll('.ticket-kpi-card').forEach(function(k) {
+    var kSt = k.getAttribute('data-kpi-status') || '';
+    if (kSt === currentStatusFilter || (!currentStatusFilter && kSt === 'all')) {
+      k.classList.add('active');
+    } else {
+      k.classList.remove('active');
+    }
+  });
+
+  applyCombinedFilter();
+
+  var newUrl = '/admin/tickets' + (currentStatusFilter && currentStatusFilter !== 'all' ? '?status=' + currentStatusFilter : '');
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, '', newUrl);
+  }
+}
+
+function filterTicketsLive() {
+  applyCombinedFilter();
+}
+
+function applyCombinedFilter() {
+  var query = (document.getElementById('ticketSearchInput') ? document.getElementById('ticketSearchInput').value : '').toLowerCase().trim();
   var items = document.querySelectorAll('.ticket-card');
+  var visible = 0;
+
   items.forEach(function(el) {
+    var st = el.getAttribute('data-status') || '';
     var id = el.getAttribute('data-ticket-id') || '';
     var client = el.getAttribute('data-client') || '';
     var subject = el.getAttribute('data-subject') || '';
     var text = el.getAttribute('data-text') || '';
-    if (!query || id.indexOf(query) !== -1 || client.indexOf(query) !== -1 || subject.indexOf(query) !== -1 || text.indexOf(query) !== -1) {
+
+    var matchStatus = (currentStatusFilter === 'all' || !currentStatusFilter || st === currentStatusFilter || (currentStatusFilter === 'open' && (st === 'open' || st === 'pending')));
+    var matchQuery = (!query || id.indexOf(query) !== -1 || client.indexOf(query) !== -1 || subject.indexOf(query) !== -1 || text.indexOf(query) !== -1);
+
+    if (matchStatus && matchQuery) {
       el.style.display = '';
+      visible++;
     } else {
       el.style.display = 'none';
     }
   });
+
+  var emptyEl = document.getElementById('ticketEmptyState');
+  if (emptyEl) {
+    emptyEl.style.display = (visible === 0) ? 'flex' : 'none';
+  }
 }
 </script>
 {% endblock %}

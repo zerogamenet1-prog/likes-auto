@@ -139,6 +139,48 @@ function la_patch_admin_tickets(string $html): string {
         }
     }
 
+    // Merge tickets_override.json for 100% immediate consistency
+    $ovFile = __DIR__ . '/tickets_override.json';
+    if (is_file($ovFile)) {
+        $tOverrides = json_decode((string)file_get_contents($ovFile), true) ?: [];
+        foreach ($tickets as &$tRow) {
+            $tId = (int)$tRow['id'];
+            if (isset($tOverrides[$tId])) {
+                if (isset($tOverrides[$tId]['status'])) {
+                    $tRow['status'] = $tOverrides[$tId]['status'];
+                }
+                if (!empty($tOverrides[$tId]['replies'])) {
+                    if (!isset($replies[$tId])) {
+                        $replies[$tId] = [];
+                    }
+                    foreach ($tOverrides[$tId]['replies'] as $oRep) {
+                        $dup = false;
+                        foreach ($replies[$tId] as $exRep) {
+                            if (($exRep['message'] ?? '') === $oRep['message'] && ($exRep['created_at'] ?? '') === $oRep['created_at']) {
+                                $dup = true;
+                                break;
+                            }
+                        }
+                        if (!$dup) {
+                            $replies[$tId][] = $oRep;
+                            $tRow['reply'] = $oRep['message'];
+                        }
+                    }
+                }
+            }
+        }
+        unset($tRow);
+        
+        // Recount based on merged statuses
+        $counts = ['all' => count($tickets), 'open' => 0, 'answered' => 0, 'closed' => 0];
+        foreach ($tickets as $tRow) {
+            $st = $tRow['status'] ?: 'open';
+            if ($st === 'open' || $st === 'pending') $counts['open']++;
+            elseif ($st === 'answered') $counts['answered']++;
+            elseif ($st === 'closed') $counts['closed']++;
+        }
+    }
+
     // Fallback: parse tickets from HTML if DB is not available
     if (!$hasDb || empty($tickets)) {
         $ticketCardsChunk = substr($html, $mStart, $mEnd - $mStart);
@@ -243,38 +285,38 @@ function la_patch_admin_tickets(string $html): string {
 
       <!-- KPI Overview Cards -->
       <div class="ticket-kpi-grid">
-        <a href="/admin/tickets" class="ticket-kpi-card <?= empty($statusFilter)?'active':'' ?>">
+        <a href="/admin/tickets" id="kpi-all" data-kpi-status="all" onclick="filterTicketsTab('all'); return false;" class="ticket-kpi-card <?= empty($statusFilter)?'active':'' ?>">
           <div class="ticket-kpi-icon is-all"><i class="ri-ticket-2-line"></i></div>
           <div class="ticket-kpi-info">
             <em>ตั๋วทั้งหมด</em>
-            <strong><?= $counts['all'] ?></strong>
+            <strong id="kpi-count-all"><?= $counts['all'] ?></strong>
             <p>ประวัติตั๋วทั้งหมดในระบบ</p>
           </div>
         </a>
-        <a href="/admin/tickets?status=open" class="ticket-kpi-card is-pending <?= ($statusFilter==='open')?'active':'' ?>">
+        <a href="/admin/tickets?status=open" id="kpi-open" data-kpi-status="open" onclick="filterTicketsTab('open'); return false;" class="ticket-kpi-card is-pending <?= ($statusFilter==='open')?'active':'' ?>">
           <div class="ticket-kpi-icon is-open">
             <i class="ri-time-line"></i>
             <?php if ($counts['open'] > 0): ?><span class="ticket-pulse-dot"></span><?php endif; ?>
           </div>
           <div class="ticket-kpi-info">
             <em>รอแอดมินตอบ</em>
-            <strong class="text-amber"><?= $counts['open'] ?></strong>
+            <strong class="text-amber" id="kpi-count-open"><?= $counts['open'] ?></strong>
             <p><?= ($counts['open'] > 0)?'ลูกค้ากำลังรอการช่วยเหลือ':'ไม่มีตั๋วค้างตอบ' ?></p>
           </div>
         </a>
-        <a href="/admin/tickets?status=answered" class="ticket-kpi-card <?= ($statusFilter==='answered')?'active':'' ?>">
+        <a href="/admin/tickets?status=answered" id="kpi-answered" data-kpi-status="answered" onclick="filterTicketsTab('answered'); return false;" class="ticket-kpi-card <?= ($statusFilter==='answered')?'active':'' ?>">
           <div class="ticket-kpi-icon is-answered"><i class="ri-chat-check-line"></i></div>
           <div class="ticket-kpi-info">
             <em>ตอบแล้ว</em>
-            <strong class="text-indigo"><?= $counts['answered'] ?></strong>
+            <strong class="text-indigo" id="kpi-count-answered"><?= $counts['answered'] ?></strong>
             <p>ส่งคำตอบแล้ว รอลูกค้า</p>
           </div>
         </a>
-        <a href="/admin/tickets?status=closed" class="ticket-kpi-card <?= ($statusFilter==='closed')?'active':'' ?>">
+        <a href="/admin/tickets?status=closed" id="kpi-closed" data-kpi-status="closed" onclick="filterTicketsTab('closed'); return false;" class="ticket-kpi-card <?= ($statusFilter==='closed')?'active':'' ?>">
           <div class="ticket-kpi-icon is-closed"><i class="ri-checkbox-circle-line"></i></div>
           <div class="ticket-kpi-info">
             <em>ปิดแล้ว</em>
-            <strong class="text-emerald"><?= $counts['closed'] ?></strong>
+            <strong class="text-emerald" id="kpi-count-closed"><?= $counts['closed'] ?></strong>
             <p>แก้ไขและจบเรื่องแล้ว</p>
           </div>
         </a>
@@ -283,22 +325,22 @@ function la_patch_admin_tickets(string $html): string {
       <!-- Control & Filter Bar -->
       <div class="ticket-control-bar">
         <div class="ticket-tabs">
-          <a href="/admin/tickets" class="ticket-tab <?= empty($statusFilter)?'active':'' ?>">
+          <a href="/admin/tickets" id="tab-all" data-tab-status="all" onclick="filterTicketsTab('all'); return false;" class="ticket-tab <?= empty($statusFilter)?'active':'' ?>">
             ทั้งหมด <span class="ticket-tab-count"><?= $counts['all'] ?></span>
           </a>
-          <a href="/admin/tickets?status=open" class="ticket-tab <?= ($statusFilter==='open')?'active':'' ?>">
+          <a href="/admin/tickets?status=open" id="tab-open" data-tab-status="open" onclick="filterTicketsTab('open'); return false;" class="ticket-tab <?= ($statusFilter==='open')?'active':'' ?>">
             รอแอดมินตอบ <span class="ticket-tab-count text-amber"><?= $counts['open'] ?></span>
           </a>
-          <a href="/admin/tickets?status=answered" class="ticket-tab <?= ($statusFilter==='answered')?'active':'' ?>">
+          <a href="/admin/tickets?status=answered" id="tab-answered" data-tab-status="answered" onclick="filterTicketsTab('answered'); return false;" class="ticket-tab <?= ($statusFilter==='answered')?'active':'' ?>">
             ตอบแล้ว <span class="ticket-tab-count"><?= $counts['answered'] ?></span>
           </a>
-          <a href="/admin/tickets?status=closed" class="ticket-tab <?= ($statusFilter==='closed')?'active':'' ?>">
+          <a href="/admin/tickets?status=closed" id="tab-closed" data-tab-status="closed" onclick="filterTicketsTab('closed'); return false;" class="ticket-tab <?= ($statusFilter==='closed')?'active':'' ?>">
             ปิดแล้ว <span class="ticket-tab-count"><?= $counts['closed'] ?></span>
           </a>
         </div>
         <div class="ticket-search-box">
           <i class="ri-search-line"></i>
-          <input type="search" id="ticketSearchInput" placeholder="ค้นหารหัสตั๋ว, ลูกค้า, ออเดอร์, ข้อความ..." value="<?= htmlspecialchars($searchQuery) ?>" oninput="filterTicketsLive(this.value)">
+          <input type="search" id="ticketSearchInput" placeholder="ค้นหารหัสตั๋ว, ลูกค้า, ออเดอร์, ข้อความ..." value="<?= htmlspecialchars($searchQuery) ?>" oninput="filterTicketsLive()">
         </div>
       </div>
 
@@ -485,13 +527,14 @@ function la_patch_admin_tickets(string $html): string {
                     <div class="ticket-textarea-wrap">
                       <textarea class="la-input ticket-textarea" id="reply-text-<?= $tid ?>" name="message" rows="3" placeholder="พิมพ์ข้อความตอบกลับลูกค้าที่นี่..." required></textarea>
                     </div>
+                    <input type="hidden" name="and_close" id="and-close-<?= $tid ?>" value="0">
 
                     <div class="ticket-form-footer">
                       <div class="ticket-footer-left">
-                        <button type="submit" class="la-btn ticket-btn-send">
+                        <button type="submit" class="la-btn ticket-btn-send" onclick="document.getElementById('and-close-<?= $tid ?>').value='0'">
                           <i class="ri-send-plane-fill"></i> ส่งคำตอบ
                         </button>
-                        <button type="submit" name="and_close" value="1" class="la-btn la-btn-ghost ticket-btn-reply-close">
+                        <button type="submit" class="la-btn la-btn-ghost ticket-btn-reply-close" onclick="document.getElementById('and-close-<?= $tid ?>').value='1'">
                           <i class="ri-checkbox-circle-fill"></i> ตอบพร้อมปิดตั๋ว
                         </button>
                       </div>
@@ -518,13 +561,12 @@ function la_patch_admin_tickets(string $html): string {
               </div>
             </article>
           <?php endforeach; ?>
-        <?php else: ?>
-          <div class="ticket-empty-state">
-            <div class="ticket-empty-icon"><i class="ri-chat-smile-2-line"></i></div>
-            <h3>ไม่มีรายการตั๋วสนับสนุน</h3>
-            <p class="adm-sub">ไม่มีตั๋วที่ตรงกับเงื่อนไขการค้นหาในขณะนี้</p>
-          </div>
         <?php endif; ?>
+        <div class="ticket-empty-state" id="ticketEmptyState" style="display: <?= empty($tickets) ? 'flex' : 'none' ?>;">
+          <div class="ticket-empty-icon"><i class="ri-chat-smile-2-line"></i></div>
+          <h3>ไม่มีรายการตั๋วสนับสนุน</h3>
+          <p class="adm-sub">ไม่มีตั๋วที่ตรงกับเงื่อนไขการค้นหาในขณะนี้</p>
+        </div>
       </div>
 
     </div>
@@ -563,6 +605,8 @@ function la_patch_admin_tickets(string $html): string {
     </div>
 
     <script>
+    var currentStatusFilter = '<?= $statusFilter ?: "all" ?>';
+
     function toggleTicketDrawer(id) {
       var drawer = document.getElementById('ticket-drawer-' + id);
       var card = document.getElementById('ticket-item-' + id);
@@ -608,20 +652,66 @@ function la_patch_admin_tickets(string $html): string {
       if (m) m.style.display = 'none';
     }
 
-    function filterTicketsLive(val) {
-      var query = (val || '').toLowerCase().trim();
+    function filterTicketsTab(status) {
+      currentStatusFilter = status || 'all';
+
+      document.querySelectorAll('.ticket-tab').forEach(function(t) {
+        var tSt = t.getAttribute('data-tab-status') || '';
+        if (tSt === currentStatusFilter || (!currentStatusFilter && tSt === 'all')) {
+          t.classList.add('active');
+        } else {
+          t.classList.remove('active');
+        }
+      });
+
+      document.querySelectorAll('.ticket-kpi-card').forEach(function(k) {
+        var kSt = k.getAttribute('data-kpi-status') || '';
+        if (kSt === currentStatusFilter || (!currentStatusFilter && kSt === 'all')) {
+          k.classList.add('active');
+        } else {
+          k.classList.remove('active');
+        }
+      });
+
+      applyCombinedFilter();
+
+      var newUrl = '/admin/tickets' + (currentStatusFilter && currentStatusFilter !== 'all' ? '?status=' + currentStatusFilter : '');
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', newUrl);
+      }
+    }
+
+    function filterTicketsLive() {
+      applyCombinedFilter();
+    }
+
+    function applyCombinedFilter() {
+      var query = (document.getElementById('ticketSearchInput') ? document.getElementById('ticketSearchInput').value : '').toLowerCase().trim();
       var items = document.querySelectorAll('.ticket-card');
+      var visible = 0;
+
       items.forEach(function(el) {
+        var st = el.getAttribute('data-status') || '';
         var id = el.getAttribute('data-ticket-id') || '';
         var client = el.getAttribute('data-client') || '';
         var subject = el.getAttribute('data-subject') || '';
         var text = el.getAttribute('data-text') || '';
-        if (!query || id.indexOf(query) !== -1 || client.indexOf(query) !== -1 || subject.indexOf(query) !== -1 || text.indexOf(query) !== -1) {
+
+        var matchStatus = (currentStatusFilter === 'all' || !currentStatusFilter || st === currentStatusFilter || (currentStatusFilter === 'open' && (st === 'open' || st === 'pending')));
+        var matchQuery = (!query || id.indexOf(query) !== -1 || client.indexOf(query) !== -1 || subject.indexOf(query) !== -1 || text.indexOf(query) !== -1);
+
+        if (matchStatus && matchQuery) {
           el.style.display = '';
+          visible++;
         } else {
           el.style.display = 'none';
         }
       });
+
+      var emptyEl = document.getElementById('ticketEmptyState');
+      if (emptyEl) {
+        emptyEl.style.display = (visible === 0) ? 'flex' : 'none';
+      }
     }
     </script>
     <?php

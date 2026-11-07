@@ -1,39 +1,385 @@
 {% extends "admin/base.html" %}
-{% block title %}ตั๋วสนับสนุน{% endblock %}
-{% block subtitle %}<p class="adm-sub">ตอบลูกค้าแล้วปิดตั๋วเมื่อจบเรื่อง</p>{% endblock %}
+{% block title %}ศูนย์ช่วยเหลือ & ตั๋วสนับสนุน{% endblock %}
 {% block content %}
-<form method="get" class="adm-filter">
-  <select class="la-input adm-select" name="status" onchange="this.form.submit()">
-    <option value="">ทุกสถานะ</option>
-    <option value="open" {% if status=='open' %}selected{% endif %}>เปิด</option>
-    <option value="answered" {% if status=='answered' %}selected{% endif %}>ตอบแล้ว</option>
-    <option value="closed" {% if status=='closed' %}selected{% endif %}>ปิด</option>
-  </select>
-</form>
-{% for r in rows %}
-<article class="adm-card adm-ticket">
-  <div class="adm-actions" style="justify-content:space-between">
-    <b>#{{ r.id }} {{ r.subject }}</b>
-    <span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span>
-  </div>
-  <p class="la-muted">{{ r.client }} · {{ r.created_at }}</p>
-  <div class="adm-thread"><b>ลูกค้า:</b> {{ r.message }}</div>
-  {% for m in (replies or {}).get(r.id, []) %}
-  <div class="adm-thread"><b>{{ m.author }}:</b> {{ m.message }} <span class="la-muted">{{ m.created_at }}</span></div>
-  {% else %}
-    {% if r.reply %}<div class="adm-thread"><b>แอดมิน:</b> {{ r.reply }}</div>{% endif %}
-  {% endfor %}
-  {% if r.status != "closed" %}
-  <form method="post" action="/admin/tickets/{{ r.id }}/reply" class="adm-actions">
-    <input class="la-input" name="message" placeholder="พิมพ์คำตอบ" required style="flex:1;min-width:180px">
-    <button class="la-btn" type="submit">ตอบ</button>
-  </form>
-  <form method="post" action="/admin/tickets/{{ r.id }}/close" style="margin-top:8px">
-    <button class="la-btn la-btn-mini la-btn-ghost" type="submit">ปิดตั๋ว</button>
-  </form>
+<div class="ticket-desk-container">
+
+  {% if ok %}
+  <div class="adm-ok"><i class="ri-checkbox-circle-fill"></i> {{ ok }}</div>
   {% endif %}
-</article>
-{% else %}
-<p class="adm-empty">ยังไม่มีตั๋ว</p>
-{% endfor %}
+  {% if err %}
+  <div class="adm-error"><i class="ri-error-warning-fill"></i> {{ err }}</div>
+  {% endif %}
+
+  <!-- Top Hero Header -->
+  <div class="ticket-header-row">
+    <div class="ticket-header-title">
+      <div class="ticket-header-badge"><i class="ri-customer-service-2-line"></i> Support Desk</div>
+      <h1>ตั๋วสนับสนุน & ซัพพอร์ตลูกค้า</h1>
+      <p class="adm-sub">ศูนย์รับแจ้งปัญหา ตอบกลับลูกค้า เชื่อมโยงข้อมูลออเดอร์ และจัดการจบงานอย่างรวดเร็ว</p>
+    </div>
+    <div class="ticket-header-actions">
+      <button type="button" class="la-btn la-btn-ghost ticket-btn-refresh" onclick="location.reload()">
+        <i class="ri-refresh-line"></i> รีเฟรช
+      </button>
+      <button type="button" class="la-btn ticket-btn-create" onclick="openCreateTicketModal()">
+        <i class="ri-add-line"></i> เปิดตั๋วใหม่ถึงลูกค้า
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Overview Cards -->
+  <div class="ticket-kpi-grid">
+    <a href="/admin/tickets" class="ticket-kpi-card {% if not status %}active{% endif %}">
+      <div class="ticket-kpi-icon is-all"><i class="ri-ticket-2-line"></i></div>
+      <div class="ticket-kpi-info">
+        <em>ตั๋วทั้งหมด</em>
+        <strong>{{ counts.all }}</strong>
+        <p>ประวัติตั๋วทั้งหมดในระบบ</p>
+      </div>
+    </a>
+    <a href="/admin/tickets?status=open" class="ticket-kpi-card is-pending {% if status=='open' %}active{% endif %}">
+      <div class="ticket-kpi-icon is-open">
+        <i class="ri-time-line"></i>
+        {% if counts.open > 0 %}<span class="ticket-pulse-dot"></span>{% endif %}
+      </div>
+      <div class="ticket-kpi-info">
+        <em>รอแอดมินตอบ</em>
+        <strong class="text-amber">{{ counts.open }}</strong>
+        <p>{% if counts.open > 0 %}ลูกค้ากำลังรอการช่วยเหลือ{% else %}ไม่มีตั๋วค้างตอบ{% endif %}</p>
+      </div>
+    </a>
+    <a href="/admin/tickets?status=answered" class="ticket-kpi-card {% if status=='answered' %}active{% endif %}">
+      <div class="ticket-kpi-icon is-answered"><i class="ri-chat-check-line"></i></div>
+      <div class="ticket-kpi-info">
+        <em>ตอบแล้ว</em>
+        <strong class="text-indigo">{{ counts.answered }}</strong>
+        <p>ส่งคำตอบแล้ว รอลูกค้า</p>
+      </div>
+    </a>
+    <a href="/admin/tickets?status=closed" class="ticket-kpi-card {% if status=='closed' %}active{% endif %}">
+      <div class="ticket-kpi-icon is-closed"><i class="ri-checkbox-circle-line"></i></div>
+      <div class="ticket-kpi-info">
+        <em>ปิดแล้ว</em>
+        <strong class="text-emerald">{{ counts.closed }}</strong>
+        <p>แก้ไขและจบเรื่องแล้ว</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Control & Filter Bar -->
+  <div class="ticket-control-bar">
+    <div class="ticket-tabs">
+      <a href="/admin/tickets" class="ticket-tab {% if not status %}active{% endif %}">
+        ทั้งหมด <span class="ticket-tab-count">{{ counts.all }}</span>
+      </a>
+      <a href="/admin/tickets?status=open" class="ticket-tab {% if status=='open' %}active{% endif %}">
+        รอแอดมินตอบ <span class="ticket-tab-count text-amber">{{ counts.open }}</span>
+      </a>
+      <a href="/admin/tickets?status=answered" class="ticket-tab {% if status=='answered' %}active{% endif %}">
+        ตอบแล้ว <span class="ticket-tab-count">{{ counts.answered }}</span>
+      </a>
+      <a href="/admin/tickets?status=closed" class="ticket-tab {% if status=='closed' %}active{% endif %}">
+        ปิดแล้ว <span class="ticket-tab-count">{{ counts.closed }}</span>
+      </a>
+    </div>
+    <div class="ticket-search-box">
+      <i class="ri-search-line"></i>
+      <input type="search" id="ticketSearchInput" placeholder="ค้นหารหัสตั๋ว, ลูกค้า, ออเดอร์, ข้อความ..." value="{{ q or '' }}" oninput="filterTicketsLive(this.value)">
+    </div>
+  </div>
+
+  <!-- Tickets List -->
+  <div class="ticket-list" id="ticketListContainer">
+    {% for r in rows %}
+      {% set client_info = clients_map.get(r.client, {}) %}
+      {% set thread_reps = replies.get(r.id, []) %}
+      
+      {# Detect referenced Order ID #}
+      {% set ref_order_id = none %}
+      {% if r.message and r.message|trim|int > 0 %}
+        {% set ref_order_id = r.message|trim|int %}
+      {% endif %}
+      {% set ref_order = orders_map.get(ref_order_id, none) if ref_order_id else none %}
+
+      <article class="ticket-card is-{{ r.status }}" id="ticket-item-{{ r.id }}" data-ticket-id="{{ r.id }}" data-client="{{ r.client|lower }}" data-subject="{{ r.subject|lower }}" data-status="{{ r.status }}" data-text="{{ r.message|lower }}">
+        
+        <!-- Accordion Header -->
+        <header class="ticket-card-header" onclick="toggleTicketDrawer({{ r.id }})">
+          <div class="ticket-header-left">
+            <span class="ticket-badge is-{{ r.status }}">
+              {% if r.status == 'open' %}
+                <i class="ri-time-line"></i> รอตอบ
+              {% elif r.status == 'answered' %}
+                <i class="ri-chat-check-line"></i> ตอบแล้ว
+              {% elif r.status == 'closed' %}
+                <i class="ri-checkbox-circle-line"></i> ปิดแล้ว
+              {% else %}
+                {{ r.status }}
+              {% endif %}
+            </span>
+            <span class="ticket-id-tag">#{{ r.id }}</span>
+            <strong class="ticket-subject-title">{{ r.subject }}</strong>
+            
+            <div class="ticket-client-pill">
+              <span class="ticket-avatar">{{ r.client[:1]|upper }}</span>
+              <span class="ticket-username">{{ r.client }}</span>
+              {% if client_info and client_info.balance is defined %}
+                <span class="ticket-balance-tag">฿{{ "%.2f"|format(client_info.balance|float) }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="ticket-header-right">
+            {% if ref_order %}
+            <div class="ticket-order-pill" title="คลิกดูข้อมูลออเดอร์" onclick="event.stopPropagation(); window.open('/admin/orders?q={{ ref_order.id }}', '_blank')">
+              <i class="ri-shopping-bag-3-line"></i> ออเดอร์ #{{ ref_order.id }} · ฿{{ ref_order.charge }}
+            </div>
+            {% endif %}
+
+            <div class="ticket-msg-count">
+              <i class="ri-message-3-line"></i> {{ (thread_reps|length) + 1 }}
+            </div>
+            <time class="ticket-time">{{ r.created_at }}</time>
+            <button type="button" class="ticket-chevron-btn" aria-label="เปิด/ปิด รายละเอียด">
+              <i class="ri-arrow-down-s-line"></i>
+            </button>
+          </div>
+        </header>
+
+        <!-- Accordion Drawer (Expanded Body) -->
+        <div class="ticket-card-drawer" id="ticket-drawer-{{ r.id }}" style="display: {% if r.status == 'open' and loop.first %}block{% else %}none{% endif %};">
+          
+          <!-- Context Insight Strip -->
+          <div class="ticket-insight-strip">
+            <div class="ticket-insight-client">
+              <i class="ri-user-smile-line"></i>
+              <span>ลูกค้า: <strong>{{ r.client }}</strong></span>
+              {% if client_info %}
+                <span class="text-muted">| อีเมล: {{ client_info.email or '-' }} | ยอดคงเหลือ: <strong class="text-emerald">฿{{ "%.2f"|format(client_info.balance|float) }}</strong></span>
+                <a href="/admin/clients?q={{ r.client }}" target="_blank" class="ticket-insight-link"><i class="ri-external-link-line"></i> ดูโปรไฟล์ลูกค้า</a>
+              {% endif %}
+            </div>
+
+            {% if ref_order %}
+            <div class="ticket-insight-order">
+              <i class="ri-box-3-line"></i>
+              <span>ออเดอร์อ้างอิง: <strong>#{{ ref_order.id }}</strong> ({{ ref_order.service or ref_order.service_name or 'บริการ' }})</span>
+              <span class="text-muted">| ยอดสั่ง: {{ ref_order.quantity }} | ราคา: ฿{{ "%.2f"|format(ref_order.charge|float) }} | สถานะ: <span class="ticket-order-st is-{{ ref_order.status }}">{{ {'pending':'รอส่ง','processing':'กำลังทำ','completed':'สำเร็จ','partial':'บางส่วน','canceled':'ยกเลิก'}.get(ref_order.status, ref_order.status) }}</span></span>
+              <a href="/admin/orders?q={{ ref_order.id }}" target="_blank" class="ticket-insight-link"><i class="ri-external-link-line"></i> จัดการออเดอร์นี้</a>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Chat History Thread -->
+          <div class="ticket-chat-thread">
+            
+            <!-- Original Customer Message -->
+            <div class="ticket-bubble-row is-client">
+              <div class="ticket-bubble-avatar">{{ r.client[:1]|upper }}</div>
+              <div class="ticket-bubble-content">
+                <div class="ticket-bubble-meta">
+                  <strong>{{ r.client }}</strong> <span class="ticket-role-badge">ลูกค้า</span>
+                  <time>{{ r.created_at }}</time>
+                </div>
+                <div class="ticket-bubble-body">
+                  {% if ref_order_id %}
+                    <p>สอบถามเกี่ยวกับออเดอร์หมายเลข <strong>#{{ ref_order_id }}</strong></p>
+                  {% endif %}
+                  <p>{{ r.message }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Follow-up Replies -->
+            {% for m in thread_reps %}
+              {% set is_admin = (m.author|lower == 'admin' or m.author|lower == 'ทีมงาน' or m.author|lower == 'staff') %}
+              <div class="ticket-bubble-row {% if is_admin %}is-admin{% else %}is-client{% endif %}">
+                <div class="ticket-bubble-avatar">
+                  {% if is_admin %}<i class="ri-shield-star-fill"></i>{% else %}{{ m.author[:1]|upper }}{% endif %}
+                </div>
+                <div class="ticket-bubble-content">
+                  <div class="ticket-bubble-meta">
+                    <strong>{% if is_admin %}ทีมงาน LIKES AUTO ({{ m.author }}){% else %}{{ m.author }}{% endif %}</strong>
+                    {% if is_admin %}<span class="ticket-role-badge is-staff"><i class="ri-check-double-line"></i> แอดมิน</span>{% else %}<span class="ticket-role-badge">ลูกค้า</span>{% endif %}
+                    <time>{{ m.created_at }}</time>
+                  </div>
+                  <div class="ticket-bubble-body">
+                    {{ m.message }}
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              {% if r.reply %}
+              <div class="ticket-bubble-row is-admin">
+                <div class="ticket-bubble-avatar"><i class="ri-shield-star-fill"></i></div>
+                <div class="ticket-bubble-content">
+                  <div class="ticket-bubble-meta">
+                    <strong>ทีมงาน LIKES AUTO (แอดมิน)</strong>
+                    <span class="ticket-role-badge is-staff"><i class="ri-check-double-line"></i> แอดมิน</span>
+                  </div>
+                  <div class="ticket-bubble-body">
+                    {{ r.reply }}
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            {% endfor %}
+
+          </div>
+
+          <!-- Quick Canned Responses Bar -->
+          <div class="ticket-canned-bar">
+            <span class="ticket-canned-lbl"><i class="ri-flashlight-line"></i> ข้อความตอบด่วน:</span>
+            <button type="button" class="ticket-canned-chip" onclick="insertCanned({{ r.id }}, 'สวัสดีครับ แอดมินรับเรื่องแล้วครับ กำลังเร่งตรวจสอบกับระบบแม่ให้ทันทีครับผม')">⚡ รับเรื่องตรวจสอบ</button>
+            <button type="button" class="ticket-canned-chip" onclick="insertCanned({{ r.id }}, 'ตรวจสอบแล้ว ออเดอร์ของคุณดำเนินการเสร็จสมบูรณ์เรียบร้อยแล้วครับ ขอบคุณที่ใช้บริการครับ')">⚡ แจ้งเสร็จสมบูรณ์</button>
+            <button type="button" class="ticket-canned-chip" onclick="insertCanned({{ r.id }}, 'แอดมินได้ทำการยกเลิกออเดอร์และคืนยอดเงินเข้ากระเป๋าของคุณเรียบร้อยแล้วครับ สามารถสั่งใหม่ได้ทันทีครับ')">⚡ แจ้งคืนเงินแล้ว</button>
+            <button type="button" class="ticket-canned-chip" onclick="insertCanned({{ r.id }}, 'ระบบกำลังเร่งดำเนินการให้อยู่นะครับ อาจมีความล่าช้าเล็กน้อยจากคิวผู้ให้บริการ ขออภัยในความไม่สะดวกครับ')">⚡ กำลังเร่งคิวงาน</button>
+            <button type="button" class="ticket-canned-chip" onclick="insertCanned({{ r.id }}, 'รบกวนขอข้อมูลลิงก์เป้าหมาย หรือภาพหน้าจอเพิ่มเติม เพื่อให้ทีมงานช่วยตรวจสอบได้เร็วยิ่งขึ้นครับ')">⚡ ขอข้อมูลเพิ่มเติม</button>
+            <button type="button" class="ticket-canned-chip" onclick="insertCanned({{ r.id }}, 'แก้ไขปัญหาให้เรียบร้อยแล้วครับ หากมีข้อสงสัยหรือติดปัญหาด้านใดเพิ่มเติม สามารถติดต่อได้ตลอด 24 ชม. ครับ')">⚡ จบเรื่องเรียบร้อย</button>
+          </div>
+
+          <!-- Action & Reply Form -->
+          <div class="ticket-action-box">
+            <form method="post" action="/admin/tickets/{{ r.id }}/reply" class="ticket-reply-form" id="reply-form-{{ r.id }}">
+              <div class="ticket-textarea-wrap">
+                <textarea class="la-input ticket-textarea" id="reply-text-{{ r.id }}" name="message" rows="3" placeholder="พิมพ์ข้อความตอบกลับลูกค้าที่นี่..." required></textarea>
+              </div>
+
+              <div class="ticket-form-footer">
+                <div class="ticket-footer-left">
+                  <button type="submit" class="la-btn ticket-btn-send">
+                    <i class="ri-send-plane-fill"></i> ส่งคำตอบ
+                  </button>
+                  <button type="submit" name="and_close" value="1" class="la-btn la-btn-ghost ticket-btn-reply-close">
+                    <i class="ri-checkbox-circle-fill"></i> ตอบพร้อมปิดตั๋ว
+                  </button>
+                </div>
+
+                <div class="ticket-footer-right">
+                  {% if r.status != 'closed' %}
+                  <button type="button" class="la-btn la-btn-ghost text-amber" onclick="postTicketAction({{ r.id }}, 'close')">
+                    <i class="ri-lock-line"></i> ปิดตั๋ว
+                  </button>
+                  {% else %}
+                  <button type="button" class="la-btn la-btn-ghost text-indigo" onclick="postTicketAction({{ r.id }}, 'reopen')">
+                    <i class="ri-restart-line"></i> เปิดตั๋วใหม่
+                  </button>
+                  {% endif %}
+
+                  <button type="button" class="la-btn la-btn-ghost text-danger" onclick="confirmDeleteTicket({{ r.id }})">
+                    <i class="ri-delete-bin-line"></i> ลบตั๋ว
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </article>
+    {% else %}
+      <div class="ticket-empty-state">
+        <div class="ticket-empty-icon"><i class="ri-chat-smile-2-line"></i></div>
+        <h3>ไม่มีรายการตั๋วสนับสนุน</h3>
+        <p class="adm-sub">ไม่มีตั๋วที่ตรงกับเงื่อนไขการค้นหาในขณะนี้</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Admin Create Ticket Modal -->
+<div class="ticket-modal-scrim" id="createTicketModal" style="display:none;" onclick="if(event.target===this) closeCreateTicketModal()">
+  <div class="ticket-modal-card">
+    <div class="ticket-modal-header">
+      <h3><i class="ri-add-circle-fill text-indigo"></i> เปิดตั๋วใหม่ถึงลูกค้า</h3>
+      <button type="button" class="dash-iconbtn" onclick="closeCreateTicketModal()"><i class="ri-close-line"></i></button>
+    </div>
+    <form method="post" action="/admin/tickets/create" class="ticket-modal-form">
+      <div class="ticket-form-group">
+        <label>เลือกลูกค้า <span class="text-danger">*</span></label>
+        <select class="la-input" name="client" required>
+          <option value="">-- เลือกลูกค้า --</option>
+          {% for c in clients_list %}
+            <option value="{{ c.username }}">{{ c.username }} (ยอดเงิน ฿{{ "%.2f"|format(c.balance|float) }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="ticket-form-group">
+        <label>หัวข้อตั๋ว <span class="text-danger">*</span></label>
+        <input type="text" class="la-input" name="subject" required placeholder="เช่น แจ้งคืนเงินออเดอร์ / แจ้งความคืบหน้าบริการ">
+      </div>
+      <div class="ticket-form-group">
+        <label>ข้อความเริ่มต้น <span class="text-danger">*</span></label>
+        <textarea class="la-input" name="message" rows="4" required placeholder="ระบุข้อความหรือคำชี้แจงถึงลูกค้า..."></textarea>
+      </div>
+      <div class="ticket-modal-actions">
+        <button type="button" class="la-btn la-btn-ghost" onclick="closeCreateTicketModal()">ยกเลิก</button>
+        <button type="submit" class="la-btn ticket-btn-send"><i class="ri-send-plane-fill"></i> สร้างและส่งตั๋ว</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function toggleTicketDrawer(id) {
+  var drawer = document.getElementById('ticket-drawer-' + id);
+  var card = document.getElementById('ticket-item-' + id);
+  if (!drawer) return;
+  if (drawer.style.display === 'none' || drawer.style.display === '') {
+    drawer.style.display = 'block';
+    if (card) card.classList.add('is-expanded');
+  } else {
+    drawer.style.display = 'none';
+    if (card) card.classList.remove('is-expanded');
+  }
+}
+
+function insertCanned(id, text) {
+  var area = document.getElementById('reply-text-' + id);
+  if (area) {
+    area.value = text;
+    area.focus();
+  }
+}
+
+function postTicketAction(id, action) {
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/admin/tickets/' + id + '/' + action;
+  document.body.appendChild(form);
+  form.submit();
+}
+
+function confirmDeleteTicket(id) {
+  if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบตั๋ว #' + id + ' นี้? ข้อมูลข้อความทั้งหมดจะถูกลบถาวร')) {
+    postTicketAction(id, 'delete');
+  }
+}
+
+function openCreateTicketModal() {
+  var m = document.getElementById('createTicketModal');
+  if (m) m.style.display = 'flex';
+}
+
+function closeCreateTicketModal() {
+  var m = document.getElementById('createTicketModal');
+  if (m) m.style.display = 'none';
+}
+
+function filterTicketsLive(val) {
+  var query = (val || '').toLowerCase().trim();
+  var items = document.querySelectorAll('.ticket-card');
+  items.forEach(function(el) {
+    var id = el.getAttribute('data-ticket-id') || '';
+    var client = el.getAttribute('data-client') || '';
+    var subject = el.getAttribute('data-subject') || '';
+    var text = el.getAttribute('data-text') || '';
+    if (!query || id.indexOf(query) !== -1 || client.indexOf(query) !== -1 || subject.indexOf(query) !== -1 || text.indexOf(query) !== -1) {
+      el.style.display = '';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+}
+</script>
 {% endblock %}

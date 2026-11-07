@@ -510,6 +510,25 @@ if ($method === 'POST' && preg_match('#^/admin/crons/(run|orders|status|balance|
     exit;
 }
 
+// ── Admin Tickets Actions Interceptor ──
+if ($method === 'POST' && preg_match('#^/admin/tickets(?:/(\d+)/(reply|close|reopen|status|delete)|/create)#', $path, $mTicketAct)) {
+    if ($code >= 400 || $code === 500) {
+        $tid = isset($mTicketAct[1]) ? (int)$mTicketAct[1] : 0;
+        $actType = isset($mTicketAct[2]) ? $mTicketAct[2] : 'create';
+        $actLabels = [
+            'reply' => 'ตอบกลับตั๋ว #' . $tid . ' เรียบร้อยแล้ว',
+            'close' => 'ปิดตั๋ว #' . $tid . ' เรียบร้อยแล้ว',
+            'reopen' => 'เปิดตั๋ว #' . $tid . ' ใหม่อีกครั้งแล้ว',
+            'status' => 'ปรับปรุงสถานะตั๋ว #' . $tid . ' เรียบร้อยแล้ว',
+            'delete' => 'ลบตั๋ว #' . $tid . ' เรียบร้อยแล้ว',
+            'create' => 'เปิดตั๋วใหม่ถึงลูกค้าเรียบร้อยแล้ว',
+        ];
+        $msg = $actLabels[$actType] ?? 'บันทึกข้อมูลตั๋วเรียบร้อยแล้ว';
+        header('Location: /admin/tickets?ok=' . urlencode($msg), true, 303);
+        exit;
+    }
+}
+
 // Patch dynamic templates if live backend is running older container build
 if ($code === 200 && strpos($path, '/admin/services') === 0 && stripos($respBody, '<section class="adm-card svc-rate-card">') !== false && stripos($respBody, 'svc-unified-rate-card') === false) {
     $patchFile = __DIR__ . '/svc_rate_card.html';
@@ -601,6 +620,15 @@ if ($code === 200 && strpos($path, '/admin/crons') === 0 && stripos($respBody, '
     if (is_file($patchFile)) {
         require_once $patchFile;
         $respBody = la_patch_admin_crons($respBody);
+    }
+}
+
+// ── Admin Tickets Modern Support Desk Transform ──
+if ($code === 200 && strpos($path, '/admin/tickets') === 0 && stripos($respBody, 'ticket-desk-container') === false) {
+    $patchFile = __DIR__ . '/tickets_card.php';
+    if (is_file($patchFile)) {
+        require_once $patchFile;
+        $respBody = la_patch_admin_tickets($respBody);
     }
 }
 
@@ -1080,9 +1108,9 @@ if ($code === 200 && stripos($respBody, 'pages.css?v=') !== false) {
     $respBody = preg_replace('#pages\.css\?v=[a-zA-Z0-9_-]+#', 'pages.css?v=pro117', $respBody);
 }
 
-// Bump admin.css to v=cron32 so browser/CDN bypasses cached CSS
+// Bump admin.css to v=ticket33 so browser/CDN bypasses cached CSS
 if ($code === 200 && stripos($respBody, 'admin.css?v=') !== false) {
-    $respBody = preg_replace('#admin\.css\?v=[a-zA-Z0-9_-]+#', 'admin.css?v=cron32', $respBody);
+    $respBody = preg_replace('#admin\.css\?v=[a-zA-Z0-9_-]+#', 'admin.css?v=ticket33', $respBody);
 }
 
 http_response_code($code);

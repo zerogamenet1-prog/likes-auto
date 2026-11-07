@@ -448,6 +448,27 @@ def close_ticket(tid):
     execute("UPDATE tickets SET status='closed' WHERE id=?", (tid,))
 
 
+def reopen_ticket(tid):
+    execute("UPDATE tickets SET status='open' WHERE id=?", (tid,))
+
+
+def delete_ticket(tid):
+    execute("DELETE FROM ticket_replies WHERE ticket_id=?", (tid,))
+    execute("DELETE FROM tickets WHERE id=?", (tid,))
+
+
+def create_admin_ticket(client, subject, message):
+    tid = execute(
+        "INSERT INTO tickets (client, subject, status, created_at, message, reply) VALUES (?,?,?,?,?,?)",
+        (client.strip(), subject.strip(), "answered", now(), message.strip(), message.strip()),
+    )
+    execute(
+        "INSERT INTO ticket_replies (ticket_id, author, message, created_at) VALUES (?,?,?,?)",
+        (tid, "admin", message.strip(), now()),
+    )
+    return tid
+
+
 def add_news(title, body):
     return execute("INSERT INTO news (title, body, created_at) VALUES (?,?,?)", (title, body, now()))
 

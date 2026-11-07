@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from urllib.parse import quote_plus
+
 from admin import render, require_admin
 from db import (
     add_log,
@@ -48,6 +50,9 @@ from store import (
     adjust_balance,
     all_ticket_replies,
     close_ticket,
+    reopen_ticket,
+    delete_ticket,
+    create_admin_ticket,
     delete_news,
     delete_service,
     fetch_all,
@@ -1001,12 +1006,14 @@ async def service_delete(request: Request, sid: int):
 
 
 @router.post("/tickets/{tid}/reply")
-async def ticket_reply(request: Request, tid: int, message: str = Form(...)):
+async def ticket_reply(request: Request, tid: int, message: str = Form(...), and_close: str = Form(None)):
     g = gate(request)
     if g:
         return g
-    reply_ticket(tid, request.session.get("admin") or "admin", message.strip())
-    return RedirectResponse("/admin/tickets", status_code=303)
+    new_status = "closed" if and_close else "answered"
+    reply_ticket(tid, request.session.get("admin") or "admin", message.strip(), new_status)
+    ok_txt = f"ตอบกลับตั๋ว #{tid} เรียบร้อยแล้ว (สถานะ: ปิดตั๋วแล้ว)" if and_close else f"ส่งคำตอบตั๋ว #{tid} สำเร็จแล้ว"
+    return RedirectResponse("/admin/tickets?ok=" + quote_plus(ok_txt), status_code=303)
 
 
 @router.post("/tickets/{tid}/close")
@@ -1015,4 +1022,43 @@ async def ticket_close(request: Request, tid: int):
     if g:
         return g
     close_ticket(tid)
-    return RedirectResponse("/admin/tickets", status_code=303)
+    return RedirectResponse("/admin/tickets?ok=" + quote_plus(f"ปิดตั๋ว #{tid} เรียบร้อยแล้ว"), status_code=303)
+
+
+@router.post("/tickets/{tid}/reopen")
+async def ticket_reopen(request: Request, tid: int):
+    g = gate(request)
+    if g:
+        return g
+    reopen_ticket(tid)
+    return RedirectResponse("/admin/tickets?ok=" + quote_plus(f"เปิดตั๋ว #{tid} ใหม่อีกครั้งแล้ว"), status_code=303)
+
+
+@router.post("/tickets/{tid}/status")
+async def ticket_status(request: Request, tid: int, status: str = Form(...)):
+    g = gate(request)
+    if g:
+        return g
+    from store import execute
+    if status in ("open", "answered", "closed"):
+        execute("UPDATE tickets SET status=? WHERE id=?", (status, tid))
+    st_th = {"open": "เปิด (รอตอบ)", "answered": "ตอบแล้ว", "closed": "ปิดแล้ว"}.get(status, status)
+    return RedirectResponse("/admin/tickets?ok=" + quote_plus(f"ปรับปรุงสถานะตั๋ว #{tid} เป็น {st_th} แล้ว"), status_code=303)
+
+
+@router.post("/tickets/{tid}/delete")
+async def ticket_delete(request: Request, tid: int):
+    g = gate(request)
+    if g:
+        return g
+    delete_ticket(tid)
+    return RedirectResponse("/admin/tickets?ok=" + quote_plus(f"ลบตั๋ว #{tid} เรียบร้อยแล้ว"), status_code=303)
+
+
+@router.post("/tickets/create")
+async def ticket_create(request: Request, client: str = Form(...), subject: str = Form(...), message: str = Form(...)):
+    g = gate(request)
+    if g:
+        return g
+    tid = create_admin_ticket(client, subject, message)
+    return RedirectResponse("/admin/tickets?ok=" + quote_plus(f"เปิดตั๋วใหม่ #{tid} ถึงลูกค้า {client} สำเร็จแล้ว"), status_code=303)

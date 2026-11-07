@@ -832,18 +832,59 @@ async def payments_slip_diag(request: Request):
 
 
 @router.get("/tickets", response_class=HTMLResponse)
-async def tickets(request: Request, status: str = ""):
+async def tickets(request: Request, status: str = "", q: str = ""):
     gate = require_admin(request)
     if gate:
         return gate
-    from store import all_ticket_replies
+    from store import all_ticket_replies, rows
     items = rows("tickets")
+    
+    # Calculate global counts across all tickets
+    all_raw = rows("tickets")
+    counts = {
+        "all": len(all_raw),
+        "open": sum(1 for t in all_raw if (t.get("status") or "") in ("open", "pending", "")),
+        "answered": sum(1 for t in all_raw if (t.get("status") or "") == "answered"),
+        "closed": sum(1 for t in all_raw if (t.get("status") or "") == "closed"),
+    }
+    
     if status:
-        items = [r for r in items if (r.get("status") or "") == status]
+        if status == "open":
+            items = [r for r in items if (r.get("status") or "") in ("open", "pending", "")]
+        else:
+            items = [r for r in items if (r.get("status") or "") == status]
+            
+    if q:
+        ql = q.lower().strip()
+        items = [
+            r for r in items
+            if ql in str(r.get("id", "")).lower()
+            or ql in str(r.get("client", "")).lower()
+            or ql in str(r.get("subject", "")).lower()
+            or ql in str(r.get("message", "")).lower()
+            or ql in str(r.get("reply", "")).lower()
+        ]
+        
+    clients_list = rows("clients", 500)
+    clients_map = {c.get("username"): c for c in clients_list if c.get("username")}
+    
+    orders_list = rows("orders", 500)
+    orders_map = {int(o.get("id")): o for o in orders_list if o.get("id")}
+    
+    ok = request.query_params.get("ok", "")
+    err = request.query_params.get("err", "")
+    
     return render(request, "admin/tickets.html", {
         "page": "tickets",
         "rows": items,
         "status": status,
+        "q": q,
+        "ok": ok,
+        "err": err,
+        "counts": counts,
+        "clients_map": clients_map,
+        "clients_list": clients_list,
+        "orders_map": orders_map,
         "replies": all_ticket_replies(),
     })
 

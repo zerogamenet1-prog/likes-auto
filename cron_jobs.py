@@ -271,12 +271,22 @@ def shop_rebuild_due(hours=SHOP_REBUILD_HOURS):
     return int(n or 0) == 0
 
 
-def refresh_catalogs(force_shop=False):
+def catalog_sync_due(hours=12):
+    from db import get_settings
+    last = _parse_ts(get_settings().get("catalog_synced_at"))
+    if not last:
+        return True
+    return (datetime.now() - last).total_seconds() >= hours * 3600
+
+
+def refresh_catalogs(force=False, force_shop=False):
     from db import get_settings, list_providers, replace_provider_catalog, save_settings, sync_listed_from_catalog, shop_manual_locked
     from db import now as db_now
     from smm_api import normalize_services
     from catalog_pick import rebuild_best_shop
     try:
+        if not force and not force_shop and not catalog_sync_due(hours=12):
+            return 0
         providers = list_providers()
         if not providers:
             return 0

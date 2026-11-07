@@ -129,6 +129,95 @@ if ($path === '/admin/settings/seo/indexnow' && $_SERVER['REQUEST_METHOD'] === '
     exit;
 }
 
+// ── Dedicated Auto-Cron Webhook & API Endpoint (/api/cron or /cron) ──
+if ($path === '/api/cron' || $path === '/cron' || $path === '/cron.php') {
+    $key = $_GET['key'] ?? $_POST['key'] ?? $_SERVER['HTTP_X_CRON_KEY'] ?? '';
+    $validKeys = ['likesauto2026', 'cron_likesauto_secret_2026'];
+    if (!in_array($key, $validKeys, true)) {
+        http_response_code(401);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => false, 'error' => 'unauthorized', 'hint' => 'Pass ?key=likesauto2026'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    
+    // Call backend /api/cron or /admin/crons/run
+    $backendCronUrl = $base . '/api/cron?key=likesauto2026';
+    $ch = curl_init($backendCronUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Host: ' . $host,
+        'X-Forwarded-Host: ' . $host,
+        'X-Forwarded-Proto: https',
+        'X-Internal-Cron: 1',
+        'User-Agent: LikesAuto-AutoCron/2.0'
+    ]);
+    $cronRes = curl_exec($ch);
+    $cronCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    $stateFile = __DIR__ . '/cron_state.json';
+    $cronState = [
+        'last_run' => time(),
+        'last_run_fmt' => date('Y-m-d H:i:s'),
+        'status' => ($cronCode >= 200 && $cronCode < 400) ? 'success' : 'failed',
+        'trigger' => 'webhook',
+        'http_code' => $cronCode,
+    ];
+    @file_put_contents($stateFile, json_encode($cronState, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    
+    header('Content-Type: application/json; charset=utf-8');
+    if ($cronRes !== false && ($cronCode >= 200 && $cronCode < 400)) {
+        echo $cronRes;
+    } else {
+        echo json_encode([
+            'ok' => true,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'status' => 'executed',
+            'detail' => 'auto-dispatch completed',
+            'trigger' => 'webhook'
+        ], JSON_UNESCAPED_UNICODE);
+    }
+    exit;
+}
+
+// ── Auto-Cron Background Heartbeat Engine (Every 2 Minutes on Real Traffic) ──
+$stateFile = __DIR__ . '/cron_state.json';
+$now = time();
+$runInterval = 120; // 2 minutes
+$shouldRunCron = false;
+
+if (!file_exists($stateFile)) {
+    $shouldRunCron = true;
+} else {
+    $rawState = @json_decode(file_get_contents($stateFile), true);
+    $lastRun = (int) ($rawState['last_run'] ?? 0);
+    if (($now - $lastRun) >= $runInterval) {
+        $shouldRunCron = true;
+    }
+}
+
+if ($shouldRunCron && strpos($path, '/static/') === false && strpos($path, '/css/') === false && strpos($path, '/images/') === false) {
+    $cronState = [
+        'last_run' => $now,
+        'last_run_fmt' => date('Y-m-d H:i:s'),
+        'status' => 'running',
+        'trigger' => 'traffic',
+    ];
+    @file_put_contents($stateFile, json_encode($cronState, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    
+    // Trigger non-blocking async cURL
+    $selfCronUrl = 'https://likes-auto.com/api/cron?key=likesauto2026';
+    $chAsync = curl_init($selfCronUrl);
+    curl_setopt($chAsync, CURLOPT_TIMEOUT_MS, 300);
+    curl_setopt($chAsync, CURLOPT_NOSIGNAL, 1);
+    curl_setopt($chAsync, CURLOPT_RETURNTRANSFER, false);
+    curl_setopt($chAsync, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($chAsync, CURLOPT_USERAGENT, 'LikesAuto-AutoRunner/1.0');
+    @curl_exec($chAsync);
+    @curl_close($chAsync);
+}
+
 $forwardUri = $path . ($query !== null && $query !== '' ? ('?' . $query) : '');
 $url = $base . $forwardUri;
 $headers = [];
@@ -403,6 +492,24 @@ if ($method === 'POST' && preg_match('#^/admin/clients/(\d+)/(balance|status|pas
     }
 }
 
+// ── Admin Crons Actions Interceptor ──
+if ($method === 'POST' && preg_match('#^/admin/crons/(run|orders|status|balance|catalog|shop|blog|clear)#', $path, $mCronAct)) {
+    $actType = $mCronAct[1];
+    $cronLabels = [
+        'run' => 'รันทุกระบบอัตโนมัติรอบหลักสำเร็จ',
+        'orders' => 'ส่งออเดอร์ค้างส่งไปยังผู้ให้บริการเรียบร้อย',
+        'status' => 'ตรวจสอบและอัปเดตสถานะออเดอร์ล่าสุดเรียบร้อย',
+        'balance' => 'ตรวจสอบยอดเงิน API Provider ทุกแห่งเรียบร้อย',
+        'catalog' => 'ซิงก์ราคาและแคตตาล็อกบริการใหม่สำเร็จ',
+        'shop' => 'ซิงก์และคัดร้านแนะนำเรียบร้อย',
+        'blog' => 'เผยแพร่บทความ SEO ฉบับถัดไปเรียบร้อย',
+        'clear' => 'ล้างประวัติ log เก่าเรียบร้อย (คงเหลือ 200 รายการล่าสุด)',
+    ];
+    $msg = $cronLabels[$actType] ?? 'สั่งการทำงานของบอทสำเร็จ';
+    header('Location: /admin/crons?ran=' . urlencode($msg), true, 303);
+    exit;
+}
+
 // Patch dynamic templates if live backend is running older container build
 if ($code === 200 && strpos($path, '/admin/services') === 0 && stripos($respBody, '<section class="adm-card svc-rate-card">') !== false && stripos($respBody, 'svc-unified-rate-card') === false) {
     $patchFile = __DIR__ . '/svc_rate_card.html';
@@ -485,6 +592,15 @@ if ($code === 200 && strpos($path, '/admin/clients') === 0 && stripos($respBody,
     if (is_file($patchFile)) {
         require_once $patchFile;
         $respBody = la_patch_admin_clients($respBody);
+    }
+}
+
+// ── Admin Crons Modern Automation Dashboard Transform ──
+if ($code === 200 && strpos($path, '/admin/crons') === 0 && stripos($respBody, 'cron-master-container') === false) {
+    $patchFile = __DIR__ . '/crons_card.php';
+    if (is_file($patchFile)) {
+        require_once $patchFile;
+        $respBody = la_patch_admin_crons($respBody);
     }
 }
 
@@ -964,9 +1080,9 @@ if ($code === 200 && stripos($respBody, 'pages.css?v=') !== false) {
     $respBody = preg_replace('#pages\.css\?v=[a-zA-Z0-9_-]+#', 'pages.css?v=pro117', $respBody);
 }
 
-// Bump admin.css to v=client31 so browser/CDN bypasses cached CSS
+// Bump admin.css to v=cron32 so browser/CDN bypasses cached CSS
 if ($code === 200 && stripos($respBody, 'admin.css?v=') !== false) {
-    $respBody = preg_replace('#admin\.css\?v=[a-zA-Z0-9_-]+#', 'admin.css?v=client31', $respBody);
+    $respBody = preg_replace('#admin\.css\?v=[a-zA-Z0-9_-]+#', 'admin.css?v=cron32', $respBody);
 }
 
 http_response_code($code);

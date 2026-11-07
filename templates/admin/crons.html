@@ -1,96 +1,390 @@
 {% extends "admin/base.html" %}
-{% block title %}บันทึกงาน{% endblock %}
-{% block subtitle %}<p class="adm-sub">ไฟล์ log การทำงานอัตโนมัติ — อ่านสถานะล่าสุดและประวัติทีละบรรทัด</p>{% endblock %}
+{% block title %}บันทึกงาน & บอทอัตโนมัติ{% endblock %}
+{% block subtitle %}<p class="adm-sub">ระบบจัดการและตรวจสอบการทำงานของบอทอัตโนมัติ 24 ชม. ส่งออเดอร์, ดึงสถานะ, เช็คยอดเงิน และซิงก์ราคา</p>{% endblock %}
 {% block content %}
-{% if ran %}<div class="adm-ok"><i class="ri-checkbox-circle-line"></i> รันแล้ว: {{ ran }}</div>{% endif %}
 
-<section class="adm-card cron-guide">
-  <div class="cron-guide-head">
-    <h2><i class="ri-information-line"></i> อ่าน log ยังไง</h2>
-    <p class="la-muted">ระบบรันเองประมาณทุก 2 นาที หน้านี้คือประวัติล่าสุด ไม่ต้องกดทุกครั้ง</p>
-  </div>
-  <div class="cron-legend">
-    <div class="cron-legend-item"><span class="cron-badge is-pull">ดึงงานรอบหลัก</span><span>ส่งออเดอร์ · เช็คสถานะ · ยอดเงิน · ดึงแคตตาล็อก</span></div>
-    <div class="cron-legend-item"><span class="cron-badge is-sync">ซิงก์บริการ</span><span>อัปเดตราคา · เปิดของที่ใช้ได้ · ปิดของที่ต้นทางไม่มี</span></div>
-    <div class="cron-legend-item"><span class="cron-badge is-shop">คัดร้าน</span><span>คัดบริการแนะนำ (ใช้เมื่อร้านยังไม่ล็อก / ไม่ใช่ร้านใหญ่)</span></div>
-    <div class="cron-legend-item"><span class="cron-badge is-catalog">แคตตาล็อก</span><span>ดึงรายการจาก API หรือแจ้ง error</span></div>
-  </div>
-</section>
-
-<section class="cron-kpis">
-  <article class="adm-card cron-kpi">
-    <em>ดึงงานล่าสุด</em>
-    <strong>{{ last_pull.created_at if last_pull else '-' }}</strong>
-    <p>{{ last_pull.summary if last_pull else 'ยังไม่มีบันทึก' }}</p>
-  </article>
-  <article class="adm-card cron-kpi">
-    <em>ซิงก์บริการล่าสุด</em>
-    <strong>{{ last_sync.created_at if last_sync else shop_synced_at }}</strong>
-    <p>{{ last_sync.summary if last_sync else ('บันทึกระบบ: ' ~ shop_synced_at) }}</p>
-  </article>
-  <article class="adm-card cron-kpi">
-    <em>คัดร้านล่าสุด</em>
-    <strong>{{ last_shop.created_at if last_shop else shop_rebuild_at }}</strong>
-    <p>{{ last_shop.summary if last_shop else ('บันทึกระบบ: ' ~ shop_rebuild_at) }}</p>
-  </article>
-</section>
-
-<section class="adm-card cron-actions">
-  <div>
-    <h2><i class="ri-play-circle-line"></i> รันด้วยมือ</h2>
-    <p class="la-muted">ใช้เมื่อต้องการดึงทันที ไม่ต้องรอรอบอัตโนมัติ</p>
-  </div>
-  <div class="cron-action-btns">
-    <form method="post" action="/admin/crons/run">
-      <button class="la-btn" type="submit"><i class="ri-refresh-line"></i> ดึงงานรอบหลักตอนนี้</button>
-    </form>
-    <form method="post" action="/admin/crons/shop">
-      <button class="la-btn la-btn-ghost" type="submit"><i class="ri-store-2-line"></i> ซิงก์/อัปเดทร้านตอนนี้</button>
-    </form>
-  </div>
-</section>
-
-<section class="adm-card cron-log-card">
-  <div class="cron-log-head">
+<div class="cron-master-container">
+  
+  <!-- Header & Live Pulse -->
+  <div class="cron-header-row">
     <div>
-      <h2><i class="ri-file-list-3-line"></i> บันทึก log</h2>
-      <p class="la-muted">แสดง {{ logs|length }} รายการล่าสุด{% if job and job != 'all' %} · กรอง: {{ job }}{% endif %}</p>
+      <h1 class="dash-h"><i class="ri-cpu-line"></i> บันทึกงาน &amp; บอทอัตโนมัติ (Crons &amp; Automation)</h1>
+      <p class="adm-sub">ระบบจัดการและตรวจสอบการทำงานของบอทอัตโนมัติ 24 ชม. ส่งออเดอร์, ดึงสถานะ, เช็คยอดเงิน และซิงก์ราคา</p>
     </div>
-    <nav class="cron-filters" aria-label="กรองประเภท log">
-      <a class="cron-filter{% if job=='all' %} is-on{% endif %}" href="/admin/crons">ทั้งหมด</a>
-      {% for key, meta in job_meta.items() %}
-      <a class="cron-filter{% if job==key %} is-on{% endif %}" href="/admin/crons?job={{ key }}">{{ meta.label }}</a>
-      {% endfor %}
-    </nav>
+    <div class="cron-heartbeat-box">
+      <div class="cron-pulse-dot" title="ระบบอัตโนมัติกำลังทำงาน"></div>
+      <span class="cron-pulse-text">บอทออโต้ 24 ชม.: <strong id="cronTimerText">กำลังทำงาน</strong></span>
+      <button type="button" class="la-btn la-btn-mini la-btn-ghost" onclick="cronTriggerImmediate()" title="กดสั่งรันทันที">
+        <i class="ri-flashlight-line"></i> รันด่วน
+      </button>
+    </div>
   </div>
 
-  <div class="cron-log-list" role="log">
-    {% for r in logs %}
-    <article class="cron-log-row{% if r.is_error %} is-error{% endif %}">
-      <div class="cron-log-meta">
-        <span class="cron-badge is-{{ r.job_tone }}"><i class="{{ r.job_icon }}"></i> {{ r.job_label }}</span>
-        <time datetime="{{ r.created_at }}">{{ r.created_at }}</time>
-        <span class="cron-log-id">#{{ r.id }}</span>
-      </div>
-      <p class="cron-log-summary">{{ r.summary }}</p>
-      {% if r.fields %}
-      <div class="cron-chips">
-        {% for f in r.fields %}
-        <span class="cron-chip"><b>{{ f.label }}</b> {{ f.value }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
-      <details class="cron-raw">
-        <summary>ดูข้อความดิบ</summary>
-        <code>{{ r.raw }}</code>
-      </details>
-    </article>
-    {% else %}
-    <div class="cron-empty">
-      <i class="ri-inbox-line"></i>
-      <p>ยังไม่มีบันทึกในตัวกรองนี้</p>
-    </div>
-    {% endfor %}
+  {% if ran %}
+  <div class="adm-ok cron-alert-ok">
+    <i class="ri-checkbox-circle-fill"></i>
+    <span><strong>ทำรายการสำเร็จ:</strong> {{ ran }}</span>
   </div>
-</section>
+  {% endif %}
+
+  <!-- 1. Top KPI Summary Grid -->
+  <div class="cron-kpi-grid">
+    <div class="cron-kpi-card is-engine">
+      <div class="cron-kpi-icon"><i class="ri-radar-line"></i></div>
+      <div class="cron-kpi-body">
+        <span class="cron-kpi-lbl">สถานะระบบอัตโนมัติ</span>
+        <div class="cron-kpi-val"><span class="cron-live-pill"><i class="ri-record-circle-fill"></i> ออโต้ 24 ชม.</span></div>
+        <span class="cron-kpi-sub">รอบล่าสุด: {{ last_pull.created_at if last_pull else 'เมื่อสักครู่' }}</span>
+      </div>
+    </div>
+
+    <div class="cron-kpi-card is-send">
+      <div class="cron-kpi-icon"><i class="ri-send-plane-fill"></i></div>
+      <div class="cron-kpi-body">
+        <span class="cron-kpi-lbl">ส่งออเดอร์ไป Provider</span>
+        <div class="cron-kpi-val">ทำงานอัตโนมัติ</div>
+        <span class="cron-kpi-sub"><i class="ri-shield-check-line"></i> Auto-Fallback เมื่อบริการปิด</span>
+      </div>
+    </div>
+
+    <div class="cron-kpi-card is-status">
+      <div class="cron-kpi-icon"><i class="ri-loop-right-line"></i></div>
+      <div class="cron-kpi-body">
+        <span class="cron-kpi-lbl">ติดตามสถานะออเดอร์</span>
+        <div class="cron-kpi-val">เช็คทุกรอบ</div>
+        <span class="cron-kpi-sub"><i class="ri-refund-line"></i> คืนเงินอัตโนมัติถ้าถูกยกเลิก</span>
+      </div>
+    </div>
+
+    <div class="cron-kpi-card is-balance">
+      <div class="cron-kpi-icon"><i class="ri-wallet-3-line"></i></div>
+      <div class="cron-kpi-body">
+        <span class="cron-kpi-lbl">ตรวจเช็คยอดเงิน API</span>
+        <div class="cron-kpi-val">พร้อมใช้งาน</div>
+        <span class="cron-kpi-sub">เช็ค Provider ทุกแห่งสม่ำเสมอ</span>
+      </div>
+    </div>
+
+    <div class="cron-kpi-card is-sync">
+      <div class="cron-kpi-icon"><i class="ri-store-2-line"></i></div>
+      <div class="cron-kpi-body">
+        <span class="cron-kpi-lbl">ซิงก์ราคาและบริการ</span>
+        <div class="cron-kpi-val">{{ last_sync.created_at if last_sync else shop_synced_at }}</div>
+        <span class="cron-kpi-sub">อัปเดตราคาต้นทุนอัตโนมัติ</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Quick Command Bar -->
+  <div class="cron-command-bar">
+    <div class="cron-cmd-title">
+      <i class="ri-terminal-box-line"></i> คำสั่งควบคุมบอทและงานระบบ:
+    </div>
+    <div class="cron-cmd-btns">
+      <form method="post" action="/admin/crons/run" class="cron-form-inline" onsubmit="return cronSubmitWithLoader(this, 'กำลังรันทุกระบบ...');">
+        <button class="la-btn la-btn-primary cron-btn-main" type="submit">
+          <i class="ri-flashlight-fill"></i> รันทุกระบบพร้อมกัน (Run All)
+        </button>
+      </form>
+      <form method="post" action="/admin/crons/orders" class="cron-form-inline" onsubmit="return cronSubmitWithLoader(this, 'กำลังส่งออเดอร์...');">
+        <button class="la-btn cron-btn-sub" type="submit">
+          <i class="ri-send-plane-line"></i> ส่งออเดอร์ค้างส่ง
+        </button>
+      </form>
+      <form method="post" action="/admin/crons/status" class="cron-form-inline" onsubmit="return cronSubmitWithLoader(this, 'กำลังดึงสถานะ...');">
+        <button class="la-btn cron-btn-sub" type="submit">
+          <i class="ri-refresh-line"></i> ดึงสถานะออเดอร์
+        </button>
+      </form>
+      <form method="post" action="/admin/crons/balance" class="cron-form-inline" onsubmit="return cronSubmitWithLoader(this, 'กำลังเช็คยอดเงิน...');">
+        <button class="la-btn cron-btn-sub" type="submit">
+          <i class="ri-wallet-line"></i> เช็คยอด API Provider
+        </button>
+      </form>
+      <form method="post" action="/admin/crons/catalog" class="cron-form-inline" onsubmit="return cronSubmitWithLoader(this, 'กำลังซิงก์ราคา...');">
+        <button class="la-btn cron-btn-sub" type="submit">
+          <i class="ri-database-2-line"></i> ซิงก์ราคา &amp; แคตตาล็อก
+        </button>
+      </form>
+      <form method="post" action="/admin/crons/blog" class="cron-form-inline" onsubmit="return cronSubmitWithLoader(this, 'กำลังปล่อยบทความ...');">
+        <button class="la-btn cron-btn-sub" type="submit">
+          <i class="ri-article-line"></i> ปล่อยบทความ SEO
+        </button>
+      </form>
+      <form method="post" action="/admin/crons/clear" class="cron-form-inline" onsubmit="return confirm('ยืนยันล้าง log เก่า (จะคงเหลือ 200 รายการล่าสุด)?') && cronSubmitWithLoader(this, 'กำลังล้าง log...');">
+        <button class="la-btn la-btn-ghost cron-btn-clear" type="submit" title="ล้าง log เก่าเกิน 200 รายการ">
+          <i class="ri-delete-bin-line"></i> ล้าง Log เก่า
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. External Webhook Card -->
+  <div class="cron-webhook-card">
+    <div class="cron-wh-left">
+      <div class="cron-wh-icon"><i class="ri-cloud-windy-line"></i></div>
+      <div>
+        <h3 class="cron-wh-title">ระบบสั่งรันอัตโนมัติภายนอกตลอด 24 ชั่วโมง (External 24/7 Webhook)</h3>
+        <p class="cron-wh-desc">
+          ระบบมี <strong>Background Traffic Runner</strong> ในตัวแล้ว และท่านสามารถนำ URL Webhook ด้านล่างไปใส่ในบริการฟรีเช่น 
+          <a href="https://cron-job.org" target="_blank" rel="noopener"><strong>cron-job.org</strong></a> หรือ <strong>cPanel Cron Jobs</strong> 
+          (ตั้งค่าให้เรียกทุก 1 นาที หรือ 2 นาที) เพื่อรับประกันว่าบอทจะส่งออเดอร์ให้ลูกค้าทันทีแม้ไม่มีใครเปิดหน้าเว็บ
+        </p>
+      </div>
+    </div>
+    <div class="cron-wh-right">
+      <div class="cron-wh-input-group">
+        <input type="text" id="cronWebhookUrl" class="la-input cron-wh-input" readonly value="https://likes-auto.com/api/cron?key=likesauto2026">
+        <button type="button" class="la-btn la-btn-primary cron-copy-btn" onclick="navigator.clipboard.writeText('https://likes-auto.com/api/cron?key=likesauto2026'); this.innerHTML='<i class=\'ri-check-line\'></i> คัดลอกแล้ว'; var b=this; setTimeout(function(){ b.innerHTML='<i class=\'ri-file-copy-line\'></i> คัดลอก URL'; }, 2000);">
+          <i class="ri-file-copy-line"></i> คัดลอก URL
+        </button>
+      </div>
+      <div class="cron-wh-badges">
+        <span class="cron-badge is-pull"><i class="ri-check-double-line"></i> รองรับ GET / POST</span>
+        <span class="cron-badge is-sync"><i class="ri-lock-line"></i> Key Protected</span>
+        <span class="cron-badge is-shop"><i class="ri-timer-line"></i> Fast Response &lt; 2s</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. System Bots Matrix Grid -->
+  <div class="cron-bots-section">
+    <div class="cron-section-title">
+      <i class="ri-robot-2-line"></i> ตารางภารกิจบอทระบบอัตโนมัติ (Active System Bots):
+    </div>
+    <div class="cron-bots-grid">
+      
+      <!-- Bot 1 -->
+      <div class="cron-bot-card">
+        <div class="cron-bot-head">
+          <div class="cron-bot-icon is-blue"><i class="ri-send-plane-2-fill"></i></div>
+          <div class="cron-bot-meta">
+            <span class="cron-bot-name">บอทส่งออเดอร์อัตโนมัติ</span>
+            <span class="cron-bot-freq">ความถี่: ทุก 1-2 นาที</span>
+          </div>
+          <span class="cron-badge is-pull">ทำงานออโต้</span>
+        </div>
+        <p class="cron-bot-desc">ตรวจสอบคำสั่งซื้อใหม่ของลูกค้า ส่งตรงไปยัง API Provider พร้อมระบบ <strong>Auto-Fallback</strong> สลับบริการใกล้เคียงอัตโนมัติเมื่อบริการเดิมปิด</p>
+        <div class="cron-bot-foot">
+          <span class="cron-bot-state"><i class="ri-checkbox-circle-fill text-ok"></i> รันล่าสุด: {{ last_pull.created_at if last_pull else 'พร้อมทำงาน' }}</span>
+          <form method="post" action="/admin/crons/orders" onsubmit="return cronSubmitWithLoader(this, 'กำลังส่งออเดอร์...');">
+            <button type="submit" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-play-fill"></i> สั่งรัน</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bot 2 -->
+      <div class="cron-bot-card">
+        <div class="cron-bot-head">
+          <div class="cron-bot-icon is-green"><i class="ri-pulse-line"></i></div>
+          <div class="cron-bot-meta">
+            <span class="cron-bot-name">บอทติดตามสถานะคำสั่งซื้อ</span>
+            <span class="cron-bot-freq">ความถี่: ทุก 2 นาที</span>
+          </div>
+          <span class="cron-badge is-pull">ทำงานออโต้</span>
+        </div>
+        <p class="cron-bot-desc">ดึงสถานะงานจริงจาก Provider (In Progress, Completed, Partial, Canceled) พร้อมอัปเดตยอดเริ่มนับ (Start) และคงเหลือ (Remains)</p>
+        <div class="cron-bot-foot">
+          <span class="cron-bot-state"><i class="ri-checkbox-circle-fill text-ok"></i> อัปเดตสถานะอัตโนมัติ</span>
+          <form method="post" action="/admin/crons/status" onsubmit="return cronSubmitWithLoader(this, 'กำลังดึงสถานะ...');">
+            <button type="submit" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-play-fill"></i> สั่งรัน</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bot 3 -->
+      <div class="cron-bot-card">
+        <div class="cron-bot-head">
+          <div class="cron-bot-icon is-purple"><i class="ri-refund-2-line"></i></div>
+          <div class="cron-bot-meta">
+            <span class="cron-bot-name">บอทคืนเงินและชดเชย</span>
+            <span class="cron-bot-freq">ความถี่: Real-time ตามสถานะ</span>
+          </div>
+          <span class="cron-badge is-shop">ทำงานออโต้</span>
+        </div>
+        <p class="cron-bot-desc">คืนเงินเข้ากระเป๋าลูกค้าทันทีเมื่อออเดอร์ถูกยกเลิก หรือคำนวณยอดคืนตามสัดส่วนที่เหลือเมื่อออเดอร์สำเร็จเพียงบางส่วน (Partial)</p>
+        <div class="cron-bot-foot">
+          <span class="cron-bot-state"><i class="ri-checkbox-circle-fill text-ok"></i> คุ้มครองยอดเงินลูกค้า 100%</span>
+          <a href="/admin/orders?status=canceled" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-eye-line"></i> ดูออเดอร์</a>
+        </div>
+      </div>
+
+      <!-- Bot 4 -->
+      <div class="cron-bot-card">
+        <div class="cron-bot-head">
+          <div class="cron-bot-icon is-amber"><i class="ri-money-dollar-circle-line"></i></div>
+          <div class="cron-bot-meta">
+            <span class="cron-bot-name">บอทตรวจสอบยอดเงิน API</span>
+            <span class="cron-bot-freq">ความถี่: ทุกรอบดึงงาน</span>
+          </div>
+          <span class="cron-badge is-pull">ทำงานออโต้</span>
+        </div>
+        <p class="cron-bot-desc">เช็คยอดเงินคงเหลือในบัญชีของผู้ให้บริการแต่ละราย ป้องกันปัญหายอดเงินไม่พอสั่งซื้อและแจ้งเตือนผู้ดูแลระบบ</p>
+        <div class="cron-bot-foot">
+          <span class="cron-bot-state"><i class="ri-checkbox-circle-fill text-ok"></i> ตรวจสอบยอดเงินครบทุกแห่ง</span>
+          <form method="post" action="/admin/crons/balance" onsubmit="return cronSubmitWithLoader(this, 'กำลังเช็คยอดเงิน...');">
+            <button type="submit" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-play-fill"></i> สั่งรัน</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bot 5 -->
+      <div class="cron-bot-card">
+        <div class="cron-bot-head">
+          <div class="cron-bot-icon is-cyan"><i class="ri-store-3-line"></i></div>
+          <div class="cron-bot-meta">
+            <span class="cron-bot-name">บอทซิงก์ราคาและบริการ</span>
+            <span class="cron-bot-freq">ความถี่: อัปเดตรายวัน / สั่งรัน</span>
+          </div>
+          <span class="cron-badge is-sync">ทำงานออโต้</span>
+        </div>
+        <p class="cron-bot-desc">ดึงรายการบริการใหม่ ตรวจสอบราคาต้นทุน และปรับเปลี่ยนสถานะบริการที่ปิดตัวจากต้นทาง เพื่อรักษาความถูกต้องของหน้าร้าน</p>
+        <div class="cron-bot-foot">
+          <span class="cron-bot-state"><i class="ri-checkbox-circle-fill text-ok"></i> ล่าสุด: {{ last_sync.created_at if last_sync else shop_synced_at }}</span>
+          <form method="post" action="/admin/crons/catalog" onsubmit="return cronSubmitWithLoader(this, 'กำลังซิงก์ราคา...');">
+            <button type="submit" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-play-fill"></i> สั่งรัน</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bot 6 -->
+      <div class="cron-bot-card">
+        <div class="cron-bot-head">
+          <div class="cron-bot-icon is-red"><i class="ri-article-line"></i></div>
+          <div class="cron-bot-meta">
+            <span class="cron-bot-name">บอทเผยแพร่บทความ SEO</span>
+            <span class="cron-bot-freq">ความถี่: อัตโนมัติตามคิว</span>
+          </div>
+          <span class="cron-badge is-catalog">ทำงานออโต้</span>
+        </div>
+        <p class="cron-bot-desc">ตรวจสอบคิวบทความและเผยแพร่คอนเทนต์ใหม่ขึ้นเว็บไซต์ตามเวลา พร้อมกระจาย Index ไปยัง Google &amp; Bing ทันที</p>
+        <div class="cron-bot-foot">
+          <span class="cron-bot-state"><i class="ri-checkbox-circle-fill text-ok"></i> สนับสนุน SEO ติดหน้าแรก Google</span>
+          <form method="post" action="/admin/crons/blog" onsubmit="return cronSubmitWithLoader(this, 'กำลังปล่อยบทความ...');">
+            <button type="submit" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-play-fill"></i> สั่งรัน</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 5. Advanced Log Viewer -->
+  <section class="adm-card cron-log-card">
+    <div class="cron-log-head">
+      <div class="cron-log-head-title">
+        <h2><i class="ri-file-list-3-line"></i> ประวัติการทำงานของบอท (Automation Execution Logs)</h2>
+        <p class="la-muted">แสดง {{ logs|length }} รายการล่าสุด · เก็บข้อมูลการส่งงาน, ผลลัพธ์ และข้อความตอบกลับจาก API</p>
+      </div>
+
+      <div class="cron-log-controls">
+        <div class="cron-search-wrap">
+          <i class="ri-search-line cron-search-icon"></i>
+          <input type="text" id="cronLogSearch" class="la-input cron-search-input" placeholder="ค้นหาใน log..." autocomplete="off">
+          <button type="button" id="cronLogSearchClear" class="cron-search-clear" style="display:none;" title="ล้างการค้นหา">&times;</button>
+        </div>
+
+        <nav class="cron-filters" aria-label="กรองประเภท log">
+          <a class="cron-tab{% if job=='all' %} is-active{% endif %}" href="/admin/crons">ทั้งหมด ({{ logs|length }})</a>
+          {% for key, meta in job_meta.items() %}
+          <a class="cron-tab{% if job==key %} is-active{% endif %}" href="/admin/crons?job={{ key }}">{{ meta.label }}</a>
+          {% endfor %}
+        </nav>
+      </div>
+    </div>
+
+    <div class="cron-log-list" id="cronLogList" role="log">
+      {% for r in logs %}
+      <article class="cron-log-row{% if r.is_error %} is-error{% endif %}" data-tone="{{ r.job_tone }}" data-search="{{ (r.summary ~ ' ' ~ r.raw ~ ' ' ~ r.job_label ~ ' ' ~ r.created_at)|lower }}">
+        <div class="cron-log-meta">
+          <span class="cron-badge is-{{ r.job_tone }}"><i class="{{ r.job_icon }}"></i> {{ r.job_label }}</span>
+          <time datetime="{{ r.created_at }}"><i class="ri-time-line"></i> {{ r.created_at }}</time>
+          <span class="cron-log-id">#{{ r.id }}</span>
+          {% if r.is_error %}
+          <span class="cron-err-pill"><i class="ri-error-warning-fill"></i> มีข้อผิดพลาด</span>
+          {% else %}
+          <span class="cron-ok-pill"><i class="ri-check-line"></i> สำเร็จ</span>
+          {% endif %}
+        </div>
+        <p class="cron-log-summary">{{ r.summary }}</p>
+        {% if r.fields %}
+        <div class="cron-chips">
+          {% for f in r.fields %}
+          <span class="cron-chip"><b>{{ f.label }}</b> {{ f.value }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <details class="cron-raw">
+          <summary><i class="ri-code-box-line"></i> ดูข้อความดิบ (Raw API Payload)</summary>
+          <code>{{ r.raw }}</code>
+        </details>
+      </article>
+      {% else %}
+      <div class="cron-empty">
+        <i class="ri-inbox-line"></i>
+        <p>ยังไม่มีบันทึกในตัวกรองนี้</p>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  var timerText = document.getElementById('cronTimerText');
+  var secondsLeft = 60;
+
+  function updateCountdown() {
+    secondsLeft--;
+    if (secondsLeft <= 0) {
+      secondsLeft = 60;
+      if (timerText) {
+        timerText.innerHTML = '<span class="la-spin"><i class="ri-loader-4-line"></i></span> กำลังรันรอบออโต้...';
+      }
+      fetch('/api/cron?key=likesauto2026', { method: 'GET' })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (timerText) {
+            timerText.textContent = 'รันแล้ว ' + (d.timestamp ? d.timestamp.split(' ')[1] : 'เมื่อสักครู่');
+          }
+        })
+        .catch(function(){
+          if (timerText) {
+            timerText.textContent = 'ทำงานอัตโนมัติ';
+          }
+        });
+    } else {
+      if (timerText) {
+        timerText.textContent = 'รอบถัดไปใน ' + secondsLeft + ' วิ';
+      }
+    }
+  }
+
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
+
+  window.cronTriggerImmediate = function() {
+    if (timerText) {
+      timerText.innerHTML = '<span class="la-spin"><i class="ri-loader-4-line"></i></span> กำลังส่งคำขอ...';
+    }
+    fetch('/api/cron?key=likesauto2026', { method: 'GET' })
+      .then(function(){
+        window.location.href = '/admin/crons?ran=' + encodeURIComponent('รันรอบอัตโนมัติเรียบร้อยแล้ว');
+      })
+      .catch(function(){
+        window.location.reload();
+      });
+  };
+
+  window.cronSubmitWithLoader = function(form, msg) {
+    var btn = form.querySelector('button[type=submit]');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="ri-loader-4-line la-spin"></i> ' + msg;
+    }
+    return true;
+  };
+})();
+</script>
 {% endblock %}

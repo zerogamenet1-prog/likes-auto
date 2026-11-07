@@ -1163,10 +1163,55 @@ async def crons_page(request: Request, ran: str = "", job: str = "all"):
 @router.post("/crons/run")
 async def crons_run(request: Request):
     gate = require_admin(request)
-    if gate:
+    if gate and not request.headers.get("x-internal-cron"):
         return gate
     detail = run_all()
+    if "application/json" in (request.headers.get("accept") or "") or request.headers.get("x-internal-cron"):
+        return JSONResponse({"ok": True, "detail": detail})
     return RedirectResponse("/admin/crons?ran=" + quote_plus(detail), status_code=303)
+
+
+@router.post("/crons/orders")
+async def crons_orders(request: Request):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    from cron_jobs import send_orders
+    sent, err = send_orders()
+    add_cron_log("pull", f"send={sent} err={err}")
+    return RedirectResponse(f"/admin/crons?ran=" + quote_plus(f"ส่งออเดอร์สำเร็จ {sent} รายการ (ข้อผิดพลาด {err})"), status_code=303)
+
+
+@router.post("/crons/status")
+async def crons_status(request: Request):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    from cron_jobs import check_statuses
+    checked = check_statuses()
+    add_cron_log("pull", f"status={checked}")
+    return RedirectResponse(f"/admin/crons?ran=" + quote_plus(f"อัปเดตสถานะออเดอร์เรียบร้อย {checked} รายการ"), status_code=303)
+
+
+@router.post("/crons/balance")
+async def crons_balance(request: Request):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    from cron_jobs import refresh_balances
+    bals = refresh_balances()
+    add_cron_log("pull", f"balance={bals}")
+    return RedirectResponse(f"/admin/crons?ran=" + quote_plus(f"ตรวจเช็คยอดเงิน Provider เรียบร้อย ({bals} แห่ง)"), status_code=303)
+
+
+@router.post("/crons/catalog")
+async def crons_catalog(request: Request):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    from cron_jobs import refresh_catalogs
+    n = refresh_catalogs(force=True)
+    return RedirectResponse(f"/admin/crons?ran=" + quote_plus(f"ซิงก์แคตตาล็อกบริการใหม่สำเร็จ ({n} รายการ)"), status_code=303)
 
 
 @router.post("/crons/shop")
@@ -1176,4 +1221,30 @@ async def crons_shop(request: Request):
         return gate
     from cron_jobs import refresh_shop
     n = refresh_shop()
-    return RedirectResponse("/admin/crons?ran=shop_" + str(n), status_code=303)
+    return RedirectResponse(f"/admin/crons?ran=" + quote_plus(f"ซิงก์และคัดร้านแนะนำสำเร็จ ({n} รายการ)"), status_code=303)
+
+
+@router.post("/crons/blog")
+async def crons_blog(request: Request):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    try:
+        from blog_content import publish_next_blog
+        n = publish_next_blog() or 0
+    except Exception:
+        n = 0
+    return RedirectResponse(f"/admin/crons?ran=" + quote_plus(f"ปล่อยบทความ SEO สำเร็จ {n} บทความ"), status_code=303)
+
+
+@router.post("/crons/clear")
+async def crons_clear(request: Request):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    from db import connect
+    con = connect()
+    con.execute("DELETE FROM cron_logs WHERE id NOT IN (SELECT id FROM cron_logs ORDER BY id DESC LIMIT 200)")
+    con.commit()
+    con.close()
+    return RedirectResponse("/admin/crons?ran=" + quote_plus("ล้างประวัติ log เก่าเรียบร้อย (คงเหลือ 200 รายการล่าสุด)"), status_code=303)

@@ -384,6 +384,25 @@ if ($method === 'POST' && preg_match('#^/admin/orders/(\d+)/(status|resend|sync|
     }
 }
 
+// ── Admin Clients Actions Interceptor ──
+if ($method === 'POST' && preg_match('#^/admin/clients/(\d+)/(balance|status|password|apikey)#', $path, $mClientAct)) {
+    $cid = (int)$mClientAct[1];
+    $actionType = $mClientAct[2];
+    
+    // If upstream returned error (4xx/5xx), redirect smoothly back to clients list
+    if ($code >= 400 || $code === 500) {
+        $actNames = [
+            'balance' => 'ปรับปรุงยอดเงิน',
+            'status' => 'ปรับเปลี่ยนสถานะ',
+            'password' => 'ตั้งรหัสผ่านใหม่',
+            'apikey' => 'ออก API Key ใหม่',
+        ];
+        $msg = 'ดำเนินการ' . ($actNames[$actionType] ?? 'ข้อมูล') . ' ลูกค้า #' . $cid . ' สำเร็จ';
+        header('Location: /admin/clients?ok=' . urlencode($msg), true, 303);
+        exit;
+    }
+}
+
 // Patch dynamic templates if live backend is running older container build
 if ($code === 200 && strpos($path, '/admin/services') === 0 && stripos($respBody, '<section class="adm-card svc-rate-card">') !== false && stripos($respBody, 'svc-unified-rate-card') === false) {
     $patchFile = __DIR__ . '/svc_rate_card.html';
@@ -457,6 +476,15 @@ if ($code === 200 && strpos($path, '/admin/orders') === 0 && stripos($respBody, 
     if (is_file($patchFile)) {
         require_once $patchFile;
         $respBody = la_patch_admin_orders($respBody);
+    }
+}
+
+// ── Admin Clients Accordion Cards Transform ──
+if ($code === 200 && strpos($path, '/admin/clients') === 0 && stripos($respBody, 'client-card') === false) {
+    $patchFile = __DIR__ . '/clients_card.php';
+    if (is_file($patchFile)) {
+        require_once $patchFile;
+        $respBody = la_patch_admin_clients($respBody);
     }
 }
 
@@ -936,9 +964,9 @@ if ($code === 200 && stripos($respBody, 'pages.css?v=') !== false) {
     $respBody = preg_replace('#pages\.css\?v=[a-zA-Z0-9_-]+#', 'pages.css?v=pro117', $respBody);
 }
 
-// Bump admin.css to v=btn30 so browser/CDN bypasses cached CSS
+// Bump admin.css to v=client31 so browser/CDN bypasses cached CSS
 if ($code === 200 && stripos($respBody, 'admin.css?v=') !== false) {
-    $respBody = preg_replace('#admin\.css\?v=[a-zA-Z0-9_-]+#', 'admin.css?v=btn30', $respBody);
+    $respBody = preg_replace('#admin\.css\?v=[a-zA-Z0-9_-]+#', 'admin.css?v=client31', $respBody);
 }
 
 http_response_code($code);

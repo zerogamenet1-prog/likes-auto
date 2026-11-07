@@ -2,44 +2,358 @@
 {% block title %}ลูกค้า{% endblock %}
 {% block subtitle %}<p class="adm-sub">ปรับยอด พักบัญชี ตั้งรหัส และออก API key ใหม่</p>{% endblock %}
 {% block content %}
-<form method="get" class="adm-filter">
-  <input class="la-input adm-search" type="search" name="q" value="{{ q }}" placeholder="ค้นหายูส อีเมล หรือโค้ดแนะนำ">
-  <button class="la-btn" type="submit">ค้นหา</button>
-</form>
-<div class="adm-table-wrap">
-  <table class="adm-table">
-    <thead><tr><th>ID</th><th>ยูส</th><th>อีเมล</th><th>ยอด</th><th>สถานะ</th><th>โค้ดแนะนำ</th><th></th></tr></thead>
-    <tbody>
+
+{% set total_clients = rows|length %}
+{% set ns = namespace(active=0, paused=0, with_bal=0, total_bal=0.0) %}
+{% for r in rows %}
+  {% set bal = (r.balance|float) if r.balance else 0.0 %}
+  {% set ns.total_bal = ns.total_bal + bal %}
+  {% if r.status == 'active' %}
+    {% set ns.active = ns.active + 1 %}
+  {% else %}
+    {% set ns.paused = ns.paused + 1 %}
+  {% endif %}
+  {% if bal > 0 %}
+    {% set ns.with_bal = ns.with_bal + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="la-clients-container">
+  
+  <!-- Top KPI Summary Cards Grid -->
+  <div class="client-kpi-grid">
+    <div class="client-kpi-card is-primary">
+      <div class="client-kpi-icon"><i class="ri-user-shared-line"></i></div>
+      <div class="client-kpi-body">
+        <span class="client-kpi-title">ลูกค้าทั้งหมด</span>
+        <div class="client-kpi-num">{{ total_clients }} <span class="client-kpi-unit">คน</span></div>
+      </div>
+    </div>
+
+    <div class="client-kpi-card is-success">
+      <div class="client-kpi-icon"><i class="ri-checkbox-circle-line"></i></div>
+      <div class="client-kpi-body">
+        <span class="client-kpi-title">ใช้งานปกติ</span>
+        <div class="client-kpi-num">{{ ns.active }} <span class="client-kpi-unit">คน</span></div>
+      </div>
+    </div>
+
+    <div class="client-kpi-card is-warning">
+      <div class="client-kpi-icon"><i class="ri-pause-circle-line"></i></div>
+      <div class="client-kpi-body">
+        <span class="client-kpi-title">พักการใช้งาน</span>
+        <div class="client-kpi-num">{{ ns.paused }} <span class="client-kpi-unit">คน</span></div>
+      </div>
+    </div>
+
+    <div class="client-kpi-card is-info">
+      <div class="client-kpi-icon"><i class="ri-wallet-3-line"></i></div>
+      <div class="client-kpi-body">
+        <span class="client-kpi-title">ยอดเงินคงเหลือรวม</span>
+        <div class="client-kpi-num">฿{{ "%.2f"|format(ns.total_bal) }}</div>
+      </div>
+    </div>
+
+    <div class="client-kpi-card is-purple">
+      <div class="client-kpi-icon"><i class="ri-funds-line"></i></div>
+      <div class="client-kpi-body">
+        <span class="client-kpi-title">มียอดเงินพร้อมสั่ง</span>
+        <div class="client-kpi-num">{{ ns.with_bal }} <span class="client-kpi-unit">คน</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Filter Pills & Live Search -->
+  <div class="client-toolbar">
+    <div class="client-tabs">
+      <button type="button" class="client-tab is-active" data-client-filter="all">
+        ทั้งหมด <span class="client-tab-cnt">{{ total_clients }}</span>
+      </button>
+      <button type="button" class="client-tab" data-client-filter="active">
+        ใช้งาน <span class="client-tab-cnt">{{ ns.active }}</span>
+      </button>
+      {% if ns.paused > 0 %}
+      <button type="button" class="client-tab" data-client-filter="paused">
+        พักใช้งาน <span class="client-tab-cnt">{{ ns.paused }}</span>
+      </button>
+      {% endif %}
+      <button type="button" class="client-tab" data-client-filter="has-bal">
+        มียอดเงิน <span class="client-tab-cnt">{{ ns.with_bal }}</span>
+      </button>
+    </div>
+
+    <div class="client-search-wrap">
+      <i class="ri-search-line client-search-icon"></i>
+      <input type="text" id="clientSearchInput" class="la-input client-search-input" value="{{ q }}" placeholder="ค้นหาชื่อผู้ใช้, อีเมล หรือรหัส..." autocomplete="off">
+      <button type="button" id="clientSearchClear" class="client-search-clear" style="{% if q %}display:inline-block;{% else %}display:none;{% endif %}" title="ล้างการค้นหา">&times;</button>
+    </div>
+  </div>
+
+  <!-- Expandable Client Cards List -->
+  <div class="client-list" id="clientList">
     {% for r in rows %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.username }}</td>
-        <td>{{ r.email }}</td>
-        <td>{{ r.balance }}</td>
-        <td><span class="adm-badge {{ r.status }}">{{ st.get(r.status, r.status) }}</span></td>
-        <td>{{ r.ref_code }}</td>
-        <td>
-          <form method="post" action="/admin/clients/{{ r.id }}/balance" class="adm-inline">
-            <input class="la-input" style="width:90px" type="number" step="0.01" name="amount" placeholder="+/-" required>
-            <button class="la-btn la-btn-mini" type="submit">ปรับยอด</button>
-          </form>
-          <form method="post" action="/admin/clients/{{ r.id }}/status" class="adm-inline">
-            <input type="hidden" name="status" value="{{ 'paused' if r.status=='active' else 'active' }}">
-            <button class="la-btn la-btn-mini" type="submit">{{ 'พัก' if r.status=='active' else 'เปิด' }}</button>
-          </form>
-          <form method="post" action="/admin/clients/{{ r.id }}/password" class="adm-inline">
-            <input class="la-input" style="width:110px" type="text" name="password" placeholder="รหัสใหม่" required minlength="6">
-            <button class="la-btn la-btn-mini" type="submit">ตั้งรหัส</button>
-          </form>
-          <form method="post" action="/admin/clients/{{ r.id }}/apikey" class="adm-inline" onsubmit="return confirm('ออก API key ใหม่ให้ลูกค้าคนนี้?')">
-            <button class="la-btn la-btn-mini la-btn-ghost" type="submit">API key ใหม่</button>
-          </form>
-        </td>
-      </tr>
+    {% set bal = (r.balance|float) if r.balance else 0.0 %}
+    {% set is_google = ('@gmail.com' in (r.email|string|lower)) %}
+    <details class="client-card" id="client-{{ r.id }}" data-status="{{ r.status }}" data-has-bal="{{ '1' if bal > 0 else '0' }}" data-search="{{ (r.username ~ ' ' ~ r.email ~ ' ' ~ r.id ~ ' ' ~ (r.ref_code or ''))|lower }}">
+      <summary class="client-head">
+        <div class="client-head-main">
+          <span class="client-id">#{{ r.id }}</span>
+          
+          <div class="client-avatar" title="{{ r.username }}">
+            {{ r.username[:1]|upper }}
+          </div>
+
+          <div class="client-title-group">
+            <span class="client-uname">
+              {{ r.username }}
+              {% if is_google %}
+              <span class="client-google-badge" title="ผู้ใช้เข้าสู่ระบบด้วย Google"><i class="ri-google-fill"></i> Google</span>
+              {% endif %}
+            </span>
+            <span class="client-email" title="{{ r.email }}">
+              {{ r.email }}
+            </span>
+          </div>
+        </div>
+
+        <div class="client-head-meta">
+          <span class="client-bal-tag {{ 'is-positive' if bal > 0 else 'is-zero' }}" title="ยอดเงินคงเหลือในกระเป๋า">
+            <i class="ri-wallet-3-line"></i> ฿{{ "%.2f"|format(bal) }}
+          </span>
+
+          <span class="adm-badge {{ r.status }}">
+            {% if r.status == 'active' %}
+              <i class="ri-check-line"></i> ใช้งาน
+            {% else %}
+              <i class="ri-pause-line"></i> พักใช้งาน
+            {% endif %}
+          </span>
+
+          <a class="client-orders-link" href="/admin/orders?q={{ r.username|urlencode }}" title="ดูคำสั่งซื้อทั้งหมดของลูกค้ารายนี้" onclick="event.stopPropagation()">
+            <i class="ri-shopping-bag-3-line"></i> ออเดอร์
+          </a>
+
+          <span class="client-btn-manage">
+            จัดการ <i class="ri-arrow-down-s-line"></i>
+          </span>
+        </div>
+      </summary>
+
+      <!-- Detail Drawer (3 Cards Grid) -->
+      <div class="client-drawer">
+        <div class="client-grid">
+          
+          <!-- 1. ข้อมูลลูกค้า -->
+          <div class="client-box client-box-profile">
+            <div class="client-box-header">
+              <i class="ri-user-3-line"></i> ข้อมูลลูกค้า
+            </div>
+            <div class="client-info-list">
+              <div class="client-info-row">
+                <span class="client-label">รหัสสมาชิก:</span>
+                <span class="client-val"><code>#{{ r.id }}</code></span>
+              </div>
+              <div class="client-info-row">
+                <span class="client-label">ชื่อผู้ใช้:</span>
+                <span class="client-val"><strong>{{ r.username }}</strong></span>
+              </div>
+              <div class="client-info-row">
+                <span class="client-label">อีเมล:</span>
+                <div class="client-val client-val-copy">
+                  <span>{{ r.email }}</span>
+                  <button type="button" class="la-btn la-btn-mini la-btn-ghost client-copy-btn" onclick="navigator.clipboard.writeText('{{ r.email }}'); this.innerHTML='<i class=\'ri-check-line\'></i>'; var b=this; setTimeout(function(){ b.innerHTML='<i class=\'ri-file-copy-line\'></i>'; }, 1500);" title="คัดลอกอีเมล">
+                    <i class="ri-file-copy-line"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="client-info-row">
+                <span class="client-label">โค้ดแนะนำ (Ref):</span>
+                <div class="client-val client-val-copy">
+                  <code>{{ r.ref_code or '-' }}</code>
+                  {% if r.ref_code %}
+                  <button type="button" class="la-btn la-btn-mini la-btn-ghost client-copy-btn" onclick="navigator.clipboard.writeText('{{ r.ref_code }}'); this.innerHTML='<i class=\'ri-check-line\'></i>'; var b=this; setTimeout(function(){ b.innerHTML='<i class=\'ri-file-copy-line\'></i>'; }, 1500);" title="คัดลอกโค้ด">
+                    <i class="ri-file-copy-line"></i>
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="client-info-row">
+                <span class="client-label">ยอดเงินในกระเป๋า:</span>
+                <span class="client-val client-val-bal">฿{{ "%.2f"|format(bal) }}</span>
+              </div>
+              <div class="client-quick-nav">
+                <a href="/admin/orders?q={{ r.username|urlencode }}" class="la-btn la-btn-ghost la-btn-sm client-nav-btn">
+                  <i class="ri-shopping-bag-3-line"></i> ดูประวัติคำสั่งซื้อ
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. ปรับยอดเงินในกระเป๋า -->
+          <div class="client-box client-box-balance">
+            <div class="client-box-header">
+              <i class="ri-wallet-3-line"></i> ปรับยอดเงินในกระเป๋า
+            </div>
+            <div class="client-box-body">
+              <div class="client-cur-bal">
+                <span class="client-cur-lbl">ยอดเงินปัจจุบัน:</span>
+                <span class="client-cur-amt">฿{{ "%.2f"|format(bal) }}</span>
+              </div>
+
+              <!-- Quick Add Buttons -->
+              <div class="client-quick-chips">
+                <button type="button" class="client-chip" onclick="document.getElementById('bal_input_{{ r.id }}').value='50';">+฿50</button>
+                <button type="button" class="client-chip" onclick="document.getElementById('bal_input_{{ r.id }}').value='100';">+฿100</button>
+                <button type="button" class="client-chip" onclick="document.getElementById('bal_input_{{ r.id }}').value='500';">+฿500</button>
+                <button type="button" class="client-chip" onclick="document.getElementById('bal_input_{{ r.id }}').value='1000';">+฿1,000</button>
+                <button type="button" class="client-chip is-minus" onclick="document.getElementById('bal_input_{{ r.id }}').value='-50';">-฿50</button>
+              </div>
+
+              <form method="post" action="/admin/clients/{{ r.id }}/balance" class="client-bal-form" onsubmit="var b=this.querySelector('button[type=submit]'); if(b){ b.disabled=true; b.innerHTML='<i class=\'ri-loader-4-line la-spin\'></i> กำลังปรับยอด...'; }">
+                <div class="client-form-field">
+                  <label class="client-field-label">จำนวนเงินที่ต้องการปรับ (+ หรือ -):</label>
+                  <input id="bal_input_{{ r.id }}" class="la-input client-bal-input" type="number" step="0.01" name="amount" placeholder="+/- ตัวอย่าง: 100 หรือ -50" required>
+                </div>
+                <div class="client-form-field">
+                  <label class="client-field-label">หมายเหตุ / เหตุผล:</label>
+                  <input class="la-input" type="text" name="note" placeholder="เช่น เติมโบนัส, แก้ไขยอดโอน">
+                </div>
+                <button class="la-btn la-btn-primary client-btn-submit" type="submit">
+                  <i class="ri-check-line"></i> บันทึกการปรับยอดเงิน
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- 3. ความปลอดภัยและสิทธิ์ใช้งาน -->
+          <div class="client-box client-box-security">
+            <div class="client-box-header">
+              <i class="ri-shield-keyhole-line"></i> จัดการสิทธิ์ &amp; ความปลอดภัย
+            </div>
+            <div class="client-box-body">
+              
+              <!-- สลับสถานะบัญชี -->
+              <div class="client-sec-item">
+                <span class="client-sec-lbl">สถานะการเข้าใช้งาน:</span>
+                <form method="post" action="/admin/clients/{{ r.id }}/status" onsubmit="return confirm('ยืนยัน{{ 'พักการใช้งาน' if r.status == 'active' else 'เปิดใช้งาน' }} บัญชี {{ r.username }}?')">
+                  <input type="hidden" name="status" value="{{ 'paused' if r.status == 'active' else 'active' }}">
+                  {% if r.status == 'active' %}
+                  <button class="la-btn la-btn-warning la-btn-sm client-btn-full" type="submit">
+                    <i class="ri-pause-circle-line"></i> พักการใช้งานบัญชีนี้
+                  </button>
+                  {% else %}
+                  <button class="la-btn la-btn-success la-btn-sm client-btn-full" type="submit">
+                    <i class="ri-play-circle-line"></i> ปลดล็อกเปิดใช้งานบัญชี
+                  </button>
+                  {% endif %}
+                </form>
+              </div>
+
+              <!-- รีเซ็ตรหัสผ่าน -->
+              <div class="client-sec-item">
+                <span class="client-sec-lbl">ตั้งรหัสผ่านใหม่:</span>
+                <form method="post" action="/admin/clients/{{ r.id }}/password" class="client-pwd-form" onsubmit="var b=this.querySelector('button[type=submit]'); if(b){ b.disabled=true; b.innerHTML='<i class=\'ri-loader-4-line la-spin\'></i> กำลังตั้งรหัส...'; }">
+                  <div class="client-field-row">
+                    <input class="la-input" type="text" name="password" placeholder="รหัสผ่านใหม่อย่างน้อย 6 ตัว" required minlength="6">
+                    <button class="la-btn la-btn-outline la-btn-sm" type="submit">
+                      <i class="ri-key-2-line"></i> ตั้งรหัส
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- สร้าง API Key ใหม่ -->
+              <div class="client-sec-item">
+                <span class="client-sec-lbl">การเข้าถึงผ่าน API:</span>
+                <form method="post" action="/admin/clients/{{ r.id }}/apikey" onsubmit="return confirm('ยืนยันออก API Key ใหม่ให้ลูกค้า {{ r.username }}? (คีย์เดิมจะถูกยกเลิกทันที)')">
+                  <button class="la-btn la-btn-ghost la-btn-sm client-btn-full" type="submit">
+                    <i class="ri-key-fill"></i> ออก API Key ใหม่
+                  </button>
+                </form>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </details>
     {% else %}
-      <tr><td colspan="7">ยังไม่มีลูกค้า</td></tr>
+    <div class="adm-card" style="padding: 24px; text-align: center; color: var(--t-muted);">
+      <i class="ri-user-unfollow-line" style="font-size: 28px; display: block; margin-bottom: 8px;"></i>
+      ไม่พบข้อมูลลูกค้า
+    </div>
     {% endfor %}
-    </tbody>
-  </table>
+  </div>
+
 </div>
+
+<!-- Live Client Filter & Search Script -->
+<script>
+(function(){
+  var input = document.getElementById('clientSearchInput');
+  var clearBtn = document.getElementById('clientSearchClear');
+  var tabs = document.querySelectorAll('[data-client-filter]');
+  var cards = document.querySelectorAll('.client-card');
+
+  var currentFilter = 'all';
+
+  function applyFilter() {
+    var query = (input ? input.value : '').trim().toLowerCase();
+    if (clearBtn) {
+      clearBtn.style.display = query.length > 0 ? 'inline-block' : 'none';
+    }
+
+    cards.forEach(function(card){
+      var st = card.getAttribute('data-status') || '';
+      var hasBal = card.getAttribute('data-has-bal') === '1';
+      var searchTxt = card.getAttribute('data-search') || '';
+
+      var matchTab = true;
+      if (currentFilter === 'active') {
+        matchTab = (st === 'active');
+      } else if (currentFilter === 'paused') {
+        matchTab = (st === 'paused');
+      } else if (currentFilter === 'has-bal') {
+        matchTab = hasBal;
+      }
+
+      var matchSearch = true;
+      if (query.length > 0) {
+        matchSearch = (searchTxt.indexOf(query) !== -1);
+      }
+
+      if (matchTab && matchSearch) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  if (input) {
+    input.addEventListener('input', applyFilter);
+  }
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function(){
+      input.value = '';
+      applyFilter();
+      input.focus();
+    });
+  }
+
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('is-active'); });
+      tab.classList.add('is-active');
+      currentFilter = tab.getAttribute('data-client-filter') || 'all';
+      applyFilter();
+    });
+  });
+
+  if (input && input.value.trim().length > 0) {
+    applyFilter();
+  }
+})();
+</script>
 {% endblock %}

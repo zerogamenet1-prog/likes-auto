@@ -606,3 +606,4 @@ function la_patch_admin_crons(string $html): string {
     $html = substr($html, 0, $mStart) . $newContent . substr($html, $mEnd + strlen('</main>'));
     return $html;
 }
+

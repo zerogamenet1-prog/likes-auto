@@ -145,7 +145,7 @@ def start_auto_worker():
     import time
 
     def _loop():
-        time.sleep(8)
+        time.sleep(3)
         last_heavy_check = 0.0
         while True:
             try:
@@ -159,7 +159,7 @@ def start_auto_worker():
                         pass
                 check_statuses()
                 now_ts = time.time()
-                if now_ts - last_heavy_check > 900:
+                if now_ts - last_heavy_check > 600:
                     last_heavy_check = now_ts
                     try:
                         from cron_jobs import refresh_balances
@@ -176,7 +176,7 @@ def start_auto_worker():
                     add_cron_log("auto_worker", "error: " + str(e)[:200])
                 except Exception:
                     pass
-            time.sleep(30)
+            time.sleep(15)
 
     t = threading.Thread(target=_loop, daemon=True, name="la_auto_worker")
     t.start()

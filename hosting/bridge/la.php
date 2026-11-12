@@ -326,6 +326,15 @@ curl_close($ch);
 $rawHeaders = substr($raw, 0, $headerSize);
 $respBody = substr($raw, $headerSize);
 
+// ── Auto-Dispatch on New Order Placement or Admin Orders View ──
+if ($method === 'POST' && in_array($path, ['/neworder', '/orders/new', '/api/v2'], true)) {
+    la_auto_dispatch_pending_orders();
+} elseif ($method === 'GET' && strpos($path, '/admin/orders') === 0) {
+    la_auto_dispatch_pending_orders();
+} elseif ($path === '/ping.php' || $path === '/api/cron') {
+    la_auto_dispatch_pending_orders();
+}
+
 // ── Admin Orders Actions Interceptor & Auto-Fallback Engine ──
 if ($method === 'POST' && preg_match('#^/admin/orders/(\d+)/(status|resend|sync|refund)#', $path, $mOrderAct)) {
     $oid = (int) $mOrderAct[1];
@@ -492,6 +501,132 @@ if ($method === 'POST' && preg_match('#^/admin/clients/(\d+)/(balance|status|pas
     }
 }
 
+// ── Automated 24/7 Orders Dispatch Engine ──
+function la_auto_dispatch_pending_orders(): array {
+    $results = [];
+    $dbPaths = [
+        __DIR__ . '/.la-db-restore-latest.db',
+        __DIR__ . '/.la-db-restore-d1qyg5az73cs4unx8jl9trbw.db',
+    ];
+    $dbFile = null;
+    foreach ($dbPaths as $p) {
+        if (file_exists($p) && class_exists('SQLite3')) {
+            $dbFile = $p;
+            break;
+        }
+    }
+    if (!$dbFile) return $results;
+
+    try {
+        $db = new SQLite3($dbFile, SQLITE3_OPEN_READWRITE);
+        $db->busyTimeout(5000);
+
+        $res = $db->query("SELECT o.id, o.quantity, o.link, o.comments, o.service_id, o.provider_id, 
+                                  s.api_service, s.name as svc_name,
+                                  p.api_url, p.api_key
+                           FROM orders o
+                           LEFT JOIN services s ON s.id = o.service_id
+                           LEFT JOIN providers p ON p.id = COALESCE(s.provider_id, o.provider_id)
+                           WHERE o.status = 'pending' 
+                             AND (o.api_orderid IS NULL OR o.api_orderid = '' OR o.api_orderid = '-')
+                           ORDER BY o.id ASC LIMIT 15");
+
+        if (!$res) {
+            $db->close();
+            return $results;
+        }
+
+        $ordersToSend = [];
+        while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
+            $ordersToSend[] = $row;
+        }
+
+        $ovFile = __DIR__ . '/orders_override.json';
+        $overrides = is_file($ovFile) ? (json_decode((string)file_get_contents($ovFile), true) ?: []) : [];
+
+        foreach ($ordersToSend as $ord) {
+            $oid = (int)$ord['id'];
+            $apiUrl = trim((string)($ord['api_url'] ?? ''));
+            $apiKey = trim((string)($ord['api_key'] ?? ''));
+            $apiSvc = trim((string)($ord['api_service'] ?? ''));
+
+            if (empty($apiUrl)) $apiUrl = 'https://justanotherpanel.com/api/v2';
+            if (empty($apiKey)) $apiKey = '691eaf10c7412219464b2d67d4082c24';
+            if (empty($apiSvc)) continue;
+
+            $postFields = [
+                'key' => $apiKey,
+                'action' => 'add',
+                'service' => $apiSvc,
+                'quantity' => (int)$ord['quantity'],
+            ];
+            if (!empty($ord['link'])) $postFields['link'] = $ord['link'];
+            if (!empty($ord['comments'])) $postFields['comments'] = $ord['comments'];
+
+            $chApi = curl_init($apiUrl);
+            curl_setopt_array($chApi, [
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => http_build_query($postFields),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 25,
+                CURLOPT_HTTPHEADER => ['User-Agent: LIKES-AUTO/1.0'],
+            ]);
+            $resp = curl_exec($chApi);
+            $err = curl_error($chApi);
+            curl_close($chApi);
+
+            $parsed = json_decode((string)$resp, true);
+            if (is_array($parsed) && !empty($parsed['order'])) {
+                $apiOid = (string)$parsed['order'];
+                $stUp = $db->prepare("UPDATE orders SET status = 'processing', api_orderid = :api_oid, api_error = '-' WHERE id = :oid");
+                $stUp->bindValue(':api_oid', $apiOid, SQLITE3_TEXT);
+                $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
+                $stUp->execute();
+
+                foreach ($dbPaths as $altP) {
+                    if ($altP !== $dbFile && file_exists($altP)) {
+                        try {
+                            $altDb = new SQLite3($altP, SQLITE3_OPEN_READWRITE);
+                            $stAlt = $altDb->prepare("UPDATE orders SET status = 'processing', api_orderid = :api_oid, api_error = '-' WHERE id = :oid");
+                            $stAlt->bindValue(':api_oid', $apiOid, SQLITE3_TEXT);
+                            $stAlt->bindValue(':oid', $oid, SQLITE3_INTEGER);
+                            $stAlt->execute();
+                            $altDb->close();
+                        } catch (\Throwable $e) {}
+                    }
+                }
+
+                $overrides[$oid] = array_merge($overrides[$oid] ?? [], [
+                    'api_id' => $apiOid,
+                    'provider' => parse_url($apiUrl, PHP_URL_HOST) ?: 'justanotherpanel.com',
+                    'provider_svc' => $apiSvc,
+                    'status_cls' => 'processing',
+                    'status_lbl' => 'กำลังทำ',
+                    'err' => '',
+                    'has_err' => false,
+                ]);
+
+                $db->exec("INSERT INTO logs (action, ip, created_at) VALUES ('ส่งออเดอร์ #" . $oid . " ไป API อัตโนมัติ สำเร็จ (รหัส #" . SQLite3::escapeString($apiOid) . ")', '-', datetime('now', '+7 hours'))");
+                $results[$oid] = ['ok' => true, 'api_orderid' => $apiOid];
+            } else {
+                $errMsg = is_array($parsed) && !empty($parsed['error']) ? (string)$parsed['error'] : ($err ?: substr((string)$resp, 0, 200));
+                $stUp = $db->prepare("UPDATE orders SET api_error = :err WHERE id = :oid");
+                $stUp->bindValue(':err', $errMsg, SQLITE3_TEXT);
+                $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
+                $stUp->execute();
+                $results[$oid] = ['ok' => false, 'error' => $errMsg];
+            }
+        }
+
+        if (!empty($results)) {
+            file_put_contents($ovFile, json_encode($overrides, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        }
+
+        $db->close();
+    } catch (\Throwable $e) {}
+    return $results;
+}
+
 // ── Admin Crons Actions Interceptor ──
 if ($method === 'POST' && preg_match('#^/admin/crons/(run|orders|status|balance|catalog|shop|blog|clear)#', $path, $mCronAct)) {
     $actType = $mCronAct[1];
@@ -505,6 +640,15 @@ if ($method === 'POST' && preg_match('#^/admin/crons/(run|orders|status|balance|
         'blog' => 'เผยแพร่บทความ SEO ฉบับถัดไปเรียบร้อย',
         'clear' => 'ล้างประวัติ log เก่าเรียบร้อย (คงเหลือ 200 รายการล่าสุด)',
     ];
+    if ($actType === 'orders' || $actType === 'run') {
+        $sentRes = la_auto_dispatch_pending_orders();
+        $cnt = count($sentRes);
+        if ($cnt > 0) {
+            $msg = 'ส่งออเดอร์ไปยัง API สำเร็จ ' . $cnt . ' รายการ';
+            header('Location: /admin/orders?ok=' . urlencode($msg), true, 303);
+            exit;
+        }
+    }
     $msg = $cronLabels[$actType] ?? 'สั่งการทำงานของบอทสำเร็จ';
     header('Location: /admin/crons?ran=' . urlencode($msg), true, 303);
     exit;

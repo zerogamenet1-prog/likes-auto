@@ -37,6 +37,11 @@
   {% if q or status %}
   <a class="la-btn la-btn-ghost" href="/admin/orders" title="ล้างตัวกรอง"><i class="ri-close-line"></i> ล้าง</a>
   {% endif %}
+  <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+    <button class="la-btn la-btn-info" type="button" onclick="if(confirm('ต้องการส่งออเดอร์ที่ยังค้างส่งไป API ผู้ให้บริการทั้งหมดทันทีหรือไม่?')){ var f=document.createElement('form'); f.method='post'; f.action='/admin/crons/orders'; document.body.appendChild(f); f.submit(); }" title="ส่งออเดอร์ที่ยังค้างส่งไปยังผู้ให้บริการอัตโนมัติทั้งหมด">
+      <i class="ri-send-plane-2-line"></i> ส่งออเดอร์ค้างทั้งหมดทันที
+    </button>
+  </div>
 </form>
 
 {% if rows %}

@@ -326,6 +326,14 @@ async def orders(request: Request, q: str = "", status: str = "", ok: str = "", 
     gate = require_admin(request)
     if gate:
         return gate
+    # ── Auto-Dispatch Pending Orders on Page Load ──
+    try:
+        from cron_jobs import send_orders
+        sent_n, _ = send_orders()
+        if sent_n > 0 and not ok:
+            ok = "ระบบส่งออเดอร์ค้างไปยัง API อัตโนมัติแล้ว %d รายการ" % sent_n
+    except Exception:
+        pass
     q = (q or "").strip()
     page = max(int(page or 1), 1)
     per_page = 40

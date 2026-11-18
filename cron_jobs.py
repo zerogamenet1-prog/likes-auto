@@ -37,6 +37,10 @@ def resolve_fallback_service(order, original_svc, provider):
             if kw in target_name:
                 keywords.append(kw)
         
+        # Subtype exclusions: if original service was NOT auto/comment/live/story/save/share, don't match those
+        subtypes = ["auto", "comment", "live", "story", "save", "share", "repost"]
+        exclude_subtypes = [st for st in subtypes if st not in target_name]
+        
         candidates = con.execute("""
             SELECT id, name, platform, rate, cost_rate, api_service, min_qty, max_qty
             FROM services
@@ -55,6 +59,8 @@ def resolve_fallback_service(order, original_svc, provider):
             c_name = c_dict["name"].lower()
             if keywords and not any(kw in c_name for kw in keywords):
                 continue
+            if any(ex in c_name for ex in exclude_subtypes):
+                continue
             if ("brazil" in c_name or "russia" in c_name or "ukraine" in c_name or "turkey" in c_name or "indonesia" in c_name or "india" in c_name) and not any(country in target_name for country in ["brazil", "russia", "ukraine", "turkey", "indonesia", "india"]):
                 continue
             if c_dict.get("min_qty") and qty < int(c_dict["min_qty"]):
@@ -67,7 +73,7 @@ def resolve_fallback_service(order, original_svc, provider):
             
         matched.sort(key=lambda x: x[0])
         
-        for _, candidate in matched[:6]:
+        for _, candidate in matched[:8]:
             cand_api_id = str(candidate["api_service"])
             test_payload = {
                 "key": provider["api_key"],
@@ -85,9 +91,7 @@ def resolve_fallback_service(order, original_svc, provider):
                 update_service_api(original_svc["id"], cand_api_id, candidate.get("cost_rate"))
                 add_log(f"สลับบริการอัตโนมัติสำหรับบริการ #{original_svc['id']} ไปใช้ Provider Service #{cand_api_id} ({candidate['name']})", "-")
                 return res.get("order"), cand_api_id, candidate
-            if isinstance(res, dict) and res.get("error") and "Incorrect service ID" not in str(res.get("error")):
-                update_service_api(original_svc["id"], cand_api_id, candidate.get("cost_rate"))
-                return None, cand_api_id, candidate
+            # Continue trying next candidates instead of aborting
     except Exception as exc:
         pass
     return None, None, None

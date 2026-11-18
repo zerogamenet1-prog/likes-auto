@@ -656,6 +656,165 @@ if ($method === 'POST' && preg_match('#^/admin/tickets(?:/(\d+)/(reply|close|reo
     exit;
 }
 
+// ── Admin Payments Actions Interceptor & Direct Execution Engine ──
+if ($method === 'POST' && (
+    preg_match('#^/admin/payments(?:/(\d+)/(approve|reject|recheck|unlock-slip|note|upload-slip)|/match)#', $path, $mPayAct)
+)) {
+    $pid = isset($mPayAct[1]) ? (int)$mPayAct[1] : 0;
+    $actType = isset($mPayAct[2]) ? $mPayAct[2] : 'match';
+
+    $dbPaths = [
+        __DIR__ . '/.la-db-restore-latest.db',
+        __DIR__ . '/.la-db-restore-d1qyg5az73cs4unx8jl9trbw.db',
+        __DIR__ . '/../.la-db-restore-latest.db',
+        __DIR__ . '/../.la-db-restore-d1qyg5az73cs4unx8jl9trbw.db',
+        dirname(__DIR__, 2) . '/live_app.db',
+    ];
+    $ovFile = __DIR__ . '/payments_override.json';
+    $pOverrides = is_file($ovFile) ? (json_decode((string)file_get_contents($ovFile), true) ?: []) : [];
+
+    date_default_timezone_set('Asia/Bangkok');
+    $now = date('Y-m-d H:i');
+    $resOk = '';
+    $resErr = '';
+
+    // Direct SQLite execution
+    foreach ($dbPaths as $p) {
+        if (file_exists($p) && class_exists('SQLite3')) {
+            try {
+                $db = new SQLite3($p, SQLITE3_OPEN_READWRITE);
+                $db->busyTimeout(5000);
+
+                if ($actType === 'approve' && $pid > 0) {
+                    $row = @$db->querySingle("SELECT client, amount, status FROM payments WHERE id = " . $pid, true);
+                    if ($row && $row['status'] === 'pending') {
+                        $amt = floatval($row['amount']);
+                        $cl = $row['client'];
+                        $db->exec("UPDATE payments SET status = 'paid' WHERE id = " . $pid);
+                        $db->exec("UPDATE clients SET balance = balance + {$amt} WHERE username = '" . SQLite3::escapeString($cl) . "'");
+                        $db->exec("INSERT INTO logs (action, ip, created_at) VALUES ('อนุมัติเติมเงิน #{$pid}', '-', '{$now}')");
+                        $resOk = 'paid';
+                        if (!isset($pOverrides[$pid])) $pOverrides[$pid] = [];
+                        $pOverrides[$pid]['status'] = 'paid';
+                    } else {
+                        $resErr = 'รายการไม่อยู่ในสถานะรอตรวจสอบ';
+                    }
+                } elseif ($actType === 'reject' && $pid > 0) {
+                    $note = trim((string)($_POST['note'] ?? ''));
+                    $row = @$db->querySingle("SELECT status FROM payments WHERE id = " . $pid, true);
+                    if ($row && $row['status'] === 'pending') {
+                        $db->exec("UPDATE payments SET status = 'canceled', note = '" . SQLite3::escapeString($note) . "' WHERE id = " . $pid);
+                        $db->exec("INSERT INTO logs (action, ip, created_at) VALUES ('ปฏิเสธเติมเงิน #{$pid}', '-', '{$now}')");
+                        $resOk = 'canceled';
+                        if (!isset($pOverrides[$pid])) $pOverrides[$pid] = [];
+                        $pOverrides[$pid]['status'] = 'canceled';
+                        if ($note !== '') $pOverrides[$pid]['note'] = $note;
+                    } else {
+                        $resErr = 'รายการไม่อยู่ในสถานะรอตรวจสอบ';
+                    }
+                } elseif ($actType === 'recheck' && $pid > 0) {
+                    $row = @$db->querySingle("SELECT client, amount, status FROM payments WHERE id = " . $pid, true);
+                    if ($row && $row['status'] === 'pending') {
+                        $amt = floatval($row['amount']);
+                        $cl = $row['client'];
+                        $db->exec("UPDATE payments SET status = 'paid' WHERE id = " . $pid);
+                        $db->exec("UPDATE clients SET balance = balance + {$amt} WHERE username = '" . SQLite3::escapeString($cl) . "'");
+                        $db->exec("INSERT INTO logs (action, ip, created_at) VALUES ('ตรวจสลิปใหม่ #{$pid} สำเร็จ', '-', '{$now}')");
+                        $resOk = 'recheck_ok';
+                        if (!isset($pOverrides[$pid])) $pOverrides[$pid] = [];
+                        $pOverrides[$pid]['status'] = 'paid';
+                    } else {
+                        $resErr = 'รายการไม่อยู่ในสถานะรอตรวจสอบ';
+                    }
+                } elseif ($actType === 'unlock-slip' && $pid > 0) {
+                    $db->exec("DELETE FROM slip_hashes WHERE payment_id = " . $pid);
+                    $db->exec("UPDATE payments SET trans_ref = NULL, note = 'แอดมินปลดล็อกสลิปแล้ว' WHERE id = " . $pid . " AND status = 'pending'");
+                    $db->exec("INSERT INTO logs (action, ip, created_at) VALUES ('ปลดล็อกสลิป #{$pid}', '-', '{$now}')");
+                    $resOk = 'unlock_ok';
+                    if (!isset($pOverrides[$pid])) $pOverrides[$pid] = [];
+                    $pOverrides[$pid]['trans_ref'] = '';
+                } elseif ($actType === 'note' && $pid > 0) {
+                    $note = trim((string)($_POST['note'] ?? ''));
+                    $db->exec("UPDATE payments SET note = '" . SQLite3::escapeString($note) . "' WHERE id = " . $pid);
+                    $resOk = 'note_ok';
+                    if (!isset($pOverrides[$pid])) $pOverrides[$pid] = [];
+                    $pOverrides[$pid]['note'] = $note;
+                } elseif ($actType === 'upload-slip' && $pid > 0) {
+                    if (isset($_FILES['slip_file']) && $_FILES['slip_file']['error'] === UPLOAD_ERR_OK) {
+                        $tmpFile = $_FILES['slip_file']['tmp_name'];
+                        $origName = $_FILES['slip_file']['name'];
+                        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+                        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'pdf'], true)) {
+                            $ext = 'jpg';
+                        }
+                        $uploadDir = __DIR__ . '/static/uploads/slips';
+                        if (!is_dir($uploadDir)) {
+                            $uploadDir = __DIR__ . '/../static/uploads/slips';
+                        }
+                        if (!is_dir($uploadDir)) {
+                            $uploadDir = dirname(__DIR__, 2) . '/py-app/static/uploads/slips';
+                        }
+                        if (!is_dir($uploadDir)) {
+                            @mkdir($uploadDir, 0755, true);
+                        }
+                        $fileName = 'p' . $pid . '_' . substr(md5(uniqid((string)$pid, true)), 0, 16) . '.' . $ext;
+                        $targetPath = $uploadDir . '/' . $fileName;
+                        if (@move_uploaded_file($tmpFile, $targetPath)) {
+                            $webSlipUrl = '/static/uploads/slips/' . $fileName;
+                            $db->exec("UPDATE payments SET slip = '" . SQLite3::escapeString($webSlipUrl) . "' WHERE id = " . $pid);
+                            $resOk = 'upload_ok';
+                            if (!isset($pOverrides[$pid])) $pOverrides[$pid] = [];
+                            $pOverrides[$pid]['slip'] = $webSlipUrl;
+                        } else {
+                            $resErr = 'บันทึกไฟล์สลิปไม่สำเร็จ (โฟลเดอร์ไม่มีสิทธิ์เขียน)';
+                        }
+                    } else {
+                        $resErr = 'กรุณาเลือกไฟล์สลิปรูปภาพที่ถูกต้อง';
+                    }
+                } elseif ($actType === 'match') {
+                    $matchAmt = floatval(str_replace(',', '', trim((string)($_POST['amount'] ?? '0'))));
+                    if ($matchAmt > 0) {
+                        $row = @$db->querySingle("SELECT id, client, amount FROM payments WHERE status = 'pending' AND ABS(amount - {$matchAmt}) < 0.005 ORDER BY id DESC LIMIT 1", true);
+                        if ($row) {
+                            $mPid = (int)$row['id'];
+                            $cl = $row['client'];
+                            $amt = floatval($row['amount']);
+                            $db->exec("UPDATE payments SET status = 'paid' WHERE id = " . $mPid);
+                            $db->exec("UPDATE clients SET balance = balance + {$amt} WHERE username = '" . SQLite3::escapeString($cl) . "'");
+                            $db->exec("INSERT INTO logs (action, ip, created_at) VALUES ('จับคู่ยอดเติมเงิน ฿{$amt} -> #{$mPid}', '-', '{$now}')");
+                            $resOk = 'matched';
+                            if (!isset($pOverrides[$mPid])) $pOverrides[$mPid] = [];
+                            $pOverrides[$mPid]['status'] = 'paid';
+                        } else {
+                            $resErr = "ไม่พบรายการรอตรวจสอบที่มียอดเงิน ฿" . number_format($matchAmt, 2);
+                        }
+                    } else {
+                        $resErr = 'จำนวนเงินที่ระบุไม่ถูกต้อง';
+                    }
+                }
+
+                $db->close();
+            } catch (\Throwable $e) {
+                $resErr = $e->getMessage();
+            }
+        }
+    }
+
+    if (!empty($pOverrides)) {
+        @file_put_contents($ovFile, json_encode($pOverrides, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+
+    $nextFilter = trim((string)($_POST['next'] ?? ''));
+    $redirUrl = '/admin/payments' . ($nextFilter !== '' ? ('?status=' . urlencode($nextFilter)) : '');
+    if ($resOk !== '') {
+        $redirUrl .= (strpos($redirUrl, '?') === false ? '?' : '&') . 'ok=' . urlencode($resOk);
+    } elseif ($resErr !== '') {
+        $redirUrl .= (strpos($redirUrl, '?') === false ? '?' : '&') . 'err=' . urlencode($resErr);
+    }
+    header('Location: ' . $redirUrl, true, 303);
+    exit;
+}
+
 // Patch dynamic templates if live backend is running older container build
 if ($code === 200 && strpos($path, '/admin/services') === 0 && stripos($respBody, '<section class="adm-card svc-rate-card">') !== false && stripos($respBody, 'svc-unified-rate-card') === false) {
     $patchFile = __DIR__ . '/svc_rate_card.html';
@@ -756,6 +915,15 @@ if ($code === 200 && strpos($path, '/admin/tickets') === 0 && stripos($respBody,
     if (is_file($patchFile)) {
         require_once $patchFile;
         $respBody = la_patch_admin_tickets($respBody);
+    }
+}
+
+// ── Admin Payments Modern Desk & Slip Inspector Transform ──
+if ($code === 200 && strpos($path, '/admin/payments') === 0 && stripos($respBody, 'pay-desk-wrap') === false) {
+    $patchFile = __DIR__ . '/payments_card.php';
+    if (is_file($patchFile)) {
+        require_once $patchFile;
+        $respBody = la_patch_admin_payments($respBody);
     }
 }
 

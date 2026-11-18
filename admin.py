@@ -1,5 +1,5 @@
 from urllib.parse import quote_plus
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
@@ -574,11 +574,22 @@ def _slip_try_count(pid):
 
 def _enrich_pay_rows(items):
     out = []
+    clients_map = {}
+    try:
+        con = connect()
+        for c in con.execute("SELECT username, balance, email FROM clients").fetchall():
+            clients_map[c["username"]] = {"balance": c["balance"], "email": c["email"]}
+        con.close()
+    except Exception:
+        pass
     for p in items:
         row = dict(p)
+        cl_info = clients_map.get(row.get("client")) or {}
         row["slip_tries"] = _slip_try_count(row.get("id"))
         row["has_slip"] = bool((row.get("slip") or "").strip())
         row["has_ref"] = bool((row.get("trans_ref") or "").strip())
+        row["client_balance"] = cl_info.get("balance")
+        row["client_email"] = cl_info.get("email")
         out.append(row)
     return out
 
@@ -819,6 +830,36 @@ async def payments_note(request: Request, pid: int, note: str = Form(""), next: 
     set_pay_note(pid, (note or "").strip()[:500])
     add_log("แก้โน้ตเติมเงิน #%s" % pid, "-")
     return _pay_back(next, "note_ok")
+
+
+@router.post("/payments/{pid}/upload-slip")
+async def payments_upload_slip(request: Request, pid: int, slip_file: UploadFile = File(None), next: str = Form("")):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    if not slip_file or not slip_file.filename:
+        return _pay_back(next, err="กรุณาเลือกไฟล์สลิปรูปภาพ")
+    import os, uuid
+    ext = os.path.splitext(slip_file.filename)[1].lower()
+    if ext not in [".jpg", ".jpeg", ".png", ".webp", ".pdf"]:
+        ext = ".jpg"
+    filename = f"p{pid}_{uuid.uuid4().hex[:16]}{ext}"
+    dest_dir = os.path.join(os.path.dirname(__file__), "static", "uploads", "slips")
+    os.makedirs(dest_dir, exist_ok=True)
+    dest_path = os.path.join(dest_dir, filename)
+    try:
+        content = await slip_file.read()
+        with open(dest_path, "wb") as f:
+            f.write(content)
+        web_path = f"/static/uploads/slips/{filename}"
+        con = connect()
+        con.execute("UPDATE payments SET slip=? WHERE id=?", (web_path, pid))
+        con.commit()
+        con.close()
+        add_log(f"แอดมินแนบสลิป #{pid}", "-")
+        return _pay_back(next, "upload_ok")
+    except Exception as e:
+        return _pay_back(next, err=f"อัปโหลดสลิปไม่สำเร็จ: {str(e)[:60]}")
 
 
 @router.get("/payments/slip-diag")

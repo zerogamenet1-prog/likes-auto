@@ -162,798 +162,819 @@ function la_patch_admin_payments(string $html): string {
     ob_start();
     ?>
     <style>
-      .pay-desk-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
-        margin-bottom: 2.5rem;
-        font-family: inherit;
+      /* Reset & Container */
+      .pm-desk-wrap {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        margin-bottom: 2.5rem !important;
+        font-family: inherit !important;
+        width: 100% !important;
+        max-width: 1200px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        box-sizing: border-box !important;
       }
-      /* KPI Counters */
-      .pay-kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1rem;
-      }
-      .pay-kpi-card {
-        background: #141c2b;
-        border: 1px solid #1f2d45;
-        border-radius: 12px;
-        padding: 1.1rem 1.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        text-decoration: none;
-        color: inherit;
-        transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
-        position: relative;
-        overflow: hidden;
-      }
-      .pay-kpi-card:hover {
-        transform: translateY(-2px);
-        border-color: #3b82f6;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-      }
-      .pay-kpi-card.is-active {
-        border-color: #3b82f6;
-        background: linear-gradient(145deg, #162238 0%, #111a29 100%);
-        box-shadow: 0 0 0 1px #3b82f6;
-      }
-      .pay-kpi-card.is-pending-alert {
-        border-color: #f59e0b;
-        background: linear-gradient(145deg, #2a2012 0%, #161a24 100%);
-      }
-      .pay-kpi-card.is-pending-alert .pay-kpi-icon {
-        color: #f59e0b;
-        background: rgba(245, 158, 11, 0.15);
-      }
-      .pay-kpi-info span {
-        display: block;
-        font-size: 0.8rem;
-        color: #94a3b8;
-        font-weight: 500;
-        margin-bottom: 0.25rem;
-      }
-      .pay-kpi-info b {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #f8fafc;
-        line-height: 1.1;
-      }
-      .pay-kpi-info small {
-        display: block;
-        font-size: 0.75rem;
-        color: #cbd5e1;
-        margin-top: 0.3rem;
-      }
-      .pay-kpi-icon {
-        width: 46px;
-        height: 46px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        background: rgba(59, 130, 246, 0.12);
-        color: #3b82f6;
-        flex-shrink: 0;
-      }
-      .pay-kpi-card.kpi-paid .pay-kpi-icon {
-        color: #10b981;
-        background: rgba(16, 185, 129, 0.12);
-      }
-      .pay-kpi-card.kpi-canceled .pay-kpi-icon {
-        color: #ef4444;
-        background: rgba(239, 68, 68, 0.12);
+      .pm-desk-wrap * {
+        box-sizing: border-box !important;
       }
 
-      /* Quick Control & Match Bar */
-      .pay-toolbar {
-        background: #141c2b;
-        border: 1px solid #1f2d45;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
+      /* KPI Counters: 4 cols on desktop, 2x2 on mobile */
+      .pm-kpi-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+        width: 100% !important;
       }
-      .pay-toolbar-top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-      }
-      .pay-tabs {
-        display: flex;
-        gap: 0.4rem;
-        background: #0d131f;
-        padding: 0.3rem;
-        border-radius: 8px;
-        border: 1px solid #1f2d45;
-      }
-      .pay-tab-btn {
-        padding: 0.45rem 0.9rem;
-        font-size: 0.82rem;
-        font-weight: 500;
-        color: #94a3b8;
-        border-radius: 6px;
-        text-decoration: none;
-        transition: all .15s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-      }
-      .pay-tab-btn:hover {
-        color: #f8fafc;
-        background: rgba(255,255,255,0.04);
-      }
-      .pay-tab-btn.is-active {
-        background: #3b82f6;
-        color: #fff;
-        font-weight: 600;
-      }
-      .pay-tab-badge {
-        font-size: 0.7rem;
-        padding: 0.1rem 0.45rem;
-        border-radius: 999px;
-        background: rgba(0,0,0,0.3);
-      }
-
-      .pay-quick-match-wrap {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        flex-wrap: wrap;
-      }
-      .pay-match-form {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        background: #0d131f;
-        border: 1px solid #2a3b5c;
-        padding: 0.25rem 0.4rem;
-        border-radius: 8px;
-      }
-      .pay-match-input {
-        background: transparent;
-        border: none;
-        color: #f8fafc;
-        font-size: 0.85rem;
-        padding: 0.35rem 0.5rem;
-        outline: none;
-        width: 130px;
-        font-weight: 600;
-      }
-      .pay-match-input::placeholder {
-        color: #64748b;
-        font-weight: normal;
-      }
-
-      /* Search & Filter Bar */
-      .pay-search-row {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-      }
-      .pay-search-box {
-        position: relative;
-        flex: 1;
-        min-width: 260px;
-      }
-      .pay-search-box i {
-        position: absolute;
-        left: 0.85rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #64748b;
-        font-size: 1rem;
-      }
-      .pay-search-box input {
-        width: 100%;
-        background: #0d131f;
-        border: 1px solid #1f2d45;
-        border-radius: 8px;
-        padding: 0.55rem 0.85rem 0.55rem 2.4rem;
-        color: #f8fafc;
-        font-size: 0.85rem;
-        outline: none;
-        transition: border-color .15s ease;
-      }
-      .pay-search-box input:focus {
-        border-color: #3b82f6;
-      }
-      .pay-method-select {
-        background: #0d131f;
-        border: 1px solid #1f2d45;
-        border-radius: 8px;
-        padding: 0.55rem 0.85rem;
-        color: #f8fafc;
-        font-size: 0.85rem;
-        outline: none;
-      }
-
-      /* Flash Alerts */
-      .pay-alert-ok {
-        background: rgba(16, 185, 129, 0.15);
-        border: 1px solid rgba(16, 185, 129, 0.4);
-        color: #34d399;
-        padding: 0.85rem 1.1rem;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-      }
-      .pay-alert-err {
-        background: rgba(239, 68, 68, 0.15);
-        border: 1px solid rgba(239, 68, 68, 0.4);
-        color: #f87171;
-        padding: 0.85rem 1.1rem;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-      }
-
-      /* Payments Cards List */
-      .pay-cards-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
-      }
-      .pay-card {
-        background: #141c2b;
-        border: 1px solid #1f2d45;
-        border-radius: 12px;
-        overflow: hidden;
-        transition: border-color .15s ease, box-shadow .15s ease;
-      }
-      .pay-card:hover {
-        border-color: #2b3e61;
-      }
-      .pay-card.status-pending {
-        border-left: 4px solid #f59e0b;
-      }
-      .pay-card.status-paid {
-        border-left: 4px solid #10b981;
-      }
-      .pay-card.status-canceled {
-        border-left: 4px solid #64748b;
-      }
-
-      /* Card Header Bar */
-      .pay-card-header {
-        padding: 0.9rem 1.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        user-select: none;
-        gap: 1rem;
-        background: rgba(255, 255, 255, 0.015);
-      }
-      .pay-card-header:hover {
-        background: rgba(255, 255, 255, 0.03);
-      }
-      .pay-header-left {
-        display: flex;
-        align-items: center;
-        gap: 0.85rem;
-        flex-wrap: wrap;
-      }
-      .pay-id-badge {
-        font-family: monospace;
-        font-weight: 700;
-        font-size: 0.85rem;
-        padding: 0.2rem 0.55rem;
-        background: #1e293b;
-        color: #cbd5e1;
-        border-radius: 6px;
-        border: 1px solid #334155;
-      }
-      .pay-status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        font-size: 0.78rem;
-        font-weight: 600;
-        padding: 0.25rem 0.65rem;
-        border-radius: 999px;
-      }
-      .status-pill-pending {
-        background: rgba(245, 158, 11, 0.15);
-        color: #f59e0b;
-        border: 1px solid rgba(245, 158, 11, 0.35);
-      }
-      .status-pill-paid {
-        background: rgba(16, 185, 129, 0.15);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.35);
-      }
-      .status-pill-canceled {
-        background: rgba(148, 163, 184, 0.15);
-        color: #94a3b8;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-      }
-      .pulse-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: currentColor;
-        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-        animation: pulseAnimation 1.6s infinite;
-      }
-      @keyframes pulseAnimation {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
-        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-      }
-
-      .pay-amount-box {
-        display: flex;
-        align-items: baseline;
-        gap: 0.3rem;
-      }
-      .pay-amount-num {
-        font-size: 1.25rem;
-        font-weight: 800;
-        color: #10b981;
-        letter-spacing: -0.02em;
-      }
-      .status-pending .pay-amount-num {
-        color: #fbbf24;
-      }
-      .status-canceled .pay-amount-num {
-        color: #94a3b8;
-      }
-      .pay-amount-unit {
-        font-size: 0.8rem;
-        color: #64748b;
-      }
-
-      .pay-client-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.82rem;
-        color: #f1f5f9;
-        font-weight: 500;
-      }
-      .pay-client-pill a {
-        color: #60a5fa;
-        text-decoration: none;
-      }
-      .pay-client-pill a:hover {
-        text-decoration: underline;
-      }
-      .pay-bal-pill {
-        font-size: 0.72rem;
-        background: #0f172a;
-        border: 1px solid #1e293b;
-        color: #94a3b8;
-        padding: 0.15rem 0.45rem;
-        border-radius: 4px;
-      }
-
-      .pay-header-right {
-        display: flex;
-        align-items: center;
-        gap: 0.85rem;
-      }
-      .pay-method-pill {
-        font-size: 0.78rem;
-        color: #94a3b8;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-      }
-      .pay-date-pill {
-        font-size: 0.75rem;
-        color: #64748b;
-      }
-      .pay-slip-badge {
-        font-size: 0.74rem;
-        padding: 0.18rem 0.5rem;
-        border-radius: 6px;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-      }
-      .slip-badge-real {
-        background: rgba(16, 185, 129, 0.12);
-        color: #34d399;
-        border: 1px solid rgba(16, 185, 129, 0.25);
-      }
-      .slip-badge-eslip {
-        background: rgba(59, 130, 246, 0.12);
-        color: #60a5fa;
-        border: 1px solid rgba(59, 130, 246, 0.25);
-      }
-      .slip-badge-none {
-        background: rgba(148, 163, 184, 0.1);
-        color: #94a3b8;
-      }
-
-      .pay-toggle-btn {
-        background: #1e293b;
-        border: 1px solid #334155;
-        color: #cbd5e1;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-        transition: transform .18s ease;
-      }
-      .pay-card.is-open .pay-toggle-btn {
-        transform: rotate(180deg);
-        background: #3b82f6;
-        color: #fff;
-        border-color: #3b82f6;
-      }
-
-      /* Card Drawer */
-      .pay-drawer {
-        display: none;
-        border-top: 1px solid #1f2d45;
-        padding: 1.25rem;
-        background: #0d131f;
-      }
-      .pay-card.is-open .pay-drawer {
-        display: block;
-      }
-      .pay-drawer-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 1.25rem;
-      }
-      @media (max-width: 1024px) {
-        .pay-drawer-grid {
-          grid-template-columns: 1fr;
+      @media (max-width: 860px) {
+        .pm-kpi-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 8px !important;
         }
       }
 
-      /* Drawer Box */
-      .pay-box {
-        background: #141c2b;
-        border: 1px solid #1f2d45;
-        border-radius: 10px;
-        padding: 1rem 1.1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.85rem;
+      .pm-kpi-card {
+        background: #141c2b !important;
+        border: 1px solid #1f2d45 !important;
+        border-radius: 10px !important;
+        padding: 10px 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        text-decoration: none !important;
+        color: inherit !important;
+        transition: transform .18s ease, border-color .18s ease !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
       }
-      .pay-box-title {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: #f1f5f9;
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        border-bottom: 1px solid #1f2d45;
-        padding-bottom: 0.6rem;
+      .pm-kpi-card:hover {
+        transform: translateY(-2px) !important;
+        border-color: #3b82f6 !important;
       }
-      .pay-box-title i {
-        color: #3b82f6;
-        font-size: 1.05rem;
+      .pm-kpi-card.is-active {
+        border-color: #3b82f6 !important;
+        background: linear-gradient(145deg, #162238 0%, #111a29 100%) !important;
+        box-shadow: 0 0 0 1px #3b82f6 !important;
       }
-
-      /* Detail Pairs */
-      .pay-kv-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.55rem;
-        font-size: 0.82rem;
+      .pm-kpi-card.is-pending-alert {
+        border-color: #f59e0b !important;
+        background: linear-gradient(145deg, #2a2012 0%, #161a24 100%) !important;
       }
-      .pay-kv-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
+      .pm-kpi-card.is-pending-alert .pm-kpi-icon {
+        color: #f59e0b !important;
+        background: rgba(245, 158, 11, 0.15) !important;
       }
-      .pay-kv-label {
-        color: #94a3b8;
+      .pm-kpi-info {
+        min-width: 0 !important;
+        flex: 1 !important;
+        overflow: hidden !important;
       }
-      .pay-kv-val {
-        color: #f8fafc;
-        font-weight: 500;
-        text-align: right;
+      .pm-kpi-title {
+        display: block !important;
+        font-size: 11px !important;
+        color: #94a3b8 !important;
+        font-weight: 500 !important;
+        margin-bottom: 2px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
       }
-      .pay-kv-val code {
-        font-family: monospace;
-        background: #0d131f;
-        padding: 0.15rem 0.4rem;
-        border-radius: 4px;
-        border: 1px solid #1e293b;
-        color: #60a5fa;
+      .pm-kpi-val {
+        font-size: 20px !important;
+        font-weight: 800 !important;
+        color: #f8fafc !important;
+        line-height: 1.15 !important;
+        display: block !important;
+        white-space: nowrap !important;
       }
-
-      /* Slip Box - Image Preview */
-      .slip-photo-box {
-        position: relative;
-        background: #090d15;
-        border: 1px solid #1f2d45;
-        border-radius: 8px;
-        overflow: hidden;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 200px;
-        max-height: 320px;
+      .pm-kpi-sub {
+        display: block !important;
+        font-size: 11px !important;
+        color: #cbd5e1 !important;
+        margin-top: 2px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
       }
-      .slip-photo-box:hover .slip-photo-zoom-hint {
-        opacity: 1;
+      .pm-kpi-icon {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 18px !important;
+        background: rgba(59, 130, 246, 0.12) !important;
+        color: #3b82f6 !important;
+        flex-shrink: 0 !important;
+        margin-left: 6px !important;
       }
-      .slip-img-thumb {
-        max-width: 100%;
-        max-height: 320px;
-        object-fit: contain;
-        display: block;
-        transition: transform .2s ease;
+      .pm-kpi-card.kpi-paid .pm-kpi-icon {
+        color: #10b981 !important;
+        background: rgba(16, 185, 129, 0.12) !important;
       }
-      .slip-photo-box:hover .slip-img-thumb {
-        transform: scale(1.02);
-      }
-      .slip-photo-zoom-hint {
-        position: absolute;
-        bottom: 10px;
-        right: 10px;
-        background: rgba(15, 23, 42, 0.85);
-        color: #fff;
-        padding: 0.3rem 0.65rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        opacity: 0.85;
-        transition: opacity .15s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.35rem;
-      }
-      .slip-photo-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 0.4rem;
+      .pm-kpi-card.kpi-canceled .pm-kpi-icon {
+        color: #ef4444 !important;
+        background: rgba(239, 68, 68, 0.12) !important;
       }
 
-      /* Thai Bank Digital E-Slip Card */
-      .thai-eslip-card {
-        background: linear-gradient(180deg, #0e1e38 0%, #0a1324 100%);
-        border: 1px solid #23385d;
-        border-radius: 12px;
-        padding: 1.1rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.35);
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        position: relative;
-        overflow: hidden;
+      /* Toolbar */
+      .pm-toolbar {
+        background: #141c2b !important;
+        border: 1px solid #1f2d45 !important;
+        border-radius: 10px !important;
+        padding: 10px 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
       }
-      .thai-eslip-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #0056b3, #00a86b);
+      .pm-toolbar-top {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
       }
-      .thai-eslip-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border-bottom: 1px dashed #23385d;
-        padding-bottom: 0.75rem;
+      .pm-tabs {
+        display: inline-flex !important;
+        gap: 3px !important;
+        background: #0d131f !important;
+        padding: 2px !important;
+        border-radius: 6px !important;
+        border: 1px solid #1f2d45 !important;
+        flex-wrap: wrap !important;
       }
-      .thai-eslip-brand {
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
+      .pm-tab-btn {
+        padding: 5px 9px !important;
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        color: #94a3b8 !important;
+        border-radius: 5px !important;
+        text-decoration: none !important;
+        transition: all .15s ease !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        white-space: nowrap !important;
       }
-      .promptpay-badge {
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #38bdf8;
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
+      .pm-tab-btn:hover {
+        color: #f8fafc !important;
+        background: rgba(255,255,255,0.04) !important;
       }
-      .eslip-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #f1f5f9;
+      .pm-tab-btn.is-active {
+        background: #3b82f6 !important;
+        color: #fff !important;
+        font-weight: 600 !important;
       }
-      .eslip-verified-tag {
-        font-size: 0.72rem;
-        padding: 0.2rem 0.5rem;
-        border-radius: 999px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-      }
-      .eslip-verified-tag.tag-paid {
-        background: rgba(16, 185, 129, 0.2);
-        color: #34d399;
-        border: 1px solid rgba(16, 185, 129, 0.4);
-      }
-      .eslip-verified-tag.tag-pending {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fbbf24;
-        border: 1px solid rgba(245, 158, 11, 0.4);
+      .pm-tab-badge {
+        font-size: 10px !important;
+        padding: 1px 4px !important;
+        border-radius: 999px !important;
+        background: rgba(0,0,0,0.3) !important;
       }
 
-      .thai-eslip-amount-box {
-        text-align: center;
-        padding: 0.6rem 0;
-        background: rgba(15, 23, 42, 0.5);
-        border-radius: 8px;
-        border: 1px solid #1e293b;
+      .pm-quick-actions {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
       }
-      .eslip-amt-label {
-        display: block;
-        font-size: 0.72rem;
-        color: #94a3b8;
+      .pm-match-form {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        background: #0d131f !important;
+        border: 1px solid #2a3b5c !important;
+        padding: 2px 4px !important;
+        border-radius: 6px !important;
       }
-      .eslip-amt-val {
-        font-size: 1.7rem;
-        font-weight: 800;
-        color: #34d399;
-        letter-spacing: -0.02em;
+      .pm-match-input {
+        background: transparent !important;
+        border: none !important;
+        color: #f8fafc !important;
+        font-size: 11px !important;
+        padding: 3px 5px !important;
+        outline: none !important;
+        width: 105px !important;
+        font-weight: 600 !important;
       }
-      .eslip-currency {
-        font-size: 0.75rem;
-        color: #64748b;
-        margin-left: 0.2rem;
-      }
-
-      .thai-eslip-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.78rem;
-        gap: 0.5rem;
-      }
-      .eslip-lbl {
-        color: #94a3b8;
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-      }
-      .eslip-val {
-        color: #f8fafc;
-        text-align: right;
-      }
-      .eslip-code {
-        font-family: monospace;
-        font-size: 0.76rem;
-        background: #090e18;
-        padding: 0.15rem 0.4rem;
-        border-radius: 4px;
-        border: 1px solid #1e293b;
-        color: #93c5fd;
-      }
-      .eslip-ref-highlight {
-        color: #fbbf24;
-        border-color: #78350f;
-        background: #1c1508;
-      }
-      .thai-eslip-footer {
-        border-top: 1px dashed #23385d;
-        padding-top: 0.6rem;
-        font-size: 0.72rem;
-        color: #64748b;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.35rem;
+      .pm-match-input::placeholder {
+        color: #64748b !important;
+        font-weight: normal !important;
       }
 
-      /* Admin Upload Box */
-      .slip-upload-box {
-        margin-top: 0.5rem;
-        background: #0a0f19;
-        border: 1px dashed #2a3b5c;
-        border-radius: 8px;
-        padding: 0.75rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
+      .pm-search-row {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
       }
-      .slip-upload-label {
-        font-size: 0.76rem;
-        color: #94a3b8;
-        display: flex;
-        align-items: center;
-        gap: 0.35rem;
+      .pm-search-box {
+        position: relative !important;
+        flex: 1 !important;
+        min-width: 160px !important;
       }
-      .slip-upload-input-wrap {
-        display: flex;
-        gap: 0.4rem;
-        align-items: center;
+      .pm-search-box i {
+        position: absolute !important;
+        left: 8px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        color: #64748b !important;
+        font-size: 13px !important;
       }
-      .slip-file-input {
-        flex: 1;
-        font-size: 0.75rem;
-        color: #94a3b8;
+      .pm-search-input {
+        width: 100% !important;
+        background: #0d131f !important;
+        border: 1px solid #1f2d45 !important;
+        border-radius: 6px !important;
+        padding: 5px 8px 5px 26px !important;
+        color: #f8fafc !important;
+        font-size: 11px !important;
+        outline: none !important;
       }
-
-      /* Action Panel */
-      .pay-action-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.6rem;
+      .pm-search-input:focus {
+        border-color: #3b82f6 !important;
       }
-      .pay-action-btn {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.45rem;
-        padding: 0.6rem 1rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all .15s ease;
-      }
-      .pay-btn-approve {
-        background: #059669;
-        color: #fff;
-        border: 1px solid #10b981;
-      }
-      .pay-btn-approve:hover {
-        background: #10b981;
-      }
-      .pay-btn-reject {
-        background: #dc2626;
-        color: #fff;
-        border: 1px solid #ef4444;
-      }
-      .pay-btn-reject:hover {
-        background: #ef4444;
-      }
-      .pay-reject-form {
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-        background: #0d131f;
-        padding: 0.65rem;
-        border-radius: 8px;
-        border: 1px solid #2a1f1f;
-      }
-      .pay-reject-input {
-        background: #141c2b;
-        border: 1px solid #3b2a2a;
-        border-radius: 6px;
-        padding: 0.4rem 0.6rem;
-        color: #f8fafc;
-        font-size: 0.8rem;
-        outline: none;
-      }
-      .pay-note-form {
-        display: flex;
-        gap: 0.4rem;
-      }
-      .pay-note-input {
-        flex: 1;
-        background: #0d131f;
-        border: 1px solid #1f2d45;
-        border-radius: 6px;
-        padding: 0.4rem 0.6rem;
-        color: #f8fafc;
-        font-size: 0.8rem;
-        outline: none;
+      .pm-method-select {
+        background: #0d131f !important;
+        border: 1px solid #1f2d45 !important;
+        border-radius: 6px !important;
+        padding: 5px 8px !important;
+        color: #f8fafc !important;
+        font-size: 11px !important;
+        outline: none !important;
       }
 
-      /* Lightbox Modal */
-      .slip-lightbox-modal {
+      /* Alert */
+      .pm-alert-ok {
+        background: rgba(16, 185, 129, 0.15) !important;
+        border: 1px solid rgba(16, 185, 129, 0.4) !important;
+        color: #34d399 !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+        font-size: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+      }
+      .pm-alert-err {
+        background: rgba(239, 68, 68, 0.15) !important;
+        border: 1px solid rgba(239, 68, 68, 0.4) !important;
+        color: #f87171 !important;
+        padding: 8px 12px !important;
+        border-radius: 6px !important;
+        font-size: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+      }
+
+      /* Cards List */
+      .pm-cards-list {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
+      }
+      .pm-card {
+        display: flex !important;
+        flex-direction: column !important;
+        grid-template-columns: none !important;
+        width: 100% !important;
+        background: #141c2b !important;
+        border: 1px solid #1f2d45 !important;
+        border-radius: 10px !important;
+        overflow: hidden !important;
+        transition: border-color .15s ease !important;
+      }
+      .pm-card:hover {
+        border-color: #2b3e61 !important;
+      }
+      .pm-card.status-pending {
+        border-left: 4px solid #f59e0b !important;
+      }
+      .pm-card.status-paid {
+        border-left: 4px solid #10b981 !important;
+      }
+      .pm-card.status-canceled {
+        border-left: 4px solid #64748b !important;
+      }
+
+      /* Perfectly Responsive Card Header */
+      .pm-card-header {
+        padding: 10px 12px !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        background: rgba(255, 255, 255, 0.015) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        width: 100% !important;
+      }
+      .pm-card-header:hover {
+        background: rgba(255, 255, 255, 0.035) !important;
+      }
+
+      .pm-hdr-top {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        gap: 8px !important;
+      }
+      .pm-hdr-badges {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        min-width: 0 !important;
+      }
+      .pm-id-badge {
+        font-family: monospace !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        padding: 2px 5px !important;
+        background: #1e293b !important;
+        color: #cbd5e1 !important;
+        border-radius: 4px !important;
+        border: 1px solid #334155 !important;
+        white-space: nowrap !important;
+      }
+      .pm-status-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        font-size: 10px !important;
+        font-weight: 600 !important;
+        padding: 2px 6px !important;
+        border-radius: 999px !important;
+        white-space: nowrap !important;
+      }
+      .pm-st-pending {
+        background: rgba(245, 158, 11, 0.15) !important;
+        color: #f59e0b !important;
+        border: 1px solid rgba(245, 158, 11, 0.35) !important;
+      }
+      .pm-st-paid {
+        background: rgba(16, 185, 129, 0.15) !important;
+        color: #10b981 !important;
+        border: 1px solid rgba(16, 185, 129, 0.35) !important;
+      }
+      .pm-st-canceled {
+        background: rgba(148, 163, 184, 0.15) !important;
+        color: #94a3b8 !important;
+        border: 1px solid rgba(148, 163, 184, 0.35) !important;
+      }
+
+      .pm-amt-box {
+        display: inline-flex !important;
+        align-items: baseline !important;
+        gap: 2px !important;
+        white-space: nowrap !important;
+        margin-left: 2px !important;
+      }
+      .pm-amt-num {
+        font-size: 15px !important;
+        font-weight: 800 !important;
+        color: #10b981 !important;
+      }
+      .pm-card.status-pending .pm-amt-num {
+        color: #fbbf24 !important;
+      }
+      .pm-card.status-canceled .pm-amt-num {
+        color: #94a3b8 !important;
+      }
+      .pm-amt-unit {
+        font-size: 10px !important;
+        color: #64748b !important;
+      }
+
+      .pm-toggle-btn {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        color: #cbd5e1 !important;
+        width: 24px !important;
+        height: 24px !important;
+        border-radius: 5px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 12px !important;
+        transition: transform .18s ease !important;
+        flex-shrink: 0 !important;
+      }
+      .pm-card.is-open .pm-toggle-btn {
+        transform: rotate(180deg) !important;
+        background: #3b82f6 !important;
+        color: #fff !important;
+      }
+
+      .pm-hdr-sub {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px 10px !important;
+        flex-wrap: wrap !important;
+        font-size: 11px !important;
+        color: #94a3b8 !important;
+        width: 100% !important;
+      }
+      .pm-client-tag {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        font-size: 11px !important;
+        color: #f1f5f9 !important;
+        white-space: nowrap !important;
+      }
+      .pm-client-tag a {
+        color: #60a5fa !important;
+        text-decoration: none !important;
+        font-weight: 600 !important;
+      }
+      .pm-bal-tag {
+        font-size: 10px !important;
+        background: #0f172a !important;
+        border: 1px solid #1e293b !important;
+        color: #94a3b8 !important;
+        padding: 1px 4px !important;
+        border-radius: 4px !important;
+        white-space: nowrap !important;
+      }
+      .pm-ref-tag {
+        font-family: monospace !important;
+        font-size: 10px !important;
+        color: #93c5fd !important;
+        background: #0d131f !important;
+        padding: 1px 4px !important;
+        border-radius: 4px !important;
+        border: 1px solid #1e293b !important;
+        white-space: nowrap !important;
+      }
+      .pm-meta-txt {
+        font-size: 10px !important;
+        color: #94a3b8 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 2px !important;
+        white-space: nowrap !important;
+      }
+      .pm-slip-badge {
+        font-size: 10px !important;
+        padding: 1px 5px !important;
+        border-radius: 4px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 2px !important;
+        white-space: nowrap !important;
+      }
+      .pm-slip-has {
+        background: rgba(16, 185, 129, 0.15) !important;
+        color: #34d399 !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
+      }
+      .pm-slip-digi {
+        background: rgba(59, 130, 246, 0.15) !important;
+        color: #60a5fa !important;
+        border: 1px solid rgba(59, 130, 246, 0.3) !important;
+      }
+      .pm-slip-empty {
+        background: rgba(148, 163, 184, 0.1) !important;
+        color: #94a3b8 !important;
+      }
+
+      /* Card Drawer */
+      .pm-drawer {
+        display: none !important;
+        border-top: 1px solid #1f2d45 !important;
+        padding: 12px !important;
+        background: #0d131f !important;
+        width: 100% !important;
+      }
+      .pm-card.is-open .pm-drawer {
+        display: block !important;
+      }
+      .pm-drawer-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr !important;
+        gap: 12px !important;
+        width: 100% !important;
+      }
+      @media (max-width: 860px) {
+        .pm-drawer-grid {
+          grid-template-columns: 1fr !important;
+          gap: 10px !important;
+        }
+      }
+
+      .pm-box {
+        background: #141c2b !important;
+        border: 1px solid #1f2d45 !important;
+        border-radius: 8px !important;
+        padding: 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      .pm-box-title {
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        color: #f1f5f9 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        border-bottom: 1px solid #1f2d45 !important;
+        padding-bottom: 5px !important;
+      }
+      .pm-box-title i {
+        color: #3b82f6 !important;
+      }
+
+      .pm-kv-list {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 5px !important;
+        font-size: 11px !important;
+        width: 100% !important;
+      }
+      .pm-kv-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        width: 100% !important;
+      }
+      .pm-kv-lbl {
+        color: #94a3b8 !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+      }
+      .pm-kv-val {
+        color: #f8fafc !important;
+        font-weight: 500 !important;
+        text-align: right !important;
+        word-break: break-all !important;
+        min-width: 0 !important;
+      }
+      .pm-kv-val code {
+        font-family: monospace !important;
+        background: #0d131f !important;
+        padding: 1px 4px !important;
+        border-radius: 4px !important;
+        border: 1px solid #1e293b !important;
+        color: #60a5fa !important;
+      }
+
+      /* Slip Photo Box */
+      .pm-slip-photo-wrap {
+        position: relative !important;
+        background: #090d15 !important;
+        border: 1px solid #1f2d45 !important;
+        border-radius: 6px !important;
+        overflow: hidden !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 160px !important;
+        max-height: 280px !important;
+      }
+      .pm-slip-thumb {
+        max-width: 100% !important;
+        max-height: 280px !important;
+        object-fit: contain !important;
+        display: block !important;
+        transition: transform .2s ease !important;
+      }
+      .pm-slip-photo-wrap:hover .pm-slip-thumb {
+        transform: scale(1.02) !important;
+      }
+      .pm-slip-zoom-hint {
+        position: absolute !important;
+        bottom: 6px !important;
+        right: 6px !important;
+        background: rgba(15, 23, 42, 0.85) !important;
+        color: #fff !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        font-size: 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+      }
+      .pm-slip-actions {
+        display: flex !important;
+        gap: 5px !important;
+        margin-top: 2px !important;
+      }
+
+      /* Thai Digital E-Slip Card */
+      .pm-eslip-card {
+        background: linear-gradient(180deg, #0e1e38 0%, #0a1324 100%) !important;
+        border: 1px solid #23385d !important;
+        border-radius: 8px !important;
+        padding: 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+        position: relative !important;
+        overflow: hidden !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
+      }
+      .pm-eslip-card::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 3px !important;
+        background: linear-gradient(90deg, #0056b3, #00a86b) !important;
+      }
+      .pm-eslip-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        border-bottom: 1px dashed #23385d !important;
+        padding-bottom: 5px !important;
+      }
+      .pm-promptpay-tag {
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        color: #38bdf8 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+      }
+      .pm-eslip-status-tag {
+        font-size: 9px !important;
+        padding: 1px 5px !important;
+        border-radius: 999px !important;
+        font-weight: 600 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 2px !important;
+      }
+      .pm-eslip-status-tag.tag-paid {
+        background: rgba(16, 185, 129, 0.2) !important;
+        color: #34d399 !important;
+        border: 1px solid rgba(16, 185, 129, 0.4) !important;
+      }
+      .pm-eslip-status-tag.tag-pending {
+        background: rgba(245, 158, 11, 0.2) !important;
+        color: #fbbf24 !important;
+        border: 1px solid rgba(245, 158, 11, 0.4) !important;
+      }
+
+      .pm-eslip-amt-box {
+        text-align: center !important;
+        padding: 5px 0 !important;
+        background: rgba(15, 23, 42, 0.5) !important;
+        border-radius: 6px !important;
+        border: 1px solid #1e293b !important;
+      }
+      .pm-eslip-amt-lbl {
+        display: block !important;
+        font-size: 9px !important;
+        color: #94a3b8 !important;
+      }
+      .pm-eslip-amt-val {
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        color: #34d399 !important;
+      }
+
+      .pm-eslip-row {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        font-size: 10px !important;
+        gap: 4px !important;
+      }
+      .pm-eslip-lbl {
+        color: #94a3b8 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+        white-space: nowrap !important;
+      }
+      .pm-eslip-val {
+        color: #f8fafc !important;
+        text-align: right !important;
+        white-space: nowrap !important;
+      }
+      .pm-eslip-code {
+        font-family: monospace !important;
+        font-size: 10px !important;
+        background: #090e18 !important;
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        border: 1px solid #1e293b !important;
+        color: #93c5fd !important;
+      }
+
+      /* Admin Upload Tool */
+      .pm-upload-box {
+        margin-top: 2px !important;
+        background: #0a0f19 !important;
+        border: 1px dashed #2a3b5c !important;
+        border-radius: 6px !important;
+        padding: 6px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+      }
+      .pm-upload-lbl {
+        font-size: 10px !important;
+        color: #94a3b8 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 3px !important;
+      }
+      .pm-upload-inputs {
+        display: flex !important;
+        gap: 4px !important;
+        align-items: center !important;
+      }
+      .pm-upload-file {
+        flex: 1 !important;
+        font-size: 10px !important;
+        color: #94a3b8 !important;
+      }
+
+      /* Action Buttons */
+      .pm-act-group {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 6px !important;
+      }
+      .pm-act-btn {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 7px 10px !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        font-size: 11px !important;
+        cursor: pointer !important;
+        transition: all .15s ease !important;
+        border: none !important;
+      }
+      .pm-btn-approve {
+        background: #059669 !important;
+        color: #fff !important;
+        border: 1px solid #10b981 !important;
+      }
+      .pm-btn-approve:hover {
+        background: #10b981 !important;
+      }
+      .pm-btn-reject {
+        background: #dc2626 !important;
+        color: #fff !important;
+        border: 1px solid #ef4444 !important;
+      }
+      .pm-btn-reject:hover {
+        background: #ef4444 !important;
+      }
+      .pm-reject-box {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        background: #0d131f !important;
+        padding: 6px !important;
+        border-radius: 6px !important;
+        border: 1px solid #3b2020 !important;
+      }
+      .pm-reject-input {
+        background: #141c2b !important;
+        border: 1px solid #4a2828 !important;
+        border-radius: 4px !important;
+        padding: 4px 6px !important;
+        color: #f8fafc !important;
+        font-size: 11px !important;
+        outline: none !important;
+      }
+      .pm-note-form {
+        display: flex !important;
+        gap: 4px !important;
+      }
+      .pm-note-input {
+        flex: 1 !important;
+        background: #0d131f !important;
+        border: 1px solid #1f2d45 !important;
+        border-radius: 4px !important;
+        padding: 4px 6px !important;
+        color: #f8fafc !important;
+        font-size: 11px !important;
+        outline: none !important;
+      }
+
+      /* Modal */
+      .pm-modal {
         display: none;
         position: fixed;
         inset: 0;
@@ -962,169 +983,167 @@ function la_patch_admin_payments(string $html): string {
         backdrop-filter: blur(4px);
         align-items: center;
         justify-content: center;
-        padding: 1.5rem;
+        padding: 1rem;
       }
-      .slip-lightbox-modal.is-active {
-        display: flex;
+      .pm-modal.is-active {
+        display: flex !important;
       }
-      .slip-lightbox-content {
-        max-width: 900px;
+      .pm-modal-content {
+        max-width: 800px;
         width: 100%;
         max-height: 90vh;
         background: #141c2b;
         border: 1px solid #1f2d45;
-        border-radius: 14px;
+        border-radius: 10px;
         overflow: hidden;
         display: flex;
         flex-direction: column;
         box-shadow: 0 20px 40px rgba(0,0,0,0.6);
       }
-      .slip-lightbox-bar {
-        padding: 0.85rem 1.25rem;
+      .pm-modal-bar {
+        padding: 8px 12px;
         background: #0d131f;
         border-bottom: 1px solid #1f2d45;
         display: flex;
         align-items: center;
         justify-content: space-between;
       }
-      .slip-lightbox-title {
-        font-size: 0.95rem;
+      .pm-modal-title {
+        font-size: 12px;
         font-weight: 700;
         color: #f8fafc;
       }
-      .slip-lightbox-actions {
+      .pm-modal-actions {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 5px;
       }
-      .slip-lightbox-close {
+      .pm-modal-close {
         background: #1e293b;
         border: 1px solid #334155;
         color: #f8fafc;
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
+        width: 26px;
+        height: 26px;
+        border-radius: 5px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.1rem;
+        font-size: 14px;
       }
-      .slip-lightbox-close:hover {
+      .pm-modal-close:hover {
         background: #ef4444;
-        border-color: #ef4444;
       }
-      .slip-lightbox-image-wrap {
-        padding: 1.25rem;
+      .pm-modal-body {
+        padding: 10px;
         overflow: auto;
         display: flex;
         align-items: center;
         justify-content: center;
         background: #090d15;
       }
-      .slip-lightbox-image-wrap img {
+      .pm-modal-body img {
         max-width: 100%;
         max-height: 75vh;
         object-fit: contain;
-        border-radius: 8px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        border-radius: 5px;
       }
     </style>
 
-    <div class="pay-desk-wrap">
+    <div class="pm-desk-wrap">
       <!-- Flash Alert -->
       <?php if ($okMsg !== ''): ?>
-        <div class="pay-alert-ok">
+        <div class="pm-alert-ok">
           <i class="ri-checkbox-circle-fill"></i>
           <span><?= $okMsg ?></span>
         </div>
       <?php endif; ?>
       <?php if ($errMsg !== ''): ?>
-        <div class="pay-alert-err">
+        <div class="pm-alert-err">
           <i class="ri-error-warning-fill"></i>
           <span><?= $errMsg ?></span>
         </div>
       <?php endif; ?>
 
-      <!-- 4 KPI Summary Cards -->
-      <div class="pay-kpi-grid">
-        <a class="pay-kpi-card <?= $statusFilter === '' ? 'is-active' : '' ?>" href="/admin/payments">
-          <div class="pay-kpi-info">
-            <span>รายการเติมเงินทั้งหมด</span>
-            <b><?= number_format($counts['all']) ?></b>
-            <small>ยอดรวม ฿<?= number_format($sums['all'], 2) ?></small>
+      <!-- 4 KPI Summary Cards (Clean 4 cols on desktop, 2x2 on mobile) -->
+      <div class="pm-kpi-grid">
+        <a class="pm-kpi-card <?= $statusFilter === '' ? 'is-active' : '' ?>" href="/admin/payments">
+          <div class="pm-kpi-info">
+            <span class="pm-kpi-title">รายการทั้งหมด</span>
+            <b class="pm-kpi-val"><?= number_format($counts['all']) ?></b>
+            <small class="pm-kpi-sub">ยอดรวม ฿<?= number_format($sums['all'], 2) ?></small>
           </div>
-          <div class="pay-kpi-icon"><i class="ri-wallet-3-line"></i></div>
+          <div class="pm-kpi-icon"><i class="ri-wallet-3-line"></i></div>
         </a>
 
-        <a class="pay-kpi-card <?= $statusFilter === 'pending' ? 'is-active' : '' ?> <?= $counts['pending'] > 0 ? 'is-pending-alert' : '' ?>" href="/admin/payments?status=pending">
-          <div class="pay-kpi-info">
-            <span>รอตรวจสอบยอด</span>
-            <b><?= number_format($counts['pending']) ?></b>
-            <small>รอยืนยัน ฿<?= number_format($sums['pending'], 2) ?></small>
+        <a class="pm-kpi-card kpi-pending <?= $statusFilter === 'pending' ? 'is-active' : '' ?> <?= $counts['pending'] > 0 ? 'is-pending-alert' : '' ?>" href="/admin/payments?status=pending">
+          <div class="pm-kpi-info">
+            <span class="pm-kpi-title">รอตรวจสอบยอด</span>
+            <b class="pm-kpi-val"><?= number_format($counts['pending']) ?></b>
+            <small class="pm-kpi-sub">รอยืนยัน ฿<?= number_format($sums['pending'], 2) ?></small>
           </div>
-          <div class="pay-kpi-icon"><i class="ri-time-line"></i></div>
+          <div class="pm-kpi-icon"><i class="ri-time-line"></i></div>
         </a>
 
-        <a class="pay-kpi-card kpi-paid <?= $statusFilter === 'paid' ? 'is-active' : '' ?>" href="/admin/payments?status=paid">
-          <div class="pay-kpi-info">
-            <span>อนุมัติสำเร็จแล้ว</span>
-            <b><?= number_format($counts['paid']) ?></b>
-            <small>สำเร็จ ฿<?= number_format($sums['paid'], 2) ?></small>
+        <a class="pm-kpi-card kpi-paid <?= $statusFilter === 'paid' ? 'is-active' : '' ?>" href="/admin/payments?status=paid">
+          <div class="pm-kpi-info">
+            <span class="pm-kpi-title">อนุมัติสำเร็จแล้ว</span>
+            <b class="pm-kpi-val"><?= number_format($counts['paid']) ?></b>
+            <small class="pm-kpi-sub">สำเร็จ ฿<?= number_format($sums['paid'], 2) ?></small>
           </div>
-          <div class="pay-kpi-icon"><i class="ri-checkbox-circle-line"></i></div>
+          <div class="pm-kpi-icon"><i class="ri-checkbox-circle-line"></i></div>
         </a>
 
-        <a class="pay-kpi-card kpi-canceled <?= $statusFilter === 'canceled' ? 'is-active' : '' ?>" href="/admin/payments?status=canceled">
-          <div class="pay-kpi-info">
-            <span>ปฏิเสธ / ยกเลิก</span>
-            <b><?= number_format($counts['canceled']) ?></b>
-            <small>ยกเลิก ฿<?= number_format($sums['canceled'], 2) ?></small>
+        <a class="pm-kpi-card kpi-canceled <?= $statusFilter === 'canceled' ? 'is-active' : '' ?>" href="/admin/payments?status=canceled">
+          <div class="pm-kpi-info">
+            <span class="pm-kpi-title">ปฏิเสธ / ยกเลิก</span>
+            <b class="pm-kpi-val"><?= number_format($counts['canceled']) ?></b>
+            <small class="pm-kpi-sub">ยกเลิก ฿<?= number_format($sums['canceled'], 2) ?></small>
           </div>
-          <div class="pay-kpi-icon"><i class="ri-close-circle-line"></i></div>
+          <div class="pm-kpi-icon"><i class="ri-close-circle-line"></i></div>
         </a>
       </div>
 
       <!-- Quick Toolbar & Matcher -->
-      <div class="pay-toolbar">
-        <div class="pay-toolbar-top">
-          <!-- Status Filter Pills -->
-          <div class="pay-tabs">
-            <a href="/admin/payments" class="pay-tab-btn <?= $statusFilter === '' ? 'is-active' : '' ?>">
-              ทั้งหมด <span class="pay-tab-badge"><?= $counts['all'] ?></span>
+      <div class="pm-toolbar">
+        <div class="pm-toolbar-top">
+          <!-- Status Tabs -->
+          <div class="pm-tabs">
+            <a href="/admin/payments" class="pm-tab-btn <?= $statusFilter === '' ? 'is-active' : '' ?>">
+              ทั้งหมด <span class="pm-tab-badge"><?= $counts['all'] ?></span>
             </a>
-            <a href="/admin/payments?status=pending" class="pay-tab-btn <?= $statusFilter === 'pending' ? 'is-active' : '' ?>">
-              รอตรวจ <span class="pay-tab-badge"><?= $counts['pending'] ?></span>
+            <a href="/admin/payments?status=pending" class="pm-tab-btn <?= $statusFilter === 'pending' ? 'is-active' : '' ?>">
+              รอตรวจ <span class="pm-tab-badge"><?= $counts['pending'] ?></span>
             </a>
-            <a href="/admin/payments?status=paid" class="pay-tab-btn <?= $statusFilter === 'paid' ? 'is-active' : '' ?>">
-              อนุมัติแล้ว <span class="pay-tab-badge"><?= $counts['paid'] ?></span>
+            <a href="/admin/payments?status=paid" class="pm-tab-btn <?= $statusFilter === 'paid' ? 'is-active' : '' ?>">
+              อนุมัติแล้ว <span class="pm-tab-badge"><?= $counts['paid'] ?></span>
             </a>
-            <a href="/admin/payments?status=canceled" class="pay-tab-btn <?= $statusFilter === 'canceled' ? 'is-active' : '' ?>">
-              ปฏิเสธ <span class="pay-tab-badge"><?= $counts['canceled'] ?></span>
+            <a href="/admin/payments?status=canceled" class="pm-tab-btn <?= $statusFilter === 'canceled' ? 'is-active' : '' ?>">
+              ปฏิเสธ <span class="pm-tab-badge"><?= $counts['canceled'] ?></span>
             </a>
           </div>
 
-          <!-- Quick Match Bank Amount -->
-          <div class="pay-quick-match-wrap">
-            <form class="pay-match-form" method="post" action="/admin/payments/match">
+          <!-- Quick Actions -->
+          <div class="pm-quick-actions">
+            <form class="pm-match-form" method="post" action="/admin/payments/match">
               <input type="hidden" name="next" value="<?= htmlspecialchars($statusFilter) ?>">
-              <i class="ri-focus-3-line" style="color:#60a5fa; margin-left:0.3rem;"></i>
-              <input class="pay-match-input" name="amount" inputmode="decimal" placeholder="จับคู่ยอด เช่น 14.16" required>
-              <button type="submit" class="la-btn la-btn-mini la-btn-primary"><i class="ri-link"></i> จับคู่ & อนุมัติ</button>
+              <i class="ri-focus-3-line" style="color:#60a5fa; margin-left:2px;"></i>
+              <input class="pm-match-input" name="amount" inputmode="decimal" placeholder="จับคู่ยอด เช่น 14.16" required>
+              <button type="submit" class="la-btn la-btn-mini la-btn-primary" style="padding:3px 7px; font-size:11px;"><i class="ri-link"></i> จับคู่ & อนุมัติ</button>
             </form>
-            <a href="/admin/settings/payments" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-settings-3-line"></i> ตั้งค่าเติมเงิน</a>
-            <a href="/addfunds" target="_blank" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-external-link-line"></i> หน้าเติมเงินลูกค้า</a>
+            <a href="/admin/settings/payments" class="la-btn la-btn-mini la-btn-ghost" style="padding:3px 7px; font-size:11px;"><i class="ri-settings-3-line"></i> ตั้งค่า</a>
+            <a href="/addfunds" target="_blank" class="la-btn la-btn-mini la-btn-ghost" style="padding:3px 7px; font-size:11px;"><i class="ri-external-link-line"></i> หน้าลูกค้า</a>
           </div>
         </div>
 
         <!-- Live Search Bar -->
-        <div class="pay-search-row">
-          <div class="pay-search-box">
+        <div class="pm-search-row">
+          <div class="pm-search-box">
             <i class="ri-search-line"></i>
-            <input type="text" id="payLiveSearch" placeholder="ค้นหาด่วน: #ID, ลูกค้า, ยอดเงิน, รหัสอ้างอิง, Bank Trans Ref..." value="<?= htmlspecialchars($searchQuery) ?>" oninput="onPayLiveSearch(this.value)">
+            <input type="text" id="pmLiveSearch" class="pm-search-input" placeholder="ค้นหาด่วน: #ID, ลูกค้า, ยอดเงิน, รหัสอ้างอิง..." value="<?= htmlspecialchars($searchQuery) ?>" oninput="onPmLiveSearch(this.value)">
           </div>
           <?php if (!empty($methodsList)): ?>
-            <select class="pay-method-select" onchange="onPayMethodFilter(this.value)">
+            <select class="pm-method-select" onchange="onPmMethodFilter(this.value)">
               <option value="">ทุกช่องทาง (<?= count($methodsList) ?>)</option>
               <?php foreach ($methodsList as $mItem): ?>
                 <option value="<?= htmlspecialchars($mItem) ?>" <?= $methodFilter === $mItem ? 'selected' : '' ?>><?= htmlspecialchars($mItem) ?></option>
@@ -1135,12 +1154,12 @@ function la_patch_admin_payments(string $html): string {
       </div>
 
       <!-- Payment Cards Accordion List -->
-      <div class="pay-cards-list" id="payCardsContainer">
+      <div class="pm-cards-list" id="pmCardsContainer">
         <?php if (empty($payments)): ?>
-          <div style="background:#141c2b; border:1px solid #1f2d45; border-radius:12px; padding:3rem 1.5rem; text-align:center; color:#94a3b8;">
-            <i class="ri-inbox-line" style="font-size:2.5rem; color:#475569; display:block; margin-bottom:0.75rem;"></i>
-            <h3 style="color:#f8fafc; font-size:1.1rem; margin-bottom:0.3rem;">ไม่พบรายการเติมเงิน</h3>
-            <p style="font-size:0.85rem;">ยังไม่มีรายการที่ตรงกับเงื่อนไขการค้นหาหรือตัวกรองในขณะนี้</p>
+          <div style="background:#141c2b; border:1px solid #1f2d45; border-radius:10px; padding:2.5rem 1.5rem; text-align:center; color:#94a3b8;">
+            <i class="ri-inbox-line" style="font-size:2.2rem; color:#475569; display:block; margin-bottom:0.5rem;"></i>
+            <h3 style="color:#f8fafc; font-size:1rem; margin-bottom:0.2rem;">ไม่พบรายการเติมเงิน</h3>
+            <p style="font-size:0.8rem;">ยังไม่มีรายการที่ตรงกับเงื่อนไขการค้นหาหรือตัวกรองในขณะนี้</p>
           </div>
         <?php endif; ?>
 
@@ -1174,123 +1193,115 @@ function la_patch_admin_payments(string $html): string {
                 }
             }
           ?>
-          <article class="pay-card status-<?= $st ?> <?= $st === 'pending' ? 'is-open' : '' ?>"
-                   id="payCard-<?= $pid ?>"
+          <article class="pm-card status-<?= $st ?> <?= $st === 'pending' ? 'is-open' : '' ?>"
+                   id="pmCard-<?= $pid ?>"
                    data-pid="<?= $pid ?>"
                    data-status="<?= $st ?>"
                    data-client="<?= htmlspecialchars(mb_strtolower($cl)) ?>"
                    data-method="<?= htmlspecialchars(mb_strtolower($m)) ?>"
                    data-search="<?= htmlspecialchars(mb_strtolower($pid . ' ' . $cl . ' ' . $amt . ' ' . $m . ' ' . $refCode . ' ' . $transRef . ' ' . $note)) ?>">
 
-            <!-- Card Header -->
-            <div class="pay-card-header" onclick="togglePayDrawer(<?= $pid ?>)">
-              <div class="pay-header-left">
-                <span class="pay-id-badge">#<?= $pid ?></span>
-
-                <!-- Status Badge -->
-                <?php if ($st === 'pending'): ?>
-                  <span class="pay-status-pill status-pill-pending"><span class="pulse-dot"></span> รอตรวจ</span>
-                <?php elseif ($st === 'paid'): ?>
-                  <span class="pay-status-pill status-pill-paid"><i class="ri-checkbox-circle-fill"></i> อนุมัติแล้ว</span>
-                <?php else: ?>
-                  <span class="pay-status-pill status-pill-canceled"><i class="ri-close-circle-fill"></i> ปฏิเสธ</span>
-                <?php endif; ?>
-
-                <!-- Amount -->
-                <div class="pay-amount-box">
-                  <span class="pay-amount-num">฿<?= number_format($amt, 2) ?></span>
-                  <span class="pay-amount-unit">บาท</span>
+            <!-- Card Header: Row 1 = Badges + Amount + Toggle Button; Row 2 = Metadata -->
+            <div class="pm-card-header" onclick="togglePmDrawer(<?= $pid ?>)">
+              <div class="pm-hdr-top">
+                <div class="pm-hdr-badges">
+                  <span class="pm-id-badge">#<?= $pid ?></span>
+                  <?php if ($st === 'pending'): ?>
+                    <span class="pm-status-pill pm-st-pending"><i class="ri-time-line"></i> รอตรวจ</span>
+                  <?php elseif ($st === 'paid'): ?>
+                    <span class="pm-status-pill pm-st-paid"><i class="ri-checkbox-circle-fill"></i> อนุมัติแล้ว</span>
+                  <?php else: ?>
+                    <span class="pm-status-pill pm-st-canceled"><i class="ri-close-circle-fill"></i> ปฏิเสธ</span>
+                  <?php endif; ?>
+                  <div class="pm-amt-box">
+                    <span class="pm-amt-num">฿<?= number_format($amt, 2) ?></span>
+                    <span class="pm-amt-unit">บาท</span>
+                  </div>
                 </div>
+                <div class="pm-toggle-btn" aria-label="ดูรายละเอียด">
+                  <i class="ri-arrow-down-s-line"></i>
+                </div>
+              </div>
 
-                <!-- Client & Current Balance -->
-                <div class="pay-client-pill">
+              <div class="pm-hdr-sub">
+                <div class="pm-client-tag">
                   <i class="ri-user-3-line" style="color:#64748b;"></i>
                   <a href="/admin/clients?q=<?= urlencode($cl) ?>" onclick="event.stopPropagation()"><b><?= htmlspecialchars($cl) ?></b></a>
                   <?php if ($cBal !== null): ?>
-                    <span class="pay-bal-pill" title="ยอดเงินคงเหลือในกระเป๋าปัจจุบัน">คงเหลือ: ฿<?= number_format($cBal, 2) ?></span>
+                    <span class="pm-bal-tag">คงเหลือ ฿<?= number_format($cBal, 2) ?></span>
                   <?php endif; ?>
                 </div>
 
-                <!-- Ref code / Trans ref preview -->
                 <?php if ($refCode !== ''): ?>
-                  <code style="font-size:0.75rem; color:#93c5fd; background:#0d131f; padding:0.15rem 0.4rem; border-radius:4px; border:1px solid #1e293b;"><?= htmlspecialchars($refCode) ?></code>
+                  <span class="pm-ref-tag"><?= htmlspecialchars($refCode) ?></span>
                 <?php endif; ?>
-              </div>
 
-              <div class="pay-header-right">
-                <!-- Method & Date -->
-                <span class="pay-method-pill"><i class="ri-qr-code-line"></i> <?= htmlspecialchars($m) ?></span>
-                <span class="pay-date-pill"><i class="ri-time-line"></i> <?= htmlspecialchars($createdAt) ?></span>
+                <span class="pm-meta-txt"><i class="ri-qr-code-line"></i> <?= htmlspecialchars($m) ?></span>
+                <span class="pm-meta-txt"><i class="ri-time-line"></i> <?= htmlspecialchars($createdAt) ?></span>
 
-                <!-- Slip Badge -->
                 <?php if ($hasPhysicalSlip): ?>
-                  <span class="pay-slip-badge slip-badge-real"><i class="ri-image-line"></i> มีรูปสลิป</span>
+                  <span class="pm-slip-badge pm-slip-has"><i class="ri-image-line"></i> มีสลิป</span>
                 <?php elseif ($transRef !== ''): ?>
-                  <span class="pay-slip-badge slip-badge-eslip"><i class="ri-file-shield-line"></i> สลิปดิจิทัล</span>
+                  <span class="pm-slip-badge pm-slip-digi"><i class="ri-file-shield-line"></i> สลิปดิจิทัล</span>
                 <?php else: ?>
-                  <span class="pay-slip-badge slip-badge-none"><i class="ri-attachment-line"></i> รอแนบสลิป</span>
+                  <span class="pm-slip-badge pm-slip-empty"><i class="ri-attachment-line"></i> รอสลิป</span>
                 <?php endif; ?>
-
-                <!-- Accordion Toggle Button -->
-                <button type="button" class="pay-toggle-btn" aria-label="ดูรายละเอียด">
-                  <i class="ri-arrow-down-s-line"></i>
-                </button>
               </div>
             </div>
 
-            <!-- Card Expanded Drawer -->
-            <div class="pay-drawer">
-              <div class="pay-drawer-grid">
+            <!-- Card Drawer -->
+            <div class="pm-drawer">
+              <div class="pm-drawer-grid">
 
-                <!-- Box 1: Payment Metadata -->
-                <div class="pay-box">
-                  <div class="pay-box-title">
+                <!-- Box 1: Payment Info -->
+                <div class="pm-box">
+                  <div class="pm-box-title">
                     <i class="ri-file-list-3-line"></i>
                     <span>ข้อมูลการเติมเงิน (#<?= $pid ?>)</span>
                   </div>
-                  <div class="pay-kv-list">
-                    <div class="pay-kv-row">
-                      <span class="pay-kv-label">รหัสรายการ:</span>
-                      <span class="pay-kv-val">#<?= $pid ?></span>
+                  <div class="pm-kv-list">
+                    <div class="pm-kv-row">
+                      <span class="pm-kv-lbl">รหัสรายการ:</span>
+                      <span class="pm-kv-val">#<?= $pid ?></span>
                     </div>
-                    <div class="pay-kv-row">
-                      <span class="pay-kv-label">ชื่อลูกค้า:</span>
-                      <span class="pay-kv-val">
+                    <div class="pm-kv-row">
+                      <span class="pm-kv-lbl">ชื่อลูกค้า:</span>
+                      <span class="pm-kv-val">
                         <a href="/admin/clients?q=<?= urlencode($cl) ?>" style="color:#60a5fa; text-decoration:none;"><b><?= htmlspecialchars($cl) ?></b></a>
                         <?php if ($cEmail !== ''): ?>
-                          <div style="font-size:0.75rem; color:#64748b;"><?= htmlspecialchars($cEmail) ?></div>
+                          <div style="font-size:10px; color:#64748b;"><?= htmlspecialchars($cEmail) ?></div>
                         <?php endif; ?>
                       </span>
                     </div>
-                    <div class="pay-kv-row">
-                      <span class="pay-kv-label">ยอดกระเป๋าปัจจุบัน:</span>
-                      <span class="pay-kv-val" style="color:#34d399; font-weight:700;">฿<?= $cBal !== null ? number_format($cBal, 2) : '-' ?></span>
+                    <div class="pm-kv-row">
+                      <span class="pm-kv-lbl">ยอดกระเป๋าปัจจุบัน:</span>
+                      <span class="pm-kv-val" style="color:#34d399; font-weight:700;">฿<?= $cBal !== null ? number_format($cBal, 2) : '-' ?></span>
                     </div>
-                    <div class="pay-kv-row">
-                      <span class="pay-kv-label">ยอดที่ต้องโอน:</span>
-                      <span class="pay-kv-val" style="color:#fbbf24; font-size:1.05rem; font-weight:800;">฿<?= number_format($amt, 2) ?></span>
+                    <div class="pm-kv-row">
+                      <span class="pm-kv-lbl">ยอดที่ต้องโอน:</span>
+                      <span class="pm-kv-val" style="color:#fbbf24; font-size:13px; font-weight:800;">฿<?= number_format($amt, 2) ?></span>
                     </div>
-                    <div class="pay-kv-row">
-                      <span class="pay-kv-label">ช่องทางชำระเงิน:</span>
-                      <span class="pay-kv-val"><?= htmlspecialchars($m) ?></span>
+                    <div class="pm-kv-row">
+                      <span class="pm-kv-lbl">ช่องทางชำระเงิน:</span>
+                      <span class="pm-kv-val"><?= htmlspecialchars($m) ?></span>
                     </div>
-                    <div class="pay-kv-row">
-                      <span class="pay-kv-label">รหัสอ้างอิงระบบ (Ref):</span>
-                      <span class="pay-kv-val"><code><?= htmlspecialchars($refCode ?: '-') ?></code></span>
+                    <div class="pm-kv-row">
+                      <span class="pm-kv-lbl">รหัสอ้างอิง (Ref):</span>
+                      <span class="pm-kv-val"><code><?= htmlspecialchars($refCode ?: '-') ?></code></span>
                     </div>
                     <?php if ($transRef !== ''): ?>
-                      <div class="pay-kv-row">
-                        <span class="pay-kv-label">Bank Trans Ref:</span>
-                        <span class="pay-kv-val"><code style="color:#fbbf24; border-color:#78350f;"><?= htmlspecialchars($transRef) ?></code></span>
+                      <div class="pm-kv-row">
+                        <span class="pm-kv-lbl">Bank Trans Ref:</span>
+                        <span class="pm-kv-val"><code style="color:#fbbf24; border-color:#78350f;"><?= htmlspecialchars($transRef) ?></code></span>
                       </div>
                     <?php endif; ?>
-                    <div class="pay-kv-row">
-                      <span class="pay-kv-label">วันที่/เวลาแจ้งโอน:</span>
-                      <span class="pay-kv-val"><?= htmlspecialchars($createdAt) ?></span>
+                    <div class="pm-kv-row">
+                      <span class="pm-kv-lbl">วันที่/เวลา:</span>
+                      <span class="pm-kv-val"><?= htmlspecialchars($createdAt) ?></span>
                     </div>
-                    <div class="pay-kv-row">
-                      <span class="pay-kv-label">สถานะปัจจุบัน:</span>
-                      <span class="pay-kv-val">
+                    <div class="pm-kv-row">
+                      <span class="pm-kv-lbl">สถานะ:</span>
+                      <span class="pm-kv-val">
                         <?php if ($st === 'pending'): ?>
                           <span style="color:#fbbf24; font-weight:700;">รอตรวจสอบยอด</span>
                         <?php elseif ($st === 'paid'): ?>
@@ -1301,104 +1312,97 @@ function la_patch_admin_payments(string $html): string {
                       </span>
                     </div>
                     <?php if ($note !== ''): ?>
-                      <div class="pay-kv-row" style="align-items:flex-start; margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed #1f2d45;">
-                        <span class="pay-kv-label">บันทึกช่วยจำ:</span>
-                        <span class="pay-kv-val" style="color:#cbd5e1;"><?= nl2br(htmlspecialchars($note)) ?></span>
+                      <div class="pm-kv-row" style="align-items:flex-start; margin-top:3px; padding-top:3px; border-top:1px dashed #1f2d45;">
+                        <span class="pm-kv-lbl">บันทึก:</span>
+                        <span class="pm-kv-val" style="color:#cbd5e1;"><?= nl2br(htmlspecialchars($note)) ?></span>
                       </div>
                     <?php endif; ?>
                   </div>
                 </div>
 
                 <!-- Box 2: Payment Slip Inspector -->
-                <div class="pay-box">
-                  <div class="pay-box-title">
+                <div class="pm-box">
+                  <div class="pm-box-title">
                     <i class="ri-shield-check-line"></i>
                     <span>หลักฐานสลิปโอนเงิน</span>
                   </div>
 
                   <?php if ($hasPhysicalSlip): ?>
                     <!-- Real Attached Slip Image -->
-                    <div class="slip-photo-box" onclick="openSlipLightbox('<?= htmlspecialchars($slip) ?>', <?= $pid ?>, '<?= htmlspecialchars($cl) ?>', '<?= number_format($amt,2) ?>')">
-                      <img src="<?= htmlspecialchars($slip) ?>" alt="สลิปโอนเงิน #<?= $pid ?>" class="slip-img-thumb" loading="lazy">
-                      <div class="slip-photo-zoom-hint"><i class="ri-zoom-in-line"></i> คลิกซูมดูรูปใหญ่</div>
+                    <div class="pm-slip-photo-wrap" onclick="openPmLighbox('<?= htmlspecialchars($slip) ?>', <?= $pid ?>, '<?= htmlspecialchars($cl) ?>', '<?= number_format($amt,2) ?>')">
+                      <img src="<?= htmlspecialchars($slip) ?>" alt="สลิปโอนเงิน #<?= $pid ?>" class="pm-slip-thumb" loading="lazy">
+                      <div class="pm-slip-zoom-hint"><i class="ri-zoom-in-line"></i> คลิกซูมดูรูปใหญ่</div>
                     </div>
-                    <div class="slip-photo-actions">
-                      <a href="<?= htmlspecialchars($slip) ?>" target="_blank" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-external-link-line"></i> เปิดภาพเต็มจอ</a>
-                      <a href="<?= htmlspecialchars($slip) ?>" download="slip-<?= $pid ?>.jpg" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-download-2-line"></i> บันทึกรูปลงเครื่อง</a>
+                    <div class="pm-slip-actions">
+                      <a href="<?= htmlspecialchars($slip) ?>" target="_blank" class="la-btn la-btn-mini la-btn-ghost" style="padding:3px 7px; font-size:11px;"><i class="ri-external-link-line"></i> เปิดภาพเต็ม</a>
+                      <a href="<?= htmlspecialchars($slip) ?>" download="slip-<?= $pid ?>.jpg" class="la-btn la-btn-mini la-btn-ghost" style="padding:3px 7px; font-size:11px;"><i class="ri-download-2-line"></i> ดาวน์โหลด</a>
                     </div>
                   <?php else: ?>
                     <!-- Thai PromptPay Digital E-Slip Card -->
-                    <div class="thai-eslip-card">
-                      <div class="thai-eslip-header">
-                        <div class="thai-eslip-brand">
-                          <span class="promptpay-badge"><i class="ri-qr-code-line"></i> PromptPay</span>
-                          <span class="eslip-title">สลิปโอนเงินดิจิทัล</span>
-                        </div>
-                        <div class="eslip-verified-tag <?= $st === 'paid' ? 'tag-paid' : 'tag-pending' ?>">
+                    <div class="pm-eslip-card">
+                      <div class="pm-eslip-header">
+                        <span class="pm-promptpay-tag"><i class="ri-qr-code-line"></i> PromptPay</span>
+                        <span class="pm-eslip-status-tag <?= $st === 'paid' ? 'tag-paid' : 'tag-pending' ?>">
                           <i class="<?= $st === 'paid' ? 'ri-checkbox-circle-fill' : 'ri-time-line' ?>"></i>
                           <?= $st === 'paid' ? 'ชำระเงินสำเร็จ' : 'รอตรวจสอบยอด' ?>
-                        </div>
+                        </span>
                       </div>
-                      <div class="thai-eslip-amount-box">
-                        <span class="eslip-amt-label">จำนวนเงินที่โอน</span>
-                        <span class="eslip-amt-val">฿<?= number_format($amt, 2) ?></span>
-                        <span class="eslip-currency">บาท</span>
+                      <div class="pm-eslip-amt-box">
+                        <span class="pm-eslip-amt-lbl">จำนวนเงินที่โอน</span>
+                        <span class="pm-eslip-amt-val">฿<?= number_format($amt, 2) ?></span>
                       </div>
-                      <div class="thai-eslip-row">
-                        <span class="eslip-lbl"><i class="ri-user-line"></i> ลูกค้า:</span>
-                        <span class="eslip-val"><b><?= htmlspecialchars($cl) ?></b></span>
+                      <div class="pm-eslip-row">
+                        <span class="pm-eslip-lbl"><i class="ri-user-line"></i> ลูกค้า:</span>
+                        <span class="pm-eslip-val"><b><?= htmlspecialchars($cl) ?></b></span>
                       </div>
-                      <div class="thai-eslip-row">
-                        <span class="eslip-lbl"><i class="ri-bank-card-line"></i> ช่องทาง:</span>
-                        <span class="eslip-val"><?= htmlspecialchars($m ?: 'PromptPay') ?></span>
+                      <div class="pm-eslip-row">
+                        <span class="pm-eslip-lbl"><i class="ri-bank-card-line"></i> ช่องทาง:</span>
+                        <span class="pm-eslip-val"><?= htmlspecialchars($m ?: 'PromptPay') ?></span>
                       </div>
-                      <div class="thai-eslip-row">
-                        <span class="eslip-lbl"><i class="ri-hashtag"></i> รหัสอ้างอิง:</span>
-                        <span class="eslip-val"><code class="eslip-code"><?= htmlspecialchars($refCode ?: 'LA' . $pid) ?></code></span>
+                      <div class="pm-eslip-row">
+                        <span class="pm-eslip-lbl"><i class="ri-hashtag"></i> รหัสอ้างอิง:</span>
+                        <span class="pm-eslip-val"><code class="pm-eslip-code"><?= htmlspecialchars($refCode ?: 'LA' . $pid) ?></code></span>
                       </div>
                       <?php if ($transRef !== ''): ?>
-                        <div class="thai-eslip-row">
-                          <span class="eslip-lbl"><i class="ri-barcode-line"></i> Bank Trans Ref:</span>
-                          <span class="eslip-val"><code class="eslip-code eslip-ref-highlight"><?= htmlspecialchars($transRef) ?></code></span>
+                        <div class="pm-eslip-row">
+                          <span class="pm-eslip-lbl"><i class="ri-barcode-line"></i> Bank Trans Ref:</span>
+                          <span class="pm-eslip-val"><code class="pm-eslip-code" style="color:#fbbf24; border-color:#78350f;"><?= htmlspecialchars($transRef) ?></code></span>
                         </div>
                       <?php endif; ?>
-                      <div class="thai-eslip-row">
-                        <span class="eslip-lbl"><i class="ri-time-line"></i> เวลาทำรายการ:</span>
-                        <span class="eslip-val"><?= htmlspecialchars($createdAt) ?></span>
-                      </div>
-                      <div class="thai-eslip-footer">
-                        <i class="ri-shield-check-fill"></i> ระบบตรวจสอบการเงินอัตโนมัติ LIKES-AUTO
+                      <div class="pm-eslip-row">
+                        <span class="pm-eslip-lbl"><i class="ri-time-line"></i> เวลาทำรายการ:</span>
+                        <span class="pm-eslip-val"><?= htmlspecialchars($createdAt) ?></span>
                       </div>
                     </div>
                   <?php endif; ?>
 
                   <!-- Admin Attach/Replace Slip Upload Form -->
-                  <form class="slip-upload-box" method="post" action="/admin/payments/<?= $pid ?>/upload-slip" enctype="multipart/form-data">
+                  <form class="pm-upload-box" method="post" action="/admin/payments/<?= $pid ?>/upload-slip" enctype="multipart/form-data">
                     <input type="hidden" name="next" value="<?= htmlspecialchars($statusFilter) ?>">
-                    <div class="slip-upload-label">
+                    <div class="pm-upload-lbl">
                       <i class="ri-upload-cloud-line"></i>
                       <span><?= $hasPhysicalSlip ? 'เปลี่ยนรูปสลิป / อัปโหลดทับ:' : 'แนบรูปสลิปหลักฐานโอนเงิน:' ?></span>
                     </div>
-                    <div class="slip-upload-input-wrap">
-                      <input type="file" name="slip_file" accept="image/*" required class="slip-file-input">
-                      <button type="submit" class="la-btn la-btn-mini la-btn-primary"><i class="ri-save-line"></i> อัปโหลด</button>
+                    <div class="pm-upload-inputs">
+                      <input type="file" name="slip_file" accept="image/*" required class="pm-upload-file">
+                      <button type="submit" class="la-btn la-btn-mini la-btn-primary" style="padding:3px 7px; font-size:10px;"><i class="ri-save-line"></i> บันทึก</button>
                     </div>
                   </form>
                 </div>
 
-                <!-- Box 3: Management & Actions Panel -->
-                <div class="pay-box">
-                  <div class="pay-box-title">
+                <!-- Box 3: Management Actions -->
+                <div class="pm-box">
+                  <div class="pm-box-title">
                     <i class="ri-tools-line"></i>
                     <span>เครื่องมือจัดการ & แอ็กชัน</span>
                   </div>
 
-                  <div class="pay-action-group">
+                  <div class="pm-act-group">
                     <?php if ($st === 'pending'): ?>
                       <!-- 1. Approve & Credit Button -->
                       <form method="post" action="/admin/payments/<?= $pid ?>/approve" onsubmit="return confirm('ยืนยันอนุมัติและเติมเงิน ฿<?= number_format($amt,2) ?> เข้ากระเป๋าคุณ <?= htmlspecialchars($cl) ?> ?')">
                         <input type="hidden" name="next" value="<?= htmlspecialchars($statusFilter) ?>">
-                        <button type="submit" class="pay-action-btn pay-btn-approve">
+                        <button type="submit" class="pm-act-btn pm-btn-approve">
                           <i class="ri-checkbox-circle-fill"></i> อนุมัติ & เติมเครดิตทันที
                         </button>
                       </form>
@@ -1406,7 +1410,7 @@ function la_patch_admin_payments(string $html): string {
                       <!-- 2. Recheck Slip QR/Satang -->
                       <form method="post" action="/admin/payments/<?= $pid ?>/recheck">
                         <input type="hidden" name="next" value="<?= htmlspecialchars($statusFilter) ?>">
-                        <button type="submit" class="la-btn la-btn-ghost pay-action-btn" style="border-color:#334155;">
+                        <button type="submit" class="la-btn la-btn-ghost pm-act-btn" style="border-color:#334155;">
                           <i class="ri-refresh-line"></i> ตรวจสลิปซ้ำ (Recheck)
                         </button>
                       </form>
@@ -1414,24 +1418,24 @@ function la_patch_admin_payments(string $html): string {
                       <!-- 3. Unlock Slip Hash Duplicate -->
                       <form method="post" action="/admin/payments/<?= $pid ?>/unlock-slip" onsubmit="return confirm('ปลดล็อกประวัติสลิป #<?= $pid ?> เพื่อให้สามารถตรวจซ้ำได้?')">
                         <input type="hidden" name="next" value="<?= htmlspecialchars($statusFilter) ?>">
-                        <button type="submit" class="la-btn la-btn-ghost pay-action-btn" style="border-color:#334155;">
+                        <button type="submit" class="la-btn la-btn-ghost pm-act-btn" style="border-color:#334155;">
                           <i class="ri-lock-unlock-line"></i> ปลดล็อกสลิปซ้ำ (Unlock)
                         </button>
                       </form>
 
                       <!-- 4. Reject Payment Form -->
-                      <form class="pay-reject-form" method="post" action="/admin/payments/<?= $pid ?>/reject" onsubmit="return confirm('ยืนยันปฏิเสธรายการเติมเงิน #<?= $pid ?> ?')">
+                      <form class="pm-reject-box" method="post" action="/admin/payments/<?= $pid ?>/reject" onsubmit="return confirm('ยืนยันปฏิเสธรายการเติมเงิน #<?= $pid ?> ?')">
                         <input type="hidden" name="next" value="<?= htmlspecialchars($statusFilter) ?>">
-                        <div style="font-size:0.75rem; color:#f87171; font-weight:600;"><i class="ri-close-circle-line"></i> ปฏิเสธรายการ:</div>
-                        <input type="text" class="pay-reject-input" name="note" placeholder="เหตุผล (เช่น สลิปปลอม, ยอดไม่เข้า)" value="<?= htmlspecialchars($note) ?>">
-                        <button type="submit" class="pay-action-btn pay-btn-reject">
-                          <i class="ri-close-line"></i> ปฏิเสธรายการ
+                        <div style="font-size:10px; color:#f87171; font-weight:600;"><i class="ri-close-circle-line"></i> ปฏิเสธรายการ:</div>
+                        <input type="text" class="pm-reject-input" name="note" placeholder="เหตุผล (เช่น สลิปปลอม, ยอดไม่เข้า)" value="<?= htmlspecialchars($note) ?>">
+                        <button type="submit" class="pm-act-btn pm-btn-reject" style="padding:5px 8px;">
+                          <i class="ri-close-line"></i> ยืนยันปฏิเสธ
                         </button>
                       </form>
                     <?php else: ?>
                       <!-- Already Paid or Canceled -->
-                      <div style="background:#0d131f; padding:0.75rem; border-radius:8px; border:1px solid #1f2d45; text-align:center;">
-                        <span style="font-size:0.85rem; font-weight:600; color:<?= $st === 'paid' ? '#34d399' : '#94a3b8' ?>;">
+                      <div style="background:#0d131f; padding:6px; border-radius:6px; border:1px solid #1f2d45; text-align:center;">
+                        <span style="font-size:11px; font-weight:600; color:<?= $st === 'paid' ? '#34d399' : '#94a3b8' ?>;">
                           <i class="<?= $st === 'paid' ? 'ri-checkbox-circle-fill' : 'ri-close-circle-fill' ?>"></i>
                           รายการนี้<?= $st === 'paid' ? 'อนุมัติเรียบร้อยแล้ว' : 'ถูกปฏิเสธแล้ว' ?>
                         </span>
@@ -1439,10 +1443,10 @@ function la_patch_admin_payments(string $html): string {
                     <?php endif; ?>
 
                     <!-- Internal Note Form -->
-                    <form class="pay-note-form" method="post" action="/admin/payments/<?= $pid ?>/note" style="margin-top:0.4rem;">
+                    <form class="pm-note-form" method="post" action="/admin/payments/<?= $pid ?>/note">
                       <input type="hidden" name="next" value="<?= htmlspecialchars($statusFilter) ?>">
-                      <input type="text" class="pay-note-input" name="note" placeholder="บันทึกข้อความภายใน..." value="<?= htmlspecialchars($note) ?>">
-                      <button type="submit" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-save-line"></i> บันทึกโน้ต</button>
+                      <input type="text" class="pm-note-input" name="note" placeholder="บันทึกข้อความภายใน..." value="<?= htmlspecialchars($note) ?>">
+                      <button type="submit" class="la-btn la-btn-mini la-btn-ghost" style="padding:3px 7px; font-size:10px;"><i class="ri-save-line"></i> โน้ต</button>
                     </form>
                   </div>
                 </div>
@@ -1455,40 +1459,40 @@ function la_patch_admin_payments(string $html): string {
     </div>
 
     <!-- Interactive Slip Lightbox Modal -->
-    <div id="slipLightboxModal" class="slip-lightbox-modal" onclick="closeSlipLightbox(event)">
-      <div class="slip-lightbox-content" onclick="event.stopPropagation()">
-        <div class="slip-lightbox-bar">
+    <div id="pmLightboxModal" class="pm-modal" onclick="closePmLighbox(event)">
+      <div class="pm-modal-content" onclick="event.stopPropagation()">
+        <div class="pm-modal-bar">
           <div>
-            <div id="slipLightboxTitle" class="slip-lightbox-title">หลักฐานสลิปโอนเงิน</div>
-            <div id="slipLightboxSub" style="font-size:0.75rem; color:#94a3b8;"></div>
+            <div id="pmModalTitle" class="pm-modal-title">หลักฐานสลิปโอนเงิน</div>
+            <div id="pmModalSub" style="font-size:10px; color:#94a3b8;"></div>
           </div>
-          <div class="slip-lightbox-actions">
-            <a id="slipLightboxOpenLink" href="#" target="_blank" class="la-btn la-btn-mini la-btn-ghost"><i class="ri-external-link-line"></i> เปิดภาพเต็มจอ</a>
-            <a id="slipLightboxDownloadLink" href="#" download class="la-btn la-btn-mini la-btn-ghost"><i class="ri-download-2-line"></i> ดาวน์โหลด</a>
-            <button type="button" class="slip-lightbox-close" onclick="closeSlipLightbox()"><i class="ri-close-line"></i></button>
+          <div class="pm-modal-actions">
+            <a id="pmModalOpenLink" href="#" target="_blank" class="la-btn la-btn-mini la-btn-ghost" style="padding:3px 7px; font-size:11px;"><i class="ri-external-link-line"></i> ภาพเต็ม</a>
+            <a id="pmModalDlLink" href="#" download class="la-btn la-btn-mini la-btn-ghost" style="padding:3px 7px; font-size:11px;"><i class="ri-download-2-line"></i> ดาวน์โหลด</a>
+            <button type="button" class="pm-modal-close" onclick="closePmLighbox()"><i class="ri-close-line"></i></button>
           </div>
         </div>
-        <div class="slip-lightbox-image-wrap">
-          <img id="slipLightboxImg" src="" alt="ภาพสลิป">
+        <div class="pm-modal-body">
+          <img id="pmModalImg" src="" alt="ภาพสลิป">
         </div>
       </div>
     </div>
 
     <script>
-    function togglePayDrawer(pid) {
-      var card = document.getElementById('payCard-' + pid);
+    function togglePmDrawer(pid) {
+      var card = document.getElementById('pmCard-' + pid);
       if (card) {
         card.classList.toggle('is-open');
       }
     }
 
-    function openSlipLightbox(url, pid, client, amount) {
-      var modal = document.getElementById('slipLightboxModal');
-      var img = document.getElementById('slipLightboxImg');
-      var title = document.getElementById('slipLightboxTitle');
-      var sub = document.getElementById('slipLightboxSub');
-      var openLink = document.getElementById('slipLightboxOpenLink');
-      var dlLink = document.getElementById('slipLightboxDownloadLink');
+    function openPmLighbox(url, pid, client, amount) {
+      var modal = document.getElementById('pmLightboxModal');
+      var img = document.getElementById('pmModalImg');
+      var title = document.getElementById('pmModalTitle');
+      var sub = document.getElementById('pmModalSub');
+      var openLink = document.getElementById('pmModalOpenLink');
+      var dlLink = document.getElementById('pmModalDlLink');
 
       if (!modal || !img) return;
 
@@ -1507,11 +1511,11 @@ function la_patch_admin_payments(string $html): string {
       document.body.style.overflow = 'hidden';
     }
 
-    function closeSlipLightbox(event) {
-      if (event && event.target && event.target.closest('.slip-lightbox-content')) {
+    function closePmLighbox(event) {
+      if (event && event.target && event.target.closest('.pm-modal-content')) {
         return;
       }
-      var modal = document.getElementById('slipLightboxModal');
+      var modal = document.getElementById('pmLightboxModal');
       if (modal) {
         modal.classList.remove('is-active');
         document.body.style.overflow = '';
@@ -1520,14 +1524,13 @@ function la_patch_admin_payments(string $html): string {
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
-        closeSlipLightbox();
+        closePmLighbox();
       }
     });
 
-    // Live search in cards
-    function onPayLiveSearch(query) {
+    function onPmLiveSearch(query) {
       var q = (query || '').toLowerCase().trim();
-      var cards = document.querySelectorAll('.pay-card');
+      var cards = document.querySelectorAll('.pm-card');
       cards.forEach(function(card) {
         var sData = card.getAttribute('data-search') || '';
         if (!q || sData.indexOf(q) !== -1) {
@@ -1538,10 +1541,9 @@ function la_patch_admin_payments(string $html): string {
       });
     }
 
-    // Method filter
-    function onPayMethodFilter(method) {
+    function onPmMethodFilter(method) {
       var m = (method || '').toLowerCase().trim();
-      var cards = document.querySelectorAll('.pay-card');
+      var cards = document.querySelectorAll('.pm-card');
       cards.forEach(function(card) {
         var cMethod = (card.getAttribute('data-method') || '').toLowerCase().trim();
         if (!m || cMethod === m) {

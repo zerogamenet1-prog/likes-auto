@@ -919,7 +919,7 @@ if ($code === 200 && strpos($path, '/admin/tickets') === 0 && stripos($respBody,
 }
 
 // ── Admin Payments Modern Desk & Slip Inspector Transform ──
-if ($code === 200 && strpos($path, '/admin/payments') === 0 && stripos($respBody, 'pay-desk-wrap') === false) {
+if ($code === 200 && strpos($path, '/admin/payments') === 0 && stripos($respBody, 'pm-desk-wrap') === false) {
     $patchFile = __DIR__ . '/payments_card.php';
     if (is_file($patchFile)) {
         require_once $patchFile;

@@ -60,6 +60,12 @@ if ($path !== '/' && substr($path, -1) === '/') {
     $path = rtrim($path, '/');
 }
 
+// ── Execute standalone local PHP utility scripts directly (e.g. cron.php, ping.php) ──
+if (str_ends_with($path, '.php') && is_file(__DIR__ . $path) && basename($path) !== 'index.php') {
+    require __DIR__ . $path;
+    exit;
+}
+
 // ── Dedicated Updates Page Handler (/updates) ──
 if ($path === '/updates') {
     $updatesFile = __DIR__ . '/updates_card.php';

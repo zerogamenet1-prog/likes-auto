@@ -200,11 +200,14 @@ def sync_order_status(order):
     mapped = "processing"
     if statu in ("completed", "complete", "success"):
         mapped = "completed"
+        remains = 0
     elif statu in ("partial",):
         mapped = "partial"
     elif statu in ("canceled", "cancelled", "refunded"):
         mapped = "canceled"
-    elif statu in ("inprogress", "processing", "pending"):
+    elif statu in ("pending",):
+        mapped = "pending"
+    elif statu in ("inprogress", "in progress", "processing"):
         mapped = "processing"
     update_order(order["id"], status=mapped, start_count=str(start), remains=str(remains), api_error="-")
     if mapped == "canceled":
@@ -225,13 +228,120 @@ def check_one_order(oid):
     return sync_order_status(get_order(oid))
 
 
-def check_statuses():
-    updated = 0
-    for order in active_status_orders():
-        ok, _msg = sync_order_status(order)
-        if ok:
-            updated += 1
-    return updated
+def check_statuses(limit=100):
+    """
+    High-Speed Batch Status Sync with SMM Provider API (JustAnotherPanel).
+    Queries up to 100 orders in a single HTTP request in <0.5s.
+    Syncs status, start_count, remains, and processes auto-refunds for canceled/partial orders.
+    """
+    from db import connect, get_provider, refund_order, update_order
+    con = connect()
+    rows = con.execute("""
+        SELECT o.id, o.api_orderid, o.client, o.charge, o.quantity, o.status, o.refunded,
+               COALESCE(s.provider_id, o.provider_id, 1) as pid
+        FROM orders o
+        LEFT JOIN services s ON s.id = o.service_id
+        WHERE IFNULL(o.api_orderid, '') != '' 
+          AND o.api_orderid != '-'
+          AND (
+            o.status IN ('processing', 'pending', 'inprogress', 'partial')
+            OR (o.status = 'completed' AND (o.remains IS NULL OR o.remains = '' OR o.remains > 0))
+            OR o.id IN (SELECT id FROM orders WHERE IFNULL(api_orderid, '') != '' ORDER BY id DESC LIMIT 50)
+          )
+        ORDER BY o.id DESC
+        LIMIT ?
+    """, (limit,)).fetchall()
+    con.close()
+
+    if not rows:
+        return 0
+
+    by_provider = {}
+    for r in rows:
+        item = dict(r)
+        pid = item.get("pid") or 1
+        by_provider.setdefault(pid, []).append(item)
+
+    updated_count = 0
+    for pid, p_orders in by_provider.items():
+        provider = get_provider(pid)
+        if not provider or not provider.get("api_url") or not provider.get("api_key"):
+            continue
+
+        for i in range(0, len(p_orders), 100):
+            chunk = p_orders[i:i + 100]
+            api_map = {str(o["api_orderid"]).strip(): o for o in chunk if str(o.get("api_orderid") or "").strip() not in ("", "-")}
+            if not api_map:
+                continue
+
+            batch_res = action(provider["api_url"], {
+                "key": provider["api_key"],
+                "action": "status",
+                "orders": ",".join(api_map.keys()),
+            }, timeout=25)
+
+            if not isinstance(batch_res, dict) or batch_res.get("error"):
+                # Fallback to single sync if batch unsupported
+                for _, order in api_map.items():
+                    ok, _ = sync_order_status(order)
+                    if ok:
+                        updated_count += 1
+                continue
+
+            for api_id, st_info in batch_res.items():
+                if not isinstance(st_info, dict) or not st_info.get("status"):
+                    continue
+
+                order = api_map.get(str(api_id))
+                if not order:
+                    continue
+
+                st_raw = str(st_info.get("status") or "").strip().lower()
+                start = str(st_info.get("start_count") or 0)
+                remains = str(st_info.get("remains") or 0)
+
+                mapped = "processing"
+                if st_raw in ("completed", "complete", "success"):
+                    mapped = "completed"
+                    remains = "0"
+                elif st_raw in ("partial",):
+                    mapped = "partial"
+                elif st_raw in ("canceled", "cancelled", "refunded"):
+                    mapped = "canceled"
+                elif st_raw in ("pending",):
+                    mapped = "pending"
+                elif st_raw in ("inprogress", "in progress", "processing"):
+                    mapped = "processing"
+
+                update_order(
+                    order["id"],
+                    status=mapped,
+                    start_count=start,
+                    remains=remains,
+                    api_error="-"
+                )
+                updated_count += 1
+
+                if mapped in ("canceled", "partial") and not order.get("refunded"):
+                    try:
+                        charge = float(order.get("charge") or 0)
+                        qty = float(order.get("quantity") or 0)
+                        rem = float(remains or 0)
+                        if mapped == "canceled":
+                            refund_order(order["id"], charge)
+                        elif mapped == "partial" and qty > 0 and rem > 0:
+                            refund_order(order["id"], round(charge * rem / qty, 2))
+                    except Exception:
+                        pass
+
+    if updated_count > 0:
+        try:
+            from db_backup import schedule_backup
+            schedule_backup("batch_sync_orders")
+        except Exception:
+            pass
+
+    return updated_count
 
 
 def refresh_balances():

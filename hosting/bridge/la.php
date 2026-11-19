@@ -136,7 +136,7 @@ if ($path === '/admin/settings/seo/indexnow' && $_SERVER['REQUEST_METHOD'] === '
 }
 
 // ── Dedicated Admin Orders Action Engine (บันทึก, ส่ง API, ดึงสถานะ, คืนเงิน) ──
-if ($method === 'POST' && preg_match('#^/admin/orders/(\d+)/(status|resend|sync|refund)#', $path)) {
+if ($method === 'POST' && (preg_match('#^/admin/orders/(\d+)/(status|resend|sync|refund)#', $path) || $path === '/admin/orders/sync-all')) {
     $actFile = __DIR__ . '/orders_action.php';
     if (is_file($actFile)) {
         require_once $actFile;
@@ -348,13 +348,17 @@ curl_close($ch);
 $rawHeaders = substr($raw, 0, $headerSize);
 $respBody = substr($raw, $headerSize);
 
-// ── Auto-Dispatch on New Order Placement or Admin Orders View ──
+// ── Auto-Dispatch & Auto-Sync on Order Placement or Orders View ──
 if ($method === 'POST' && in_array($path, ['/neworder', '/orders/new', '/api/v2'], true)) {
     la_auto_dispatch_pending_orders();
 } elseif ($method === 'GET' && strpos($path, '/admin/orders') === 0) {
     la_auto_dispatch_pending_orders();
+    la_auto_sync_active_orders();
+} elseif ($method === 'GET' && strpos($path, '/orders') === 0) {
+    la_auto_sync_active_orders();
 } elseif ($path === '/ping.php' || $path === '/api/cron') {
     la_auto_dispatch_pending_orders();
+    la_auto_sync_active_orders();
 }
 
 // ── Admin Orders Actions Interceptor & Auto-Fallback Engine ──
@@ -383,6 +387,179 @@ if ($method === 'POST' && preg_match('#^/admin/clients/(\d+)/(balance|status|pas
         $msg = 'ดำเนินการ' . ($actNames[$actionType] ?? 'ข้อมูล') . ' ลูกค้า #' . $cid . ' สำเร็จ';
         header('Location: /admin/clients?ok=' . urlencode($msg), true, 303);
         exit;
+    }
+}
+
+// ── Automated Real-Time Orders Status Synchronization Engine ──
+function la_auto_sync_active_orders(bool $force = false): int {
+    static $lastSync = 0;
+    $now = time();
+    if (!$force && ($now - $lastSync) < 15) {
+        return 0; // Throttle to once every 15 seconds unless forced
+    }
+    $lastSync = $now;
+
+    $dbPaths = [
+        __DIR__ . '/.la-db-restore-latest.db',
+        __DIR__ . '/.la-db-restore-d1qyg5az73cs4unx8jl9trbw.db',
+    ];
+    $dbFile = null;
+    foreach ($dbPaths as $p) {
+        if (file_exists($p) && class_exists('SQLite3') && is_writable($p)) {
+            $dbFile = $p;
+            break;
+        }
+    }
+    if (!$dbFile) return 0;
+
+    try {
+        $db = new SQLite3($dbFile, SQLITE3_OPEN_READWRITE);
+        $db->busyTimeout(5000);
+
+        // Fetch Provider
+        $provRes = $db->query("SELECT * FROM providers WHERE id = 1 LIMIT 1");
+        $prov = $provRes ? $provRes->fetchArray(SQLITE3_ASSOC) : null;
+        $provUrl = !empty($prov['api_url']) ? (string)$prov['api_url'] : 'https://justanotherpanel.com/api/v2';
+        $provKey = !empty($prov['api_key']) ? (string)$prov['api_key'] : '691eaf10c7412219464b2d67d4082c24';
+
+        // Select orders that need sync
+        $res = $db->query("
+            SELECT id, api_orderid, client, charge, quantity, status, refunded
+            FROM orders
+            WHERE api_orderid IS NOT NULL AND api_orderid != '' AND api_orderid != '-'
+              AND (
+                status IN ('processing', 'pending', 'inprogress', 'partial')
+                OR (status = 'completed' AND (remains IS NULL OR remains = '' OR remains > 0))
+                OR id IN (SELECT id FROM orders WHERE api_orderid IS NOT NULL AND api_orderid != '' AND api_orderid != '-' ORDER BY id DESC LIMIT 50)
+              )
+            ORDER BY id DESC LIMIT 100
+        ");
+
+        if (!$res) {
+            $db->close();
+            return 0;
+        }
+
+        $apiIds = [];
+        $orderMap = [];
+        while ($r = $res->fetchArray(SQLITE3_ASSOC)) {
+            $aId = trim((string)$r['api_orderid']);
+            if ($aId !== '' && $aId !== '-') {
+                $apiIds[] = $aId;
+                $orderMap[$aId] = $r;
+            }
+        }
+
+        if (empty($apiIds)) {
+            $db->close();
+            return 0;
+        }
+
+        // Call JAP in batch
+        $ch = curl_init($provUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query([
+                'key' => $provKey,
+                'action' => 'status',
+                'orders' => implode(',', array_slice($apiIds, 0, 100)),
+            ]),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_USERAGENT => 'LikesAuto-BatchSync/2.0',
+        ]);
+        $resp = curl_exec($ch);
+        curl_close($ch);
+
+        $parsed = json_decode((string)$resp, true);
+        if (!is_array($parsed)) {
+            $db->close();
+            return 0;
+        }
+
+        $updated = 0;
+        foreach ($parsed as $apiId => $stInfo) {
+            if (!is_array($stInfo) || empty($stInfo['status'])) continue;
+            $sOrd = $orderMap[$apiId] ?? null;
+            if (!$sOrd) continue;
+            $oid = (int)$sOrd['id'];
+
+            $stRaw = strtolower(trim((string)$stInfo['status']));
+            $startCount = (string)($stInfo['start_count'] ?? '0');
+            $remains = (string)($stInfo['remains'] ?? '0');
+
+            $mappedStatus = 'processing';
+            if (in_array($stRaw, ['completed', 'complete', 'success'], true)) {
+                $mappedStatus = 'completed';
+                $remains = '0';
+            } elseif ($stRaw === 'partial') {
+                $mappedStatus = 'partial';
+            } elseif (in_array($stRaw, ['canceled', 'cancelled', 'refunded'], true)) {
+                $mappedStatus = 'canceled';
+            } elseif (in_array($stRaw, ['pending'], true)) {
+                $mappedStatus = 'pending';
+            } elseif (in_array($stRaw, ['in progress', 'inprogress', 'processing'], true)) {
+                $mappedStatus = 'processing';
+            }
+
+            $stUp = $db->prepare("
+                UPDATE orders 
+                SET status = :st, start_count = :sc, remains = :rem, api_error = '-' 
+                WHERE id = :oid
+            ");
+            $stUp->bindValue(':st', $mappedStatus, SQLITE3_TEXT);
+            $stUp->bindValue(':sc', $startCount, SQLITE3_TEXT);
+            $stUp->bindValue(':rem', $remains, SQLITE3_TEXT);
+            $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
+            $stUp->execute();
+            $updated++;
+
+            // Auto-refund for canceled or partial if not refunded
+            if (($mappedStatus === 'canceled' || $mappedStatus === 'partial') && empty($sOrd['refunded'])) {
+                $refundAmt = 0.0;
+                $charge = (float)($sOrd['charge'] ?? 0);
+                $qty = (float)($sOrd['quantity'] ?? 0);
+                $rem = (float)$remains;
+
+                if ($mappedStatus === 'canceled') {
+                    $refundAmt = $charge;
+                } elseif ($mappedStatus === 'partial' && $qty > 0 && $rem > 0) {
+                    $refundAmt = round($charge * ($rem / $qty), 2);
+                }
+
+                if ($refundAmt > 0 && !empty($sOrd['client'])) {
+                    $stRef = $db->prepare("UPDATE clients SET balance = balance + :amt WHERE username = :u");
+                    $stRef->bindValue(':amt', $refundAmt, SQLITE3_FLOAT);
+                    $stRef->bindValue(':u', (string)$sOrd['client'], SQLITE3_TEXT);
+                    $stRef->execute();
+
+                    $stMark = $db->prepare("UPDATE orders SET refunded = 1 WHERE id = :oid");
+                    $stMark->bindValue(':oid', $oid, SQLITE3_INTEGER);
+                    $stMark->execute();
+                }
+            }
+        }
+
+        $db->close();
+
+        // Sync to alternate DB replica
+        foreach ($dbPaths as $altP) {
+            if ($altP !== $dbFile && file_exists($altP) && file_exists($dbFile)) {
+                @copy($dbFile, $altP);
+            }
+        }
+
+        // Clean up stale orders_override.json
+        $ovFile = __DIR__ . '/orders_override.json';
+        if (is_file($ovFile)) {
+            @unlink($ovFile);
+        }
+
+        return $updated;
+    } catch (\Throwable $e) {
+        return 0;
     }
 }
 
@@ -525,8 +702,17 @@ if ($method === 'POST' && preg_match('#^/admin/crons/(run|orders|status|balance|
         'blog' => 'เผยแพร่บทความ SEO ฉบับถัดไปเรียบร้อย',
         'clear' => 'ล้างประวัติ log เก่าเรียบร้อย (คงเหลือ 200 รายการล่าสุด)',
     ];
+    if ($actType === 'status') {
+        $synced = la_auto_sync_active_orders(true);
+        $msg = 'ตรวจสอบและอัปเดตสถานะออเดอร์กับผู้ให้บริการแล้ว (' . $synced . ' รายการ)';
+        header('Location: /admin/crons?ran=' . urlencode($msg), true, 303);
+        exit;
+    }
     if ($actType === 'orders' || $actType === 'run') {
         $sentRes = la_auto_dispatch_pending_orders();
+        if ($actType === 'run') {
+            la_auto_sync_active_orders(true);
+        }
         $cnt = count($sentRes);
         if ($cnt > 0) {
             $msg = 'ส่งออเดอร์ไปยัง API สำเร็จ ' . $cnt . ' รายการ';
@@ -882,8 +1068,8 @@ if ($code === 200 && strpos($path, '/admin/providers') === 0 && stripos($respBod
     }
 }
 
-// ── Admin Orders Accordion Cards Transform ──
-if ($code === 200 && strpos($path, '/admin/orders') === 0 && stripos($respBody, 'ord-card') === false && stripos($respBody, 'ord-wrap') !== false) {
+// ── Admin Orders Master Desk Transform ──
+if ($code === 200 && strpos($path, '/admin/orders') === 0 && stripos($respBody, 'om-desk-wrap') === false) {
     $patchFile = __DIR__ . '/orders_card.php';
     if (is_file($patchFile)) {
         require_once $patchFile;

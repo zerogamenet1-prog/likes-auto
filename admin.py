@@ -354,6 +354,11 @@ async def orders(request: Request, q: str = "", status: str = "", ok: str = "", 
             where.append("(o.client LIKE ? OR o.service LIKE ? OR IFNULL(o.link,'') LIKE ? OR IFNULL(o.api_orderid,'') LIKE ?)")
             args.extend([like, like, like, like])
     sql_where = (" WHERE " + " AND ".join(where)) if where else ""
+    try:
+        from cron_jobs import check_statuses
+        check_statuses(limit=30)
+    except Exception:
+        pass
     con = connect()
     total = int(con.execute("SELECT COUNT(*) c FROM orders o" + sql_where, args).fetchone()["c"])
     pages = max((total + per_page - 1) // per_page, 1)
@@ -447,6 +452,20 @@ async def orders_sync(request: Request, oid: int, q: str = Form(""), filter_stat
         return _ord_back(q, filter_status, err="ดึงสถานะไม่สำเร็จ: " + str(msg)[:100], page=page)
     except Exception as exc:
         return _ord_back(q, filter_status, err=str(exc)[:100], page=page)
+
+
+@router.post("/orders/sync-all")
+async def orders_sync_all(request: Request, q: str = Form(""), filter_status: str = Form(""), page: str = Form("")):
+    gate = require_admin(request)
+    if gate:
+        return gate
+    try:
+        from cron_jobs import check_statuses
+        cnt = check_statuses(limit=100)
+        add_log("ซิงค์สถานะออเดอร์ทั้งหมดกับผู้ให้บริการ (อัปเดต %d รายการ)" % cnt, request.client.host if request.client else "-")
+        return _ord_back(q, filter_status, ok="ซิงค์สถานะกับผู้ให้บริการสำเร็จ (อัปเดต %d รายการ)" % cnt, page=page)
+    except Exception as exc:
+        return _ord_back(q, filter_status, err="ซิงค์สถานะไม่สำเร็จ: " + str(exc)[:100], page=page)
 
 
 @router.post("/orders/{oid}/refund")

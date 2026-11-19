@@ -10,12 +10,22 @@
 declare(strict_types=1);
 
 function la_handle_admin_order_action(string $path, string $method): void {
-    if ($method !== 'POST' || !preg_match('#^/admin/orders/(\d+)/(status|resend|sync|refund)#', $path, $m)) {
+    if ($method !== 'POST') {
         return;
     }
 
-    $oid = (int)$m[1];
-    $actionType = $m[2];
+    $isSyncAll = ($path === '/admin/orders/sync-all');
+    $oid = 0;
+    $actionType = '';
+    if (!$isSyncAll) {
+        if (!preg_match('#^/admin/orders/(\d+)/(status|resend|sync|refund)#', $path, $m)) {
+            return;
+        }
+        $oid = (int)$m[1];
+        $actionType = $m[2];
+    } else {
+        $actionType = 'sync-all';
+    }
 
     $dbFiles = [
         __DIR__ . '/.la-db-restore-latest.db',
@@ -435,14 +445,121 @@ function la_handle_admin_order_action(string $path, string $method): void {
             $syncDb();
         }
 
-        $overrides[$oid] = array_merge($overrides[$oid] ?? [], [
-            'status_cls' => 'canceled',
-            'status_lbl' => 'ยกเลิก',
-        ]);
-        file_put_contents($ovFile, json_encode($overrides, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        if (is_file($ovFile)) {
+            @unlink($ovFile);
+        }
 
         $msg = 'คืนเงิน ฿' . number_format($charge, 2) . ' เข้ากระเป๋าลูกค้า @' . $client . ' และยกเลิกออเดอร์ #' . $oid . ' เรียบร้อยแล้ว';
         header('Location: /admin/orders?ok=' . urlencode($msg), true, 303);
+        exit;
+    }
+
+    // ── 5. ACTION: SYNC-ALL (ซิงค์สถานะออเดอร์ทั้งหมดกับ Provider API แบบ Batch) ──
+    if ($actionType === 'sync-all') {
+        $updated = 0;
+        if ($db) {
+            $syncRes = $db->query("
+                SELECT id, api_orderid, client, charge, quantity, status, refunded
+                FROM orders
+                WHERE api_orderid IS NOT NULL AND api_orderid != '' AND api_orderid != '-'
+                  AND (
+                    status IN ('processing', 'pending', 'inprogress', 'partial')
+                    OR (status = 'completed' AND (remains IS NULL OR remains = '' OR remains > 0))
+                    OR id IN (SELECT id FROM orders WHERE api_orderid IS NOT NULL AND api_orderid != '' AND api_orderid != '-' ORDER BY id DESC LIMIT 50)
+                  )
+                ORDER BY id DESC LIMIT 100
+            ");
+
+            $apiMap = [];
+            while ($row = $syncRes->fetchArray(SQLITE3_ASSOC)) {
+                $aId = trim((string)$row['api_orderid']);
+                if ($aId !== '' && $aId !== '-') {
+                    $apiMap[$aId] = $row;
+                }
+            }
+
+            if (!empty($apiMap)) {
+                $batchRes = $japCall([
+                    'action' => 'status',
+                    'orders' => implode(',', array_keys($apiMap)),
+                ]);
+
+                if (is_array($batchRes)) {
+                    foreach ($batchRes as $aId => $stInfo) {
+                        if (!is_array($stInfo) || empty($stInfo['status'])) continue;
+                        $sOrd = $apiMap[$aId] ?? null;
+                        if (!$sOrd) continue;
+                        $cOid = (int)$sOrd['id'];
+
+                        $stRaw = strtolower(trim((string)$stInfo['status']));
+                        $startCount = (string)($stInfo['start_count'] ?? '0');
+                        $remains = (string)($stInfo['remains'] ?? '0');
+
+                        $mappedCls = 'processing';
+                        if (in_array($stRaw, ['completed', 'complete', 'success'], true)) {
+                            $mappedCls = 'completed';
+                            $remains = '0';
+                        } elseif ($stRaw === 'partial') {
+                            $mappedCls = 'partial';
+                        } elseif (in_array($stRaw, ['canceled', 'cancelled', 'refunded'], true)) {
+                            $mappedCls = 'canceled';
+                        } elseif (in_array($stRaw, ['pending'], true)) {
+                            $mappedCls = 'pending';
+                        } elseif (in_array($stRaw, ['in progress', 'inprogress', 'processing'], true)) {
+                            $mappedCls = 'processing';
+                        }
+
+                        $stUp = $db->prepare("UPDATE orders SET status = :st, start_count = :sc, remains = :rem, api_error = '-' WHERE id = :oid");
+                        $stUp->bindValue(':st', $mappedCls, SQLITE3_TEXT);
+                        $stUp->bindValue(':sc', $startCount, SQLITE3_TEXT);
+                        $stUp->bindValue(':rem', $remains, SQLITE3_TEXT);
+                        $stUp->bindValue(':oid', $cOid, SQLITE3_INTEGER);
+                        $stUp->execute();
+                        $updated++;
+
+                        // Handle refund
+                        if (($mappedCls === 'canceled' || $mappedCls === 'partial') && empty($sOrd['refunded'])) {
+                            $refundAmt = 0.0;
+                            $charge = (float)($sOrd['charge'] ?? 0);
+                            $qty = (float)($sOrd['quantity'] ?? 0);
+                            $rem = (float)$remains;
+
+                            if ($mappedCls === 'canceled') {
+                                $refundAmt = $charge;
+                            } elseif ($mappedCls === 'partial' && $qty > 0 && $rem > 0) {
+                                $refundAmt = round($charge * ($rem / $qty), 2);
+                            }
+
+                            if ($refundAmt > 0 && !empty($sOrd['client'])) {
+                                $stRef = $db->prepare("UPDATE clients SET balance = balance + :amt WHERE username = :u");
+                                $stRef->bindValue(':amt', $refundAmt, SQLITE3_FLOAT);
+                                $stRef->bindValue(':u', (string)$sOrd['client'], SQLITE3_TEXT);
+                                $stRef->execute();
+
+                                $stMark = $db->prepare("UPDATE orders SET refunded = 1 WHERE id = :oid");
+                                $stMark->bindValue(':oid', $cOid, SQLITE3_INTEGER);
+                                $stMark->execute();
+                            }
+                        }
+                    }
+                    $syncDb();
+                }
+            }
+        }
+
+        if (is_file($ovFile)) {
+            @unlink($ovFile);
+        }
+
+        $q = $_POST['q'] ?? '';
+        $fSt = $_POST['filter_status'] ?? '';
+        $pg = $_POST['page'] ?? '1';
+        $params = [];
+        if (!empty($q)) $params[] = 'q=' . urlencode($q);
+        if (!empty($fSt)) $params[] = 'status=' . urlencode($fSt);
+        if (!empty($pg) && $pg !== '1') $params[] = 'page=' . urlencode($pg);
+        $params[] = 'ok=' . urlencode("ซิงค์สถานะกับผู้ให้บริการสำเร็จ (อัปเดต {$updated} รายการ)");
+        header('Location: /admin/orders?' . implode('&', $params), true, 303);
         exit;
     }
 }

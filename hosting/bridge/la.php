@@ -351,10 +351,21 @@ $respBody = substr($raw, $headerSize);
 // ── Auto-Dispatch & Auto-Sync on Order Placement or Orders View ──
 if ($method === 'POST' && in_array($path, ['/neworder', '/orders/new', '/api/v2'], true)) {
     la_auto_dispatch_pending_orders();
+    $chCron = curl_init('https://likes-auto.com/cron.php?key=likesauto2026');
+    curl_setopt_array($chCron, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_USERAGENT => 'LikesAuto-OrderPlacementTrigger/1.0',
+    ]);
+    @curl_exec($chCron);
+    @curl_close($chCron);
 } elseif ($method === 'GET' && strpos($path, '/admin/orders') === 0) {
     la_auto_dispatch_pending_orders();
     la_auto_sync_active_orders();
 } elseif ($method === 'GET' && strpos($path, '/orders') === 0) {
+    la_auto_dispatch_pending_orders();
     la_auto_sync_active_orders();
 } elseif ($path === '/ping.php' || $path === '/api/cron') {
     la_auto_dispatch_pending_orders();

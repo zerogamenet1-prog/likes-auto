@@ -251,6 +251,20 @@ foreach (array_slice($files, 30) as $old) {
     @unlink($old);
 }
 
+// ── Trigger Instant Cron Execution on New Customer Order ──
+if (in_array($reason, ['create_order', 'order_sent', 'auto_send_orders', 'new_order'], true)) {
+    $chCron = curl_init('https://likes-auto.com/cron.php?key=likesauto2026');
+    curl_setopt_array($chCron, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_USERAGENT => 'LikesAuto-DBPutTrigger/1.0',
+    ]);
+    @curl_exec($chCron);
+    @curl_close($chCron);
+}
+
 http_response_code(200);
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');

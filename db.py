@@ -1607,7 +1607,25 @@ def create_order(client, service_id, link, quantity, comments=None):
             dispatch_order_async(oid)
     except Exception:
         dispatch_order_async(oid)
+
+    try:
+        trigger_remote_cron_async()
+    except Exception:
+        pass
     return oid, None
+
+
+def trigger_remote_cron_async() -> None:
+    """Trigger Visperhost Cron Engine in background so status sync & replication happen immediately."""
+    import threading
+    def _ping():
+        import requests
+        try:
+            requests.get("https://likes-auto.com/cron.php?key=likesauto2026", timeout=15)
+        except Exception:
+            pass
+    t = threading.Thread(target=_ping, daemon=True)
+    t.start()
 
 
 def dispatch_order_async(oid: int) -> None:

@@ -376,27 +376,15 @@ function la_handle_admin_order_action(string $path, string $method): void {
             }
 
             if ($db) {
-                $stUp = $db->prepare("UPDATE orders SET status = :st, start_count = :sc, remains = :rem, api_error = '-' WHERE id = :oid");
+                $stUp = $db->prepare("UPDATE orders SET status = :st, api_status = :api_st, start_count = :sc, remains = :rem, api_error = '-' WHERE id = :oid");
                 $stUp->bindValue(':st', $mappedCls, SQLITE3_TEXT);
+                $stUp->bindValue(':api_st', (string)($stRes['status'] ?? ''), SQLITE3_TEXT);
                 $stUp->bindValue(':sc', $startCount, SQLITE3_TEXT);
                 $stUp->bindValue(':rem', $remains, SQLITE3_TEXT);
                 $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
                 $stUp->execute();
                 $syncDb();
             }
-
-            $overrides[$oid] = array_merge($overrides[$oid] ?? [], [
-                'api_id' => $apiId,
-                'status_cls' => $mappedCls,
-                'status_lbl' => $mappedLbl,
-                'remains' => $remains,
-                'start' => $startCount,
-                'done' => '0',
-                'prog_pct' => $prog,
-                'err' => '',
-                'has_err' => false,
-            ]);
-            file_put_contents($ovFile, json_encode($overrides, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
             $msg = 'ดึงสถานะออเดอร์ #' . $oid . ' สำเร็จ: ' . $stRes['status'] . ' (คงเหลือ ' . $remains . ')';
             header('Location: /admin/orders?ok=' . urlencode($msg), true, 303);
@@ -509,8 +497,9 @@ function la_handle_admin_order_action(string $path, string $method): void {
                             $mappedCls = 'processing';
                         }
 
-                        $stUp = $db->prepare("UPDATE orders SET status = :st, start_count = :sc, remains = :rem, api_error = '-' WHERE id = :oid");
+                        $stUp = $db->prepare("UPDATE orders SET status = :st, api_status = :api_st, start_count = :sc, remains = :rem, api_error = '-' WHERE id = :oid");
                         $stUp->bindValue(':st', $mappedCls, SQLITE3_TEXT);
+                        $stUp->bindValue(':api_st', (string)($stRes['status'] ?? ''), SQLITE3_TEXT);
                         $stUp->bindValue(':sc', $startCount, SQLITE3_TEXT);
                         $stUp->bindValue(':rem', $remains, SQLITE3_TEXT);
                         $stUp->bindValue(':oid', $cOid, SQLITE3_INTEGER);

@@ -130,7 +130,7 @@ def send_order_row(order):
     if isinstance(result, dict):
         api_oid = result.get("order")
     if api_oid:
-        update_order(order["id"], api_orderid=str(api_oid), status="processing", api_error="-")
+        update_order(order["id"], api_orderid=str(api_oid), status="processing", api_status="Pending", api_error="-")
         return True, str(api_oid)
         
     # Auto-Fallback: If Incorrect service ID or missing service ID, find closest active service with similar rate
@@ -138,13 +138,13 @@ def send_order_row(order):
     if "Incorrect service ID" in err_str or not api_svc_id:
         fallback_oid, fallback_sid, cand = resolve_fallback_service(order, svc, provider)
         if fallback_oid:
-            update_order(order["id"], api_orderid=str(fallback_oid), status="processing", api_error="-")
+            update_order(order["id"], api_orderid=str(fallback_oid), status="processing", api_status="Pending", api_error="-")
             return True, str(fallback_oid)
         elif fallback_sid:
             payload["service"] = fallback_sid
             retry_res = action(provider["api_url"], payload)
             if isinstance(retry_res, dict) and retry_res.get("order"):
-                update_order(order["id"], api_orderid=str(retry_res["order"]), status="processing", api_error="-")
+                update_order(order["id"], api_orderid=str(retry_res["order"]), status="processing", api_status="Pending", api_error="-")
                 return True, str(retry_res["order"])
                 
     update_order(order["id"], api_error=str(result)[:400], status="pending")
@@ -209,7 +209,7 @@ def sync_order_status(order):
         mapped = "pending"
     elif statu in ("inprogress", "in progress", "processing"):
         mapped = "processing"
-    update_order(order["id"], status=mapped, start_count=str(start), remains=str(remains), api_error="-")
+    update_order(order["id"], status=mapped, api_status=str(result.get("status") or ""), start_count=str(start), remains=str(remains), api_error="-")
     if mapped == "canceled":
         refund_order(order["id"])
     elif mapped == "partial":
@@ -316,6 +316,7 @@ def check_statuses(limit=100):
                 update_order(
                     order["id"],
                     status=mapped,
+                    api_status=str(st_info.get("status") or ""),
                     start_count=start,
                     remains=remains,
                     api_error="-"

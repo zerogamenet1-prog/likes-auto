@@ -57,10 +57,19 @@ function la_patch_admin_orders(string $html): string {
         return $html;
     }
 
+    // Auto-dispatch pending unsent orders first
+    if (function_exists('la_auto_dispatch_pending_orders')) {
+        @la_auto_dispatch_pending_orders();
+    }
+
     // Real-time automatic background sync if active orders exist
     if (function_exists('la_auto_sync_active_orders')) {
         @la_auto_sync_active_orders(false);
     }
+
+    // Unsent count
+    $unsentRes = $db->query("SELECT COUNT(*) as c FROM orders WHERE (api_orderid IS NULL OR api_orderid = '' OR api_orderid = '-') AND status NOT IN ('completed', 'canceled')");
+    $unsentCount = $unsentRes ? (int)($unsentRes->fetchArray(SQLITE3_ASSOC)['c'] ?? 0) : 0;
 
     // 1. Calculate KPI Statistics
     $kpiCounts = [
@@ -179,9 +188,9 @@ function la_patch_admin_orders(string $html): string {
 
           <a href="/admin/orders?status=pending" class="om-kpi-card <?= $statusFilter === 'pending' ? 'is-active' : '' ?>">
             <div class="om-kpi-info">
-              <span class="om-kpi-lbl">รอส่ง API</span>
+              <span class="om-kpi-lbl">ในคิวระบบ (API)</span>
               <span class="om-kpi-val text-warn"><?= number_format($kpiCounts['pending']) ?></span>
-              <span class="om-kpi-sub">รอดำเนินการ</span>
+              <span class="om-kpi-sub"><?= $unsentCount > 0 ? ('รอส่ง ' . $unsentCount . ' รายการ') : 'รอเริ่มงานบน API' ?></span>
             </div>
             <div class="om-kpi-icon om-ico-pending"><i class="ri-time-fill"></i></div>
           </a>
@@ -190,7 +199,7 @@ function la_patch_admin_orders(string $html): string {
             <div class="om-kpi-info">
               <span class="om-kpi-lbl">กำลังดำเนินการ</span>
               <span class="om-kpi-val text-blue"><?= number_format($kpiCounts['processing']) ?></span>
-              <span class="om-kpi-sub">ส่ง API แล้ว</span>
+              <span class="om-kpi-sub">ส่ง API แล้ว (รันงาน)</span>
             </div>
             <div class="om-kpi-icon om-ico-processing"><i class="ri-loader-4-fill om-spin"></i></div>
           </a>
@@ -230,7 +239,7 @@ function la_patch_admin_orders(string $html): string {
               ทั้งหมด <span class="om-tab-badge"><?= $kpiCounts['all'] ?></span>
             </a>
             <a href="/admin/orders?status=pending<?= !empty($searchQuery) ? ('&q=' . urlencode($searchQuery)) : '' ?>" class="om-tab <?= $statusFilter === 'pending' ? 'is-active' : '' ?>">
-              <i class="ri-time-line"></i> รอส่ง <span class="om-tab-badge"><?= $kpiCounts['pending'] ?></span>
+              <i class="ri-time-line"></i> ในคิวระบบ <span class="om-tab-badge"><?= $kpiCounts['pending'] ?></span>
             </a>
             <a href="/admin/orders?status=processing<?= !empty($searchQuery) ? ('&q=' . urlencode($searchQuery)) : '' ?>" class="om-tab <?= $statusFilter === 'processing' ? 'is-active' : '' ?>">
               <i class="ri-loader-4-line"></i> กำลังทำ <span class="om-tab-badge"><?= $kpiCounts['processing'] ?></span>
@@ -329,15 +338,34 @@ function la_patch_admin_orders(string $html): string {
                 $progPct = 50;
               }
 
+              // Provider Live Status string
+              $apiSt = trim((string)($ord['api_status'] ?? ''));
+              if ($apiSt === '') {
+                if ($st === 'completed') $apiSt = 'Completed';
+                elseif ($st === 'processing') $apiSt = 'In progress';
+                elseif ($st === 'pending') $apiSt = $hasApi ? 'Pending' : '';
+                elseif ($st === 'partial') $apiSt = 'Partial';
+                elseif ($st === 'canceled') $apiSt = 'Canceled';
+              }
+
               // Status meta
-              $stMap = [
-                'pending' => ['รอส่ง', 'om-st-pending', 'ri-time-line'],
-                'processing' => ['กำลังทำ', 'om-st-processing', 'ri-loader-4-line om-spin'],
-                'completed' => ['สำเร็จ', 'om-st-completed', 'ri-checkbox-circle-fill'],
-                'partial' => ['บางส่วน', 'om-st-partial', 'ri-pie-chart-line'],
-                'canceled' => ['ยกเลิก', 'om-st-canceled', 'ri-close-circle-line'],
-              ];
-              $stInfo = $stMap[$st] ?? [$st, 'om-st-pending', 'ri-information-line'];
+              if ($hasApi) {
+                if ($st === 'completed') {
+                  $stInfo = ['สำเร็จ (API: Completed)', 'om-st-completed', 'ri-checkbox-circle-fill'];
+                } elseif ($st === 'processing') {
+                  $stInfo = ['กำลังทำ (API: ' . ($apiSt ?: 'In progress') . ')', 'om-st-processing', 'ri-loader-4-line om-spin'];
+                } elseif ($st === 'pending') {
+                  $stInfo = ['ในคิว (API: ' . ($apiSt ?: 'Pending') . ')', 'om-st-pending', 'ri-time-line'];
+                } elseif ($st === 'partial') {
+                  $stInfo = ['บางส่วน (API: ' . ($apiSt ?: 'Partial') . ')', 'om-st-partial', 'ri-pie-chart-line'];
+                } elseif ($st === 'canceled') {
+                  $stInfo = ['ยกเลิก (API: ' . ($apiSt ?: 'Canceled') . ')', 'om-st-canceled', 'ri-close-circle-line'];
+                } else {
+                  $stInfo = [$st . ($apiSt ? ' (API: ' . $apiSt . ')' : ''), 'om-st-pending', 'ri-information-line'];
+                }
+              } else {
+                $stInfo = ['รอส่งไป API (คอนจ็อปส่งออโต้)', 'om-st-pending om-pill-unsent', 'ri-send-plane-fill om-pulse'];
+              }
             ?>
               <article class="om-card status-<?= $st ?> <?= $hasErr ? 'is-err' : '' ?>" id="omCard-<?= $oid ?>">
                 
@@ -376,9 +404,14 @@ function la_patch_admin_orders(string $html): string {
                       <span class="om-meta-item om-meta-api" title="รหัสอ้างอิงบน Provider API">
                         <i class="ri-cloud-line"></i> API: <strong>#<?= htmlspecialchars($apiOid) ?></strong>
                       </span>
+                      <?php if (!empty($apiSt)): ?>
+                        <span class="om-meta-item om-meta-apistatus" title="สถานะสดจากเว็บผู้ให้บริการ">
+                          <i class="ri-pulse-line"></i> สถานะเว็บ: <strong class="om-apist-txt-<?= strtolower($apiSt) ?>"><?= htmlspecialchars($apiSt) ?></strong>
+                        </span>
+                      <?php endif; ?>
                     <?php else: ?>
-                      <span class="om-meta-item om-meta-noapi">
-                        <i class="ri-error-warning-line"></i> ยังไม่ส่ง API
+                      <span class="om-meta-item om-meta-noapi text-warn">
+                        <i class="ri-time-line om-pulse"></i> คอนจ็อปกำลังส่งออเดอร์ไป API อัตโนมัติ
                       </span>
                     <?php endif; ?>
                     <span class="om-meta-item om-meta-time" title="วันเวลาที่สั่งซื้อ">
@@ -467,9 +500,18 @@ function la_patch_admin_orders(string $html): string {
                           <?php if ($hasApi): ?>
                             <span class="om-prov-id">Order ID: <strong>#<?= htmlspecialchars($apiOid) ?></strong></span>
                           <?php else: ?>
-                            <span class="om-prov-id text-warn">ยังไม่มีรหัส API</span>
+                            <span class="om-prov-id text-warn"><i class="ri-time-line om-pulse"></i> รอดำเนินการส่ง API อัตโนมัติ</span>
                           <?php endif; ?>
                         </div>
+
+                        <?php if ($hasApi): ?>
+                          <div class="om-api-live-row">
+                            <span class="om-api-live-lbl"><i class="ri-global-line"></i> สถานะสดจากเว็บ API:</span>
+                            <span class="om-api-live-pill is-<?= strtolower($apiSt ?: $st) ?>">
+                              <span class="om-pulse-dot-sm"></span> <strong><?= htmlspecialchars($apiSt ?: ucfirst($st)) ?></strong>
+                            </span>
+                          </div>
+                        <?php endif; ?>
 
                         <!-- Progress Section -->
                         <div class="om-prog-container">
@@ -920,6 +962,80 @@ function la_patch_admin_orders(string $html): string {
         .om-st-completed { background: rgba(16, 185, 129, 0.15) !important; color: #34d399 !important; }
         .om-st-partial { background: rgba(168, 85, 247, 0.15) !important; color: #c084fc !important; }
         .om-st-canceled { background: rgba(239, 68, 68, 0.15) !important; color: #f87171 !important; }
+        .om-pill-unsent {
+          background: rgba(245, 158, 11, 0.25) !important;
+          color: #fbbf24 !important;
+          border: 1px dashed rgba(245, 158, 11, 0.6) !important;
+        }
+        .om-meta-apistatus {
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 4px !important;
+        }
+        .om-apist-txt-completed { color: #34d399 !important; font-weight: 700 !important; }
+        .om-apist-txt-processing, .om-apist-txt-inprogress { color: #38bdf8 !important; font-weight: 700 !important; }
+        .om-apist-txt-pending { color: #fbbf24 !important; font-weight: 700 !important; }
+        .om-apist-txt-partial { color: #c084fc !important; font-weight: 700 !important; }
+        .om-apist-txt-canceled { color: #f87171 !important; font-weight: 700 !important; }
+
+        .om-api-live-row {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          background: #0f172a !important;
+          padding: 8px 12px !important;
+          border-radius: 8px !important;
+          border: 1px solid #1e293b !important;
+          margin-bottom: 12px !important;
+          font-size: 13px !important;
+        }
+        .om-api-live-lbl {
+          color: #94a3b8 !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+        }
+        .om-api-live-pill {
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 6px !important;
+          padding: 3px 10px !important;
+          border-radius: 20px !important;
+          font-size: 12px !important;
+          font-weight: 600 !important;
+        }
+        .om-api-live-pill.is-completed {
+          background: rgba(16, 185, 129, 0.15) !important;
+          color: #34d399 !important;
+          border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        }
+        .om-api-live-pill.is-processing, .om-api-live-pill.is-inprogress {
+          background: rgba(14, 165, 233, 0.15) !important;
+          color: #38bdf8 !important;
+          border: 1px solid rgba(14, 165, 233, 0.3) !important;
+        }
+        .om-api-live-pill.is-pending {
+          background: rgba(245, 158, 11, 0.15) !important;
+          color: #fbbf24 !important;
+          border: 1px solid rgba(245, 158, 11, 0.3) !important;
+        }
+        .om-api-live-pill.is-partial {
+          background: rgba(168, 85, 247, 0.15) !important;
+          color: #c084fc !important;
+          border: 1px solid rgba(168, 85, 247, 0.3) !important;
+        }
+        .om-api-live-pill.is-canceled {
+          background: rgba(239, 68, 68, 0.15) !important;
+          color: #f87171 !important;
+          border: 1px solid rgba(239, 68, 68, 0.3) !important;
+        }
+        .om-pulse-dot-sm {
+          width: 6px !important;
+          height: 6px !important;
+          border-radius: 50% !important;
+          background: currentColor !important;
+          animation: om-pulse 1.8s infinite !important;
+        }
 
         .om-amt-box {
           display: inline-flex !important;

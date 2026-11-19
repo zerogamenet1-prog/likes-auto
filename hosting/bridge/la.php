@@ -506,15 +506,33 @@ function la_auto_sync_active_orders(bool $force = false): int {
 
             $stUp = $db->prepare("
                 UPDATE orders 
-                SET status = :st, start_count = :sc, remains = :rem, api_error = '-' 
+                SET status = :st, api_status = :api_st, start_count = :sc, remains = :rem, api_error = '-' 
                 WHERE id = :oid
             ");
             $stUp->bindValue(':st', $mappedStatus, SQLITE3_TEXT);
+            $stUp->bindValue(':api_st', (string)($stInfo['status'] ?? ''), SQLITE3_TEXT);
             $stUp->bindValue(':sc', $startCount, SQLITE3_TEXT);
             $stUp->bindValue(':rem', $remains, SQLITE3_TEXT);
             $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
             $stUp->execute();
             $updated++;
+
+            // Also replicate to replica DB
+            foreach ($dbPaths as $altP) {
+                if ($altP !== $dbFile && file_exists($altP)) {
+                    try {
+                        $altDb = new SQLite3($altP, SQLITE3_OPEN_READWRITE);
+                        $stAlt = $altDb->prepare("UPDATE orders SET status = :st, api_status = :api_st, start_count = :sc, remains = :rem, api_error = '-' WHERE id = :oid");
+                        $stAlt->bindValue(':st', $mappedStatus, SQLITE3_TEXT);
+                        $stAlt->bindValue(':api_st', (string)($stInfo['status'] ?? ''), SQLITE3_TEXT);
+                        $stAlt->bindValue(':sc', $startCount, SQLITE3_TEXT);
+                        $stAlt->bindValue(':rem', $remains, SQLITE3_TEXT);
+                        $stAlt->bindValue(':oid', $oid, SQLITE3_INTEGER);
+                        $stAlt->execute();
+                        $altDb->close();
+                    } catch (\Throwable $e) {}
+                }
+            }
 
             // Auto-refund for canceled or partial if not refunded
             if (($mappedStatus === 'canceled' || $mappedStatus === 'partial') && empty($sOrd['refunded'])) {
@@ -589,8 +607,8 @@ function la_auto_dispatch_pending_orders(): array {
                            FROM orders o
                            LEFT JOIN services s ON s.id = o.service_id
                            LEFT JOIN providers p ON p.id = COALESCE(s.provider_id, o.provider_id)
-                           WHERE o.status = 'pending' 
-                             AND (o.api_orderid IS NULL OR o.api_orderid = '' OR o.api_orderid = '-')
+                           WHERE (o.api_orderid IS NULL OR o.api_orderid = '' OR o.api_orderid = '-')
+                             AND o.status NOT IN ('completed', 'canceled', 'refunded')
                            ORDER BY o.id ASC LIMIT 15");
 
         if (!$res) {
@@ -602,9 +620,6 @@ function la_auto_dispatch_pending_orders(): array {
         while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
             $ordersToSend[] = $row;
         }
-
-        $ovFile = __DIR__ . '/orders_override.json';
-        $overrides = is_file($ovFile) ? (json_decode((string)file_get_contents($ovFile), true) ?: []) : [];
 
         foreach ($ordersToSend as $ord) {
             $oid = (int)$ord['id'];
@@ -640,7 +655,7 @@ function la_auto_dispatch_pending_orders(): array {
             $parsed = json_decode((string)$resp, true);
             if (is_array($parsed) && !empty($parsed['order'])) {
                 $apiOid = (string)$parsed['order'];
-                $stUp = $db->prepare("UPDATE orders SET status = 'processing', api_orderid = :api_oid, api_error = '-' WHERE id = :oid");
+                $stUp = $db->prepare("UPDATE orders SET status = 'processing', api_orderid = :api_oid, api_status = 'Pending', api_error = '-' WHERE id = :oid");
                 $stUp->bindValue(':api_oid', $apiOid, SQLITE3_TEXT);
                 $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
                 $stUp->execute();
@@ -649,7 +664,7 @@ function la_auto_dispatch_pending_orders(): array {
                     if ($altP !== $dbFile && file_exists($altP)) {
                         try {
                             $altDb = new SQLite3($altP, SQLITE3_OPEN_READWRITE);
-                            $stAlt = $altDb->prepare("UPDATE orders SET status = 'processing', api_orderid = :api_oid, api_error = '-' WHERE id = :oid");
+                            $stAlt = $altDb->prepare("UPDATE orders SET status = 'processing', api_orderid = :api_oid, api_status = 'Pending', api_error = '-' WHERE id = :oid");
                             $stAlt->bindValue(':api_oid', $apiOid, SQLITE3_TEXT);
                             $stAlt->bindValue(':oid', $oid, SQLITE3_INTEGER);
                             $stAlt->execute();
@@ -658,30 +673,20 @@ function la_auto_dispatch_pending_orders(): array {
                     }
                 }
 
-                $overrides[$oid] = array_merge($overrides[$oid] ?? [], [
-                    'api_id' => $apiOid,
-                    'provider' => parse_url($apiUrl, PHP_URL_HOST) ?: 'justanotherpanel.com',
-                    'provider_svc' => $apiSvc,
-                    'status_cls' => 'processing',
-                    'status_lbl' => 'กำลังทำ',
-                    'err' => '',
-                    'has_err' => false,
-                ]);
-
-                $db->exec("INSERT INTO logs (action, ip, created_at) VALUES ('ส่งออเดอร์ #" . $oid . " ไป API อัตโนมัติ สำเร็จ (รหัส #" . SQLite3::escapeString($apiOid) . ")', '-', datetime('now', '+7 hours'))");
-                $results[$oid] = ['ok' => true, 'api_orderid' => $apiOid];
+                @$db->exec("INSERT INTO logs (action, ip, created_at) VALUES ('ส่งออเดอร์ #" . $oid . " ไป API อัตโนมัติ สำเร็จ (รหัส #" . SQLite3::escapeString($apiOid) . ")', '-', datetime('now', '+7 hours'))");
+                $results[] = [
+                    'order_id' => $oid,
+                    'api_orderid' => $apiOid,
+                    'status' => 'processing',
+                    'api_status' => 'Pending'
+                ];
             } else {
                 $errMsg = is_array($parsed) && !empty($parsed['error']) ? (string)$parsed['error'] : ($err ?: substr((string)$resp, 0, 200));
                 $stUp = $db->prepare("UPDATE orders SET api_error = :err WHERE id = :oid");
                 $stUp->bindValue(':err', $errMsg, SQLITE3_TEXT);
                 $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
                 $stUp->execute();
-                $results[$oid] = ['ok' => false, 'error' => $errMsg];
             }
-        }
-
-        if (!empty($results)) {
-            file_put_contents($ovFile, json_encode($overrides, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         }
 
         $db->close();

@@ -322,6 +322,25 @@ if ($isMultipart) {
             $fields[$key] = new CURLFile($tmp, $type ?: 'application/octet-stream', $name);
         }
     }
+    // Persist customer uploaded slips locally on Visperhost storage so Render dyno restarts never lose slips
+    if (preg_match('#^/addfunds/pay/(\d+)/slip#', $path, $mSlipMatch)) {
+        $slipPid = (int)$mSlipMatch[1];
+        if (isset($_FILES['slip']) && (int)($_FILES['slip']['error'] ?? 1) === UPLOAD_ERR_OK) {
+            $slipTmp = (string)($_FILES['slip']['tmp_name'] ?? '');
+            if ($slipTmp !== '' && is_uploaded_file($slipTmp)) {
+                $slipExt = strtolower(pathinfo((string)($_FILES['slip']['name'] ?? ''), PATHINFO_EXTENSION));
+                if (!in_array($slipExt, ['jpg', 'jpeg', 'png', 'webp', 'pdf'], true)) {
+                    $slipExt = 'jpg';
+                }
+                $slipsDir = __DIR__ . '/static/uploads/slips';
+                if (!is_dir($slipsDir)) {
+                    @mkdir($slipsDir, 0755, true);
+                }
+                $destName = 'p' . $slipPid . '_' . substr(md5_file($slipTmp), 0, 16) . '.' . $slipExt;
+                @copy($slipTmp, $slipsDir . '/' . $destName);
+            }
+        }
+    }
     $opts[CURLOPT_POSTFIELDS] = $fields;
 } else {
     $body = file_get_contents('php://input');

@@ -1181,15 +1181,39 @@ function la_patch_admin_payments(string $html): string {
 
             // Check physical file existence
             $hasPhysicalSlip = false;
+            $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
             if ($slip !== '') {
                 $cleanPath = ltrim($slip, '/');
-                $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
                 if ($docRoot !== '' && is_file($docRoot . '/' . $cleanPath)) {
+                    $hasPhysicalSlip = true;
+                } elseif (is_file(__DIR__ . '/' . $cleanPath)) {
                     $hasPhysicalSlip = true;
                 } elseif (is_file(__DIR__ . '/../' . $cleanPath)) {
                     $hasPhysicalSlip = true;
                 } elseif (is_file(dirname(__DIR__, 2) . '/' . $cleanPath)) {
                     $hasPhysicalSlip = true;
+                }
+            }
+            // Auto-discover slip file by PID if exact path not matched
+            if (!$hasPhysicalSlip && $pid > 0) {
+                $searchDirs = [
+                    ($docRoot !== '' ? $docRoot : __DIR__) . '/static/uploads/slips',
+                    __DIR__ . '/static/uploads/slips',
+                    __DIR__ . '/../static/uploads/slips',
+                    dirname(__DIR__, 2) . '/py-app/static/uploads/slips',
+                ];
+                foreach ($searchDirs as $sDir) {
+                    if (is_dir($sDir)) {
+                        $matches = glob($sDir . '/p' . $pid . '_*.*');
+                        if (empty($matches)) {
+                            $matches = glob($sDir . '/p' . $pid . '.*');
+                        }
+                        if (!empty($matches)) {
+                            $hasPhysicalSlip = true;
+                            $slip = '/static/uploads/slips/' . basename($matches[0]);
+                            break;
+                        }
+                    }
                 }
             }
           ?>

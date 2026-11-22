@@ -367,27 +367,15 @@ curl_close($ch);
 $rawHeaders = substr($raw, 0, $headerSize);
 $respBody = substr($raw, $headerSize);
 
-// ── Auto-Dispatch & Auto-Sync on Order Placement or Orders View ──
+// ── Auto-Sync on Orders View ──
 if ($method === 'POST' && in_array($path, ['/neworder', '/orders/new', '/api/v2'], true)) {
-    la_auto_dispatch_pending_orders();
-    $chCron = curl_init('https://likes-auto.com/cron.php?key=likesauto2026');
-    curl_setopt_array($chCron, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 15,
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_SSL_VERIFYHOST => 0,
-        CURLOPT_USERAGENT => 'LikesAuto-OrderPlacementTrigger/1.0',
-    ]);
-    @curl_exec($chCron);
-    @curl_close($chCron);
+    // Render FastAPI handles order creation, deduction, and immediate API dispatch.
+    // Do NOT trigger local duplicate dispatch here.
 } elseif ($method === 'GET' && strpos($path, '/admin/orders') === 0) {
-    la_auto_dispatch_pending_orders();
     la_auto_sync_active_orders();
 } elseif ($method === 'GET' && strpos($path, '/orders') === 0) {
-    la_auto_dispatch_pending_orders();
     la_auto_sync_active_orders();
 } elseif ($path === '/ping.php' || $path === '/api/cron') {
-    la_auto_dispatch_pending_orders();
     la_auto_sync_active_orders();
 }
 
@@ -631,6 +619,10 @@ function la_auto_dispatch_pending_orders(): array {
         $db = new SQLite3($dbFile, SQLITE3_OPEN_READWRITE);
         $db->busyTimeout(5000);
 
+        // Auto-recover any order stuck in 'SENDING' for > 5 minutes
+        @$db->exec("UPDATE orders SET api_orderid = NULL, api_error = 'sending_timeout_recovered' WHERE api_orderid = 'SENDING' AND (created_at <= datetime('now', '-5 minutes'))");
+
+        // Grace period 2 minutes to prevent racing with Render
         $res = $db->query("SELECT o.id, o.quantity, o.link, o.comments, o.service_id, o.provider_id, 
                                   s.api_service, s.name as svc_name,
                                   p.api_url, p.api_key
@@ -639,6 +631,7 @@ function la_auto_dispatch_pending_orders(): array {
                            LEFT JOIN providers p ON p.id = COALESCE(s.provider_id, o.provider_id)
                            WHERE (o.api_orderid IS NULL OR o.api_orderid = '' OR o.api_orderid = '-')
                              AND o.status NOT IN ('completed', 'canceled', 'refunded')
+                             AND (o.created_at IS NULL OR o.created_at <= datetime('now', '-2 minutes'))
                            ORDER BY o.id ASC LIMIT 15");
 
         if (!$res) {
@@ -653,21 +646,58 @@ function la_auto_dispatch_pending_orders(): array {
 
         foreach ($ordersToSend as $ord) {
             $oid = (int)$ord['id'];
+
+            // Layer 1: Atomic Row Claim Token
+            $stClaim = $db->prepare("UPDATE orders SET api_orderid = 'SENDING', api_status = 'Pending' WHERE id = :oid AND (api_orderid IS NULL OR api_orderid = '' OR api_orderid = '-')");
+            $stClaim->bindValue(':oid', $oid, SQLITE3_INTEGER);
+            $stClaim->execute();
+            if ($db->changes() !== 1) {
+                continue; // Claimed or sent by another worker/thread
+            }
+
+            $serviceId = (int)($ord['service_id'] ?? 0);
+            $qty = (int)($ord['quantity'] ?? 0);
+            $link = (string)($ord['link'] ?? '');
+
+            // Layer 2: 10-Minute Identical Order Deduplication Guard
+            if (!empty($link) && $serviceId > 0 && $qty > 0) {
+                $stDup = $db->prepare("SELECT id, api_orderid FROM orders WHERE service_id = :sid AND quantity = :qty AND link = :link AND id != :oid AND api_orderid IS NOT NULL AND api_orderid != '' AND api_orderid NOT IN ('-', 'SENDING') AND created_at >= datetime('now', '-10 minutes') ORDER BY id DESC LIMIT 1");
+                $stDup->bindValue(':sid', $serviceId, SQLITE3_INTEGER);
+                $stDup->bindValue(':qty', $qty, SQLITE3_INTEGER);
+                $stDup->bindValue(':link', $link, SQLITE3_TEXT);
+                $stDup->bindValue(':oid', $oid, SQLITE3_INTEGER);
+                $dupRes = $stDup->execute();
+                if ($dupRow = $dupRes->fetchArray(SQLITE3_ASSOC)) {
+                    $dupApiOid = (string)$dupRow['api_orderid'];
+                    $stUp = $db->prepare("UPDATE orders SET status = 'processing', api_orderid = :aoid, api_status = 'Pending', api_error = :err WHERE id = :oid");
+                    $stUp->bindValue(':aoid', $dupApiOid, SQLITE3_TEXT);
+                    $stUp->bindValue(':err', 'duplicate_prevented_linked_to_order_' . $dupRow['id'], SQLITE3_TEXT);
+                    $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
+                    $stUp->execute();
+                    continue;
+                }
+            }
+
             $apiUrl = trim((string)($ord['api_url'] ?? ''));
             $apiKey = trim((string)($ord['api_key'] ?? ''));
             $apiSvc = trim((string)($ord['api_service'] ?? ''));
 
             if (empty($apiUrl)) $apiUrl = 'https://justanotherpanel.com/api/v2';
             if (empty($apiKey)) $apiKey = '691eaf10c7412219464b2d67d4082c24';
-            if (empty($apiSvc)) continue;
+            if (empty($apiSvc)) {
+                $stErr = $db->prepare("UPDATE orders SET api_orderid = NULL, api_error = 'missing_api_service' WHERE id = :oid");
+                $stErr->bindValue(':oid', $oid, SQLITE3_INTEGER);
+                $stErr->execute();
+                continue;
+            }
 
             $postFields = [
                 'key' => $apiKey,
                 'action' => 'add',
                 'service' => $apiSvc,
-                'quantity' => (int)$ord['quantity'],
+                'quantity' => $qty,
             ];
-            if (!empty($ord['link'])) $postFields['link'] = $ord['link'];
+            if (!empty($link)) $postFields['link'] = $link;
             if (!empty($ord['comments'])) $postFields['comments'] = $ord['comments'];
 
             $chApi = curl_init($apiUrl);
@@ -712,7 +742,7 @@ function la_auto_dispatch_pending_orders(): array {
                 ];
             } else {
                 $errMsg = is_array($parsed) && !empty($parsed['error']) ? (string)$parsed['error'] : ($err ?: substr((string)$resp, 0, 200));
-                $stUp = $db->prepare("UPDATE orders SET api_error = :err WHERE id = :oid");
+                $stUp = $db->prepare("UPDATE orders SET api_orderid = NULL, api_error = :err, status = 'pending' WHERE id = :oid");
                 $stUp->bindValue(':err', $errMsg, SQLITE3_TEXT);
                 $stUp->bindValue(':oid', $oid, SQLITE3_INTEGER);
                 $stUp->execute();

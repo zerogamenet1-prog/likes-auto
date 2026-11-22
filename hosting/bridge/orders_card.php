@@ -57,12 +57,7 @@ function la_patch_admin_orders(string $html): string {
         return $html;
     }
 
-    // Auto-dispatch pending unsent orders first
-    if (function_exists('la_auto_dispatch_pending_orders')) {
-        @la_auto_dispatch_pending_orders();
-    }
-
-    // Real-time automatic background sync if active orders exist
+    // Real-time automatic background status sync if active orders exist
     if (function_exists('la_auto_sync_active_orders')) {
         @la_auto_sync_active_orders(false);
     }

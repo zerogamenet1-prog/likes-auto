@@ -1599,8 +1599,8 @@ def create_order(client, service_id, link, quantity, comments=None):
         ok, msg = send_one_order(oid)
         if ok:
             try:
-                from db_backup import schedule_backup
-                schedule_backup("order_sent")
+                from db_backup import flush_backup_now
+                flush_backup_now("order_sent")
             except Exception:
                 pass
         else:
@@ -1608,10 +1608,6 @@ def create_order(client, service_id, link, quantity, comments=None):
     except Exception:
         dispatch_order_async(oid)
 
-    try:
-        trigger_remote_cron_async()
-    except Exception:
-        pass
     return oid, None
 
 
@@ -1641,8 +1637,8 @@ def dispatch_order_async(oid: int) -> None:
                 ok, msg = send_one_order(oid)
                 if ok:
                     try:
-                        from db_backup import schedule_backup
-                        schedule_backup("order_sent")
+                        from db_backup import flush_backup_now
+                        flush_backup_now("order_sent")
                     except Exception:
                         pass
                     return

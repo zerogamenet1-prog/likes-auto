@@ -100,16 +100,63 @@ def resolve_fallback_service(order, original_svc, provider):
 def send_order_row(order):
     if not order:
         return False, "no_order"
+    oid = order.get("id")
+    if not oid:
+        return False, "no_order_id"
+
+    # Fast-check if already sent
+    curr_api = str(order.get("api_orderid") or "").strip()
+    if curr_api and curr_api not in ("-", "", "SENDING"):
+        return False, f"already_sent_api_{curr_api}"
+
+    # 1. Atomic Claim Token: Lock the row so NO OTHER thread or process can send it concurrently
+    try:
+        from db import connect
+        con = connect()
+        cur = con.execute(
+            "UPDATE orders SET api_orderid = 'SENDING', api_status = 'Pending' WHERE id = ? AND (api_orderid IS NULL OR api_orderid = '' OR api_orderid = '-')",
+            (oid,),
+        )
+        con.commit()
+        claimed = (cur.rowcount == 1)
+        con.close()
+        if not claimed:
+            return False, "already_claimed_or_sent"
+    except Exception as exc:
+        return False, f"lock_claim_failed: {exc}"
+
     svc = get_service(order.get("service_id")) if order.get("service_id") else None
     pid = (svc or {}).get("provider_id") or order.get("provider_id")
     if not pid or not svc:
-        update_order(order["id"], api_error="no_service")
+        update_order(oid, api_orderid=None, api_error="no_service", status="pending")
         return False, "no_service"
     provider = get_provider(pid)
     if not provider:
-        update_order(order["id"], api_error="no_provider")
+        update_order(oid, api_orderid=None, api_error="no_provider", status="pending")
         return False, "no_provider"
-    
+
+    # 2. Duplicate Guard (10-minute Link/Quantity/Service Check)
+    try:
+        con = connect()
+        dup = con.execute(
+            """
+            SELECT id, api_orderid FROM orders
+            WHERE service_id = ? AND quantity = ? AND link = ?
+              AND id != ?
+              AND api_orderid IS NOT NULL AND api_orderid != '' AND api_orderid NOT IN ('-', 'SENDING')
+              AND created_at >= datetime('now', '-10 minutes')
+            ORDER BY id DESC LIMIT 1
+            """,
+            (svc.get("id"), order["quantity"], str(order.get("link") or ""), oid),
+        ).fetchone()
+        con.close()
+        if dup:
+            dup_api_id = str(dup["api_orderid"])
+            update_order(oid, api_orderid=dup_api_id, status="processing", api_status="Pending", api_error=f"duplicate_prevented_linked_to_order_{dup['id']}")
+            return True, dup_api_id
+    except Exception:
+        pass
+
     api_svc_id = svc.get("api_service")
     payload = {
         "key": provider["api_key"],
@@ -130,7 +177,7 @@ def send_order_row(order):
     if isinstance(result, dict):
         api_oid = result.get("order")
     if api_oid:
-        update_order(order["id"], api_orderid=str(api_oid), status="processing", api_status="Pending", api_error="-")
+        update_order(oid, api_orderid=str(api_oid), status="processing", api_status="Pending", api_error="-")
         return True, str(api_oid)
         
     # Auto-Fallback: If Incorrect service ID or missing service ID, find closest active service with similar rate
@@ -138,20 +185,32 @@ def send_order_row(order):
     if "Incorrect service ID" in err_str or not api_svc_id:
         fallback_oid, fallback_sid, cand = resolve_fallback_service(order, svc, provider)
         if fallback_oid:
-            update_order(order["id"], api_orderid=str(fallback_oid), status="processing", api_status="Pending", api_error="-")
+            update_order(oid, api_orderid=str(fallback_oid), status="processing", api_status="Pending", api_error="-")
             return True, str(fallback_oid)
         elif fallback_sid:
             payload["service"] = fallback_sid
             retry_res = action(provider["api_url"], payload)
             if isinstance(retry_res, dict) and retry_res.get("order"):
-                update_order(order["id"], api_orderid=str(retry_res["order"]), status="processing", api_status="Pending", api_error="-")
+                update_order(oid, api_orderid=str(retry_res["order"]), status="processing", api_status="Pending", api_error="-")
                 return True, str(retry_res["order"])
                 
-    update_order(order["id"], api_error=str(result)[:400], status="pending")
+    update_order(oid, api_orderid=None, api_error=str(result)[:400], status="pending")
     return False, str(result)[:400]
 
 
 def send_orders():
+    # Auto-recover any order stuck in 'SENDING' for > 5 minutes
+    try:
+        from db import connect
+        con = connect()
+        con.execute(
+            "UPDATE orders SET api_orderid = NULL, api_error = 'sending_timeout_recovered' WHERE api_orderid = 'SENDING' AND created_at <= datetime('now', '-5 minutes')"
+        )
+        con.commit()
+        con.close()
+    except Exception:
+        pass
+
     sent = 0
     errors = 0
     for order in pending_send_orders():
@@ -167,8 +226,9 @@ def send_one_order(oid):
     order = get_order(oid)
     if not order:
         return False, "ไม่พบออเดอร์"
-    if order.get("api_orderid") and str(order.get("status") or "") not in ("pending",):
-        return False, "มีรหัส API แล้ว ให้กดดึงสถานะ"
+    curr_api = str(order.get("api_orderid") or "").strip()
+    if curr_api and curr_api not in ("-", "", "SENDING"):
+        return False, f"มีรหัส API แล้ว ({curr_api}) ให้กดดึงสถานะ"
     return send_order_row(order)
 
 

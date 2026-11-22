@@ -157,6 +157,12 @@ function la_handle_admin_order_action(string $path, string $method): void {
             exit;
         }
 
+        $existingApi = trim((string)($order['api_orderid'] ?? ''));
+        if (!empty($existingApi) && !in_array($existingApi, ['-', 'SENDING'], true) && in_array(strtolower((string)$order['status']), ['processing', 'inprogress', 'completed'], true)) {
+            header('Location: /admin/orders?err=' . urlencode('ออเดอร์ #' . $oid . ' ถูกส่งไปผู้ให้บริการแล้ว (API #' . $existingApi . ') หากต้องการอัปเดตกรุณากดปุ่ม "ดึงสถานะ" แทน'), true, 303);
+            exit;
+        }
+
         $qty = (int)$order['quantity'];
         $link = (string)($order['link'] ?? '');
         $apiSvc = trim((string)($order['api_service'] ?? ''));

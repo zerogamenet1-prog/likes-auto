@@ -153,8 +153,8 @@ def start_auto_worker():
                 sent, errors = send_orders()
                 if sent > 0:
                     try:
-                        from db_backup import schedule_backup
-                        schedule_backup("auto_send_orders")
+                        from db_backup import flush_backup_now
+                        flush_backup_now("auto_send_orders")
                     except Exception:
                         pass
                 check_statuses()

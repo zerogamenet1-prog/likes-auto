@@ -1157,6 +1157,15 @@ if ($code === 200 && strpos($path, '/admin/payments') === 0 && stripos($respBody
     }
 }
 
+// ── Admin Reports Modern Revenue & Financial Intelligence Desk Transform ──
+if ($code === 200 && strpos($path, '/admin/reports') === 0 && stripos($respBody, 'rp-desk-wrap') === false) {
+    $patchFile = __DIR__ . '/reports_card.php';
+    if (is_file($patchFile)) {
+        require_once $patchFile;
+        $respBody = la_patch_admin_reports($respBody);
+    }
+}
+
 if ($code === 200 && strpos($path, '/admin/appearance/pages') === 0 && stripos($respBody, 'page-kpi-grid') === false) {
     $patchFile = __DIR__ . '/pages_card.php';
     if (is_file($patchFile)) {

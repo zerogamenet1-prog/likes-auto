@@ -1103,6 +1103,15 @@ if ($code === 200 && strpos($path, '/admin/providers') === 0 && stripos($respBod
     }
 }
 
+// ── Admin Dashboard Live Synchronizer Transform ──
+if ($code === 200 && ($path === '/admin' || $path === '/admin/') && stripos($respBody, 'dash-content') !== false) {
+    $patchFile = __DIR__ . '/dashboard_card.php';
+    if (is_file($patchFile)) {
+        require_once $patchFile;
+        $respBody = la_patch_admin_dashboard($respBody);
+    }
+}
+
 // ── Admin Orders Master Desk Transform ──
 if ($code === 200 && strpos($path, '/admin/orders') === 0 && stripos($respBody, 'om-desk-wrap') === false) {
     $patchFile = __DIR__ . '/orders_card.php';

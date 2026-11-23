@@ -511,6 +511,14 @@
 
   <div class="container">
 
+    <!-- Cloud Notice Banner -->
+    <div id="cloudBanner" style="display: none; background: linear-gradient(90deg, #1e3a8a, #2563eb); color: #fff; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(37,99,235,0.2);">
+      <div>
+        <strong>🚀 ใช้งานโหมดความเร็วสูงสุด (Local Studio Engine):</strong> ขณะนี้คุณเปิดบนเว็บคลาวด์ หากต้องการเรนเดอร์ความเร็วสูง 10x และดึงเพจโพสต์ได้เต็มประสิทธิภาพ แนะนำเปิดผ่าน Engine ในเครื่อง
+      </div>
+      <a href="http://127.0.0.1:8000/studio" target="_blank" style="background: #fff; color: #1e3a8a; padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 13.5px; white-space: nowrap; margin-left: 16px; display: inline-flex; align-items: center; gap: 6px;">เปิด http://127.0.0.1:8000/studio ⚡</a>
+    </div>
+
     <div class="grid-studio">
 
       <!-- Left Column: Controls -->
@@ -763,6 +771,9 @@
           <!-- Facebook Post Content -->
           <div id="fbTab" style="display: none;">
             <div class="meta-box">
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #166534; line-height: 1.5;">
+                💡 <strong>วิธีเชื่อมต่อ Facebook:</strong> ตรวจสอบว่าล็อกอิน Facebook ใน Chrome แล้ว จากนั้นไปที่ <code>chrome://extensions</code> กดปุ่ม 🔄 (Reload) ที่ <strong>LikesAuto Studio</strong> 1 ครั้ง แล้วกดปุ่ม <strong>"ดึงเพจของฉัน"</strong> ได้ทันทีครับ
+              </div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <label class="field-label" style="margin-bottom: 0;">เลือกเพจ Facebook ที่ต้องการโพสต์</label>
                 <div style="display: flex; gap: 6px;">
@@ -881,6 +892,10 @@
   </div>
 
   <script>
+    if (location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
+      const cb = document.getElementById('cloudBanner')
+      if (cb) cb.style.display = 'flex'
+    }
     const ACTIVE_KEY = ''
     let currentExtId = ''
     let loadedVideoFile = null
@@ -1050,7 +1065,7 @@
             method: 'POST',
             body: formData
           })
-          if (!res.ok && res.status === 404 && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
+          if (!res.ok && (res.status === 404 || res.status === 502 || res.status === 504) && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
             const localRes = await fetch('http://127.0.0.1:8000/api/studio/render', {
               method: 'POST',
               body: formData
@@ -1064,12 +1079,29 @@
             res = await fetch('http://127.0.0.1:8000/api/studio/render', {
               method: 'POST',
               body: formData
-            })
-          } else {
-            throw fetchErr
+            }).catch(() => null)
           }
+          if (!res) throw fetchErr
         }
         clearInterval(progressTimer)
+
+        if (!res || !res.ok) {
+          btnStartRender.disabled = false
+          if (location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
+            const goLocal = confirm(
+              '☁️ ระบบคลาวด์ Render กำลังเตรียมเซิร์ฟเวอร์ หรือไม่รองรับการเรนเดอร์วิดีโอขนาดใหญ่บน Free Plan\n\n' +
+              '⚡ คุณมีโปรแกรม Studio ทำงานบนเครื่องอยู่แล้วที่ 127.0.0.1:8000\n' +
+              'ต้องการเปิดใช้งานที่ http://127.0.0.1:8000/studio ทันทีหรือไม่?\n' +
+              '(เรนเดอร์เร็วกว่า 10 เท่า และดึงเพจโพสต์ได้แน่นอน 100%)'
+            )
+            if (goLocal) {
+              window.open('http://127.0.0.1:8000/studio', '_blank')
+            }
+            return
+          }
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(errData.error || `HTTP ${res.status}: การเรนเดอร์ล้มเหลว`)
+        }
 
         const data = await res.json()
         if (!data.ok) {

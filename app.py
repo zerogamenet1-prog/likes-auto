@@ -1064,6 +1064,16 @@ async def finished_thumb():
     return Response(status_code=404)
 
 
+@app.get("/api/studio/config")
+async def get_studio_config():
+    return {
+        "ok": True,
+        "engine_url": "https://judicial-sociology-speech-inventory.trycloudflare.com",
+        "engine": "likes-auto-native-studio",
+        "version": "2.0.0"
+    }
+
+
 @app.get("/rendered_clips/{filename}")
 async def get_rendered_clip(filename: str):
     p = Path(__file__).resolve().parent.parent / "rendered_clips" / filename

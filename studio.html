@@ -1331,152 +1331,212 @@
         }
       }, 600)
 
-      try {
-        let res = null
+      const ONLINE_TUNNEL_URL = 'https://judicial-sociology-speech-inventory.trycloudflare.com'
+
+      // Smart multi-tier endpoint candidates:
+      // When on mobile / likes-auto.com: Try Cloudflare Tunnel first -> then /api/studio/render -> then LAN/local
+      let renderCandidates = []
+      if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+        renderCandidates = [
+          '/api/studio/render',
+          ONLINE_TUNNEL_URL + '/api/studio/render'
+        ]
+      } else {
+        renderCandidates = [
+          ONLINE_TUNNEL_URL + '/api/studio/render',
+          '/api/studio/render',
+          'http://127.0.0.1:8000/api/studio/render'
+        ]
+      }
+
+      let res = null
+      let activeBase = ''
+      let lastErr = null
+
+      for (const endpoint of renderCandidates) {
         try {
-          res = await fetch('/api/studio/render', {
+          addLog(`[Network] กำลังส่งงานไปยัง Engine: ${endpoint.includes('trycloudflare') ? 'Cloudflare Online Engine' : endpoint}...`)
+          const testRes = await fetch(endpoint, {
             method: 'POST',
             body: formData
           })
-          if (!res.ok && (res.status === 404 || res.status === 502 || res.status === 504) && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
-            const localRes = await fetch('http://127.0.0.1:8000/api/studio/render', {
-              method: 'POST',
-              body: formData
-            }).catch(() => null)
-            if (localRes && localRes.ok) {
-              res = localRes
+          if (testRes && testRes.ok) {
+            res = testRes
+            if (endpoint.startsWith('http')) {
+              activeBase = new URL(endpoint).origin
+            } else {
+              activeBase = window.location.origin
             }
+            break
+          } else if (testRes && !testRes.ok) {
+            lastErr = `HTTP ${testRes.status}`
           }
         } catch (fetchErr) {
-          if (location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
-            res = await fetch('http://127.0.0.1:8000/api/studio/render', {
-              method: 'POST',
-              body: formData
-            }).catch(() => null)
-          }
-          if (!res) throw fetchErr
+          lastErr = fetchErr.message
+          console.warn('Endpoint error:', endpoint, fetchErr)
         }
-        clearInterval(progressTimer)
+      }
 
-        if (!res || !res.ok) {
-          btnStartRender.disabled = false
-          if (location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
-            const goLocal = confirm(
-              '☁️ ระบบคลาวด์ Render กำลังเตรียมเซิร์ฟเวอร์ หรือไม่รองรับการเรนเดอร์วิดีโอขนาดใหญ่บน Free Plan\n\n' +
-              '⚡ คุณมีโปรแกรม Studio ทำงานบนเครื่องอยู่แล้วที่ 127.0.0.1:8000\n' +
-              'ต้องการเปิดใช้งานที่ http://127.0.0.1:8000/studio ทันทีหรือไม่?\n' +
-              '(เรนเดอร์เร็วกว่า 10 เท่า และดึงเพจโพสต์ได้แน่นอน 100%)'
-            )
-            if (goLocal) {
-              window.open('http://127.0.0.1:8000/studio', '_blank')
-            }
-            return
-          }
-          const errData = await res.json().catch(() => ({}))
-          throw new Error(errData.error || `HTTP ${res.status}: การเรนเดอร์ล้มเหลว`)
-        }
+      clearInterval(progressTimer)
 
-        const data = await res.json()
-        if (!data.ok) {
-          throw new Error(data.error || 'การเรนเดอร์ล้มเหลว')
-        }
-
-        setAllDone()
-        setBar(100, 'ตัดต่อเสร็จสมบูรณ์!')
+      if (!res || !res.ok) {
         btnStartRender.disabled = false
         const stickyBtn = document.getElementById('btnStickyRender')
         if (stickyBtn) stickyBtn.disabled = false
+        throw new Error(lastErr || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์เรนเดอร์ได้ กรุณาลองใหม่อีกครั้ง')
+      }
 
-        if (data.detected_product) {
-          addLog(`[AI Vision] 🔍 ตรวจพบสินค้าในวิดีโอ: ${data.detected_product}`)
+      const data = await res.json()
+      if (!data.ok) {
+        throw new Error(data.error || 'การเรนเดอร์ล้มเหลว')
+      }
+
+      setAllDone()
+      setBar(100, 'ตัดต่อเสร็จสมบูรณ์!')
+      btnStartRender.disabled = false
+      const stickyBtn = document.getElementById('btnStickyRender')
+      if (stickyBtn) stickyBtn.disabled = false
+
+      if (data.detected_product) {
+        addLog(`[AI Vision] 🔍 ตรวจพบสินค้าในวิดีโอ: ${data.detected_product}`)
+      }
+      addLog(`[Success] ✅ เรนเดอร์คลิปสำเร็จในความยาว ${data.duration.toFixed(1)} วินาที!`)
+      addLog('[Complete] คลิปพร้อมเล่น ดาวน์โหลด และแชร์ได้ทันที')
+
+      const rawVideo = data.video_url || ''
+      const fullVideoUrl = rawVideo.startsWith('http') ? rawVideo : (activeBase + rawVideo)
+      const rawThumb = data.thumbnail_url || '/likes_auto_finished_thumb.jpg'
+      const fullThumbUrl = rawThumb.startsWith('http') ? rawThumb : (activeBase + rawThumb)
+
+      reelPlayer.src = fullVideoUrl + '?t=' + Date.now()
+      reelPlayer.play().catch(() => { })
+
+      currentThumbUrl = fullThumbUrl
+      const thumbImg = document.getElementById('reelThumbPreview')
+      if (thumbImg) {
+        thumbImg.src = fullThumbUrl + '?t=' + Date.now()
+      }
+      document.getElementById('outTitle').value = data.title || 'คลิปขายของไวรัล'
+      document.getElementById('outScript').value = data.script || ''
+      document.getElementById('outCaption').value = data.caption || ''
+      if (data.first_comment) {
+        document.getElementById('outFirstComment').value = data.first_comment
+        document.getElementById('fbCommentText').value = data.first_comment
+      }
+
+      try {
+        const vBlobRes = await fetch(fullVideoUrl)
+        currentVideoBlob = await vBlobRes.blob()
+      } catch (e) { }
+
+      // --- Mobile UX Enhancements ---
+      const badgeView = document.getElementById('badgeViewReady')
+      if (badgeView) badgeView.style.display = 'inline-block'
+      const btnMobShare = document.getElementById('btnMobileShare')
+      if (btnMobShare) btnMobShare.style.display = 'block'
+      if (window.innerWidth <= 960) {
+        switchMobileCol('view')
+      }
+
+    } catch (err) {
+      clearInterval(progressTimer)
+      addLog('[Error] ' + err.message)
+      alert('เกิดข้อผิดพลาด: ' + err.message)
+      btnStartRender.disabled = false
+      const stickyBtn = document.getElementById('btnStickyRender')
+      if (stickyBtn) stickyBtn.disabled = false
+      setBar(0, 'ล้มเหลว: ' + err.message)
+    }
+  }
+
+  let currentThumbUrl = 'likes_auto_finished_thumb.jpg'
+
+  window.switchPreviewMode = function (mode) {
+    const v = document.getElementById('reelPlayer')
+    const img = document.getElementById('reelThumbPreview')
+    const btnV = document.getElementById('tabPreviewVideo')
+    const btnT = document.getElementById('tabPreviewThumb')
+    if (mode === 'thumb') {
+      v.style.display = 'none'
+      v.pause()
+      img.style.display = 'block'
+      btnT.style.background = 'rgba(245,158,11,0.2)'
+      btnT.style.borderColor = 'rgba(245,158,11,0.6)'
+      btnT.style.color = '#fbbf24'
+      btnV.style.background = ''
+      btnV.style.borderColor = ''
+      btnV.style.color = ''
+    } else {
+      img.style.display = 'none'
+      v.style.display = 'block'
+      btnV.style.background = 'rgba(59,130,246,0.18)'
+      btnV.style.borderColor = 'rgba(59,130,246,0.5)'
+      btnV.style.color = '#60a5fa'
+      btnT.style.background = ''
+      btnT.style.borderColor = ''
+      btnT.style.color = ''
+    }
+  }
+
+  // Save Video & Thumbnail
+  document.getElementById('btnSaveVideo').addEventListener('click', () => {
+    const a = document.createElement('a')
+    a.href = currentVideoBlob ? URL.createObjectURL(currentVideoBlob) : reelPlayer.src
+    a.download = `LikesAuto_Reel_${Date.now()}.mp4`
+    a.target = '_blank'
+    a.click()
+  })
+
+  document.getElementById('btnSaveThumb').addEventListener('click', () => {
+    const a = document.createElement('a')
+    a.href = currentThumbUrl
+    a.download = `LikesAuto_Thumb_${Date.now()}.jpg`
+    a.target = '_blank'
+    a.click()
+  })
+
+  window.triggerMobileShare = async function () {
+    const vidSrc = reelPlayer.src
+    if (!currentVideoBlob && vidSrc) {
+      try {
+        const r = await fetch(vidSrc)
+        currentVideoBlob = await r.blob()
+      } catch (e) { }
+    }
+
+    const captionText = document.getElementById('outCaption').value || ''
+    const titleText = document.getElementById('outTitle').value || 'คลิปไวรัล LikesAuto'
+
+    if (navigator.share && currentVideoBlob) {
+      try {
+        const file = new File([currentVideoBlob], 'LikesAuto_Reel.mp4', { type: 'video/mp4' })
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: titleText,
+            text: captionText,
+            files: [file]
+          })
+          return
         }
-        addLog(`[Success] ✅ เรนเดอร์คลิปสำเร็จในความยาว ${data.duration.toFixed(1)} วินาที!`)
-        addLog('[Complete] คลิปพร้อมเล่น ดาวน์โหลด และโพสต์ขึ้น Facebook Reels ได้ทันที')
-
-        reelPlayer.src = data.video_url + '?t=' + Date.now()
-        reelPlayer.play().catch(() => { })
-
-        currentThumbUrl = data.thumbnail_url || '/likes_auto_finished_thumb.jpg'
-        const thumbImg = document.getElementById('reelThumbPreview')
-        if (thumbImg) {
-          thumbImg.src = currentThumbUrl + '?t=' + Date.now()
-        }
-        document.getElementById('outTitle').value = data.title || 'คลิปขายของไวรัล'
-        document.getElementById('outScript').value = data.script || ''
-        document.getElementById('outCaption').value = data.caption || ''
-        if (data.first_comment) {
-          document.getElementById('outFirstComment').value = data.first_comment
-          document.getElementById('fbCommentText').value = data.first_comment
-        }
-
-        try {
-          const vBlobRes = await fetch(data.video_url)
-          currentVideoBlob = await vBlobRes.blob()
-        } catch (e) { }
-
-        // --- Mobile UX Enhancements ---
-        const badgeView = document.getElementById('badgeViewReady')
-        if (badgeView) badgeView.style.display = 'inline-block'
-        const btnMobShare = document.getElementById('btnMobileShare')
-        if (btnMobShare) btnMobShare.style.display = 'block'
-        if (window.innerWidth <= 960) {
-          switchMobileCol('view')
-        }
-
       } catch (err) {
-        clearInterval(progressTimer)
-        addLog('[Error] ' + err.message)
-        alert('เกิดข้อผิดพลาด: ' + err.message)
-        btnStartRender.disabled = false
-        const stickyBtn = document.getElementById('btnStickyRender')
-        if (stickyBtn) stickyBtn.disabled = false
-        setBar(0, 'ล้มเหลว: ' + err.message)
+        if (err.name !== 'AbortError') {
+          console.log('Native share failed:', err)
+        } else {
+          return
+        }
       }
     }
 
-    let currentThumbUrl = 'likes_auto_finished_thumb.jpg'
-
-    window.switchPreviewMode = function (mode) {
-      const v = document.getElementById('reelPlayer')
-      const img = document.getElementById('reelThumbPreview')
-      const btnV = document.getElementById('tabPreviewVideo')
-      const btnT = document.getElementById('tabPreviewThumb')
-      if (mode === 'thumb') {
-        v.style.display = 'none'
-        v.pause()
-        img.style.display = 'block'
-        btnT.style.background = 'rgba(245,158,11,0.2)'
-        btnT.style.borderColor = 'rgba(245,158,11,0.6)'
-        btnT.style.color = '#fbbf24'
-        btnV.style.background = ''
-        btnV.style.borderColor = ''
-        btnV.style.color = ''
-      } else {
-        img.style.display = 'none'
-        v.style.display = 'block'
-        btnV.style.background = 'rgba(59,130,246,0.18)'
-        btnV.style.borderColor = 'rgba(59,130,246,0.5)'
-        btnV.style.color = '#60a5fa'
-        btnT.style.background = ''
-        btnT.style.borderColor = ''
-        btnT.style.color = ''
-      }
+    const a = document.createElement('a')
+    a.href = currentVideoBlob ? URL.createObjectURL(currentVideoBlob) : vidSrc
+    a.download = `LikesAuto_Reel_${Date.now()}.mp4`
+    a.target = '_blank'
+    a.click()
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(captionText).catch(() => { })
     }
-
-    // Save Video & Thumbnail
-    document.getElementById('btnSaveVideo').addEventListener('click', () => {
-      const a = document.createElement('a')
-      a.href = currentVideoBlob ? URL.createObjectURL(currentVideoBlob) : 'likes_auto_finished_reel.mp4'
-      a.download = `LikesAuto_Reel_${Date.now()}.mp4`
-      a.click()
-    })
-
-    document.getElementById('btnSaveThumb').addEventListener('click', () => {
-      const a = document.createElement('a')
-      a.href = currentThumbUrl
-      a.download = `LikesAuto_Thumb_${Date.now()}.jpg`
-      a.click()
-    })
+    alert('✅ บันทึกวิดีโอและคัดลอกแคปชั่นเรียบร้อยแล้ว!\nคุณสามารถเปิดแอป Facebook Reels หรือ TikTok บนมือถือแล้วเลือกวิดีโอนี้เพื่อโพสต์ได้ทันที')
+  }
 
     function copyFirstComment() {
       const txt = document.getElementById('outFirstComment').value

@@ -3,7 +3,10 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1877f2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>LikesAuto Studio — ตัดต่อคลิปขายของอัตโนมัติ พากย์ไทย ใส่ซับ โพสต์ลงเพจ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -483,6 +486,188 @@
       padding: 14px;
       margin-top: 12px;
     }
+
+    /* Mobile Responsive Optimizations & Touch UX */
+    .mobile-nav-bar {
+      display: none;
+      position: sticky;
+      top: 61px;
+      z-index: 90;
+      background: #ffffff;
+      border: 1px solid var(--lp-line);
+      padding: 8px 12px;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(15, 27, 51, 0.04);
+      margin-bottom: 16px;
+      border-radius: 14px;
+    }
+
+    .mobile-tab-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 600;
+      font-family: inherit;
+      border: 1px solid transparent;
+      background: #f1f5f9;
+      color: var(--lp-body);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .mobile-tab-btn.active {
+      background: var(--lp-blue-soft);
+      color: var(--lp-blue);
+      border-color: rgba(24, 119, 242, 0.25);
+    }
+
+    .badge-mini-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulseDot 1.5s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+
+    /* Modal for Mobile QR Code Connect */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 27, 51, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 20px;
+      max-width: 440px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      border: none;
+      font-size: 16px;
+      color: var(--lp-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-sticky-action {
+      display: none;
+    }
+
+    @media (max-width: 960px) {
+      .mobile-nav-bar {
+        display: flex;
+      }
+      .grid-studio {
+        display: block;
+      }
+      .mobile-col {
+        display: none;
+      }
+      .mobile-col.active {
+        display: block;
+      }
+      .mobile-sticky-action {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--lp-line);
+        padding: 10px 16px;
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        z-index: 95;
+        box-shadow: 0 -4px 16px rgba(15, 27, 51, 0.08);
+      }
+      body {
+        padding-bottom: 90px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 10px 14px;
+      }
+      .brand-text h1 {
+        font-size: 16px;
+      }
+      .brand-text p {
+        display: none;
+      }
+      .header-secondary-badge {
+        display: none;
+      }
+      .container {
+        padding: 0 12px;
+        margin: 14px auto;
+      }
+      .card {
+        padding: 18px 14px;
+        border-radius: 16px;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      /* Prevent iOS Safari auto-zoom by enforcing 16px font */
+      .field-input, .field-select, .field-textarea {
+        font-size: 16px !important;
+        padding: 12px 14px;
+        border-radius: 12px;
+      }
+      .btn {
+        padding: 12px 18px;
+        font-size: 14.5px;
+        min-height: 46px;
+      }
+      .phone-bezel {
+        max-width: 280px;
+        border-radius: 24px;
+        padding: 8px;
+      }
+      .phone-screen {
+        border-radius: 16px;
+      }
+    }
   </style>
 </head>
 
@@ -498,11 +683,15 @@
       </div>
     </a>
     <div class="nav-badges">
+      <button type="button" id="btnOpenMobileModal" class="badge" style="background: #f1f5f9; color: var(--lp-ink); border: 1px solid var(--lp-line); cursor: pointer; text-decoration: none;" onclick="openMobileModal()" title="สแกน QR Code เพื่อเปิดใช้งานบนมือถือ">
+        <span>📱</span>
+        <span>เปิดบนมือถือ</span>
+      </button>
       <div id="extBadge" class="badge badge-ok">
         <span class="dot"></span>
         <span id="extBadgeText">✨ LikesAuto Studio (Engine พร้อมใช้งาน 100%)</span>
       </div>
-      <div class="badge badge-ok">
+      <div class="badge badge-ok header-secondary-badge">
         <span class="dot"></span>
         <span>Gemini AI พร้อมใช้งาน</span>
       </div>
@@ -519,20 +708,31 @@
       <a href="http://127.0.0.1:8000/studio" target="_blank" style="background: #fff; color: #1e3a8a; padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 13.5px; white-space: nowrap; margin-left: 16px; display: inline-flex; align-items: center; gap: 6px;">เปิด http://127.0.0.1:8000/studio ⚡</a>
     </div>
 
+    <!-- Mobile Segmented Navigation Switcher -->
+    <div class="mobile-nav-bar" id="mobileNavBar">
+      <button type="button" class="mobile-tab-btn active" id="tabBtnEdit" onclick="switchMobileCol('edit')">
+        <span>🎬 1. ตั้งค่าวิดีโอ & AI</span>
+      </button>
+      <button type="button" class="mobile-tab-btn" id="tabBtnView" onclick="switchMobileCol('view')">
+        <span>📱 2. พรีวิว & ส่งออก</span>
+        <span id="badgeViewReady" class="badge-mini-dot" style="display: none;"></span>
+      </button>
+    </div>
+
     <div class="grid-studio">
 
       <!-- Left Column: Controls -->
-      <div class="card">
+      <div id="colEditor" class="card mobile-col active">
         <div class="card-heading">
           <span>🎬</span> ตั้งค่าวิดีโอและบทพากย์ขายของ
         </div>
 
         <!-- Dropzone -->
         <div id="dropArea" class="dropzone">
-          <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime">
+          <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime,video/*">
           <div class="drop-icon">📹</div>
-          <div id="dropPrompt" class="drop-title">คลิกเลือกคลิปสินค้า หรือลากไฟล์มาวางที่นี่</div>
-          <div class="drop-hint">รองรับ MP4, WebM (ตัดต่อยืดความยาวคลิปให้เท่ากับเสียงพากย์อัตโนมัติ)</div>
+          <div id="dropPrompt" class="drop-title">แตะเพื่อเลือกคลิปสินค้า หรือลากไฟล์มาวางที่นี่</div>
+          <div class="drop-hint">รองรับ MP4, WebM, MOV (ตัดต่อยืดความยาวคลิปให้เท่ากับเสียงพากย์อัตโนมัติ)</div>
           <div style="margin-top: 12px;">
             <button type="button" id="btnLoadDemo" class="btn btn-secondary"
               style="font-size: 12px; padding: 6px 14px; position: relative; z-index: 10;">
@@ -697,7 +897,7 @@
       </div>
 
       <!-- Right Column: Interactive Phone Mockup -->
-      <div class="card mockup-container">
+      <div id="colPreview" class="card mockup-container mobile-col">
         <div class="card-heading"
           style="width: 100%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
           <span>📱 พรีวิวผลลัพธ์</span>
@@ -757,13 +957,26 @@
                   style="flex: none; padding: 0 14px; font-size: 12px;">📋 คัดลอก</button>
               </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 16px;">
-              <button id="btnSaveVideo" class="btn btn-success" style="flex: 1.2;">
+            <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
+              <button id="btnSaveVideo" class="btn btn-success" style="flex: 1 1 180px;">
                 ⬇️ ดาวน์โหลดคลิป (MP4)
               </button>
               <button id="btnSaveThumb" class="btn btn-secondary"
-                style="flex: 0.8; border-color: rgba(245, 158, 11, 0.5); color: #fbbf24; font-weight: 600;">
+                style="flex: 1 1 140px; border-color: rgba(245, 158, 11, 0.5); color: #b45309; font-weight: 600;">
                 🖼️ บันทึกรูปปก (Cover HD)
+              </button>
+            </div>
+            <button type="button" id="btnMobileShare" class="btn btn-primary btn-block"
+              style="margin-top: 10px; background: linear-gradient(135deg, #1877f2, #0d5fd0); display: none;"
+              onclick="triggerMobileShare()">
+              📲 แชร์คลิปไป Facebook Reels / TikTok (แชร์ผ่านมือถือ)
+            </button>
+            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary" style="flex: 1 1 140px; font-size: 12px; padding: 8px 10px;" onclick="copyFullCaption()">
+                📋 คัดลอกแคปชันทั้งหมด
+              </button>
+              <button type="button" class="btn btn-secondary" style="flex: 1 1 140px; font-size: 12px; padding: 8px 10px;" onclick="copyFirstComment()">
+                💬 คัดลอกคอมเมนต์ปักหมุด
               </button>
             </div>
           </div>
@@ -891,6 +1104,48 @@
 
   </div>
 
+  <!-- Mobile Sticky Floating Render Button -->
+  <div class="mobile-sticky-action" id="mobileStickyBar">
+    <button type="button" id="btnStickyRender" class="btn btn-primary btn-block" style="box-shadow: 0 4px 14px rgba(24,119,242,0.35); font-size: 15px; padding: 13px;" onclick="document.getElementById('btnStartRender').click()">
+      ⚡ สร้างคลิปรีวิว (AI Render)
+    </button>
+  </div>
+
+  <!-- Modal for Mobile QR Code Connect -->
+  <div class="modal-overlay" id="mobileModal" onclick="if(event.target===this)closeMobileModal()">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeMobileModal()" aria-label="Close">✕</button>
+      <div style="text-align: center;">
+        <div style="font-size: 34px; margin-bottom: 6px;">📱</div>
+        <h3 style="font-size: 18px; font-weight: 700; color: var(--lp-ink); margin-bottom: 4px;">เปิดสตูดิโอบนมือถือ</h3>
+        <p style="font-size: 13px; color: var(--lp-muted); margin-bottom: 16px;">
+          สแกน QR Code ด้วยกล้องมือถือ เพื่อตัดต่อและดาวน์โหลดคลิปบนสมาร์ตโฟน
+        </p>
+        
+        <div style="background: #f8fafc; border: 1px solid var(--lp-line); border-radius: 16px; padding: 14px; display: inline-block; margin-bottom: 14px;">
+          <img id="mobileQrImg" src="" alt="QR Code" style="width: 200px; height: 200px; display: block; border-radius: 8px;">
+        </div>
+
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #1e40af; margin-bottom: 14px; word-break: break-all; font-family: monospace;">
+          <span id="mobileUrlText"></span>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-primary" style="flex: 1;" onclick="copyMobileUrl()">
+            📋 คัดลอกลิงก์
+          </button>
+          <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeMobileModal()">
+            ปิดหน้าต่าง
+          </button>
+        </div>
+
+        <div style="margin-top: 12px; font-size: 11.5px; color: #94a3b8; text-align: left; line-height: 1.5;">
+          💡 <strong>เคล็ดลับ:</strong> สำหรับเครื่องคอมพิวเตอร์ ให้เชื่อมต่อมือถือและคอมพิวเตอร์ใน Wi-Fi วงเดียวกัน เพื่อเรนเดอร์ผ่าน Engine ในเครื่องด้วยความเร็วสูงสุด
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     if (location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
       const cb = document.getElementById('cloudBanner')
@@ -1001,6 +1256,9 @@
       }
 
       btnStartRender.disabled = true
+      const stickyBtn = document.getElementById('btnStickyRender')
+      if (stickyBtn) stickyBtn.disabled = true
+
       progressCard.style.display = 'block'
       logTerminal.style.display = 'block'
       logTerminal.innerHTML = ''
@@ -1111,6 +1369,9 @@
         setAllDone()
         setBar(100, 'ตัดต่อเสร็จสมบูรณ์!')
         btnStartRender.disabled = false
+        const stickyBtn = document.getElementById('btnStickyRender')
+        if (stickyBtn) stickyBtn.disabled = false
+
         if (data.detected_product) {
           addLog(`[AI Vision] 🔍 ตรวจพบสินค้าในวิดีโอ: ${data.detected_product}`)
         }
@@ -1138,11 +1399,22 @@
           currentVideoBlob = await vBlobRes.blob()
         } catch (e) { }
 
+        // --- Mobile UX Enhancements ---
+        const badgeView = document.getElementById('badgeViewReady')
+        if (badgeView) badgeView.style.display = 'inline-block'
+        const btnMobShare = document.getElementById('btnMobileShare')
+        if (btnMobShare) btnMobShare.style.display = 'block'
+        if (window.innerWidth <= 960) {
+          switchMobileCol('view')
+        }
+
       } catch (err) {
         clearInterval(progressTimer)
         addLog('[Error] ' + err.message)
         alert('เกิดข้อผิดพลาด: ' + err.message)
         btnStartRender.disabled = false
+        const stickyBtn = document.getElementById('btnStickyRender')
+        if (stickyBtn) stickyBtn.disabled = false
         setBar(0, 'ล้มเหลว: ' + err.message)
       }
     }
@@ -1438,6 +1710,129 @@
       }
       return chunks
     }
+
+    // --- Mobile Responsive & Multi-device UI Helpers ---
+    window.switchMobileCol = function (col) {
+      const colEd = document.getElementById('colEditor')
+      const colPr = document.getElementById('colPreview')
+      const tabEd = document.getElementById('tabBtnEdit')
+      const tabPr = document.getElementById('tabBtnView')
+      const stickyBar = document.getElementById('mobileStickyBar')
+
+      if (col === 'view') {
+        colEd?.classList.remove('active')
+        colPr?.classList.add('active')
+        tabEd?.classList.remove('active')
+        tabPr?.classList.add('active')
+        if (stickyBar) stickyBar.style.display = 'none'
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        colPr?.classList.remove('active')
+        colEd?.classList.add('active')
+        tabPr?.classList.remove('active')
+        tabEd?.classList.add('active')
+        if (stickyBar && window.innerWidth <= 960) stickyBar.style.display = 'block'
+      }
+    }
+
+    window.openMobileModal = function () {
+      const modal = document.getElementById('mobileModal')
+      const qrImg = document.getElementById('mobileQrImg')
+      const urlText = document.getElementById('mobileUrlText')
+
+      let targetUrl = location.href.split('?')[0].split('#')[0]
+      if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+        targetUrl = 'http://192.168.1.40:' + (location.port || '8000') + '/studio'
+      }
+
+      urlText.textContent = targetUrl
+      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(targetUrl)
+      if (modal) modal.style.display = 'flex'
+    }
+
+    window.closeMobileModal = function () {
+      const modal = document.getElementById('mobileModal')
+      if (modal) modal.style.display = 'none'
+    }
+
+    window.copyMobileUrl = function () {
+      const txt = document.getElementById('mobileUrlText')?.textContent || ''
+      navigator.clipboard.writeText(txt).then(() => {
+        alert('📋 คัดลอกลิงก์สตูดิโอเรียบร้อยแล้ว: ' + txt)
+      }).catch(() => {
+        prompt('คัดลอกลิงก์ด้านล่างนี้ได้เลย:', txt)
+      })
+    }
+
+    window.triggerMobileShare = async function () {
+      const title = document.getElementById('outTitle')?.value || 'รีวิวสินค้าสุดปัง'
+      const text = document.getElementById('outCaption')?.value || ''
+
+      if (!currentVideoBlob && reelPlayer.src) {
+        try {
+          currentVideoBlob = await (await fetch(reelPlayer.src)).blob()
+        } catch (_) {}
+      }
+
+      if (navigator.share) {
+        try {
+          if (currentVideoBlob && navigator.canShare && navigator.canShare({ files: [new File([currentVideoBlob], 'reel.mp4', { type: 'video/mp4' })] })) {
+            const videoFile = new File([currentVideoBlob], 'likes_auto_reel.mp4', { type: 'video/mp4' })
+            await navigator.share({
+              title,
+              text,
+              files: [videoFile]
+            })
+            return
+          } else {
+            await navigator.share({
+              title,
+              text: `${title}\n\n${text}\n\nลิงก์: ${location.href}`
+            })
+            return
+          }
+        } catch (err) {
+          if (err.name === 'AbortError') return
+        }
+      }
+      copyFullCaption()
+      document.getElementById('btnSaveVideo')?.click()
+      alert('📱 ดาวน์โหลดคลิปและคัดลอกแคปชันเรียบร้อยแล้ว สามารถนำไปโพสต์ลง Facebook Reels / TikTok ได้ทันทีครับ!')
+    }
+
+    window.copyFullCaption = function () {
+      const title = document.getElementById('outTitle')?.value || ''
+      const caption = document.getElementById('outCaption')?.value || ''
+      const fullText = `${title}\n\n${caption}`
+      navigator.clipboard.writeText(fullText).then(() => {
+        alert('✅ คัดลอกหัวข้อ แคปชัน และแฮชแท็กเรียบร้อยแล้ว!')
+      }).catch(() => {
+        prompt('คัดลอกแคปชันด้านล่างนี้:', fullText)
+      })
+    }
+
+    window.copyFirstComment = function () {
+      const comment = document.getElementById('outFirstComment')?.value || ''
+      navigator.clipboard.writeText(comment).then(() => {
+        alert('✅ คัดลอกคอมเมนต์ปักหมุดเรียบร้อยแล้ว!')
+      }).catch(() => {
+        prompt('คัดลอกคอมเมนต์ด้านล่างนี้:', comment)
+      })
+    }
+
+    window.addEventListener('resize', () => {
+      const stickyBar = document.getElementById('mobileStickyBar')
+      if (window.innerWidth > 960) {
+        document.getElementById('colEditor')?.classList.add('active')
+        document.getElementById('colPreview')?.classList.add('active')
+        if (stickyBar) stickyBar.style.display = 'none'
+      } else {
+        if (!document.getElementById('colPreview')?.classList.contains('active')) {
+          document.getElementById('colEditor')?.classList.add('active')
+          if (stickyBar) stickyBar.style.display = 'block'
+        }
+      }
+    })
   </script>
 </body>
 

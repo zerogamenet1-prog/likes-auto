@@ -862,6 +862,20 @@
           </div>
         </div>
 
+        <!-- Thumbnail Style Selector (Matching User Reference Styles) -->
+        <div class="field-group" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; padding: 12px 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="field-label" style="margin-bottom: 0; color: #b45309; font-weight: 700;">🖼️ สไตล์ภาพปกคลิปดึงดูดสายตา (Viral Cover)</label>
+            <span style="font-size: 11.5px; color: #92400e;">เลือกให้เข้ากับประเภทสินค้า</span>
+          </div>
+          <select id="thumbStyle" class="field-select" style="border-color: rgba(245, 158, 11, 0.4);">
+            <option value="creator_viral" selected>🔥 Creator ไฮอิมแพ็ค (3D Headline คมชัด + จุดเด่นเช็คลิสต์ - สไตล์ YouTuber/TikToker แนะนำ)</option>
+            <option value="ecommerce_shop">🛒 Reels & TikTok Shop (ป้ายพาสเทล + 3 ไอคอนจุดเด่นสินค้า + ปุ่มกดสั่งซื้อไล่เฉดสี)</option>
+            <option value="lifestyle_food">🎀 สายกิน & ไลฟ์สไตล์ (อักษรพองกลม 2 สีสดใส ขาว/เหลือง + ป้ายเทปน่ารัก + ประกายวิ้งๆ)</option>
+            <option value="curated_picker">📌 ชี้เป้า & ป้ายยาพิกัด (สติกเกอร์หัวข้อใหญ่ + ป้ายแสตมป์ฟรี + แถบไฮไลต์สีสัน)</option>
+          </select>
+        </div>
+
         <!-- Render Button -->
         <div style="margin-top: 24px;">
           <button id="btnStartRender" class="btn btn-primary btn-block" style="padding: 14px 24px; font-size: 15.5px;"
@@ -1286,6 +1300,7 @@
       formData.append('sub_border', document.getElementById('subBorder').value)
       formData.append('sub_scale', document.getElementById('subScale').value)
       formData.append('sub_pos_y', document.getElementById('subPosY').value)
+      formData.append('thumb_style', document.getElementById('thumbStyle')?.value || 'creator_viral')
       formData.append('api_key', ACTIVE_KEY)
 
       const presenterInput = document.getElementById('presenterInput')

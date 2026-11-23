@@ -1090,6 +1090,7 @@ async def studio_render_api(
     presenter: UploadFile = File(None),
     presenter_corner: str = Form("bottom_right"),
     presenter_size: int = Form(220),
+    thumb_style: str = Form("creator_viral"),
     api_key: str = Form("")
 ):
     from studio_engine import process_studio_render
@@ -1122,7 +1123,8 @@ async def studio_render_api(
             presenter_filename=presenter_filename,
             presenter_corner=presenter_corner,
             presenter_size=presenter_size,
-            api_key=api_key
+            api_key=api_key,
+            thumb_style=thumb_style
         )
         return JSONResponse(res)
     except Exception as e:

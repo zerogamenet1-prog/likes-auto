@@ -439,130 +439,284 @@ def select_best_thumbnail_frame(video_path: Path) -> Image.Image:
     return Image.new("RGBA", (720, 1280), (24, 24, 32, 255))
 
 
+def draw_sparkle(draw, center, r, fill=(255, 230, 0, 255)):
+    cx, cy = center
+    pts = [
+        (cx, cy - r), (cx + r * 0.28, cy - r * 0.28),
+        (cx + r, cy), (cx + r * 0.28, cy + r * 0.28),
+        (cx, cy + r), (cx - r * 0.28, cy + r * 0.28),
+        (cx - r, cy), (cx - r * 0.28, cy - r * 0.28)
+    ]
+    draw.polygon(pts, fill=fill)
+
+
+def draw_text_stroke(draw, pos, text, font, fill, stroke_fill=(0,0,0,255), stroke_w=3, shadow_offset=(0,0), shadow_fill=None):
+    x, y = pos
+    if shadow_fill and shadow_offset != (0, 0):
+        sx, sy = shadow_offset
+        draw.text((x + sx, y + sy), text, font=font, fill=shadow_fill)
+    for dx in range(-stroke_w, stroke_w + 1):
+        for dy in range(-stroke_w, stroke_w + 1):
+            if dx * dx + dy * dy <= stroke_w * stroke_w:
+                draw.text((x + dx, y + dy), text, font=font, fill=stroke_fill)
+    draw.text((x, y), text, font=font, fill=fill)
+
+
 def create_viral_thumbnail(
     video_path: Path,
     out_thumb_path: Path,
     title: str = '',
     detected_product: str = '',
-    badge_text: str = ''
+    badge_text: str = '',
+    thumb_style: str = 'creator_viral'
 ) -> Path:
     # 1. Select the sharpest, clearest product hero frame with ample headroom
     base_img = select_best_thumbnail_frame(video_path)
     w, h = base_img.size
 
-    # 2. Enhance contrast, saturation & micro-sharpness for high-end product presentation
-    base_img = ImageEnhance.Color(base_img).enhance(1.15)
+    # 2. Enhance contrast, saturation & micro-sharpness for high-end presentation
+    base_img = ImageEnhance.Color(base_img).enhance(1.16)
     base_img = ImageEnhance.Contrast(base_img).enhance(1.08)
 
     overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
 
-    # 3. Smooth Vignette Scrim Overlays (gentle top & bottom contrast without darkening subject)
-    top_scrim_h = int(min(220, h * 0.20))
+    # 3. Smooth Vignette Scrim Overlays
+    top_scrim_h = int(min(260, h * 0.22))
     for y in range(top_scrim_h):
-        alpha = int(120 * (1.0 - (y / top_scrim_h) ** 1.3))
+        alpha = int(140 * (1.0 - (y / top_scrim_h) ** 1.25))
         draw.line([(0, y), (w, y)], fill=(0, 0, 0, alpha))
 
     bot_scrim_h = int(min(180, h * 0.16))
     for y in range(h - bot_scrim_h, h):
-        alpha = int(130 * (((y - (h - bot_scrim_h)) / bot_scrim_h) ** 1.3))
+        alpha = int(140 * (((y - (h - bot_scrim_h)) / bot_scrim_h) ** 1.3))
         draw.line([(0, y), (w, y)], fill=(0, 0, 0, alpha))
 
     # Fonts
     font_bold_path = FONTS_DIR / "Kanit-Bold.ttf"
     if not font_bold_path.exists():
         font_bold_path = FONTS_DIR / "Prompt-Bold.ttf"
+    font_mitr_path = FONTS_DIR / "Mitr-Bold.ttf"
+    if not font_mitr_path.exists():
+        font_mitr_path = font_bold_path
 
-    f_badge_sz = max(15, int(w * 0.026))
-    f_hero_sz = max(26, int(w * 0.048))
-    f_sub_sz = max(20, int(w * 0.038))
-    f_cta_sz = max(16, int(w * 0.028))
-    f_stamp_sz = max(13, int(w * 0.022))
-
-    font_badge = ImageFont.truetype(str(font_bold_path), f_badge_sz)
-    font_hero = ImageFont.truetype(str(font_bold_path), f_hero_sz)
-    font_sub = ImageFont.truetype(str(font_bold_path), f_sub_sz)
-    font_cta = ImageFont.truetype(str(font_bold_path), f_cta_sz)
-    font_stamp = ImageFont.truetype(str(font_bold_path), f_stamp_sz)
-
-    # --- 1. Top Badge Pill (Eye-catching Crimson Pill with Gold Vector Star) ---
-    if not badge_text:
-        badge_text = "BEST SELLER 2026 • รีวิวของแท้ 100%"
-    bb = font_badge.getbbox(badge_text)
-    txt_w = bb[2] - bb[0]
-    txt_h = bb[3] - bb[1]
-    star_pad = 24
-    bw = txt_w + 30 + star_pad
-    bh = txt_h + 12
-    bx = (w - bw) // 2
-    by = int(h * 0.016)
-
-    draw.rounded_rectangle([bx + 2, by + 2, bx + bw + 2, by + bh + 2], radius=bh // 2, fill=(0, 0, 0, 140))
-    draw.rounded_rectangle([bx, by, bx + bw, by + bh], radius=bh // 2, fill=(225, 29, 72, 245), outline=(255, 255, 255, 230), width=2)
-    draw_star(draw, (bx + 14, by + bh // 2), 6, fill=(255, 230, 0, 255))
-    draw.text((bx + 14 + star_pad, by + (bh - txt_h) // 2 - 2), badge_text, font=font_badge, fill=(255, 255, 255))
-
-    # --- 2. Format 2-Tier Visual Headline (Hero Sticker Box + Contrasting Subtitle) ---
     hero_txt, sub_txt = format_thumbnail_texts(title, detected_product)
+    style = (thumb_style or 'creator_viral').lower()
 
-    # Line 1: Hero Sticker Box (Bright Neon Yellow with bold black text)
-    hb = font_hero.getbbox(hero_txt)
-    hw = (hb[2] - hb[0]) + 28
-    hh = (hb[3] - hb[1]) + 14
-    hx = (w - hw) // 2
-    hy = by + bh + int(h * 0.010)
+    if style == 'lifestyle_food':
+        # ===== Style 1: Lifestyle & Food (Reference 1 - Bubbly Two-Tone + Cute Sparkles + Ribbon Tape) =====
+        f_b1 = ImageFont.truetype(str(font_mitr_path), max(30, int(w * 0.070)))
+        f_b2 = ImageFont.truetype(str(font_mitr_path), max(34, int(w * 0.082)))
+        f_tape = ImageFont.truetype(str(font_mitr_path), max(15, int(w * 0.030)))
 
-    draw.rounded_rectangle([hx + 2, hy + 3, hx + hw + 2, hy + hh + 3], radius=10, fill=(0, 0, 0, 160))
-    draw.rounded_rectangle([hx, hy, hx + hw, hy + hh], radius=10, fill=(255, 230, 0, 255), outline=(255, 255, 255, 255), width=2)
-    draw.text((hx + (hw - (hb[2] - hb[0])) // 2, hy + (hh - (hb[3] - hb[1])) // 2 - 3), hero_txt, font=font_hero, fill=(0, 0, 0))
+        words = hero_txt.split()
+        if len(words) >= 2:
+            s1 = " ".join(words[:len(words)//2])
+            s2 = " ".join(words[len(words)//2:])
+        else:
+            s1 = "รวมของดี"
+            s2 = hero_txt
 
-    # Line 2: Benefit text (Pure White with heavy black outline + dropshadow)
-    sb = font_sub.getbbox(sub_txt)
-    sw = sb[2] - sb[0]
-    sh = sb[3] - sb[1]
-    sx = (w - sw) // 2
-    sy = hy + hh + int(h * 0.008)
+        b1 = f_b1.getbbox(s1)
+        b2 = f_b1.getbbox(s2)
+        tot_w = (b1[2]-b1[0]) + 10 + (b2[2]-b2[0])
+        start_x = (w - tot_w) // 2
+        start_y = int(h * 0.024)
 
-    stroke_w = max(2, int(w * 0.005))
-    for dx in range(-stroke_w, stroke_w + 1):
-        for dy in range(-stroke_w, stroke_w + 1):
-            if dx or dy:
-                draw.text((sx + dx, sy + dy), sub_txt, font=font_sub, fill=(0, 0, 0, 255))
-    draw.text((sx + 2, sy + 3), sub_txt, font=font_sub, fill=(0, 0, 0, 220))
-    draw.text((sx, sy), sub_txt, font=font_sub, fill=(255, 255, 255))
+        draw_text_stroke(draw, (start_x, start_y), s1, f_b1, fill=(255,255,255), stroke_fill=(0,0,0,255), stroke_w=5, shadow_offset=(3,4), shadow_fill=(0,0,0,160))
+        draw_text_stroke(draw, (start_x + (b1[2]-b1[0]) + 10, start_y), s2, f_b1, fill=(255, 230, 0), stroke_fill=(0,0,0,255), stroke_w=5, shadow_offset=(3,4), shadow_fill=(0,0,0,160))
 
-    # --- 3. Tilted Trust Stamp Sticker in Upper-Right ---
-    st_txt = "4.9/5 ตรงปก 100%"
-    st_bb = font_stamp.getbbox(st_txt)
-    st_txt_w = st_bb[2] - st_bb[0]
-    star_s_pad = 18
-    stamp_w, stamp_h = st_txt_w + 26 + star_s_pad, 36
-    st_img = Image.new("RGBA", (stamp_w, stamp_h), (0, 0, 0, 0))
-    st_draw = ImageDraw.Draw(st_img)
-    st_draw.rounded_rectangle([2, 2, stamp_w - 2, stamp_h - 2], radius=8, fill=(15, 23, 42, 240), outline=(250, 204, 21, 255), width=2)
-    draw_star(st_draw, (14, stamp_h // 2), 6, fill=(255, 215, 0, 255))
-    st_draw.text((14 + star_s_pad, (stamp_h - (st_bb[3] - st_bb[1])) // 2 - 2), st_txt, font=font_stamp, fill=(254, 240, 138))
+        # Line 2: Big punchy keyword
+        p_txt = sub_txt if len(sub_txt) <= 20 else "ติดกระแส"
+        b3 = f_b2.getbbox(p_txt)
+        w3 = b3[2] - b3[0]
+        x3 = (w - w3) // 2
+        y3 = start_y + (b1[3]-b1[1]) + 16
+        draw_text_stroke(draw, (x3, y3), p_txt, f_b2, fill=(255, 230, 0), stroke_fill=(0,0,0,255), stroke_w=6, shadow_offset=(4,5), shadow_fill=(0,0,0,200))
 
-    st_rotated = st_img.rotate(4, resample=Image.BICUBIC, expand=True)
-    rw, rh = st_rotated.size
-    rx = w - rw - int(w * 0.030)
-    ry = sy + sh + int(h * 0.010)
-    overlay.paste(st_rotated, (rx, ry), st_rotated)
+        # Cute Sparkles
+        draw_sparkle(draw, (start_x - 18, start_y + 14), 11, fill=(255, 255, 255))
+        draw_sparkle(draw, (start_x + tot_w + 18, start_y + 18), 13, fill=(255, 230, 0))
+        draw_sparkle(draw, (x3 + w3 + 18, y3 + 26), 11, fill=(255, 255, 255))
 
-    # --- 4. Bottom CTA Button (Docked tight at bottom edge so product is never covered) ---
-    cta_txt = "พิกัดส่วนลดในคลิป >> กดสั่งซื้อด่วน"
-    cb = font_cta.getbbox(cta_txt)
-    cart_pad = 22
-    cw = (cb[2] - cb[0]) + 30 + cart_pad
-    ch = (cb[3] - cb[1]) + 14
-    cx = (w - cw) // 2
-    cy = h - ch - 14
+        # Bottom Cute Pastel Tape
+        tape_txt = f"🎀 {detected_product or hero_txt} • พิกัดในคลิปจ้า ✨"
+        if len(tape_txt) > 36:
+            tape_txt = "🎀 พิกัดส่วนลดในคลิป • กดสั่งซื้อด่วน ✨"
+        tb = f_tape.getbbox(tape_txt)
+        tape_w = (tb[2]-tb[0]) + 36
+        tape_h = (tb[3]-tb[1]) + 14
+        tape_x = (w - tape_w) // 2
+        tape_y = h - tape_h - 16
 
-    draw.rounded_rectangle([cx + 2, cy + 3, cx + cw + 2, cy + ch + 3], radius=16, fill=(0, 0, 0, 150))
-    draw.rounded_rectangle([cx, cy, cx + cw, cy + ch], radius=16, fill=(16, 185, 129, 250), outline=(255, 255, 255, 240), width=2)
-    draw.ellipse([cx + 12, cy + ch // 2 - 5, cx + 22, cy + ch // 2 + 5], fill=(255, 255, 255))
-    draw.polygon([(cx + 26, cy + ch // 2), (cx + 19, cy + ch // 2 - 4), (cx + 19, cy + ch // 2 + 4)], fill=(16, 185, 129))
-    draw.text((cx + 12 + cart_pad, cy + (ch - (cb[3] - cb[1])) // 2 - 2), cta_txt, font=font_cta, fill=(255, 255, 255))
+        draw.rounded_rectangle([tape_x+2, tape_y+3, tape_x+tape_w+2, tape_y+tape_h+3], radius=14, fill=(0,0,0,140))
+        draw.rounded_rectangle([tape_x, tape_y, tape_x+tape_w, tape_y+tape_h], radius=14, fill=(253, 232, 236, 245), outline=(244, 114, 182, 240), width=2)
+        draw.text((tape_x + (tape_w - (tb[2]-tb[0]))//2, tape_y + (tape_h - (tb[3]-tb[1]))//2 - 2), tape_txt, font=f_tape, fill=(157, 23, 77))
+
+    elif style == 'ecommerce_shop':
+        # ===== Style 2: Ecommerce Shop (Reference 4 - Top Capsule + 3 Feature Badges + Gradient Buy Button) =====
+        f_top = ImageFont.truetype(str(font_mitr_path), max(26, int(w * 0.054)))
+        f_sub = ImageFont.truetype(str(font_bold_path), max(17, int(w * 0.032)))
+        f_badge = ImageFont.truetype(str(font_bold_path), max(14, int(w * 0.025)))
+        f_cta = ImageFont.truetype(str(font_bold_path), max(17, int(w * 0.032)))
+
+        # Top Neon Yellow Capsule
+        top_txt = hero_txt
+        bb_top = f_top.getbbox(top_txt)
+        tw = (bb_top[2]-bb_top[0]) + 36
+        th = (bb_top[3]-bb_top[1]) + 14
+        tx, ty = (w - tw)//2, int(h * 0.020)
+        draw.rounded_rectangle([tx+2, ty+3, tx+tw+2, ty+th+3], radius=14, fill=(0,0,0,140))
+        draw.rounded_rectangle([tx, ty, tx+tw, ty+th], radius=14, fill=(255, 230, 0, 250), outline=(255,255,255,240), width=2)
+        draw.text((tx + (tw - (bb_top[2]-bb_top[0]))//2, ty + (th - (bb_top[3]-bb_top[1]))//2 - 2), top_txt, font=f_top, fill=(15, 23, 42))
+
+        # Sub Model Pill
+        sub_badge = f"{detected_product or sub_txt} • ของแท้ 100%"
+        if len(sub_badge) > 34:
+            sub_badge = f"{sub_txt} • ของแท้ 100%"
+        bb_sub = f_sub.getbbox(sub_badge)
+        sw = (bb_sub[2]-bb_sub[0]) + 24
+        sh = (bb_sub[3]-bb_sub[1]) + 8
+        sx, sy = (w - sw)//2, ty + th + 10
+        draw.rounded_rectangle([sx+2, sy+2, sx+sw+2, sy+sh+2], radius=sh//2, fill=(0,0,0,130))
+        draw.rounded_rectangle([sx, sy, sx+sw, sy+sh], radius=sh//2, fill=(15, 23, 42, 230), outline=(250, 204, 21, 230), width=1)
+        draw.text((sx + 12, sy + (sh - (bb_sub[3]-bb_sub[1]))//2 - 2), sub_badge, font=f_sub, fill=(254, 240, 138))
+
+        # 3 Feature Pills row
+        features = [('✔ ระบายน้ำดี', (16, 185, 129)), ('✔ ทนแดด 5 ปี', (245, 158, 11)), ('✔ เก็บปลายทาง', (139, 92, 246))]
+        tot_fw = sum(f_badge.getbbox(ft[0])[2] - f_badge.getbbox(ft[0])[0] + 28 for ft in features) + 16
+        fx = (w - tot_fw)//2
+        fy = sy + sh + 10
+        for ft_txt, ft_col in features:
+            fb = f_badge.getbbox(ft_txt)
+            fw = (fb[2]-fb[0]) + 24
+            fh = (fb[3]-fb[1]) + 8
+            draw.rounded_rectangle([fx, fy, fx+fw, fy+fh], radius=6, fill=ft_col, outline=(255,255,255,220), width=1)
+            draw.text((fx + 12, fy + (fh - (fb[3]-fb[1]))//2 - 1), ft_txt, font=f_badge, fill=(255,255,255))
+            fx += fw + 8
+
+        # Bottom Purple-Pink Gradient Buy Button
+        cta_txt = "✨ กดสั่งซื้อจากคลิปนี้เลย! ✨"
+        cb = f_cta.getbbox(cta_txt)
+        cw = (cb[2]-cb[0]) + 44
+        ch = (cb[3]-cb[1]) + 18
+        cx = (w - cw)//2
+        cy = h - ch - 16
+
+        for step in range(cw):
+            ratio = step / cw
+            r = int(139 * (1 - ratio) + 236 * ratio)
+            g = int(92 * (1 - ratio) + 72 * ratio)
+            b = int(246 * (1 - ratio) + 153 * ratio)
+            draw.line([(cx + step, cy + 4), (cx + step, cy + ch - 4)], fill=(r, g, b, 255), width=1)
+        draw.rounded_rectangle([cx, cy, cx+cw, cy+ch], radius=ch//2, outline=(255,255,255,230), width=2)
+        draw.text((cx + (cw - (cb[2]-cb[0]))//2, cy + (ch - (cb[3]-cb[1]))//2 - 2), cta_txt, font=f_cta, fill=(255,255,255))
+        draw_sparkle(draw, (cx + 14, cy + ch//2), 6)
+        draw_sparkle(draw, (cx + cw - 14, cy + ch//2), 6)
+
+    elif style == 'curated_picker':
+        # ===== Style 3: Curated List / Item Picker (Reference 2) =====
+        f_top = ImageFont.truetype(str(font_bold_path), max(28, int(w * 0.056)))
+        f_sub = ImageFont.truetype(str(font_bold_path), max(22, int(w * 0.040)))
+        f_tag = ImageFont.truetype(str(font_bold_path), max(14, int(w * 0.024)))
+        f_cta = ImageFont.truetype(str(font_bold_path), max(17, int(w * 0.032)))
+
+        # Header Sticker Cloud
+        top_txt = f"ชี้เป้า: {hero_txt}"
+        bb_top = f_top.getbbox(top_txt)
+        tw = (bb_top[2]-bb_top[0]) + 30
+        th = (bb_top[3]-bb_top[1]) + 14
+        tx, ty = (w - tw)//2, int(h * 0.024)
+        draw.rounded_rectangle([tx+2, ty+3, tx+tw+2, ty+th+3], radius=14, fill=(0,0,0,140))
+        draw.rounded_rectangle([tx, ty, tx+tw, ty+th], radius=14, fill=(255, 255, 255, 245), outline=(37, 99, 235, 240), width=2)
+        draw.text((tx + 15, ty + (th - (bb_top[3]-bb_top[1]))//2 - 2), top_txt, font=f_top, fill=(15, 23, 42))
+
+        # Yellow Highlight Bar for Subtitle
+        bb_sub = f_sub.getbbox(sub_txt)
+        sw = (bb_sub[2]-bb_sub[0]) + 26
+        sh = (bb_sub[3]-bb_sub[1]) + 10
+        sx, sy = (w - sw)//2, ty + th + 10
+        draw.rounded_rectangle([sx+2, sy+2, sx+sw+2, sy+sh+2], radius=8, fill=(0,0,0,130))
+        draw.rounded_rectangle([sx, sy, sx+sw, sy+sh], radius=8, fill=(255, 230, 0, 250), outline=(255,255,255,230), width=2)
+        draw.text((sx + 13, sy + (sh - (bb_sub[3]-bb_sub[1]))//2 - 2), sub_txt, font=f_sub, fill=(0, 0, 0))
+
+        # Red Free/Hot Stamp
+        st_txt = "ตัวท็อป"
+        st_b = f_tag.getbbox(st_txt)
+        stw = (st_b[2]-st_b[0]) + 14
+        sth = (st_b[3]-st_b[1]) + 8
+        stx = tx + tw - 8
+        sty = ty - 8
+        draw.rounded_rectangle([stx, sty, stx+stw, sty+sth], radius=6, fill=(220, 38, 38, 255), outline=(255,255,255,255), width=2)
+        draw.text((stx + 7, sty + 1), st_txt, font=f_tag, fill=(255,255,255))
+
+        # Bottom CTA
+        cta_txt = "📌 พิกัดในคลิป >> กดสั่งซื้อด่วน"
+        cb = f_cta.getbbox(cta_txt)
+        cw = (cb[2]-cb[0]) + 36
+        ch = (cb[3]-cb[1]) + 16
+        cx, cy = (w - cw)//2, h - ch - 16
+        draw.rounded_rectangle([cx+2, cy+3, cx+cw+2, cy+ch+3], radius=14, fill=(0,0,0,150))
+        draw.rounded_rectangle([cx, cy, cx+cw, cy+ch], radius=14, fill=(37, 99, 235, 250), outline=(255,255,255,240), width=2)
+        draw.text((cx + 18, cy + (ch - (cb[3]-cb[1]))//2 - 2), cta_txt, font=f_cta, fill=(255,255,255))
+
+    else:
+        # ===== Style 4: Creator Viral Hook (Default, Reference 3 & 5 - 3D Contrast Headline + Feature Checks) =====
+        f_tag = ImageFont.truetype(str(font_bold_path), max(14, int(w * 0.026)))
+        f_h1 = ImageFont.truetype(str(font_bold_path), max(28, int(w * 0.058)))
+        f_h2 = ImageFont.truetype(str(font_bold_path), max(32, int(w * 0.068)))
+        f_check = ImageFont.truetype(str(font_bold_path), max(13, int(w * 0.028)))
+        f_cta = ImageFont.truetype(str(font_bold_path), max(16, int(w * 0.033)))
+
+        # 1. Top Angled Crimson Tag
+        tag_txt = badge_text or "🔥 ตัวเด็ดติดกระแส • รีวิวของแท้ 100%"
+        tb = f_tag.getbbox(tag_txt)
+        tw = (tb[2]-tb[0]) + 26
+        th = (tb[3]-tb[1]) + 10
+        tx, ty = (w - tw) // 2, int(h * 0.018)
+        draw.rounded_rectangle([tx+2, ty+2, tx+tw+2, ty+th+2], radius=6, fill=(0,0,0,130))
+        draw.rounded_rectangle([tx, ty, tx+tw, ty+th], radius=6, fill=(225, 29, 72, 245), outline=(255,255,255,230), width=2)
+        draw.text((tx + 13, ty + (th - (tb[3]-tb[1]))//2 - 2), tag_txt, font=f_tag, fill=(255,255,255))
+
+        # 2. Hero 3D Headline (White 3D + Deep Dropshadow)
+        bb1 = f_h1.getbbox(hero_txt)
+        w1 = bb1[2] - bb1[0]
+        x1 = (w - w1) // 2
+        y1 = ty + th + 10
+        draw_text_stroke(draw, (x1, y1), hero_txt, f_h1, fill=(255,255,255), stroke_fill=(0,0,0,255), stroke_w=4, shadow_offset=(4, 5), shadow_fill=(0,0,0,200))
+
+        # Line 2: Neon Yellow Headline with heavy 5px outline
+        bb2 = f_h2.getbbox(sub_txt)
+        w2 = bb2[2] - bb2[0]
+        x2 = (w - w2) // 2
+        y2 = y1 + (bb1[3]-bb1[1]) + 14
+        draw_text_stroke(draw, (x2, y2), sub_txt, f_h2, fill=(255, 230, 0), stroke_fill=(0,0,0,255), stroke_w=5, shadow_offset=(4, 5), shadow_fill=(0,0,0,220))
+
+        # 3. Checkmarks list on right side
+        checks = ['✔ ตรงปก 100%', '✔ ทนทาน ใช้งานดี', '✔ มีโค้ดลดในคลิป']
+        chk_y = y2 + (bb2[3]-bb2[1]) + 14
+        for c in checks:
+            cb = f_check.getbbox(c)
+            cw = (cb[2]-cb[0]) + 18
+            ch = (cb[3]-cb[1]) + 8
+            cx = w - cw - 20
+            draw.rounded_rectangle([cx, chk_y, cx + cw, chk_y + ch], radius=6, fill=(15, 23, 42, 220), outline=(250, 204, 21, 230), width=1)
+            draw.text((cx + 9, chk_y + 1), c, font=f_check, fill=(254, 240, 138))
+            chk_y += ch + 6
+
+        # 4. Bottom CTA Emerald Button
+        cta_txt = "✨ พิกัดส่วนลดในคลิป >> กดสั่งซื้อเลย! ✨"
+        ctab = f_cta.getbbox(cta_txt)
+        ctaw = (ctab[2]-ctab[0]) + 36
+        ctah = (ctab[3]-ctab[1]) + 18
+        ctax = (w - ctaw) // 2
+        ctay = h - ctah - 14
+
+        draw.rounded_rectangle([ctax+2, ctay+3, ctax+ctaw+2, ctay+ctah+3], radius=16, fill=(0,0,0,160))
+        draw.rounded_rectangle([ctax, ctay, ctax+ctaw, ctay+ctah], radius=16, fill=(16, 185, 129, 250), outline=(255,255,255,240), width=2)
+        draw.text((ctax + 18, ctay + (ctah - (ctab[3]-ctab[1]))//2 - 2), cta_txt, font=f_cta, fill=(255,255,255))
+        draw_sparkle(draw, (ctax + 12, ctay + ctah//2), 6)
+        draw_sparkle(draw, (ctax + ctaw - 12, ctay + ctah//2), 6)
 
     final_img = Image.alpha_composite(base_img, overlay).convert("RGB")
     final_img.save(str(out_thumb_path), "JPEG", quality=95)
@@ -586,7 +740,8 @@ def process_studio_render(
     presenter_filename: str = "",
     presenter_corner: str = "bottom_right",
     presenter_size: int = 220,
-    api_key: str = DEFAULT_API_KEY
+    api_key: str = DEFAULT_API_KEY,
+    thumb_style: str = "creator_viral"
 ):
     key = api_key.strip() if api_key and api_key.strip() else DEFAULT_API_KEY
     timestamp = int(time.time())
@@ -852,7 +1007,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             video_path=src_video_path,
             out_thumb_path=thumb_path,
             title=script_data.get("title", ""),
-            detected_product=script_data.get("detected_product", "")
+            detected_product=script_data.get("detected_product", ""),
+            thumb_style=thumb_style
         )
     except Exception as e:
         thumb_cmd = [

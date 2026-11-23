@@ -773,13 +773,18 @@
               <select id="fbPageList" class="field-select">
                 <option value="">กดปุ่ม 'ดึงเพจของฉัน' ด้านบน</option>
               </select>
-              <div style="margin-top: 6px; margin-bottom: 12px; font-size: 11.5px; color: #64748b; display: flex; justify-content: space-between;">
+              <div
+                style="margin-top: 6px; margin-bottom: 12px; font-size: 11.5px; color: #64748b; display: flex; justify-content: space-between;">
                 <span>* ดึงเพจผ่านบัญชี Facebook ที่ล็อกอินในเบราว์เซอร์</span>
-                <a href="javascript:void(0)" onclick="const b=document.getElementById('manualFbBox');b.style.display=b.style.display==='none'?'block':'none';" style="color: #3b82f6; text-decoration: underline;">หรือระบุ Page ID เอง</a>
+                <a href="javascript:void(0)"
+                  onclick="const b=document.getElementById('manualFbBox');b.style.display=b.style.display==='none'?'block':'none';"
+                  style="color: #3b82f6; text-decoration: underline;">หรือระบุ Page ID เอง</a>
               </div>
-              <div id="manualFbBox" style="display: none; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
+              <div id="manualFbBox"
+                style="display: none; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
                 <label class="field-label" style="font-size: 11px;">Page ID (รหัสเพจ)</label>
-                <input type="text" id="manualFbPageId" class="field-input" placeholder="เช่น 1029384756..." style="margin-bottom: 6px;">
+                <input type="text" id="manualFbPageId" class="field-input" placeholder="เช่น 1029384756..."
+                  style="margin-bottom: 6px;">
                 <label class="field-label" style="font-size: 11px;">Page Access Token (ถ้ามี)</label>
                 <input type="text" id="manualFbToken" class="field-input" placeholder="EAA...">
               </div>
@@ -1039,10 +1044,31 @@
       }, 600)
 
       try {
-        const res = await fetch('/api/studio/render', {
-          method: 'POST',
-          body: formData
-        })
+        let res = null
+        try {
+          res = await fetch('/api/studio/render', {
+            method: 'POST',
+            body: formData
+          })
+          if (!res.ok && res.status === 404 && location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
+            const localRes = await fetch('http://127.0.0.1:8000/api/studio/render', {
+              method: 'POST',
+              body: formData
+            }).catch(() => null)
+            if (localRes && localRes.ok) {
+              res = localRes
+            }
+          }
+        } catch (fetchErr) {
+          if (location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
+            res = await fetch('http://127.0.0.1:8000/api/studio/render', {
+              method: 'POST',
+              body: formData
+            })
+          } else {
+            throw fetchErr
+          }
+        }
         clearInterval(progressTimer)
 
         const data = await res.json()

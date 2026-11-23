@@ -44,6 +44,14 @@ _HOME_BUNDLE_TTL = 45.0
 _TICKER_JSON = json.dumps(LIVE_TICKER, ensure_ascii=False, separators=(",", ":"))
 
 app = FastAPI(title="LIKES AUTO")
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.add_middleware(GuardMiddleware)
 app.add_middleware(
     SessionMiddleware,

@@ -76,6 +76,19 @@ if ($path === '/updates') {
     }
 }
 
+// ── Dedicated Studio Page Handler (/studio) ──
+if ($path === '/studio' || $path === '/studio/' || $path === '/studio.html') {
+    $studioFile = __DIR__ . '/studio.html';
+    if (!is_file($studioFile)) {
+        $studioFile = __DIR__ . '/studio/index.html';
+    }
+    if (is_file($studioFile)) {
+        header('Content-Type: text/html; charset=utf-8');
+        readfile($studioFile);
+        exit;
+    }
+}
+
 // ── Google Search Console Verification File Handler ──
 if (preg_match('#^/google([a-zA-Z0-9_-]+)\.html$#', $path, $mG)) {
     header('Content-Type: text/html; charset=utf-8');

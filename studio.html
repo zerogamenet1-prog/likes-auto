@@ -209,6 +209,13 @@
       height: 100%;
       opacity: 0;
       cursor: pointer;
+      z-index: 5;
+    }
+
+    .drop-icon,
+    .drop-title,
+    .drop-hint {
+      pointer-events: none;
     }
 
     .drop-icon {
@@ -728,15 +735,19 @@
         </div>
 
         <!-- Dropzone -->
-        <div id="dropArea" class="dropzone">
-          <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime,video/*">
+        <div id="dropArea" class="dropzone" style="cursor: pointer;" onclick="handleDropzoneClick(event)">
+          <input type="file" id="videoInput" accept="video/*" title="แตะเพื่อเลือกวิดีโอ">
           <div class="drop-icon">📹</div>
-          <div id="dropPrompt" class="drop-title">แตะเพื่อเลือกคลิปสินค้า หรือลากไฟล์มาวางที่นี่</div>
-          <div class="drop-hint">รองรับ MP4, WebM, MOV (ตัดต่อยืดความยาวคลิปให้เท่ากับเสียงพากย์อัตโนมัติ)</div>
-          <div style="margin-top: 12px;">
-            <button type="button" id="btnLoadDemo" class="btn btn-secondary"
-              style="font-size: 12px; padding: 6px 14px; position: relative; z-index: 10;">
-              ✨ โหลดคลิปตัวอย่างทันที (sample_product.mp4)
+          <div id="dropPrompt" class="drop-title" style="font-size: 15px; font-weight: 700; color: var(--lp-ink);">แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ</div>
+          <div class="drop-hint" style="font-size: 12px; color: var(--lp-muted); margin-top: 4px;">รองรับวิดีโอทุกรูปแบบจากมือถือและคอม (MP4, MOV, WebM)</div>
+          <div style="margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 10;">
+            <button type="button" class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('videoInput').click()"
+              style="font-size: 13px; padding: 9px 20px; border-radius: 10px; font-weight: 600; box-shadow: 0 2px 8px rgba(24,119,242,0.25); pointer-events: auto;">
+              📁 เลือกวิดีโอจากเครื่อง
+            </button>
+            <button type="button" id="btnLoadDemo" class="btn btn-secondary" onclick="event.stopPropagation();triggerLoadDemoVideo()"
+              style="font-size: 13px; padding: 9px 16px; border-radius: 10px; font-weight: 600; pointer-events: auto;">
+              ✨ ใช้คลิปตัวอย่าง (Demo)
             </button>
           </div>
         </div>
@@ -1120,7 +1131,7 @@
 
   <!-- Mobile Sticky Floating Render Button -->
   <div class="mobile-sticky-action" id="mobileStickyBar">
-    <button type="button" id="btnStickyRender" class="btn btn-primary btn-block" style="box-shadow: 0 4px 14px rgba(24,119,242,0.35); font-size: 15px; padding: 13px;" onclick="document.getElementById('btnStartRender').click()">
+    <button type="button" id="btnStickyRender" class="btn btn-primary btn-block" style="box-shadow: 0 4px 14px rgba(24,119,242,0.35); font-size: 15px; padding: 13px;" onclick="handleMobileStickyRender()">
       ⚡ สร้างคลิปรีวิว (AI Render)
     </button>
   </div>
@@ -1215,14 +1226,40 @@
     })
     checkExt()
 
-    // File input
-    videoInput.addEventListener('change', (e) => {
-      const file = e.target.files[0]
+    // Dropzone Click Handler
+    window.handleDropzoneClick = function (e) {
+      if (e.target && e.target.closest('button')) return
+      document.getElementById('videoInput').click()
+    }
+
+    // Video Selected Handler
+    window.handleVideoSelected = function (file) {
       if (!file) return
       loadedVideoFile = file
-      dropPrompt.innerHTML = `<strong>${file.name}</strong> (${(file.size / (1024 * 1024)).toFixed(1)} MB)`
-      reelPlayer.src = URL.createObjectURL(file)
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
+      const promptEl = document.getElementById('dropPrompt')
+      const areaEl = document.getElementById('dropArea')
+      if (promptEl) {
+        promptEl.innerHTML = `✅ <strong>${file.name}</strong> (${sizeMB} MB พร้อมตัดต่อ)`
+      }
+      if (areaEl) {
+        areaEl.style.borderColor = '#10b981'
+        areaEl.style.background = 'rgba(16, 185, 129, 0.08)'
+      }
+      try {
+        reelPlayer.src = URL.createObjectURL(file)
+      } catch (err) { }
+
       btnStartRender.disabled = false
+      const stickyBtn = document.getElementById('btnStickyRender')
+      if (stickyBtn) stickyBtn.disabled = false
+      addLog(`[File] ✅ เลือกวิดีโอเรียบร้อย: ${file.name} (${sizeMB} MB)`)
+    }
+
+    // File input
+    videoInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0]
+      if (file) handleVideoSelected(file)
     })
 
     // Drag and drop
@@ -1231,42 +1268,50 @@
     dropArea.addEventListener('dragleave', () => dropArea.classList.remove('active'))
     dropArea.addEventListener('drop', (e) => {
       e.preventDefault(); dropArea.classList.remove('active')
-      if (e.dataTransfer.files.length) {
-        videoInput.files = e.dataTransfer.files
-        videoInput.dispatchEvent(new Event('change'))
+      if (e.dataTransfer.files && e.dataTransfer.files.length) {
+        handleVideoSelected(e.dataTransfer.files[0])
       }
     })
 
     // Load demo sample
-    async function loadDemoVideo() {
+    window.triggerLoadDemoVideo = async function () {
+      const promptEl = document.getElementById('dropPrompt')
+      if (promptEl) promptEl.innerHTML = '⏳ กำลังดาวน์โหลดคลิปตัวอย่าง...'
       try {
-        const resp = await fetch('/sample_product.mp4')
+        let resp = null
+        for (const url of ['/sample_product.mp4', ONLINE_TUNNEL_URL + '/sample_product.mp4']) {
+          try {
+            resp = await fetch(url)
+            if (resp && resp.ok) break
+          } catch (e) { }
+        }
+        if (!resp || !resp.ok) throw new Error('ไม่สามารถเข้าถึงไฟล์ตัวอย่างได้')
         const blob = await resp.blob()
-        loadedVideoFile = new File([blob], 'sample_product.mp4', { type: 'video/mp4' })
-        dropPrompt.innerHTML = `<strong>sample_product.mp4</strong> (${(loadedVideoFile.size / (1024 * 1024)).toFixed(1)} MB)`
-        reelPlayer.src = URL.createObjectURL(loadedVideoFile)
-        btnStartRender.disabled = false
-        return true
+        const file = new File([blob], 'sample_product.mp4', { type: 'video/mp4' })
+        handleVideoSelected(file)
+        alert('✅ โหลดคลิปตัวอย่างสำเร็จ พร้อมกดตัดต่อได้ทันที!')
       } catch (err) {
-        return false
+        if (promptEl) promptEl.innerHTML = 'แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ'
+        alert('เกิดข้อผิดพลาดในการโหลดคลิปตัวอย่าง: ' + err.message + '\nแนะนำให้แตะปุ่ม "เลือกวิดีโอจากเครื่อง" เพื่อใช้วิดีโอของคุณได้เลยครับ')
       }
     }
 
-    document.getElementById('btnLoadDemo').addEventListener('click', async (e) => {
-      e.stopPropagation()
-      const ok = await loadDemoVideo()
-      if (ok) {
-        alert('โหลดคลิปตัวอย่างสำเร็จ พร้อมกดตัดต่อได้ทันที!')
-      } else {
-        alert('กรุณาเปิดหน้าเว็บผ่าน http://localhost:8000/studio เพื่อโหลดคลิปตัวอย่าง')
+    // Mobile Sticky Render Handler
+    window.handleMobileStickyRender = function () {
+      if (!loadedVideoFile) {
+        alert('📹 กรุณาแตะเลือกไฟล์วิดีโอสินค้าของคุณก่อนครับ (แตะที่กล่องเลือกวิดีโอด้านบน หรือกด "ใช้คลิปตัวอย่าง")')
+        document.getElementById('videoInput').click()
+        return
       }
-    })
+      runNativeRender()
+    }
 
     // Render Execution
     btnStartRender.addEventListener('click', async () => {
       if (!loadedVideoFile) {
-        const loaded = await loadDemoVideo()
-        if (!loaded) return alert('กรุณาเลือกไฟล์วิดีโอก่อน')
+        alert('📹 กรุณาแตะเลือกไฟล์วิดีโอสินค้าของคุณก่อนครับ')
+        document.getElementById('videoInput').click()
+        return
       }
 
       btnStartRender.disabled = true

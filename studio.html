@@ -939,7 +939,7 @@
 
         <div class="phone-bezel">
           <div class="phone-screen" style="position: relative;">
-            <video id="reelPlayer" controls playsinline src="likes_auto_finished_reel.mp4"
+            <video id="reelPlayer" controls playsinline preload="auto" poster="likes_auto_finished_thumb.jpg" src="sample_product.mp4"
               style="width: 100%; height: 100%; object-fit: cover;"></video>
             <img id="reelThumbPreview" src="likes_auto_finished_thumb.jpg"
               style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 20px;"
@@ -1376,7 +1376,8 @@
         }
       }, 600)
 
-      const ONLINE_TUNNEL_URL = 'https://judicial-sociology-speech-inventory.trycloudflare.com'
+      try {
+        const ONLINE_TUNNEL_URL = 'https://judicial-sociology-speech-inventory.trycloudflare.com'
 
       // Smart multi-tier endpoint candidates:
       // When on mobile / likes-auto.com: Try Cloudflare Tunnel first -> then /api/studio/render -> then LAN/local

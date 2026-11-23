@@ -10,32 +10,35 @@
   <title>LikesAuto Studio — ตัดต่อคลิปขายของอัตโนมัติ พากย์ไทย ใส่ซับ โพสต์ลงเพจ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;600&family=Athiti:wght@400;600&family=Bai+Jamjuree:wght@400;600&family=Chakra+Petch:wght@400;600&family=Charm:wght@400;700&family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;600&family=Itim&family=K2D:wght@400;600&family=Kanit:wght@400;600&family=Mali:wght@400;600&family=Mitr:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;600;700&family=Pattaya&family=Pridi:wght@400;600&family=Prompt:wght@400;600&family=Sarabun:wght@400;600&family=Sriracha&family=Taviraj:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --lp-ink: #0f1b33;
-      --lp-body: #3d4a63;
-      --lp-muted: #64708a;
-      --lp-line: #dfe6f0;
-      --lp-bg: #f5f8fc;
+      --lp-body: #334155;
+      --lp-muted: #64748b;
+      --lp-line: #e2e8f0;
+      --lp-bg: #f8fafc;
       --lp-card: #ffffff;
       --lp-blue: #1877f2;
-      --lp-blue-deep: #0d5fd0;
-      --lp-blue-soft: #e8f1fe;
-      --lp-green: #0f9d58;
-      --lp-green-soft: #e8f6ee;
+      --lp-blue-hover: #0d5fd0;
+      --lp-blue-soft: #eff6ff;
+      --lp-green: #10b981;
+      --lp-green-dark: #059669;
+      --lp-green-soft: #ecfdf5;
+      --lp-amber: #f59e0b;
+      --lp-amber-soft: #fffbeb;
       --lp-radius: 18px;
-      --shadow-sm: 0 1px 3px rgba(15, 27, 51, 0.05);
-      --shadow-md: 0 4px 16px rgba(15, 27, 51, 0.06);
-      --shadow-lg: 0 12px 32px rgba(15, 27, 51, 0.08);
+      --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.07);
+      --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.1);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -44,22 +47,42 @@
       color: var(--lp-body);
       min-height: 100vh;
       line-height: 1.6;
-      padding-bottom: 60px;
+      padding-bottom: 70px;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Navbar */
+    /* Navbar with Ambient Glow & Animated Accent Line */
     header {
-      background: #ffffff;
-      border-bottom: 1px solid var(--lp-line);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.85);
       position: sticky;
       top: 0;
       z-index: 100;
-      padding: 14px 28px;
+      padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: var(--shadow-sm);
+      box-shadow: 0 4px 20px rgba(15, 27, 51, 0.04);
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1877f2, #00d2ff, #a855f7, transparent);
+      opacity: 0.8;
+      background-size: 200% 100%;
+      animation: shimmerLine 4s linear infinite;
+    }
+
+    @keyframes shimmerLine {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
     }
 
     .brand-wrap {
@@ -71,98 +94,110 @@
     }
 
     .brand-icon {
-      width: 38px;
-      height: 38px;
-      background: linear-gradient(135deg, #1877f2 0%, #0d5fd0 100%);
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #1877f2 0%, #00c6ff 100%);
       color: #fff;
-      border-radius: 10px;
+      border-radius: 13px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 21px;
       font-weight: 700;
-      box-shadow: 0 2px 8px rgba(24, 119, 242, 0.3);
+      box-shadow: 0 4px 14px rgba(24, 119, 242, 0.35);
+      flex-shrink: 0;
+      position: relative;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .brand-icon:hover {
+      transform: scale(1.05) rotate(4deg);
+      box-shadow: 0 6px 18px rgba(24, 119, 242, 0.45);
     }
 
     .brand-text h1 {
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 17.5px;
+      font-weight: 800;
       color: var(--lp-ink);
       line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #0f1b33 20%, #1877f2 75%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-pro-badge {
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #ffffff;
+      background: linear-gradient(135deg, #1877f2, #8b5cf6);
+      padding: 2px 7px;
+      border-radius: 999px;
+      -webkit-text-fill-color: #ffffff;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(139, 92, 246, 0.35);
     }
 
     .brand-text p {
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--lp-muted);
     }
 
     .nav-badges {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 12px;
+      padding: 6px 12px;
       border-radius: 999px;
       font-size: 12px;
       font-weight: 600;
       border: 1px solid transparent;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
     .badge-ok {
       background: var(--lp-green-soft);
-      color: var(--lp-green);
-      border-color: rgba(15, 157, 88, 0.2);
-    }
-
-    .badge-warn {
-      background: #fef3c7;
-      color: #b45309;
-      border-color: rgba(180, 83, 9, 0.2);
+      color: var(--lp-green-dark);
+      border-color: rgba(16, 185, 129, 0.25);
     }
 
     .dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: currentColor;
+    }
+
+    .dot-pulse {
+      animation: pulseAnim 1.8s infinite;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.25); }
     }
 
     /* Main Container */
     .container {
       max-width: 1240px;
-      margin: 28px auto;
-      padding: 0 24px;
-    }
-
-    .banner-install {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      color: #1e40af;
-      padding: 14px 20px;
-      border-radius: 14px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13.5px;
+      margin: 24px auto;
+      padding: 0 20px;
     }
 
     .grid-studio {
       display: grid;
       grid-template-columns: 1.15fr 0.85fr;
-      gap: 28px;
-    }
-
-    @media (max-width: 990px) {
-      .grid-studio {
-        grid-template-columns: 1fr;
-      }
+      gap: 24px;
+      align-items: start;
     }
 
     /* Cards */
@@ -171,28 +206,79 @@
       border: 1px solid var(--lp-line);
       border-radius: var(--lp-radius);
       padding: 24px;
-      box-shadow: var(--shadow-md);
+      box-shadow: var(--shadow-sm);
     }
 
     .card-heading {
-      font-size: 16.5px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--lp-ink);
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    /* Upload Area */
+    /* Mobile Segmented Navigation */
+    .mobile-nav-bar {
+      display: none;
+      position: sticky;
+      top: 65px;
+      z-index: 90;
+      background: #ffffff;
+      border: 1px solid var(--lp-line);
+      padding: 6px;
+      gap: 6px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 16px;
+      border-radius: 16px;
+    }
+
+    .mobile-tab-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 700;
+      font-family: inherit;
+      border: 1px solid transparent;
+      background: #f8fafc;
+      color: var(--lp-muted);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .mobile-tab-btn.active {
+      background: var(--lp-blue);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(24, 119, 242, 0.25);
+    }
+
+    .mobile-tab-btn .badge-pill {
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      position: absolute;
+      top: 6px;
+      right: 10px;
+    }
+
+    /* Dropzone & Video Picker */
     .dropzone {
-      border: 2px dashed #cbd5e1;
-      border-radius: 14px;
-      padding: 30px 20px;
+      border: 2px dashed #94a3b8;
+      border-radius: 16px;
+      padding: 26px 18px;
       text-align: center;
       cursor: pointer;
       background: #f8fafc;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
       position: relative;
     }
 
@@ -212,40 +298,137 @@
       z-index: 5;
     }
 
-    .drop-icon,
-    .drop-title,
-    .drop-hint {
+    .drop-icon {
+      font-size: 38px;
+      margin-bottom: 6px;
       pointer-events: none;
     }
 
-    .drop-icon {
-      font-size: 36px;
-      margin-bottom: 6px;
-    }
-
     .drop-title {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 15px;
+      font-weight: 700;
       color: var(--lp-ink);
+      pointer-events: none;
     }
 
     .drop-hint {
-      font-size: 12px;
+      font-size: 12.5px;
       color: var(--lp-muted);
-      margin-top: 2px;
+      margin-top: 4px;
+      pointer-events: none;
+    }
+
+    /* Video Loaded Info Box */
+    .video-loaded-card {
+      display: none;
+      background: #ffffff;
+      border: 1.5px solid #10b981;
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 10px;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.1);
+      animation: fadeInCard 0.25s ease-out;
+    }
+
+    @keyframes fadeInCard {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .mini-player-wrap {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #000000;
+      max-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .mini-player-wrap video {
+      width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+    }
+
+    .video-meta-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .video-loaded-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--lp-ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .video-chips-wrap {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .video-chip {
+      background: #f1f5f9;
+      color: var(--lp-body);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .video-chip-success {
+      background: #ecfdf5;
+      color: #059669;
+      font-weight: 700;
+    }
+
+    .video-actions-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-danger-soft {
+      border-color: #fca5a5 !important;
+      color: #ef4444 !important;
+      background: #fff5f5 !important;
+    }
+
+    .btn-danger-soft:hover {
+      background: #fee2e2 !important;
     }
 
     /* Form Fields */
     .field-group {
-      margin-top: 18px;
+      margin-top: 16px;
     }
 
     .field-label {
-      display: block;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 13px;
       font-weight: 600;
       color: var(--lp-ink);
       margin-bottom: 6px;
+    }
+
+    .field-label-hint {
+      font-size: 11px;
+      color: var(--lp-muted);
+      font-weight: 400;
     }
 
     .field-input,
@@ -256,7 +439,7 @@
       border: 1px solid var(--lp-line);
       color: var(--lp-ink);
       padding: 10px 14px;
-      border-radius: 10px;
+      border-radius: 11px;
       font-family: inherit;
       font-size: 13.5px;
       transition: border-color 0.2s, box-shadow 0.2s;
@@ -279,7 +462,518 @@
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
+      gap: 12px;
+    }
+
+    /* Visual Viral Style Cards */
+    .style-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .style-card-option {
+      border: 2px solid var(--lp-line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      background: #ffffff;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+
+    .style-card-option:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+    }
+
+    .style-card-option.selected {
+      border-color: var(--lp-blue);
+      background: var(--lp-blue-soft);
+      box-shadow: 0 2px 8px rgba(24, 119, 242, 0.15);
+    }
+
+    .style-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--lp-ink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .style-card-desc {
+      font-size: 11px;
+      color: var(--lp-muted);
+      line-height: 1.35;
+    }
+
+    .style-card-check {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--lp-blue);
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .style-card-option.selected .style-card-check {
+      display: flex;
+    }
+
+    /* ========================================================
+       ADVANCED SETTINGS UI/UX REDESIGN (Voices, Fonts, Music, Subtitles)
+       ======================================================== */
+    .accordion-toggle-btn {
+      width: 100%;
+      background: #f8fafc;
+      border: 1.5px solid var(--lp-line);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--lp-ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    .accordion-toggle-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .accordion-toggle-btn.is-open {
+      border-color: #93c5fd;
+      background: #f0f7ff;
+    }
+    .accordion-content {
+      display: none;
+      padding-top: 12px;
+    }
+    .accordion-content.open {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .adv-panel {
+      background: #ffffff;
+      border: 1.5px solid var(--lp-line);
+      border-radius: 14px;
+      padding: 18px 16px;
+      box-shadow: 0 4px 16px rgba(15, 27, 51, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+    .adv-section {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+    .adv-sec-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .adv-sec-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--lp-ink);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .adv-sec-desc {
+      font-size: 11.5px;
+      color: var(--lp-muted);
+      margin-top: -3px;
+    }
+    .adv-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 100px;
+      background: var(--lp-blue-soft);
+      color: var(--lp-blue);
+    }
+
+    /* Tabs / Filter Pills */
+    .adv-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .adv-tabs::-webkit-scrollbar {
+      display: none;
+    }
+    .adv-tab-pill {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--lp-line);
+      background: #f8fafc;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--lp-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .adv-tab-pill:hover {
+      background: #f1f5f9;
+      color: var(--lp-ink);
+    }
+    .adv-tab-pill.active {
+      background: var(--lp-blue);
+      color: #ffffff;
+      border-color: var(--lp-blue);
+      box-shadow: 0 2px 6px rgba(24, 119, 242, 0.25);
+    }
+
+    /* Voice Cards Grid */
+    .voice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+    }
+    @media (max-width: 480px) {
+      .voice-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .voice-card {
+      position: relative;
+      border: 1.5px solid var(--lp-line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      user-select: none;
+      min-height: 80px;
+    }
+    .voice-card:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+    }
+    .voice-card.selected {
+      border-color: var(--lp-blue);
+      background: #eff6ff;
+      box-shadow: 0 2px 8px rgba(24, 119, 242, 0.15);
+    }
+    .adv-card-check {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: var(--lp-blue);
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .voice-card.selected .adv-card-check,
+    .font-card.selected .adv-card-check {
+      display: flex;
+    }
+    .voice-top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    .voice-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      background: #f1f5f9;
+      flex-shrink: 0;
+    }
+    .voice-card.selected .voice-avatar {
+      background: #dbeafe;
+    }
+    .voice-name-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--lp-ink);
+      line-height: 1.2;
+    }
+    .voice-badge-tag {
+      display: inline-block;
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 1.5px 5px;
+      border-radius: 4px;
+      background: #fef08a;
+      color: #854d0e;
+      margin-top: 2px;
+    }
+    .voice-desc {
+      font-size: 10.5px;
+      color: var(--lp-muted);
+      line-height: 1.35;
+    }
+
+    /* Font Cards Grid */
+    .font-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 8px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+    @media (max-width: 480px) {
+      .font-grid {
+        grid-template-columns: 1fr 1fr;
+        max-height: 270px;
+      }
+    }
+    .font-card {
+      position: relative;
+      border: 1.5px solid var(--lp-line);
+      border-radius: 11px;
+      padding: 9px 10px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+    .font-card:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+    }
+    .font-card.selected {
+      border-color: var(--lp-blue);
+      background: #eff6ff;
+      box-shadow: 0 2px 8px rgba(24, 119, 242, 0.15);
+    }
+    .font-card-name {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--lp-ink);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .font-card-preview {
+      font-size: 15px;
+      color: var(--lp-ink);
+      margin: 4px 0 2px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+    .font-card-tag {
+      font-size: 10px;
+      color: var(--lp-muted);
+    }
+
+    /* Segment Buttons */
+    .seg-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .seg-btn {
+      flex: 1;
+      min-width: 78px;
+      padding: 8px 10px;
+      border: 1.5px solid var(--lp-line);
+      border-radius: 10px;
+      background: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--lp-ink);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      user-select: none;
+    }
+    .seg-btn:hover {
+      border-color: #93c5fd;
+      background: #f8fafc;
+    }
+    .seg-btn.selected {
+      border-color: var(--lp-blue);
+      background: #eff6ff;
+      color: var(--lp-blue);
+      box-shadow: 0 2px 6px rgba(24, 119, 242, 0.15);
+    }
+    .seg-btn-sub {
+      font-size: 10px;
+      color: var(--lp-muted);
+      font-weight: normal;
+    }
+    .seg-btn.selected .seg-btn-sub {
+      color: #3b82f6;
+    }
+
+    /* Color Presets */
+    .color-preset-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .color-preset-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 20px;
+      border: 1.5px solid var(--lp-line);
+      background: #ffffff;
+      cursor: pointer;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--lp-ink);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .color-preset-pill:hover {
+      border-color: #93c5fd;
+    }
+    .color-preset-pill.selected {
+      border-color: var(--lp-blue);
+      background: #eff6ff;
+      color: var(--lp-blue);
+    }
+    .color-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    /* Live Subtitle Simulator */
+    .sub-preview-box {
+      position: relative;
+      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+      border-radius: 12px;
+      padding: 24px 14px 18px 14px;
+      text-align: center;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+      min-height: 85px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .sub-preview-top-tag {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      font-size: 9.5px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      padding: 1px 7px;
+      border-radius: 100px;
+    }
+    .sub-preview-pos-tag {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 9.5px;
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.25);
+      color: #93c5fd;
+      padding: 1px 7px;
+      border-radius: 100px;
+    }
+    .sub-preview-text {
+      line-height: 1.4;
+      transition: all 0.15s ease;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+      max-width: 95%;
+      word-break: break-word;
+    }
+
+    /* PIP Grid */
+    .pip-corner-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      max-width: 240px;
+    }
+    .pip-corner-btn {
+      padding: 7px 8px;
+      border: 1.5px solid var(--lp-line);
+      border-radius: 8px;
+      background: #ffffff;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--lp-ink);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .pip-corner-btn:hover {
+      border-color: #93c5fd;
+    }
+    .pip-corner-btn.selected {
+      border-color: var(--lp-blue);
+      background: #eff6ff;
+      color: var(--lp-blue);
+    }
+
+    @media (max-width: 640px) {
+      .media-stack-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      .adv-panel {
+        padding: 14px 12px;
+        gap: 18px;
+      }
+      .font-grid {
+        max-height: 250px;
+      }
+      .voice-grid {
+        gap: 6px;
+      }
+      .voice-card {
+        padding: 8px;
+      }
     }
 
     /* Buttons */
@@ -288,8 +982,8 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 11px 20px;
-      border-radius: 11px;
+      padding: 11px 18px;
+      border-radius: 12px;
       font-family: inherit;
       font-size: 14px;
       font-weight: 600;
@@ -305,7 +999,7 @@
     }
 
     .btn-primary:hover {
-      background: var(--lp-blue-deep);
+      background: var(--lp-blue-hover);
       box-shadow: 0 4px 12px rgba(24, 119, 242, 0.28);
     }
 
@@ -332,7 +1026,17 @@
     }
 
     .btn-success:hover {
-      background: #0b7c45;
+      background: var(--lp-green-dark);
+    }
+
+    .btn-amber {
+      background: var(--lp-amber-soft);
+      border-color: rgba(245, 158, 11, 0.5);
+      color: #b45309;
+    }
+
+    .btn-amber:hover {
+      background: #fde68a;
     }
 
     .btn-block {
@@ -341,18 +1045,18 @@
 
     /* Progress Tracker */
     .progress-section {
-      margin-top: 22px;
+      margin-top: 20px;
       background: #f8fafc;
       border: 1px solid var(--lp-line);
       border-radius: 14px;
-      padding: 18px;
+      padding: 16px;
       display: none;
     }
 
     .progress-bar-track {
       background: #e2e8f0;
       border-radius: 999px;
-      height: 10px;
+      height: 8px;
       overflow: hidden;
       margin: 10px 0;
     }
@@ -375,15 +1079,15 @@
     .pipeline-steps {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-top: 14px;
+      gap: 7px;
+      margin-top: 12px;
     }
 
     .pipeline-step {
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: 12.5px;
+      font-size: 12px;
       color: var(--lp-muted);
     }
 
@@ -393,7 +1097,7 @@
     }
 
     .pipeline-step.done {
-      color: var(--lp-green);
+      color: var(--lp-green-dark);
     }
 
     .step-bullet {
@@ -404,9 +1108,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
-      flex: none;
+      flex-shrink: 0;
     }
 
     .terminal-box {
@@ -414,15 +1118,15 @@
       color: #38bdf8;
       font-family: monospace;
       font-size: 11.5px;
-      padding: 10px 14px;
+      padding: 10px 12px;
       border-radius: 8px;
-      max-height: 120px;
+      max-height: 110px;
       overflow-y: auto;
-      margin-top: 12px;
+      margin-top: 10px;
       display: none;
     }
 
-    /* Right Panel Mockup */
+    /* Right Column: Interactive Phone Mockup */
     .mockup-container {
       display: flex;
       flex-direction: column;
@@ -431,19 +1135,32 @@
 
     .phone-bezel {
       width: 100%;
-      max-width: 310px;
+      max-width: 300px;
       aspect-ratio: 9/16;
       background: #000000;
-      border-radius: 28px;
-      padding: 10px;
-      box-shadow: var(--shadow-lg), 0 0 0 6px #1e293b;
+      border-radius: 32px;
+      padding: 8px;
+      box-shadow: var(--shadow-lg), 0 0 0 5px #1e293b;
       position: relative;
+    }
+
+    /* Dynamic Island */
+    .phone-island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 18px;
+      background: #000000;
+      border-radius: 999px;
+      z-index: 20;
     }
 
     .phone-screen {
       width: 100%;
       height: 100%;
-      border-radius: 20px;
+      border-radius: 24px;
       overflow: hidden;
       background: #090d16;
       display: flex;
@@ -452,33 +1169,49 @@
       position: relative;
     }
 
-    .phone-screen video {
+    .phone-screen video,
+    .phone-screen img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      display: block;
     }
 
-    /* Tabs */
+    /* Tabs & Horizontal Scroll for Mobile */
+    .tab-bar-wrap {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      margin-top: 20px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--lp-line);
+    }
+
+    .tab-bar-wrap::-webkit-scrollbar {
+      display: none;
+    }
+
     .tab-bar {
       display: flex;
-      width: 100%;
-      border-bottom: 1px solid var(--lp-line);
-      margin-top: 22px;
-      margin-bottom: 16px;
+      width: max-content;
+      gap: 4px;
     }
 
     .tab-item {
-      padding: 8px 16px;
-      font-size: 13.5px;
+      padding: 8px 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--lp-muted);
-      border-bottom: 2px solid transparent;
+      border-bottom: 2.5px solid transparent;
       cursor: pointer;
       background: none;
       border-top: none;
       border-left: none;
       border-right: none;
       font-family: inherit;
+      white-space: nowrap;
+      transition: all 0.2s;
     }
 
     .tab-item.active {
@@ -491,61 +1224,12 @@
       border: 1px solid var(--lp-line);
       border-radius: 12px;
       padding: 14px;
-      margin-top: 12px;
+      margin-top: 8px;
     }
 
-    /* Mobile Responsive Optimizations & Touch UX */
-    .mobile-nav-bar {
+    /* Mobile Sticky Action Bar */
+    .mobile-sticky-action {
       display: none;
-      position: sticky;
-      top: 61px;
-      z-index: 90;
-      background: #ffffff;
-      border: 1px solid var(--lp-line);
-      padding: 8px 12px;
-      gap: 8px;
-      box-shadow: 0 2px 8px rgba(15, 27, 51, 0.04);
-      margin-bottom: 16px;
-      border-radius: 14px;
-    }
-
-    .mobile-tab-btn {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-size: 13.5px;
-      font-weight: 600;
-      font-family: inherit;
-      border: 1px solid transparent;
-      background: #f1f5f9;
-      color: var(--lp-body);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .mobile-tab-btn.active {
-      background: var(--lp-blue-soft);
-      color: var(--lp-blue);
-      border-color: rgba(24, 119, 242, 0.25);
-    }
-
-    .badge-mini-dot {
-      width: 8px;
-      height: 8px;
-      background: #10b981;
-      border-radius: 50%;
-      display: inline-block;
-      animation: pulseDot 1.5s infinite;
-    }
-
-    @keyframes pulseDot {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.3); opacity: 0.7; }
     }
 
     /* Modal for Mobile QR Code Connect */
@@ -594,10 +1278,185 @@
       justify-content: center;
     }
 
-    .mobile-sticky-action {
-      display: none;
+    /* Creator & Platform Footer (Compact & Modern) */
+    footer {
+      margin-top: 36px;
+      border-top: 1px solid var(--lp-line);
+      background: #ffffff;
+      padding: 22px 20px 20px;
     }
 
+    .footer-container {
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+
+    .creator-bar {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .creator-bar:hover {
+      border-color: #cbd5e1;
+      background: #f1f5f9;
+    }
+
+    .creator-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .creator-avatar-wrap {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+
+    .creator-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid #cbd5e1;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .creator-status-dot {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+    }
+
+    .creator-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .creator-name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .creator-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--lp-ink);
+    }
+
+    .creator-badge-dev {
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      font-size: 10.5px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .creator-subtitle {
+      font-size: 11.5px;
+      color: var(--lp-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .creator-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-creator-fb {
+      background: #1877f2;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-creator-fb:hover {
+      background: #166fe5;
+    }
+
+    .btn-creator-contact {
+      background: #ffffff;
+      color: var(--lp-ink);
+      border: 1px solid var(--lp-line);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-creator-contact:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .footer-bottom {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      color: var(--lp-muted);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--lp-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--lp-blue);
+    }
+
+    /* Responsive Breakpoints */
     @media (max-width: 960px) {
       .mobile-nav-bar {
         display: flex;
@@ -618,15 +1477,18 @@
         left: 0;
         right: 0;
         background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(12px);
         border-top: 1px solid var(--lp-line);
         padding: 10px 16px;
-        padding-bottom: max(10px, env(safe-area-inset-bottom));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
         z-index: 95;
         box-shadow: 0 -4px 16px rgba(15, 27, 51, 0.08);
       }
       body {
-        padding-bottom: 90px;
+        padding-bottom: 96px;
+      }
+      .style-cards-grid {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -634,45 +1496,51 @@
       header {
         padding: 10px 14px;
       }
+      .brand-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
       .brand-text h1 {
-        font-size: 16px;
+        font-size: 15px;
       }
       .brand-text p {
         display: none;
       }
+      #btnOpenMobileModal,
       .header-secondary-badge {
-        display: none;
+        display: none !important;
       }
       .container {
         padding: 0 12px;
-        margin: 14px auto;
+        margin: 12px auto;
       }
       .card {
-        padding: 18px 14px;
+        padding: 16px 14px;
         border-radius: 16px;
       }
       .form-row {
         grid-template-columns: 1fr;
         gap: 10px;
       }
-      /* Prevent iOS Safari auto-zoom by enforcing 16px font */
+      /* Prevent iOS Safari 16px input zoom */
       .field-input, .field-select, .field-textarea {
         font-size: 16px !important;
-        padding: 12px 14px;
+        padding: 11px 14px;
         border-radius: 12px;
       }
       .btn {
-        padding: 12px 18px;
-        font-size: 14.5px;
+        padding: 12px 16px;
+        font-size: 14px;
         min-height: 46px;
       }
       .phone-bezel {
-        max-width: 280px;
-        border-radius: 24px;
-        padding: 8px;
+        max-width: 270px;
+        border-radius: 28px;
+        padding: 6px;
       }
       .phone-screen {
-        border-radius: 16px;
+        border-radius: 20px;
       }
     }
   </style>
@@ -680,39 +1548,45 @@
 
 <body>
 
-  <!-- Top Header -->
+  <!-- Top Header with Modern Ambient Glow -->
   <header>
     <a href="/" class="brand-wrap">
       <div class="brand-icon">⚡</div>
       <div class="brand-text">
-        <h1>LikesAuto Studio</h1>
-        <p>ตัดต่อคลิปสินค้า พากย์ไทย ใส่ซับ โพสต์ลง Facebook Reels อัตโนมัติ</p>
+        <h1>
+          <span>LikesAuto Studio</span>
+          <span class="brand-pro-badge">PRO AI</span>
+        </h1>
+        <p>สตูดิโอตัดต่อคลิปสินค้าอัตโนมัติ • พากย์ไทย • ซับไตเติ้ล • โพสต์เพจ Reels</p>
       </div>
     </a>
     <div class="nav-badges">
-      <button type="button" id="btnOpenMobileModal" class="badge" style="background: #f1f5f9; color: var(--lp-ink); border: 1px solid var(--lp-line); cursor: pointer; text-decoration: none;" onclick="openMobileModal()" title="สแกน QR Code เพื่อเปิดใช้งานบนมือถือ">
+      <button type="button" id="btnOpenMobileModal" class="badge" style="background: #f1f5f9; color: var(--lp-ink); border: 1px solid var(--lp-line); cursor: pointer;" onclick="openMobileModal()" title="สแกน QR Code เพื่อเปิดใช้งานบนมือถือ">
         <span>📱</span>
         <span>เปิดบนมือถือ</span>
       </button>
       <div id="extBadge" class="badge badge-ok">
-        <span class="dot"></span>
-        <span id="extBadgeText">✨ LikesAuto Studio (Engine พร้อมใช้งาน 100%)</span>
+        <span class="dot dot-pulse"></span>
+        <span id="extBadgeText">Engine พร้อมใช้งาน</span>
       </div>
-      <div class="badge badge-ok header-secondary-badge">
-        <span class="dot"></span>
-        <span>Gemini AI พร้อมใช้งาน</span>
+      <div class="badge badge-ok header-secondary-badge" style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1)); border-color: rgba(168,85,247,0.3); color: #7c3aed;">
+        <span class="dot" style="background: #a855f7;"></span>
+        <span>Gemini 3.5 AI</span>
       </div>
     </div>
   </header>
 
   <div class="container">
 
-    <!-- Cloud Notice Banner -->
-    <div id="cloudBanner" style="display: none; background: linear-gradient(90deg, #1e3a8a, #2563eb); color: #fff; padding: 12px 20px; border-radius: 12px; margin-bottom: 20px; font-size: 14px; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(37,99,235,0.2);">
-      <div>
-        <strong>🚀 ใช้งานโหมดความเร็วสูงสุด (Local Studio Engine):</strong> ขณะนี้คุณเปิดบนเว็บคลาวด์ หากต้องการเรนเดอร์ความเร็วสูง 10x และดึงเพจโพสต์ได้เต็มประสิทธิภาพ แนะนำเปิดผ่าน Engine ในเครื่อง
+    <!-- Free Trial Banner -->
+    <div id="cloudBanner" style="display: flex; background: linear-gradient(90deg, #10b981, #059669); color: #fff; padding: 12px 18px; border-radius: 14px; margin-bottom: 18px; font-size: 13.5px; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(16,185,129,0.2);">
+      <div style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
+        <span style="font-size: 18px;">🎁</span>
+        <span><strong>โหมดทดลองใช้ฟรี:</strong> คุณกำลังใช้งาน LikesAuto Studio ทดลองสร้างคลิปรีวิวและรูปปกไวรัล AI ได้ฟรี!</span>
       </div>
-      <a href="http://127.0.0.1:8000/studio" target="_blank" style="background: #fff; color: #1e3a8a; padding: 8px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 13.5px; white-space: nowrap; margin-left: 16px; display: inline-flex; align-items: center; gap: 6px;">เปิด http://127.0.0.1:8000/studio ⚡</a>
+      <div style="background: rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;">
+        ✨ ใช้งานฟรี
+      </div>
     </div>
 
     <!-- Mobile Segmented Navigation Switcher -->
@@ -722,7 +1596,7 @@
       </button>
       <button type="button" class="mobile-tab-btn" id="tabBtnView" onclick="switchMobileCol('view')">
         <span>📱 2. พรีวิว & ส่งออก</span>
-        <span id="badgeViewReady" class="badge-mini-dot" style="display: none;"></span>
+        <span id="badgeViewReady" class="badge-pill" style="display: none;">เสร็จแล้ว</span>
       </button>
     </div>
 
@@ -734,162 +1608,621 @@
           <span>🎬</span> ตั้งค่าวิดีโอและบทพากย์ขายของ
         </div>
 
-        <!-- Dropzone -->
-        <div id="dropArea" class="dropzone" style="cursor: pointer;" onclick="handleDropzoneClick(event)">
-          <input type="file" id="videoInput" accept="video/*" title="แตะเพื่อเลือกวิดีโอ">
+        <!-- Hidden Standalone File Input (Outside any hidden container to guarantee 100% reliability on mobile Safari & Android) -->
+        <input type="file" id="videoInput" accept="video/mp4,video/quicktime,video/mov,video/webm,video/*"
+          style="position: fixed; top: -9999px; left: -9999px; opacity: 0; width: 1px; height: 1px; pointer-events: none;"
+          aria-hidden="true">
+
+        <!-- Dropzone / Touch Video Picker -->
+        <div id="dropArea" class="dropzone" onclick="triggerFilePicker()">
           <div class="drop-icon">📹</div>
-          <div id="dropPrompt" class="drop-title" style="font-size: 15px; font-weight: 700; color: var(--lp-ink);">แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ</div>
-          <div class="drop-hint" style="font-size: 12px; color: var(--lp-muted); margin-top: 4px;">รองรับวิดีโอทุกรูปแบบจากมือถือและคอม (MP4, MOV, WebM)</div>
-          <div style="margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 10;">
-            <button type="button" class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('videoInput').click()"
-              style="font-size: 13px; padding: 9px 20px; border-radius: 10px; font-weight: 600; box-shadow: 0 2px 8px rgba(24,119,242,0.25); pointer-events: auto;">
+          <div id="dropPrompt" class="drop-title">แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ</div>
+          <div class="drop-hint">รองรับวิดีโอทุกขนาดจากมือถือและคอมพิวเตอร์ (MP4, MOV, WebM)</div>
+          <div style="margin-top: 14px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 10;">
+            <button type="button" class="btn btn-primary" onclick="event.stopPropagation();triggerFilePicker()"
+              style="font-size: 13.5px; padding: 11px 20px; border-radius: 12px; font-weight: 700; box-shadow: 0 3px 10px rgba(24,119,242,0.28);">
               📁 เลือกวิดีโอจากเครื่อง
             </button>
             <button type="button" id="btnLoadDemo" class="btn btn-secondary" onclick="event.stopPropagation();triggerLoadDemoVideo()"
-              style="font-size: 13px; padding: 9px 16px; border-radius: 10px; font-weight: 600; pointer-events: auto;">
+              style="font-size: 13.5px; padding: 11px 18px; border-radius: 12px; font-weight: 600;">
               ✨ ใช้คลิปตัวอย่าง (Demo)
+            </button>
+          </div>
+        </div>
+
+        <!-- Video Loaded Interactive Preview Card (Step 1) -->
+        <div id="videoLoadedCard" class="video-loaded-card">
+          <div class="mini-player-wrap">
+            <video id="miniVideoPlayer" playsinline controls preload="metadata" muted></video>
+          </div>
+          <div class="video-meta-row">
+            <div id="loadedFileName" class="video-loaded-name">sample_product.mp4</div>
+            <div class="video-chips-wrap">
+              <span id="loadedFileSize" class="video-chip">781 KB</span>
+              <span id="loadedFileDuration" class="video-chip">0:15 นาที</span>
+              <span id="loadedFileRatio" class="video-chip">แนวตั้ง 9:16</span>
+              <span class="video-chip video-chip-success">✅ พร้อมตัดต่อ</span>
+            </div>
+          </div>
+          <div class="video-actions-row">
+            <button type="button" class="btn btn-secondary" style="flex: 1; font-size: 13px; font-weight: 600; padding: 9px 12px;" onclick="triggerFilePicker()">
+              🔄 เปลี่ยนคลิปวิดีโอ
+            </button>
+            <button type="button" class="btn btn-secondary btn-danger-soft" style="font-size: 13px; font-weight: 600; padding: 9px 14px;" onclick="resetSelectedVideo()">
+              🗑️ ลบออก
             </button>
           </div>
         </div>
 
         <!-- Audio Mode & Product Context -->
         <div class="field-group">
-          <label class="field-label">โหมดเสียงและบทพากย์ (Audio & Dubbing Mode)</label>
+          <label class="field-label">
+            <span>โหมดเสียงและบทพากย์</span>
+            <span class="field-label-hint">Audio & Dubbing Mode</span>
+          </label>
           <select id="audioMode" class="field-select">
-            <option value="dub" selected>🎙️ พากย์เสียงใหม่ด้วย AI (สร้างบทขาย + พากย์เสียงไทย + ซับไตเติ้ล - แนะนำ)
-            </option>
+            <option value="dub" selected>🎙️ พากย์เสียงใหม่ด้วย AI (สร้างบทขาย + พากย์เสียงไทย + ซับไตเติ้ล - แนะนำ)</option>
             <option value="source">🔊 ใช้เสียงต้นฉบับเดิมของคลิป (คงเสียงเดิม + ถอดซับไตเติ้ลภาษาไทย)</option>
           </select>
         </div>
 
         <div class="field-group">
-          <label class="field-label">ข้อมูลสินค้า / จุดขายที่ต้องการเน้นเป็นพิเศษ</label>
+          <label class="field-label">
+            <span>ข้อมูลสินค้า / จุดเด่นที่ต้องการเน้น</span>
+            <span class="field-label-hint">ไม่ใส่ก็ได้ AI จะวิเคราะห์จากภาพเอง</span>
+          </label>
           <textarea id="productDetails" class="field-textarea"
-            placeholder="เช่น กระบอกน้ำสแตนเลส 316 เก็บความเย็น 24 ชม. ไม่เป็นสนิม ก้นยางกันลื่น..."></textarea>
+            placeholder="เช่น กระบอกน้ำสแตนเลส 316 เก็บความเย็น 24 ชม. ไม่เป็นสนิม ก้นยางกันลื่น วางตรงไหนก็ไม่ล้ม..."></textarea>
         </div>
 
-        <!-- Selectors -->
-        <div class="form-row">
-          <div class="field-group">
-            <label class="field-label">เสียงพากย์ AI ภาษาไทย (Gemini & Neural Voices)</label>
-            <select id="voiceChoice" class="field-select">
-              <option value="Kore" selected>✨ Kore (หญิง - นุ่มนวล คมชัด มีชีวิตชีวา แนะนำยอดนิยม)</option>
-              <option value="Aoede">🌸 Aoede (หญิง - ละมุน ฟังสบาย อบอุ่น เป็นมิตร)</option>
-              <option value="Leda">🎀 Leda (หญิง - หวาน อ่อนโยน น่ารัก สดใส สไตล์บิวตี้)</option>
-              <option value="Zephyr">⚡ Zephyr (หญิง - มั่นใจ กระฉับกระเฉง ทันสมัย คล่องแคล่ว)</option>
-              <option value="Puck">🔥 Puck (ชาย - สดใส วัยรุ่น มีพลัง ชวนติดตาม)</option>
-              <option value="Fenrir">☕ Fenrir (ชาย - ทุ้ม อบอุ่น ฟังสบาย สไตล์รีวิวเรียลๆ)</option>
-              <option value="Charon">👔 Charon (ชาย - สุขุม นิ่ง ผู้ใหญ่ น่าเชื่อถือ มืออาชีพ)</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label">ฟอนต์ซับไตเติ้ลภาษาไทย (ครบ 19 ฟอนต์)</label>
-            <select id="fontChoice" class="field-select">
-              <option value="mitr" selected>Mitr (มิตร - ทันสมัย ยอดนิยม)</option>
-              <option value="kanit">Kanit (คณิต - คมชัด ตัวหนา สไตล์รีวิว)</option>
-              <option value="sarabun">Sarabun (สารบรรณ - ทางการ เรียบร้อย)</option>
-              <option value="prompt">Prompt (พร้อมท์ - พรีเมียม โมเดิร์น)</option>
-              <option value="anuphan">Anuphan (อนุพันธ์ - มินิมอล อ่านง่าย)</option>
-              <option value="noto">Noto Sans Thai (โนโตะ แซนส์ - สากล คมชัด)</option>
-              <option value="chonburi">Chonburi (ชลบุรี - หัวข้อตัวหนา วินเทจ โดดเด่น)</option>
-              <option value="charm">Charm (ชาร์ม - ตัวเขียนพริ้วไหว สวยงาม)</option>
-              <option value="baijamjuree">Bai Jamjuree (จามจุรี - โมเดิร์น เหลี่ยมมน)</option>
-              <option value="mali">Mali (มะลิ - น่ารัก คิ้วท์ๆ สไตล์การ์ตูน)</option>
-              <option value="pridi">Pridi (ปรีดี - คลาสสิก เรียบหรู)</option>
-              <option value="pattaya">Pattaya (พัทยา - พู่กันไทย สะดุดตา)</option>
-              <option value="chakrapetch">Chakra Petch (จักรเพชร - สไตล์เกมมิ่ง ไซไฟ)</option>
-              <option value="sriracha">Sriracha (ศรีราชา - ลายมือธรรมชาติ ชวนคุย)</option>
-              <option value="itim">Itim (ไอติม - ตัวกลม น่ารัก ฟรุ้งฟริ้ง)</option>
-              <option value="k2d">K2D (เคทูดี - สปอร์ต แอคทีฟ โดดเด่น)</option>
-              <option value="athiti">Athiti (อธิษฐาน - มินิมอล มีสไตล์)</option>
-              <option value="taviraj">Taviraj (ทวิราช - โรแมนติก อบอุ่น)</option>
-              <option value="ibmplex">IBM Plex Sans Thai (ไอบีเอ็ม เพลกซ์ - เทคโนโลยี คมชัดสูง)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="field-group">
-            <label class="field-label">เพลงประกอบ (Background Music)</label>
-            <select id="bgmToggle" class="field-select">
-              <option value="bgm1" selected>🎵 BGM 1: เพลงรีวิวน่ารัก สดใส (แนะนำสำหรับสินค้าทั่วไป)</option>
-              <option value="bgm2">🔥 BGM 2: เพลงตื่นเต้น เร้าใจ (สำหรับโปรโมชั่น / ลดราคา)</option>
-              <option value="bgm3">⚡ BGM 3: เพลงบีทตื๊ดสไตล์ TikTok / Reels (ทันสมัย วัยรุ่น)</option>
-              <option value="none">🔇 ปิดเพลงประกอบ (เฉพาะเสียงพากย์)</option>
-            </select>
-          </div>
-          <div class="field-group">
-            <label class="field-label">เอฟเฟกต์เสียงไวรัล (Viral Sound Effects SFX)</label>
-            <select id="sfxChoice" class="field-select">
-              <option value="auto" selected>✨ เปิดครบทุกจุด (Pop เปิดคลิป + Ding ปักหมุดซื้อ CTA - แนะนำ)</option>
-              <option value="minimal">🔔 เฉพาะเสียงกระดิ่งปักหมุดซื้อ (Ding CTA)</option>
-              <option value="none">🔇 ปิดเอฟเฟกต์เสียง (เฉพาะเสียงพากย์และเพลง)</option>
-            </select>
-          </div>
-        </div>
-
+        <!-- Viral Thumbnail Style Cards -->
         <div class="field-group">
-          <label class="field-label">ตำแหน่งและขนาดซับไตเติ้ล</label>
-          <div style="display: flex; gap: 8px;">
-            <select id="subPosY" class="field-select" style="flex: 1.2;">
-              <option value="75" selected>ล่างคลิป (75% แนะนำ)</option>
-              <option value="50">กลางคลิป (50%)</option>
-              <option value="25">บนคลิป (25%)</option>
-            </select>
-            <input type="color" id="subColor" value="#ffffff" title="สีตัวอักษร"
-              style="width: 44px; height: 38px; border: 1px solid var(--lp-line); border-radius: 8px; cursor: pointer;">
-            <input type="color" id="subBorder" value="#000000" title="สีขอบตัวอักษร"
-              style="width: 44px; height: 38px; border: 1px solid var(--lp-line); border-radius: 8px; cursor: pointer;">
-            <select id="subScale" class="field-select" style="flex: 0.9;">
-              <option value="85">เล็ก (85%)</option>
-              <option value="100" selected>ปกติ (100%)</option>
-              <option value="120">ใหญ่ (120%)</option>
-            </select>
-          </div>
-        </div>
+          <label class="field-label">
+            <span style="color: #b45309; font-weight: 700;">🖼️ สไตล์ภาพปกคลิปดึงดูดสายตา (Viral Cover)</span>
+            <span class="field-label-hint" style="color: #92400e;">แตะเลือกสไตล์ที่ชอบ</span>
+          </label>
 
-        <!-- Presenter / Character Overlay (PIP) -->
-        <div class="field-group"
-          style="background: rgba(59,130,246,0.04); border: 1px dashed var(--lp-line); border-radius: 12px; padding: 14px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label class="field-label" style="margin-bottom: 0;">🎭 ซ้อนตัวละคร / ผู้ดำเนินรายการ (Presenter Overlay -
-              ไม่บังคับ)</label>
-            <span style="font-size: 11.5px; color: var(--lp-muted);">PNG โปร่งใส หรือ วิดีโอ MP4</span>
-          </div>
-          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px;">
-            <input type="file" id="presenterInput" accept="image/*,video/*" class="field-select"
-              style="padding: 6px 10px; font-size: 12px;">
-            <select id="presenterCorner" class="field-select">
-              <option value="bottom_right" selected>↘️ มุมล่างขวา</option>
-              <option value="bottom_left">↙️ มุมล่างซ้าย</option>
-              <option value="top_right">↗️ มุมบนขวา</option>
-              <option value="top_left">↖️ มุมบนซ้าย</option>
-            </select>
-            <select id="presenterSize" class="field-select">
-              <option value="180">เล็ก (180px)</option>
-              <option value="220" selected>ปกติ (220px)</option>
-              <option value="260">ใหญ่ (260px)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Thumbnail Style Selector (Matching User Reference Styles) -->
-        <div class="field-group" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 12px; padding: 12px 14px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label class="field-label" style="margin-bottom: 0; color: #b45309; font-weight: 700;">🖼️ สไตล์ภาพปกคลิปดึงดูดสายตา (Viral Cover)</label>
-            <span style="font-size: 11.5px; color: #92400e;">เลือกให้เข้ากับประเภทสินค้า</span>
-          </div>
-          <select id="thumbStyle" class="field-select" style="border-color: rgba(245, 158, 11, 0.4);">
-            <option value="creator_viral" selected>🔥 Creator ไฮอิมแพ็ค (3D Headline คมชัด + จุดเด่นเช็คลิสต์ - สไตล์ YouTuber/TikToker แนะนำ)</option>
-            <option value="ecommerce_shop">🛒 Reels & TikTok Shop (ป้ายพาสเทล + 3 ไอคอนจุดเด่นสินค้า + ปุ่มกดสั่งซื้อไล่เฉดสี)</option>
-            <option value="lifestyle_food">🎀 สายกิน & ไลฟ์สไตล์ (อักษรพองกลม 2 สีสดใส ขาว/เหลือง + ป้ายเทปน่ารัก + ประกายวิ้งๆ)</option>
-            <option value="curated_picker">📌 ชี้เป้า & ป้ายยาพิกัด (สติกเกอร์หัวข้อใหญ่ + ป้ายแสตมป์ฟรี + แถบไฮไลต์สีสัน)</option>
+          <select id="thumbStyle" class="field-select" style="display: none;">
+            <option value="creator_viral" selected>creator_viral</option>
+            <option value="ecommerce_shop">ecommerce_shop</option>
+            <option value="lifestyle_food">lifestyle_food</option>
+            <option value="curated_picker">curated_picker</option>
           </select>
+
+          <div class="style-cards-grid">
+            <div class="style-card-option selected" data-style="creator_viral" onclick="selectStyleCard('creator_viral')">
+              <div class="style-card-title">🔥 Creator ไฮอิมแพ็ค</div>
+              <div class="style-card-desc">3D Headline คมชัด + จุดเด่นเช็คลิสต์ 3 ข้อ (สไตล์ YouTuber & TikToker แนะนำ)</div>
+              <div class="style-card-check">✓</div>
+            </div>
+
+            <div class="style-card-option" data-style="ecommerce_shop" onclick="selectStyleCard('ecommerce_shop')">
+              <div class="style-card-title">🛒 TikTok Shop ป้ายยา</div>
+              <div class="style-card-desc">ป้ายโปรโมชั่นสุดคุ้ม + 3 ไอคอนจุดเด่นสินค้า + ปุ่มกดสั่งซื้อไล่เฉดสี</div>
+              <div class="style-card-check">✓</div>
+            </div>
+
+            <div class="style-card-option" data-style="lifestyle_food" onclick="selectStyleCard('lifestyle_food')">
+              <div class="style-card-title">🎀 สายกิน & ไลฟ์สไตล์</div>
+              <div class="style-card-desc">อักษรพองกลม 2 สีสดใส ขาว/เหลือง + ป้ายเทปน่ารัก + ประกายวิ้งๆ</div>
+              <div class="style-card-check">✓</div>
+            </div>
+
+            <div class="style-card-option" data-style="curated_picker" onclick="selectStyleCard('curated_picker')">
+              <div class="style-card-title">📌 ชี้เป้า & ป้ายยาพิกัด</div>
+              <div class="style-card-desc">สติกเกอร์หัวข้อใหญ่ + ป้ายแสตมป์ฟรี + แถบไฮไลต์สีสันสดใส</div>
+              <div class="style-card-check">✓</div>
+            </div>
+          </div>
+        </div>
+
+                <!-- Collapsible Advanced Settings (Voices, Fonts, Music, Subtitles) -->
+        <button type="button" class="accordion-toggle-btn" id="advAccordionBtn" onclick="toggleAccordion('advancedSettingsBox')">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <span style="display: inline-flex; width: 30px; height: 30px; border-radius: 8px; background: #e0f2fe; color: #0284c7; align-items: center; justify-content: center; font-size: 15px;">⚙️</span>
+            <div style="text-align: left;">
+              <div style="font-weight: 700; color: var(--lp-ink); font-size: 13.5px;">ปรับแต่งขั้นสูง (เสียงพากย์, ฟอนต์, เพลง, ซับไตเติ้ล)</div>
+              <div style="font-size: 11px; color: var(--lp-muted); font-weight: 400;">เลือกเสียง AI 7 แบบ • ฟอนต์ 19 แบบ • เพลง & ซับ</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="adv-badge" id="advSummaryBadge">Kore • Mitr</span>
+            <span id="accordionArrow" style="transition: transform 0.2s ease; display: inline-block;">▼</span>
+          </div>
+        </button>
+
+        <div id="advancedSettingsBox" class="accordion-content">
+          <div class="adv-panel">
+
+            <!-- 1. AI Voice Selection -->
+            <div class="adv-section">
+              <div class="adv-sec-header">
+                <div class="adv-sec-title">🎙️ เสียงพากย์ AI ภาษาไทย (Gemini Neural TTS)</div>
+                <div class="adv-tabs">
+                  <div class="adv-tab-pill active" onclick="filterVoiceTab('all', this)">✨ ทั้งหมด (7)</div>
+                  <div class="adv-tab-pill" onclick="filterVoiceTab('female', this)">👩 หญิง (4)</div>
+                  <div class="adv-tab-pill" onclick="filterVoiceTab('male', this)">👨 ชาย (3)</div>
+                </div>
+              </div>
+              <div class="adv-sec-desc">เลือกน้ำเสียงผู้บรรยายที่เข้ากับประเภทสินค้าและกลุ่มเป้าหมายของคุณ</div>
+              
+              <div class="voice-grid" id="voiceGrid">
+                <!-- Female Voices -->
+                <div class="voice-card selected" data-voice="Kore" data-gender="female" onclick="selectVoice('Kore')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="voice-top-row">
+                    <div class="voice-avatar">👩‍🦰</div>
+                    <div>
+                      <div class="voice-name-title">Kore (คอร์)</div>
+                      <span class="voice-badge-tag">⭐ แนะนำยอดนิยม</span>
+                    </div>
+                  </div>
+                  <div class="voice-desc">นุ่มนวล คมชัด มีชีวิตชีวา ฟังสบาย ไม่น่าเบื่อ</div>
+                </div>
+
+                <div class="voice-card" data-voice="Aoede" data-gender="female" onclick="selectVoice('Aoede')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="voice-top-row">
+                    <div class="voice-avatar">🌸</div>
+                    <div>
+                      <div class="voice-name-title">Aoede (เออดี้)</div>
+                      <span class="voice-badge-tag" style="background:#fce7f3; color:#9d174d;">ละมุน อบอุ่น</span>
+                    </div>
+                  </div>
+                  <div class="voice-desc">โทนสุภาพ เป็นมิตร ฟังแล้วรู้สึกผ่อนคลาย สบายใจ</div>
+                </div>
+
+                <div class="voice-card" data-voice="Leda" data-gender="female" onclick="selectVoice('Leda')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="voice-top-row">
+                    <div class="voice-avatar">🎀</div>
+                    <div>
+                      <div class="voice-name-title">Leda (เลดา)</div>
+                      <span class="voice-badge-tag" style="background:#fae8ff; color:#86198f;">สไตล์บิวตี้</span>
+                    </div>
+                  </div>
+                  <div class="voice-desc">หวาน สดใส น่ารัก เหมาะกับสินค้าผู้หญิงและเครื่องสำอาง</div>
+                </div>
+
+                <div class="voice-card" data-voice="Zephyr" data-gender="female" onclick="selectVoice('Zephyr')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="voice-top-row">
+                    <div class="voice-avatar">⚡</div>
+                    <div>
+                      <div class="voice-name-title">Zephyr (เซเฟอร์)</div>
+                      <span class="voice-badge-tag" style="background:#e0e7ff; color:#3730a3;">มั่นใจ คล่องแคล่ว</span>
+                    </div>
+                  </div>
+                  <div class="voice-desc">มั่นใจ กระฉับกระเฉง เหมาะกับแกดเจ็ต แฟชั่น และธุรกิจ</div>
+                </div>
+
+                <!-- Male Voices -->
+                <div class="voice-card" data-voice="Puck" data-gender="male" onclick="selectVoice('Puck')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="voice-top-row">
+                    <div class="voice-avatar">🔥</div>
+                    <div>
+                      <div class="voice-name-title">Puck (พัค)</div>
+                      <span class="voice-badge-tag" style="background:#fee2e2; color:#991b1b;">วัยรุ่น มีพลัง</span>
+                    </div>
+                  </div>
+                  <div class="voice-desc">สดใส ชวนคุย กระตือรือร้น ชวนกดสั่งซื้อทันที</div>
+                </div>
+
+                <div class="voice-card" data-voice="Fenrir" data-gender="male" onclick="selectVoice('Fenrir')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="voice-top-row">
+                    <div class="voice-avatar">☕</div>
+                    <div>
+                      <div class="voice-name-title">Fenrir (เฟนริล)</div>
+                      <span class="voice-badge-tag" style="background:#fef3c7; color:#92400e;">ทุ้ม นุ่มลึก</span>
+                    </div>
+                  </div>
+                  <div class="voice-desc">ทุ้ม อบอุ่น ฟังสบาย สไตล์รีวิวเรียลๆ น่าเชื่อถือ</div>
+                </div>
+
+                <div class="voice-card" data-voice="Charon" data-gender="male" onclick="selectVoice('Charon')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="voice-top-row">
+                    <div class="voice-avatar">👔</div>
+                    <div>
+                      <div class="voice-name-title">Charon (คารอน)</div>
+                      <span class="voice-badge-tag" style="background:#f1f5f9; color:#334155;">สุขุม มืออาชีพ</span>
+                    </div>
+                  </div>
+                  <div class="voice-desc">สุขุม นิ่ง ผู้ใหญ่ น่าเชื่อถือ สไตล์ผู้เชี่ยวชาญทางการ</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Font Selection (19 Thai Google Fonts with real preview) -->
+            <div class="adv-section">
+              <div class="adv-sec-header">
+                <div class="adv-sec-title">🔤 ฟอนต์ซับไตเติ้ลภาษาไทย (19 แบบยอดฮิต)</div>
+                <div class="adv-tabs">
+                  <div class="adv-tab-pill active" onclick="filterFontTab('all', this)">✨ ทั้งหมด (19)</div>
+                  <div class="adv-tab-pill" onclick="filterFontTab('popular', this)">🔥 ยอดนิยม (4)</div>
+                  <div class="adv-tab-pill" onclick="filterFontTab('cute', this)">🎀 น่ารัก/ลายมือ (4)</div>
+                  <div class="adv-tab-pill" onclick="filterFontTab('bold', this)">⚡ ตัวหนาสะดุดตา (4)</div>
+                  <div class="adv-tab-pill" onclick="filterFontTab('formal', this)">👔 เรียบหรู/ทางการ (7)</div>
+                </div>
+              </div>
+              <div class="adv-sec-desc">แตะเลือกฟอนต์เพื่อดูตัวอย่างแบบอักษรจริงได้ทันที</div>
+
+              <div class="font-grid" id="fontGrid">
+                <!-- Popular -->
+                <div class="font-card selected" data-font="mitr" data-category="popular" onclick="selectFont('mitr')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Mitr (มิตร)</span><span class="font-card-tag">⭐ ยอดนิยม</span></div>
+                  <div class="font-card-preview" style="font-family: 'Mitr', sans-serif;">มิตรไมตรี ทันสมัย ยอดนิยม</div>
+                </div>
+
+                <div class="font-card" data-font="kanit" data-category="popular" onclick="selectFont('kanit')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Kanit (คณิต)</span><span class="font-card-tag">🎬 ฮิตในคลิป</span></div>
+                  <div class="font-card-preview" style="font-family: 'Kanit', sans-serif;">คมชัด ตัวหนา สไตล์รีวิว</div>
+                </div>
+
+                <div class="font-card" data-font="prompt" data-category="popular" onclick="selectFont('prompt')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Prompt (พร้อมท์)</span><span class="font-card-tag">⚡ ทันสมัย</span></div>
+                  <div class="font-card-preview" style="font-family: 'Prompt', sans-serif;">พรีเมียม โมเดิร์น คลีนๆ</div>
+                </div>
+
+                <div class="font-card" data-font="anuphan" data-category="popular" onclick="selectFont('anuphan')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Anuphan (อนุพันธ์)</span><span class="font-card-tag">📱 มินิมอล</span></div>
+                  <div class="font-card-preview" style="font-family: 'Anuphan', sans-serif;">มินิมอล อ่านง่าย สบายตา</div>
+                </div>
+
+                <!-- Cute & Handwriting -->
+                <div class="font-card" data-font="mali" data-category="cute" onclick="selectFont('mali')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Mali (มะลิ)</span><span class="font-card-tag">🌸 คิ้วท์ๆ</span></div>
+                  <div class="font-card-preview" style="font-family: 'Mali', cursive;">น่ารัก คิ้วท์ๆ สไตล์การ์ตูน</div>
+                </div>
+
+                <div class="font-card" data-font="itim" data-category="cute" onclick="selectFont('itim')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Itim (ไอติม)</span><span class="font-card-tag">🍦 สายหวาน</span></div>
+                  <div class="font-card-preview" style="font-family: 'Itim', cursive;">ตัวกลม น่ารัก ฟรุ้งฟริ้ง</div>
+                </div>
+
+                <div class="font-card" data-font="sriracha" data-category="cute" onclick="selectFont('sriracha')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Sriracha (ศรีราชา)</span><span class="font-card-tag">🎨 ลายมือธรรมชาติ</span></div>
+                  <div class="font-card-preview" style="font-family: 'Sriracha', cursive;">ลายมือธรรมชาติ ชวนคุย</div>
+                </div>
+
+                <div class="font-card" data-font="charm" data-category="cute" onclick="selectFont('charm')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Charm (ชาร์ม)</span><span class="font-card-tag">💖 พริ้วไหว</span></div>
+                  <div class="font-card-preview" style="font-family: 'Charm', cursive;">ตัวเขียนพริ้วไหว สวยงาม</div>
+                </div>
+
+                <!-- Bold & Impact -->
+                <div class="font-card" data-font="chonburi" data-category="bold" onclick="selectFont('chonburi')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Chonburi (ชลบุรี)</span><span class="font-card-tag">💥 หัวข้อตัวหนา</span></div>
+                  <div class="font-card-preview" style="font-family: 'Chonburi', serif;">หัวข้อตัวหนา วินเทจ โดดเด่น</div>
+                </div>
+
+                <div class="font-card" data-font="k2d" data-category="bold" onclick="selectFont('k2d')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>K2D (เคทูดี)</span><span class="font-card-tag">⚡ สปอร์ต</span></div>
+                  <div class="font-card-preview" style="font-family: 'K2D', sans-serif;">สปอร์ต แอคทีฟ สะดุดตา</div>
+                </div>
+
+                <div class="font-card" data-font="chakrapetch" data-category="bold" onclick="selectFont('chakrapetch')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Chakra Petch</span><span class="font-card-tag">🤖 เกมมิ่ง</span></div>
+                  <div class="font-card-preview" style="font-family: 'Chakra Petch', sans-serif;">จักรเพชร สไตล์เกมมิ่ง ไซไฟ</div>
+                </div>
+
+                <div class="font-card" data-font="pattaya" data-category="bold" onclick="selectFont('pattaya')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Pattaya (พัทยา)</span><span class="font-card-tag">🏖️ พู่กันไทย</span></div>
+                  <div class="font-card-preview" style="font-family: 'Pattaya', sans-serif;">พู่กันไทย สะดุดตามาก</div>
+                </div>
+
+                <!-- Formal & Clean -->
+                <div class="font-card" data-font="noto" data-category="formal" onclick="selectFont('noto')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Noto Sans</span><span class="font-card-tag">🌐 มาตรฐานโลก</span></div>
+                  <div class="font-card-preview" style="font-family: 'Noto Sans Thai', sans-serif;">สากล คมชัด มาตรฐานโลก</div>
+                </div>
+
+                <div class="font-card" data-font="sarabun" data-category="formal" onclick="selectFont('sarabun')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Sarabun (สารบรรณ)</span><span class="font-card-tag">📄 ทางการ</span></div>
+                  <div class="font-card-preview" style="font-family: 'Sarabun', sans-serif;">ทางการ เรียบร้อย สุภาพ</div>
+                </div>
+
+                <div class="font-card" data-font="baijamjuree" data-category="formal" onclick="selectFont('baijamjuree')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Bai Jamjuree</span><span class="font-card-tag">🏢 เหลี่ยมมน</span></div>
+                  <div class="font-card-preview" style="font-family: 'Bai Jamjuree', sans-serif;">จามจุรี โมเดิร์น เหลี่ยมมน</div>
+                </div>
+
+                <div class="font-card" data-font="pridi" data-category="formal" onclick="selectFont('pridi')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Pridi (ปรีดี)</span><span class="font-card-tag">🖋️ คลาสสิก</span></div>
+                  <div class="font-card-preview" style="font-family: 'Pridi', serif;">คลาสสิก เรียบหรู มีสไตล์</div>
+                </div>
+
+                <div class="font-card" data-font="ibmplex" data-category="formal" onclick="selectFont('ibmplex')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>IBM Plex Sans</span><span class="font-card-tag">💻 ไฮเทค</span></div>
+                  <div class="font-card-preview" style="font-family: 'IBM Plex Sans Thai', sans-serif;">ไอบีเอ็ม เพลกซ์ ทันสมัย</div>
+                </div>
+
+                <div class="font-card" data-font="athiti" data-category="formal" onclick="selectFont('athiti')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Athiti (อธิษฐาน)</span><span class="font-card-tag">✨ อาร์ต</span></div>
+                  <div class="font-card-preview" style="font-family: 'Athiti', sans-serif;">มินิมอล มีสไตล์ แตกต่าง</div>
+                </div>
+
+                <div class="font-card" data-font="taviraj" data-category="formal" onclick="selectFont('taviraj')">
+                  <div class="adv-card-check">✓</div>
+                  <div class="font-card-name"><span>Taviraj (ทวิราช)</span><span class="font-card-tag">📜 โรแมนติก</span></div>
+                  <div class="font-card-preview" style="font-family: 'Taviraj', serif;">โรแมนติก นุ่มนวล อบอุ่น</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Music & Sound Effects (BGM & SFX) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" class="media-stack-row">
+              <!-- BGM -->
+              <div class="adv-section">
+                <div class="adv-sec-title">🎵 เพลงประกอบ (BGM)</div>
+                <div class="seg-group">
+                  <div class="seg-btn selected" data-bgm="bgm1" onclick="selectBgm('bgm1')">
+                    <span>🎵 สดใส น่ารัก</span>
+                    <span class="seg-btn-sub">สินค้าทั่วไป</span>
+                  </div>
+                  <div class="seg-btn" data-bgm="bgm2" onclick="selectBgm('bgm2')">
+                    <span>🔥 ตื่นเต้น เร้าใจ</span>
+                    <span class="seg-btn-sub">โปรโมชั่น</span>
+                  </div>
+                  <div class="seg-btn" data-bgm="bgm3" onclick="selectBgm('bgm3')">
+                    <span>⚡ บีท TikTok</span>
+                    <span class="seg-btn-sub">วัยรุ่น/ตื๊ด</span>
+                  </div>
+                  <div class="seg-btn" data-bgm="none" onclick="selectBgm('none')">
+                    <span>🔇 ปิดเพลง</span>
+                    <span class="seg-btn-sub">เสียงพูดล้วน</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SFX -->
+              <div class="adv-section">
+                <div class="adv-sec-title">🔔 เสียงเอฟเฟกต์ (SFX)</div>
+                <div class="seg-group">
+                  <div class="seg-btn selected" data-sfx="auto" onclick="selectSfx('auto')">
+                    <span>✨ ครบทุกจุด</span>
+                    <span class="seg-btn-sub">Pop + Ding แนะนำ</span>
+                  </div>
+                  <div class="seg-btn" data-sfx="minimal" onclick="selectSfx('minimal')">
+                    <span>🔔 เฉพาะ Ding</span>
+                    <span class="seg-btn-sub">ปักหมุดท้ายคลิป</span>
+                  </div>
+                  <div class="seg-btn" data-sfx="none" onclick="selectSfx('none')">
+                    <span>🔇 ปิดเอฟเฟกต์</span>
+                    <span class="seg-btn-sub">ไม่มีเสียงกริ่ง</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Subtitle Position, Size, Color & Live Simulator -->
+            <div class="adv-section">
+              <div class="adv-sec-header">
+                <div class="adv-sec-title">📐 ตำแหน่ง ขนาด และสีซับไตเติ้ล</div>
+                <span class="adv-badge" id="subLivePosBadge">ล่างคลิป (75%)</span>
+              </div>
+
+              <!-- Controls row -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="media-stack-row">
+                <!-- Position -->
+                <div>
+                  <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">ตำแหน่งในคลิป:</div>
+                  <div class="seg-group">
+                    <div class="seg-btn selected" data-pos="75" onclick="selectSubPos('75')">
+                      <span>🔽 ล่างคลิป</span>
+                      <span class="seg-btn-sub">75% (แนะนำ)</span>
+                    </div>
+                    <div class="seg-btn" data-pos="50" onclick="selectSubPos('50')">
+                      <span>⏺️ กลางคลิป</span>
+                      <span class="seg-btn-sub">50%</span>
+                    </div>
+                    <div class="seg-btn" data-pos="25" onclick="selectSubPos('25')">
+                      <span>🔼 บนคลิป</span>
+                      <span class="seg-btn-sub">25%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Size -->
+                <div>
+                  <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">ขนาดตัวอักษร:</div>
+                  <div class="seg-group">
+                    <div class="seg-btn" data-scale="85" onclick="selectSubScale('85')">
+                      <span>เล็ก</span>
+                      <span class="seg-btn-sub">85%</span>
+                    </div>
+                    <div class="seg-btn selected" data-scale="100" onclick="selectSubScale('100')">
+                      <span>ปกติ</span>
+                      <span class="seg-btn-sub">100% (แนะนำ)</span>
+                    </div>
+                    <div class="seg-btn" data-scale="120" onclick="selectSubScale('120')">
+                      <span>ใหญ่</span>
+                      <span class="seg-btn-sub">120%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Color Presets + Custom Color Pickers -->
+              <div style="margin-top: 4px;">
+                <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">โทนสีซับไตเติ้ลยอดฮิต:</div>
+                <div class="color-preset-group">
+                  <div class="color-preset-pill selected" id="presetWhite" onclick="selectColorPreset('#ffffff', '#000000', this)">
+                    <span class="color-dot" style="background:#ffffff; box-shadow: inset 0 0 0 1px #cbd5e1;"></span>
+                    <span>⚪ ขาวขอบดำ (ยอดนิยม)</span>
+                  </div>
+                  <div class="color-preset-pill" id="presetYellow" onclick="selectColorPreset('#fde047', '#000000', this)">
+                    <span class="color-dot" style="background:#fde047;"></span>
+                    <span>🟡 เหลืองขอบดำ (สไตล์ไวรัล)</span>
+                  </div>
+                  <div class="color-preset-pill" id="presetGreen" onclick="selectColorPreset('#4ade80', '#090d16', this)">
+                    <span class="color-dot" style="background:#4ade80;"></span>
+                    <span>🟢 เขียวขอบดำ</span>
+                  </div>
+                  <div class="color-preset-pill" id="presetCyan" onclick="selectColorPreset('#38bdf8', '#090d16', this)">
+                    <span class="color-dot" style="background:#38bdf8;"></span>
+                    <span>🔵 ฟ้าขอบดำ</span>
+                  </div>
+                  
+                  <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: auto;">
+                    <label style="font-size: 11px; color: var(--lp-muted);" for="subColor">สีตัวอักษร:</label>
+                    <input type="color" id="subColor" value="#ffffff" title="สีตัวอักษร" oninput="onCustomColorChange()"
+                      style="width: 32px; height: 30px; border: 1px solid var(--lp-line); border-radius: 6px; cursor: pointer; padding: 1px;">
+                    <label style="font-size: 11px; color: var(--lp-muted); margin-left: 4px;" for="subBorder">สีขอบ:</label>
+                    <input type="color" id="subBorder" value="#000000" title="สีขอบตัวอักษร" oninput="onCustomColorChange()"
+                      style="width: 32px; height: 30px; border: 1px solid var(--lp-line); border-radius: 6px; cursor: pointer; padding: 1px;">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Subtitle Simulator Box -->
+              <div class="sub-preview-box">
+                <span class="sub-preview-top-tag">👁️ ตัวอย่างซับไตเติ้ลจริงบนคลิป</span>
+                <span class="sub-preview-pos-tag" id="subLiveFontBadge">Mitr • 100%</span>
+                <div class="sub-preview-text" id="subLivePreviewText" style="font-family: 'Mitr', sans-serif; color: #ffffff; -webkit-text-stroke: 1.5px #000000; font-size: 18px; font-weight: 700;">
+                  "🔥 สินค้าตัวนี้บอกเลยว่าปังมาก! รีบกดสั่งในตะกร้าด่วน"
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Presenter / Character Overlay (PIP) -->
+            <div class="adv-section" style="background: #f8fafc; border: 1px dashed var(--lp-line); border-radius: 12px; padding: 12px;">
+              <div class="adv-sec-header">
+                <div class="adv-sec-title">🎭 ซ้อนตัวละคร / พิธีกร (Presenter PIP)</div>
+                <span style="font-size: 11px; color: var(--lp-muted);">ทางเลือกเสริม (Optional)</span>
+              </div>
+              <div class="adv-sec-desc">ใส่วิดีโอหรือภาพไดคัทพิธีกรเพื่อเพิ่มความน่าเชื่อถือให้กับคลิป</div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 4px;">
+                <!-- Upload button & File status -->
+                <div style="flex: 1; min-width: 200px;">
+                  <button type="button" class="btn" onclick="document.getElementById('presenterInput').click()"
+                    style="background: #ffffff; border: 1.5px solid var(--lp-line); font-size: 12px; padding: 7px 12px; width: 100%; justify-content: flex-start;">
+                    📁 เลือกไฟล์รูป/วิดีโอพิธีกร (PNG, MP4)
+                  </button>
+                  <div id="presenterFileInfo" style="display: none; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; color: var(--lp-ink);">
+                    <span id="presenterFileName" style="font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                    <span id="presenterFileSize" style="color: var(--lp-muted);"></span>
+                    <button type="button" onclick="clearPresenterFile()" style="background: none; border: none; color: #ef4444; font-size: 11px; cursor: pointer; padding: 0 4px;">✕ ลบออก</button>
+                  </div>
+                </div>
+
+                <!-- 4 Corner Grid -->
+                <div>
+                  <div style="font-size: 11px; font-weight: 600; color: var(--lp-muted); margin-bottom: 4px;">มุมวางพิธีกร:</div>
+                  <div class="pip-corner-grid">
+                    <div class="pip-corner-btn" data-corner="top_left" onclick="selectPresenterCorner('top_left')">↖️ บนซ้าย</div>
+                    <div class="pip-corner-btn" data-corner="top_right" onclick="selectPresenterCorner('top_right')">↗️ บนขวา</div>
+                    <div class="pip-corner-btn" data-corner="bottom_left" onclick="selectPresenterCorner('bottom_left')">↙️ ล่างซ้าย</div>
+                    <div class="pip-corner-btn selected" data-corner="bottom_right" onclick="selectPresenterCorner('bottom_right')">↘️ ล่างขวา</div>
+                  </div>
+                </div>
+
+                <!-- Size -->
+                <div>
+                  <div style="font-size: 11px; font-weight: 600; color: var(--lp-muted); margin-bottom: 4px;">ขนาด:</div>
+                  <div class="seg-group" style="min-width: 140px;">
+                    <div class="seg-btn" data-pipsize="180" onclick="selectPresenterSize('180')">180px เล็ก</div>
+                    <div class="seg-btn selected" data-pipsize="220" onclick="selectPresenterSize('220')">220px ปกติ</div>
+                    <div class="seg-btn" data-pipsize="260" onclick="selectPresenterSize('260')">260px ใหญ่</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden native form elements for 100% backend synchronization -->
+            <div style="position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; overflow: hidden;" aria-hidden="true">
+              <select id="voiceChoice">
+                <option value="Kore" selected>Kore</option>
+                <option value="Aoede">Aoede</option>
+                <option value="Leda">Leda</option>
+                <option value="Zephyr">Zephyr</option>
+                <option value="Puck">Puck</option>
+                <option value="Fenrir">Fenrir</option>
+                <option value="Charon">Charon</option>
+              </select>
+              <select id="fontChoice">
+                <option value="mitr" selected>mitr</option>
+                <option value="kanit">kanit</option>
+                <option value="sarabun">sarabun</option>
+                <option value="prompt">prompt</option>
+                <option value="anuphan">anuphan</option>
+                <option value="noto">noto</option>
+                <option value="chonburi">chonburi</option>
+                <option value="charm">charm</option>
+                <option value="baijamjuree">baijamjuree</option>
+                <option value="mali">mali</option>
+                <option value="pridi">pridi</option>
+                <option value="pattaya">pattaya</option>
+                <option value="chakrapetch">chakrapetch</option>
+                <option value="sriracha">sriracha</option>
+                <option value="itim">itim</option>
+                <option value="k2d">k2d</option>
+                <option value="athiti">athiti</option>
+                <option value="taviraj">taviraj</option>
+                <option value="ibmplex">ibmplex</option>
+              </select>
+              <select id="bgmToggle">
+                <option value="bgm1" selected>bgm1</option>
+                <option value="bgm2">bgm2</option>
+                <option value="bgm3">bgm3</option>
+                <option value="none">none</option>
+              </select>
+              <select id="sfxChoice">
+                <option value="auto" selected>auto</option>
+                <option value="minimal">minimal</option>
+                <option value="none">none</option>
+              </select>
+              <select id="subPosY">
+                <option value="75" selected>75</option>
+                <option value="50">50</option>
+                <option value="25">25</option>
+              </select>
+              <select id="subScale">
+                <option value="85">85</option>
+                <option value="100" selected>100</option>
+                <option value="120">120</option>
+              </select>
+              <select id="presenterCorner">
+                <option value="bottom_right" selected>bottom_right</option>
+                <option value="bottom_left">bottom_left</option>
+                <option value="top_right">top_right</option>
+                <option value="top_left">top_left</option>
+              </select>
+              <select id="presenterSize">
+                <option value="180">180</option>
+                <option value="220" selected>220</option>
+                <option value="260">260</option>
+              </select>
+              <input type="file" id="presenterInput" accept="image/*,video/*" onchange="handlePresenterFile(this)">
+            </div>
+
+          </div>
         </div>
 
         <!-- Render Button -->
-        <div style="margin-top: 24px;">
-          <button id="btnStartRender" class="btn btn-primary btn-block" style="padding: 14px 24px; font-size: 15.5px;"
+        <div style="margin-top: 22px;">
+          <button id="btnStartRender" class="btn btn-primary btn-block" style="padding: 14px 24px; font-size: 15.5px; box-shadow: 0 4px 14px rgba(24,119,242,0.3);"
             disabled>
             ✨ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)
           </button>
@@ -905,16 +2238,11 @@
             <div id="barFill" class="progress-bar-fill"></div>
           </div>
           <div class="pipeline-steps">
-            <div id="p-upload" class="pipeline-step active"><span class="step-bullet">1</span> สตรีมวิดีโอเข้าสู่ Engine
-            </div>
-            <div id="p-script" class="pipeline-step"><span class="step-bullet">2</span> ให้ AI
-              วิเคราะห์คลิปและเขียนบทขาย</div>
-            <div id="p-tts" class="pipeline-step"><span class="step-bullet">3</span> สร้างเสียงพากย์ภาษาไทย (Gemini TTS)
-            </div>
-            <div id="p-sub" class="pipeline-step"><span class="step-bullet">4</span> ถอดคำและจัดวรรคซับไตเติ้ลภาษาไทย
-            </div>
-            <div id="p-mix" class="pipeline-step"><span class="step-bullet">5</span> มิกซ์เสียงเพลง BGM และเรนเดอร์ไฟล์
-              MP4</div>
+            <div id="p-upload" class="pipeline-step active"><span class="step-bullet">1</span> สตรีมวิดีโอเข้าสู่ Engine</div>
+            <div id="p-script" class="pipeline-step"><span class="step-bullet">2</span> ให้ AI วิเคราะห์คลิปและเขียนบทขาย</div>
+            <div id="p-tts" class="pipeline-step"><span class="step-bullet">3</span> สร้างเสียงพากย์ภาษาไทย (Gemini TTS)</div>
+            <div id="p-sub" class="pipeline-step"><span class="step-bullet">4</span> ถอดคำและจัดวรรคซับไตเติ้ลภาษาไทย</div>
+            <div id="p-mix" class="pipeline-step"><span class="step-bullet">5</span> มิกซ์ดนตรี BGM และเรนเดอร์ MP4</div>
           </div>
           <div id="logTerminal" class="terminal-box"></div>
         </div>
@@ -929,36 +2257,60 @@
           <div style="display: flex; gap: 6px;">
             <button type="button" id="tabPreviewVideo" class="btn btn-secondary active"
               onclick="switchPreviewMode('video')"
-              style="padding: 4px 10px; font-size: 11.5px; background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.5); color: #60a5fa;">🎬
-              ดูคลิป (Reels)</button>
+              style="padding: 5px 12px; font-size: 12px; background: rgba(24,119,242,0.12); border-color: rgba(24,119,242,0.4); color: #1877f2; font-weight: 700;">
+              🎬 ดูคลิป (Reels)
+            </button>
             <button type="button" id="tabPreviewThumb" class="btn btn-secondary" onclick="switchPreviewMode('thumb')"
-              style="padding: 4px 10px; font-size: 11.5px; border-color: rgba(245,158,11,0.4); color: #fbbf24;">🖼️
-              ดูรูปหน้าปก (Cover HD)</button>
+              style="padding: 5px 12px; font-size: 12px; border-color: rgba(245,158,11,0.4); color: #d97706; font-weight: 700;">
+              🖼️ ดูรูปปก (Cover HD)
+            </button>
           </div>
         </div>
 
+        <!-- Phone Frame Mockup -->
         <div class="phone-bezel">
+          <div class="phone-island"></div>
           <div class="phone-screen" style="position: relative;">
-            <video id="reelPlayer" controls playsinline preload="auto" poster="likes_auto_finished_thumb.jpg" src="sample_product.mp4"
-              style="width: 100%; height: 100%; object-fit: cover;"></video>
-            <img id="reelThumbPreview" src="likes_auto_finished_thumb.jpg"
+            <video id="reelPlayer" controls playsinline preload="auto" poster="/likes_auto_finished_thumb.jpg" src="/sample_product.mp4"
+              style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px;"></video>
+            <img id="reelThumbPreview" src="/likes_auto_finished_thumb.jpg"
               style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 20px;"
+              onerror="if(this.src!=='/likes_auto_finished_thumb.jpg')this.src='/likes_auto_finished_thumb.jpg';"
               alt="รูปหน้าปกคลิปไวรัล">
           </div>
         </div>
 
+        <!-- Action Row (Download / Share) -->
+        <div style="width: 100%; margin-top: 16px;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="btnSaveVideo" class="btn btn-success" style="flex: 1 1 140px; font-weight: 700;">
+              ⬇️ ดาวน์โหลดคลิป
+            </button>
+            <button id="btnSaveThumb" class="btn btn-amber" style="flex: 1 1 130px; font-weight: 700;">
+              🖼️ เซฟรูปปก HD
+            </button>
+          </div>
+          <button type="button" id="btnMobileShare" class="btn btn-primary btn-block"
+            style="margin-top: 8px; background: linear-gradient(135deg, #1877f2, #0d5fd0); box-shadow: 0 4px 12px rgba(24,119,242,0.25);"
+            onclick="triggerMobileShare()">
+            📲 แชร์คลิปไป TikTok / Reels (แชร์ผ่านมือถือ)
+          </button>
+        </div>
+
         <!-- Result Details Tabs -->
         <div style="width: 100%;">
-          <div class="tab-bar">
-            <button class="tab-item active" onclick="showTab('scriptTab')">บทพากย์ & แคปชัน</button>
-            <button class="tab-item" onclick="showTab('fbTab')">โพสต์ Facebook Reels</button>
-            <button class="tab-item" onclick="showTab('shopeeTab')">🛒 ลิงก์ Shopee</button>
-            <button class="tab-item" onclick="showTab('metaAiTab')">🤖 Meta AI Prompts</button>
+          <div class="tab-bar-wrap">
+            <div class="tab-bar">
+              <button class="tab-item active" onclick="showTab('scriptTab')">📝 บทพากย์ & แคปชัน</button>
+              <button class="tab-item" onclick="showTab('fbTab')">🚀 โพสต์ Facebook Reels</button>
+              <button class="tab-item" onclick="showTab('shopeeTab')">🛒 ลิงก์ Shopee</button>
+              <button class="tab-item" onclick="showTab('metaAiTab')">🤖 Meta AI Prompts</button>
+            </div>
           </div>
 
           <!-- Script Content -->
           <div id="scriptTab">
-            <div class="field-group" style="margin-top: 10px;">
+            <div class="field-group" style="margin-top: 4px;">
               <label class="field-label">หัวข้อคลิป (Title)</label>
               <input type="text" id="outTitle" class="field-input" value="รีวิวกระบอกน้ำเก็บความเย็น 24 ชม. สแตนเลส 316"
                 readonly>
@@ -982,25 +2334,11 @@
                   style="flex: none; padding: 0 14px; font-size: 12px;">📋 คัดลอก</button>
               </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
-              <button id="btnSaveVideo" class="btn btn-success" style="flex: 1 1 180px;">
-                ⬇️ ดาวน์โหลดคลิป (MP4)
-              </button>
-              <button id="btnSaveThumb" class="btn btn-secondary"
-                style="flex: 1 1 140px; border-color: rgba(245, 158, 11, 0.5); color: #b45309; font-weight: 600;">
-                🖼️ บันทึกรูปปก (Cover HD)
-              </button>
-            </div>
-            <button type="button" id="btnMobileShare" class="btn btn-primary btn-block"
-              style="margin-top: 10px; background: linear-gradient(135deg, #1877f2, #0d5fd0); display: none;"
-              onclick="triggerMobileShare()">
-              📲 แชร์คลิปไป Facebook Reels / TikTok (แชร์ผ่านมือถือ)
-            </button>
             <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-              <button type="button" class="btn btn-secondary" style="flex: 1 1 140px; font-size: 12px; padding: 8px 10px;" onclick="copyFullCaption()">
+              <button type="button" class="btn btn-secondary" style="flex: 1 1 140px; font-size: 12px; padding: 9px 12px;" onclick="copyFullCaption()">
                 📋 คัดลอกแคปชันทั้งหมด
               </button>
-              <button type="button" class="btn btn-secondary" style="flex: 1 1 140px; font-size: 12px; padding: 8px 10px;" onclick="copyFirstComment()">
+              <button type="button" class="btn btn-secondary" style="flex: 1 1 140px; font-size: 12px; padding: 9px 12px;" onclick="copyFirstComment()">
                 💬 คัดลอกคอมเมนต์ปักหมุด
               </button>
             </div>
@@ -1129,10 +2467,62 @@
 
   </div>
 
+  <!-- Creator & Platform Footer (Compact & Modern) -->
+  <footer>
+    <div class="footer-container">
+      <div class="creator-bar">
+        <div class="creator-profile">
+          <div class="creator-avatar-wrap">
+            <img src="/bank_avatar.jpg" alt="Bank Chakkrit Kawinram" class="creator-avatar"
+                 onerror="this.style.display='none'; document.getElementById('creatorFallbackAvatar').style.display='flex';">
+            <div id="creatorFallbackAvatar" class="creator-avatar" style="display: none; background: #e2e8f0; color: #475569;">👨‍💻</div>
+            <div class="creator-status-dot" title="Online Developer"></div>
+          </div>
+          <div class="creator-details">
+            <div class="creator-name-row">
+              <span class="creator-name">Bank Chakkrit Kawinram</span>
+              <span class="creator-badge-dev">ผู้พัฒนา</span>
+            </div>
+            <div class="creator-subtitle">
+              <span>Digital Creator & AI Developer</span>
+              <span>•</span>
+              <span>Muang Buriram</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="creator-actions">
+          <a href="https://facebook.com/BankJukkirt/" target="_blank" rel="noopener noreferrer" class="btn-creator-fb">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            <span>Facebook</span>
+          </a>
+          <a href="tel:0619196251" class="btn-creator-contact">
+            <span>📞 06-19196251</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 <strong>LikesAuto Studio</strong> — แพลตฟอร์มตัดต่อและสร้างสรรค์คลิปวิดีโอ AI อัตโนมัติ
+        </div>
+        <div class="footer-links">
+          <a href="https://likes-auto.com" target="_blank">หน้าหลัก</a>
+          <span>•</span>
+          <a href="https://facebook.com/BankJukkirt/" target="_blank">ติดต่อผู้จัดทำ</a>
+          <span>•</span>
+          <span>Powered by Gemini AI</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
   <!-- Mobile Sticky Floating Render Button -->
   <div class="mobile-sticky-action" id="mobileStickyBar">
     <button type="button" id="btnStickyRender" class="btn btn-primary btn-block" style="box-shadow: 0 4px 14px rgba(24,119,242,0.35); font-size: 15px; padding: 13px;" onclick="handleMobileStickyRender()">
-      ⚡ สร้างคลิปรีวิว (AI Render)
+      ⚡ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)
     </button>
   </div>
 
@@ -1172,20 +2562,22 @@
   </div>
 
   <script>
-    if (location.hostname !== '127.0.0.1' && location.hostname !== 'localhost') {
-      const cb = document.getElementById('cloudBanner')
-      if (cb) cb.style.display = 'flex'
-    }
+    const ONLINE_TUNNEL_URL = 'https://judicial-sociology-speech-inventory.trycloudflare.com'
     const ACTIVE_KEY = ''
     let currentExtId = ''
     let loadedVideoFile = null
     let currentVideoBlob = null
+    let currentThumbUrl = '/likes_auto_finished_thumb.jpg'
 
     const extBadge = document.getElementById('extBadge')
     const extBadgeText = document.getElementById('extBadgeText')
     const btnStartRender = document.getElementById('btnStartRender')
+    const btnStickyRender = document.getElementById('btnStickyRender')
     const videoInput = document.getElementById('videoInput')
-    const dropPrompt = document.getElementById('dropPrompt')
+    const dropArea = document.getElementById('dropArea')
+    const videoLoadedCard = document.getElementById('videoLoadedCard')
+    const loadedFileName = document.getElementById('loadedFileName')
+    const loadedFileSize = document.getElementById('loadedFileSize')
     const reelPlayer = document.getElementById('reelPlayer')
     const progressCard = document.getElementById('progressCard')
     const barFill = document.getElementById('barFill')
@@ -1210,15 +2602,21 @@
         })
       }
       extBadge.className = 'badge badge-ok'
-      extBadgeText.textContent = 'LikesAuto Studio Engine พร้อมใช้งาน 100%'
-      if (loadedVideoFile) btnStartRender.disabled = false
+      extBadgeText.textContent = 'Engine พร้อมใช้งาน'
+      if (loadedVideoFile) {
+        btnStartRender.disabled = false
+        if (btnStickyRender) btnStickyRender.disabled = false
+      }
     }
 
     function setReady(id) {
       currentExtId = id
       extBadge.className = 'badge badge-ok'
-      extBadgeText.textContent = 'Extension + Engine พร้อมใช้งาน 100%'
-      if (loadedVideoFile) btnStartRender.disabled = false
+      extBadgeText.textContent = 'Extension + Engine พร้อม'
+      if (loadedVideoFile) {
+        btnStartRender.disabled = false
+        if (btnStickyRender) btnStickyRender.disabled = false
+      }
     }
 
     window.addEventListener('pubilo-ext-ready', (e) => {
@@ -1226,44 +2624,330 @@
     })
     checkExt()
 
-    // Dropzone Click Handler
-    window.handleDropzoneClick = function (e) {
-      if (e.target && e.target.closest('button')) return
-      document.getElementById('videoInput').click()
+    // ========================================================
+    // ADVANCED SETTINGS INTERACTIVE LOGIC & SYNCHRONIZATION
+    // ========================================================
+    window.toggleAccordion = function (id) {
+      const el = document.getElementById(id)
+      const btn = document.getElementById('advAccordionBtn')
+      const arrow = document.getElementById('accordionArrow')
+      if (!el) return
+      const isOpen = el.classList.toggle('open')
+      if (btn) btn.classList.toggle('is-open', isOpen)
+      if (arrow) {
+        arrow.textContent = isOpen ? '▲' : '▼'
+      }
+    }
+
+    // Voice Selection & Filter
+    window.selectVoice = function (voiceKey) {
+      document.querySelectorAll('.voice-card').forEach(card => {
+        card.classList.toggle('selected', card.getAttribute('data-voice') === voiceKey)
+      })
+      const sel = document.getElementById('voiceChoice')
+      if (sel) sel.value = voiceKey
+      updateAdvSummary()
+    }
+
+    window.filterVoiceTab = function (gender, pill) {
+      if (pill && pill.parentElement) {
+        pill.parentElement.querySelectorAll('.adv-tab-pill').forEach(p => p.classList.remove('active'))
+        pill.classList.add('active')
+      }
+      document.querySelectorAll('.voice-card').forEach(card => {
+        if (gender === 'all' || card.getAttribute('data-gender') === gender) {
+          card.style.display = 'flex'
+        } else {
+          card.style.display = 'none'
+        }
+      })
+    }
+
+    // Font Selection & Filter
+    window.selectFont = function (fontKey) {
+      document.querySelectorAll('.font-card').forEach(card => {
+        card.classList.toggle('selected', card.getAttribute('data-font') === fontKey)
+      })
+      const sel = document.getElementById('fontChoice')
+      if (sel) sel.value = fontKey
+      updateSubPreview()
+      updateAdvSummary()
+    }
+
+    window.filterFontTab = function (category, pill) {
+      if (pill && pill.parentElement) {
+        pill.parentElement.querySelectorAll('.adv-tab-pill').forEach(p => p.classList.remove('active'))
+        pill.classList.add('active')
+      }
+      document.querySelectorAll('.font-card').forEach(card => {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+          card.style.display = 'block'
+        } else {
+          card.style.display = 'none'
+        }
+      })
+    }
+
+    // BGM Selection
+    window.selectBgm = function (bgmKey) {
+      document.querySelectorAll('.seg-btn[data-bgm]').forEach(btn => {
+        btn.classList.toggle('selected', btn.getAttribute('data-bgm') === bgmKey)
+      })
+      const sel = document.getElementById('bgmToggle')
+      if (sel) sel.value = bgmKey
+    }
+
+    // SFX Selection
+    window.selectSfx = function (sfxKey) {
+      document.querySelectorAll('.seg-btn[data-sfx]').forEach(btn => {
+        btn.classList.toggle('selected', btn.getAttribute('data-sfx') === sfxKey)
+      })
+      const sel = document.getElementById('sfxChoice')
+      if (sel) sel.value = sfxKey
+    }
+
+    // Subtitle Position
+    window.selectSubPos = function (posY) {
+      document.querySelectorAll('.seg-btn[data-pos]').forEach(btn => {
+        btn.classList.toggle('selected', btn.getAttribute('data-pos') === posY)
+      })
+      const sel = document.getElementById('subPosY')
+      if (sel) sel.value = posY
+      updateSubPreview()
+    }
+
+    // Subtitle Scale
+    window.selectSubScale = function (scale) {
+      document.querySelectorAll('.seg-btn[data-scale]').forEach(btn => {
+        btn.classList.toggle('selected', btn.getAttribute('data-scale') === scale)
+      })
+      const sel = document.getElementById('subScale')
+      if (sel) sel.value = scale
+      updateSubPreview()
+    }
+
+    // Subtitle Color Presets
+    window.selectColorPreset = function (textColor, borderColor, pill) {
+      document.querySelectorAll('.color-preset-pill').forEach(p => p.classList.remove('selected'))
+      if (pill) pill.classList.add('selected')
+      const c1 = document.getElementById('subColor')
+      const c2 = document.getElementById('subBorder')
+      if (c1) c1.value = textColor
+      if (c2) c2.value = borderColor
+      updateSubPreview()
+    }
+
+    window.onCustomColorChange = function () {
+      document.querySelectorAll('.color-preset-pill').forEach(p => p.classList.remove('selected'))
+      updateSubPreview()
+    }
+
+    // Presenter Corner & Size
+    window.selectPresenterCorner = function (corner) {
+      document.querySelectorAll('.pip-corner-btn').forEach(btn => {
+        btn.classList.toggle('selected', btn.getAttribute('data-corner') === corner)
+      })
+      const sel = document.getElementById('presenterCorner')
+      if (sel) sel.value = corner
+    }
+
+    window.selectPresenterSize = function (size) {
+      document.querySelectorAll('.seg-btn[data-pipsize]').forEach(btn => {
+        btn.classList.toggle('selected', btn.getAttribute('data-pipsize') === size)
+      })
+      const sel = document.getElementById('presenterSize')
+      if (sel) sel.value = size
+    }
+
+    window.handlePresenterFile = function (input) {
+      const infoBox = document.getElementById('presenterFileInfo')
+      const nameEl = document.getElementById('presenterFileName')
+      const sizeEl = document.getElementById('presenterFileSize')
+      if (input.files && input.files.length > 0) {
+        const f = input.files[0]
+        if (nameEl) nameEl.textContent = f.name
+        if (sizeEl) sizeEl.textContent = '(' + (f.size > 1024 * 1024 ? (f.size / (1024 * 1024)).toFixed(1) + ' MB' : Math.round(f.size / 1024) + ' KB') + ')'
+        if (infoBox) infoBox.style.display = 'inline-flex'
+      } else {
+        if (infoBox) infoBox.style.display = 'none'
+      }
+    }
+
+    window.clearPresenterFile = function () {
+      const input = document.getElementById('presenterInput')
+      if (input) input.value = ''
+      const infoBox = document.getElementById('presenterFileInfo')
+      if (infoBox) infoBox.style.display = 'none'
+    }
+
+    // Live Subtitle Preview Simulator
+    window.updateSubPreview = function () {
+      const font = (document.getElementById('fontChoice') || {}).value || 'mitr'
+      const color = (document.getElementById('subColor') || {}).value || '#ffffff'
+      const border = (document.getElementById('subBorder') || {}).value || '#000000'
+      const scale = parseInt((document.getElementById('subScale') || {}).value || 100)
+      const posY = (document.getElementById('subPosY') || {}).value || '75'
+
+      const textEl = document.getElementById('subLivePreviewText')
+      const posBadge = document.getElementById('subLivePosBadge')
+      const fontBadge = document.getElementById('subLiveFontBadge')
+
+      const fontFamilies = {
+        mitr: "'Mitr', sans-serif",
+        kanit: "'Kanit', sans-serif",
+        sarabun: "'Sarabun', sans-serif",
+        prompt: "'Prompt', sans-serif",
+        anuphan: "'Anuphan', sans-serif",
+        noto: "'Noto Sans Thai', sans-serif",
+        chonburi: "'Chonburi', serif",
+        charm: "'Charm', cursive",
+        baijamjuree: "'Bai Jamjuree', sans-serif",
+        mali: "'Mali', cursive",
+        pridi: "'Pridi', serif",
+        pattaya: "'Pattaya', sans-serif",
+        chakrapetch: "'Chakra Petch', sans-serif",
+        sriracha: "'Sriracha', cursive",
+        itim: "'Itim', cursive",
+        k2d: "'K2D', sans-serif",
+        athiti: "'Athiti', sans-serif",
+        taviraj: "'Taviraj', serif",
+        ibmplex: "'IBM Plex Sans Thai', sans-serif"
+      }
+
+      if (textEl) {
+        textEl.style.fontFamily = fontFamilies[font] || "'Mitr', sans-serif"
+        textEl.style.color = color
+        textEl.style.webkitTextStroke = `1.5px ${border}`
+        textEl.style.fontSize = Math.round(18 * (scale / 100)) + 'px'
+      }
+
+      if (posBadge) {
+        const posNames = { '75': 'ล่างคลิป (75%)', '50': 'กลางคลิป (50%)', '25': 'บนคลิป (25%)' }
+        posBadge.textContent = posNames[posY] || (posY + '%')
+      }
+
+      if (fontBadge) {
+        const capitalFont = font.charAt(0).toUpperCase() + font.slice(1)
+        fontBadge.textContent = `${capitalFont} • ${scale}%`
+      }
+    }
+
+    function updateAdvSummary() {
+      const v = (document.getElementById('voiceChoice') || {}).value || 'Kore'
+      const f = (document.getElementById('fontChoice') || {}).value || 'mitr'
+      const badge = document.getElementById('advSummaryBadge')
+      if (badge) {
+        badge.textContent = `${v} • ${f.charAt(0).toUpperCase() + f.slice(1)}`
+      }
+    }
+    // Initialize initial preview on load
+    setTimeout(function() {
+      try {
+        updateSubPreview()
+        updateAdvSummary()
+      } catch (err) {}
+    }, 50)
+
+    // Visual Style Card Selection
+    window.selectStyleCard = function (styleKey) {
+      document.querySelectorAll('.style-card-option').forEach(card => {
+        card.classList.toggle('selected', card.getAttribute('data-style') === styleKey)
+      })
+      const sel = document.getElementById('thumbStyle')
+      if (sel) sel.value = styleKey
+    }
+
+    // Standalone Native File Picker Trigger (100% Mobile Safe)
+    window.triggerFilePicker = function () {
+      const vi = document.getElementById('videoInput')
+      if (!vi) return
+      vi.value = '' // Reset so user can pick the same file again or swap smoothly
+      vi.click()
     }
 
     // Video Selected Handler
     window.handleVideoSelected = function (file) {
       if (!file) return
       loadedVideoFile = file
-      const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
-      const promptEl = document.getElementById('dropPrompt')
-      const areaEl = document.getElementById('dropArea')
-      if (promptEl) {
-        promptEl.innerHTML = `✅ <strong>${file.name}</strong> (${sizeMB} MB พร้อมตัดต่อ)`
+      const sizeMB = file.size > 1024 * 1024 
+        ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
+        : (file.size / 1024).toFixed(0) + ' KB'
+
+      const loadedFileName = document.getElementById('loadedFileName')
+      const loadedFileSize = document.getElementById('loadedFileSize')
+      const loadedFileDuration = document.getElementById('loadedFileDuration')
+      const loadedFileRatio = document.getElementById('loadedFileRatio')
+      const miniVideoPlayer = document.getElementById('miniVideoPlayer')
+      const videoLoadedCard = document.getElementById('videoLoadedCard')
+      const dropArea = document.getElementById('dropArea')
+
+      if (loadedFileName) loadedFileName.textContent = file.name
+      if (loadedFileSize) loadedFileSize.textContent = sizeMB
+
+      const videoUrl = URL.createObjectURL(file)
+      if (miniVideoPlayer) {
+        miniVideoPlayer.src = videoUrl
+        miniVideoPlayer.onloadedmetadata = function () {
+          const durSec = Math.round(miniVideoPlayer.duration || 0)
+          const mins = Math.floor(durSec / 60)
+          const secs = durSec % 60
+          if (loadedFileDuration) {
+            loadedFileDuration.textContent = `⏱️ ${mins}:${secs < 10 ? '0' : ''}${secs} นาที`
+          }
+          if (loadedFileRatio) {
+            const isVertical = (miniVideoPlayer.videoHeight || 0) >= (miniVideoPlayer.videoWidth || 0)
+            loadedFileRatio.textContent = isVertical ? '📐 แนวตั้ง (9:16)' : '📐 แนวนอน (16:9)'
+          }
+        }
       }
-      if (areaEl) {
-        areaEl.style.borderColor = '#10b981'
-        areaEl.style.background = 'rgba(16, 185, 129, 0.08)'
+
+      if (reelPlayer) {
+        try { reelPlayer.src = videoUrl } catch (err) { }
       }
-      try {
-        reelPlayer.src = URL.createObjectURL(file)
-      } catch (err) { }
+
+      if (dropArea) dropArea.style.display = 'none'
+      if (videoLoadedCard) videoLoadedCard.style.display = 'flex'
 
       btnStartRender.disabled = false
-      const stickyBtn = document.getElementById('btnStickyRender')
-      if (stickyBtn) stickyBtn.disabled = false
-      addLog(`[File] ✅ เลือกวิดีโอเรียบร้อย: ${file.name} (${sizeMB} MB)`)
+      if (btnStickyRender) {
+        btnStickyRender.disabled = false
+        btnStickyRender.innerHTML = '⚡ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)'
+        btnStickyRender.style.background = 'linear-gradient(135deg, #1877f2 0%, #0d5fd0 100%)'
+      }
+      addLog(`[File] ✅ เลือกวิดีโอเรียบร้อย: ${file.name} (${sizeMB})`)
     }
 
-    // File input
+    // Reset / Remove Selected Video
+    window.resetSelectedVideo = function () {
+      loadedVideoFile = null
+      const vi = document.getElementById('videoInput')
+      if (vi) vi.value = ''
+      const miniVideoPlayer = document.getElementById('miniVideoPlayer')
+      if (miniVideoPlayer) {
+        miniVideoPlayer.pause()
+        miniVideoPlayer.src = ''
+      }
+      const videoLoadedCard = document.getElementById('videoLoadedCard')
+      const dropArea = document.getElementById('dropArea')
+      if (videoLoadedCard) videoLoadedCard.style.display = 'none'
+      if (dropArea) dropArea.style.display = 'block'
+
+      btnStartRender.disabled = true
+      if (btnStickyRender) {
+        btnStickyRender.disabled = false
+        btnStickyRender.innerHTML = '📹 แตะเลือกวิดีโอเพื่อเริ่มตัดต่อ'
+        btnStickyRender.style.background = 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+      }
+      addLog('[File] ลบไฟล์วิดีโอออกเรียบร้อย พร้อมเลือกไฟล์ใหม่')
+    }
+
+    // File input listener
     videoInput.addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0]
       if (file) handleVideoSelected(file)
     })
 
     // Drag and drop
-    const dropArea = document.getElementById('dropArea')
     dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('active'); })
     dropArea.addEventListener('dragleave', () => dropArea.classList.remove('active'))
     dropArea.addEventListener('drop', (e) => {
@@ -1289,7 +2973,6 @@
         const blob = await resp.blob()
         const file = new File([blob], 'sample_product.mp4', { type: 'video/mp4' })
         handleVideoSelected(file)
-        alert('✅ โหลดคลิปตัวอย่างสำเร็จ พร้อมกดตัดต่อได้ทันที!')
       } catch (err) {
         if (promptEl) promptEl.innerHTML = 'แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ'
         alert('เกิดข้อผิดพลาดในการโหลดคลิปตัวอย่าง: ' + err.message + '\nแนะนำให้แตะปุ่ม "เลือกวิดีโอจากเครื่อง" เพื่อใช้วิดีโอของคุณได้เลยครับ')
@@ -1299,8 +2982,7 @@
     // Mobile Sticky Render Handler
     window.handleMobileStickyRender = function () {
       if (!loadedVideoFile) {
-        alert('📹 กรุณาแตะเลือกไฟล์วิดีโอสินค้าของคุณก่อนครับ (แตะที่กล่องเลือกวิดีโอด้านบน หรือกด "ใช้คลิปตัวอย่าง")')
-        document.getElementById('videoInput').click()
+        triggerFilePicker()
         return
       }
       runNativeRender()
@@ -1313,20 +2995,20 @@
         document.getElementById('videoInput').click()
         return
       }
+      runNativeRender()
+    })
 
+    async function runNativeRender() {
       btnStartRender.disabled = true
-      const stickyBtn = document.getElementById('btnStickyRender')
-      if (stickyBtn) stickyBtn.disabled = true
+      if (btnStickyRender) {
+        btnStickyRender.disabled = true
+        btnStickyRender.innerHTML = '⏳ กำลังตัดต่อด้วย AI...'
+      }
 
       progressCard.style.display = 'block'
       logTerminal.style.display = 'block'
       logTerminal.innerHTML = ''
 
-      // Use High-Speed Native AI Engine (Gemini 3.5 Flash + Gemini 3.8 Flash TTS + Ultrafast Multi-threaded FFmpeg)
-      runNativeRender()
-    })
-
-    async function runNativeRender() {
       setBar(8, 'กำลังเชื่อมต่อ LikesAuto Studio Engine...')
       setStep('p-upload')
       addLog('🚀 เริ่มขั้นตอนตัดต่อวิดีโอด้วย LikesAuto High-Speed Native Engine...')
@@ -1362,7 +3044,7 @@
           currentPct += Math.floor(Math.random() * 6) + 4
           if (currentPct >= 20 && currentPct < 45) {
             setStep('p-script')
-            setBar(currentPct, 'Gemini 3 Vision กำลังดูภาพวิดีโอ วิเคราะห์สินค้าและแต่งบทขายตรงจุด...')
+            setBar(currentPct, 'Gemini 3 Vision กำลังวิเคราะห์คลิปและแต่งบทขายตรงจุด...')
           } else if (currentPct >= 45 && currentPct < 70) {
             setStep('p-tts')
             setBar(currentPct, 'Gemini TTS กำลังสร้างเสียงพากย์ภาษาไทยสำเนียงธรรมชาติ...')
@@ -1377,219 +3059,235 @@
       }, 600)
 
       try {
-        const ONLINE_TUNNEL_URL = 'https://judicial-sociology-speech-inventory.trycloudflare.com'
-
-      // Smart multi-tier endpoint candidates:
-      // When on mobile / likes-auto.com: Try Cloudflare Tunnel first -> then /api/studio/render -> then LAN/local
-      let renderCandidates = []
-      if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
-        renderCandidates = [
-          '/api/studio/render',
-          ONLINE_TUNNEL_URL + '/api/studio/render'
-        ]
-      } else {
-        renderCandidates = [
-          ONLINE_TUNNEL_URL + '/api/studio/render',
-          '/api/studio/render',
-          'http://127.0.0.1:8000/api/studio/render'
-        ]
-      }
-
-      let res = null
-      let activeBase = ''
-      let lastErr = null
-
-      for (const endpoint of renderCandidates) {
-        try {
-          addLog(`[Network] กำลังส่งงานไปยัง Engine: ${endpoint.includes('trycloudflare') ? 'Cloudflare Online Engine' : endpoint}...`)
-          const testRes = await fetch(endpoint, {
-            method: 'POST',
-            body: formData
-          })
-          if (testRes && testRes.ok) {
-            res = testRes
-            if (endpoint.startsWith('http')) {
-              activeBase = new URL(endpoint).origin
-            } else {
-              activeBase = window.location.origin
-            }
-            break
-          } else if (testRes && !testRes.ok) {
-            lastErr = `HTTP ${testRes.status}`
-          }
-        } catch (fetchErr) {
-          lastErr = fetchErr.message
-          console.warn('Endpoint error:', endpoint, fetchErr)
-        }
-      }
-
-      clearInterval(progressTimer)
-
-      if (!res || !res.ok) {
-        btnStartRender.disabled = false
-        const stickyBtn = document.getElementById('btnStickyRender')
-        if (stickyBtn) stickyBtn.disabled = false
-        throw new Error(lastErr || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์เรนเดอร์ได้ กรุณาลองใหม่อีกครั้ง')
-      }
-
-      const data = await res.json()
-      if (!data.ok) {
-        throw new Error(data.error || 'การเรนเดอร์ล้มเหลว')
-      }
-
-      setAllDone()
-      setBar(100, 'ตัดต่อเสร็จสมบูรณ์!')
-      btnStartRender.disabled = false
-      const stickyBtn = document.getElementById('btnStickyRender')
-      if (stickyBtn) stickyBtn.disabled = false
-
-      if (data.detected_product) {
-        addLog(`[AI Vision] 🔍 ตรวจพบสินค้าในวิดีโอ: ${data.detected_product}`)
-      }
-      addLog(`[Success] ✅ เรนเดอร์คลิปสำเร็จในความยาว ${data.duration.toFixed(1)} วินาที!`)
-      addLog('[Complete] คลิปพร้อมเล่น ดาวน์โหลด และแชร์ได้ทันที')
-
-      const rawVideo = data.video_url || ''
-      const fullVideoUrl = rawVideo.startsWith('http') ? rawVideo : (activeBase + rawVideo)
-      const rawThumb = data.thumbnail_url || '/likes_auto_finished_thumb.jpg'
-      const fullThumbUrl = rawThumb.startsWith('http') ? rawThumb : (activeBase + rawThumb)
-
-      reelPlayer.src = fullVideoUrl + '?t=' + Date.now()
-      reelPlayer.play().catch(() => { })
-
-      currentThumbUrl = fullThumbUrl
-      const thumbImg = document.getElementById('reelThumbPreview')
-      if (thumbImg) {
-        thumbImg.src = fullThumbUrl + '?t=' + Date.now()
-      }
-      document.getElementById('outTitle').value = data.title || 'คลิปขายของไวรัล'
-      document.getElementById('outScript').value = data.script || ''
-      document.getElementById('outCaption').value = data.caption || ''
-      if (data.first_comment) {
-        document.getElementById('outFirstComment').value = data.first_comment
-        document.getElementById('fbCommentText').value = data.first_comment
-      }
-
-      try {
-        const vBlobRes = await fetch(fullVideoUrl)
-        currentVideoBlob = await vBlobRes.blob()
-      } catch (e) { }
-
-      // --- Mobile UX Enhancements ---
-      const badgeView = document.getElementById('badgeViewReady')
-      if (badgeView) badgeView.style.display = 'inline-block'
-      const btnMobShare = document.getElementById('btnMobileShare')
-      if (btnMobShare) btnMobShare.style.display = 'block'
-      if (window.innerWidth <= 960) {
-        switchMobileCol('view')
-      }
-
-    } catch (err) {
-      clearInterval(progressTimer)
-      addLog('[Error] ' + err.message)
-      alert('เกิดข้อผิดพลาด: ' + err.message)
-      btnStartRender.disabled = false
-      const stickyBtn = document.getElementById('btnStickyRender')
-      if (stickyBtn) stickyBtn.disabled = false
-      setBar(0, 'ล้มเหลว: ' + err.message)
-    }
-  }
-
-  let currentThumbUrl = 'likes_auto_finished_thumb.jpg'
-
-  window.switchPreviewMode = function (mode) {
-    const v = document.getElementById('reelPlayer')
-    const img = document.getElementById('reelThumbPreview')
-    const btnV = document.getElementById('tabPreviewVideo')
-    const btnT = document.getElementById('tabPreviewThumb')
-    if (mode === 'thumb') {
-      v.style.display = 'none'
-      v.pause()
-      img.style.display = 'block'
-      btnT.style.background = 'rgba(245,158,11,0.2)'
-      btnT.style.borderColor = 'rgba(245,158,11,0.6)'
-      btnT.style.color = '#fbbf24'
-      btnV.style.background = ''
-      btnV.style.borderColor = ''
-      btnV.style.color = ''
-    } else {
-      img.style.display = 'none'
-      v.style.display = 'block'
-      btnV.style.background = 'rgba(59,130,246,0.18)'
-      btnV.style.borderColor = 'rgba(59,130,246,0.5)'
-      btnV.style.color = '#60a5fa'
-      btnT.style.background = ''
-      btnT.style.borderColor = ''
-      btnT.style.color = ''
-    }
-  }
-
-  // Save Video & Thumbnail
-  document.getElementById('btnSaveVideo').addEventListener('click', () => {
-    const a = document.createElement('a')
-    a.href = currentVideoBlob ? URL.createObjectURL(currentVideoBlob) : reelPlayer.src
-    a.download = `LikesAuto_Reel_${Date.now()}.mp4`
-    a.target = '_blank'
-    a.click()
-  })
-
-  document.getElementById('btnSaveThumb').addEventListener('click', () => {
-    const a = document.createElement('a')
-    a.href = currentThumbUrl
-    a.download = `LikesAuto_Thumb_${Date.now()}.jpg`
-    a.target = '_blank'
-    a.click()
-  })
-
-  window.triggerMobileShare = async function () {
-    const vidSrc = reelPlayer.src
-    if (!currentVideoBlob && vidSrc) {
-      try {
-        const r = await fetch(vidSrc)
-        currentVideoBlob = await r.blob()
-      } catch (e) { }
-    }
-
-    const captionText = document.getElementById('outCaption').value || ''
-    const titleText = document.getElementById('outTitle').value || 'คลิปไวรัล LikesAuto'
-
-    if (navigator.share && currentVideoBlob) {
-      try {
-        const file = new File([currentVideoBlob], 'LikesAuto_Reel.mp4', { type: 'video/mp4' })
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: titleText,
-            text: captionText,
-            files: [file]
-          })
-          return
-        }
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.log('Native share failed:', err)
+        let renderCandidates = []
+        if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
+          renderCandidates = [
+            '/api/studio/render',
+            ONLINE_TUNNEL_URL + '/api/studio/render'
+          ]
         } else {
-          return
+          renderCandidates = [
+            ONLINE_TUNNEL_URL + '/api/studio/render',
+            '/api/studio/render',
+            'http://127.0.0.1:8000/api/studio/render'
+          ]
+        }
+
+        let res = null
+        let activeBase = ''
+        let lastErr = null
+
+        for (const endpoint of renderCandidates) {
+          try {
+            addLog(`[Network] ส่งงานไปยัง Engine: ${endpoint.includes('trycloudflare') ? 'Cloudflare Online Engine' : endpoint}...`)
+            const testRes = await fetch(endpoint, {
+              method: 'POST',
+              body: formData
+            })
+            if (testRes && testRes.ok) {
+              res = testRes
+              if (endpoint.startsWith('http')) {
+                activeBase = new URL(endpoint).origin
+              } else {
+                activeBase = window.location.origin
+              }
+              break
+            } else if (testRes && !testRes.ok) {
+              lastErr = `HTTP ${testRes.status}`
+            }
+          } catch (fetchErr) {
+            lastErr = fetchErr.message
+            console.warn('Endpoint error:', endpoint, fetchErr)
+          }
+        }
+
+        clearInterval(progressTimer)
+
+        if (!res || !res.ok) {
+          btnStartRender.disabled = false
+          if (btnStickyRender) {
+            btnStickyRender.disabled = false
+            btnStickyRender.innerHTML = '⚡ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)'
+          }
+          throw new Error(lastErr || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์เรนเดอร์ได้ กรุณาลองใหม่อีกครั้ง')
+        }
+
+        const data = await res.json()
+        if (!data.ok) {
+          throw new Error(data.error || 'การเรนเดอร์ล้มเหลว')
+        }
+
+        setAllDone()
+        setBar(100, 'ตัดต่อเสร็จสมบูรณ์!')
+        btnStartRender.disabled = false
+        if (btnStickyRender) {
+          btnStickyRender.disabled = false
+          btnStickyRender.innerHTML = '⚡ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)'
+        }
+
+        if (data.detected_product) {
+          addLog(`[AI Vision] 🔍 ตรวจพบสินค้าในวิดีโอ: ${data.detected_product}`)
+        }
+        addLog(`[Success] ✅ เรนเดอร์คลิปสำเร็จในความยาว ${data.duration.toFixed(1)} วินาที!`)
+        addLog('[Complete] คลิปพร้อมเล่น ดาวน์โหลด และแชร์ได้ทันที')
+
+        const rawVideo = data.video_url || ''
+        const fullVideoUrl = rawVideo.startsWith('http') ? rawVideo : (activeBase + rawVideo)
+        const rawThumb = data.thumbnail_url || '/likes_auto_finished_thumb.jpg'
+        const fullThumbUrl = rawThumb.startsWith('http') ? rawThumb : (activeBase + rawThumb)
+
+        reelPlayer.src = fullVideoUrl + '?t=' + Date.now()
+        reelPlayer.play().catch(() => { })
+
+        currentThumbUrl = fullThumbUrl
+        const thumbImg = document.getElementById('reelThumbPreview')
+        if (thumbImg) {
+          thumbImg.src = fullThumbUrl + '?t=' + Date.now()
+        }
+        document.getElementById('outTitle').value = data.title || 'คลิปขายของไวรัล'
+        document.getElementById('outScript').value = data.script || ''
+        document.getElementById('outCaption').value = data.caption || ''
+        if (data.first_comment) {
+          document.getElementById('outFirstComment').value = data.first_comment
+          document.getElementById('fbCommentText').value = data.first_comment
+        }
+
+        try {
+          const vBlobRes = await fetch(fullVideoUrl)
+          currentVideoBlob = await vBlobRes.blob()
+        } catch (e) { }
+
+        // --- Mobile Switch to View Tab ---
+        const badgeView = document.getElementById('badgeViewReady')
+        if (badgeView) badgeView.style.display = 'inline-block'
+        if (window.innerWidth <= 960) {
+          switchMobileCol('view')
+        }
+
+      } catch (err) {
+        clearInterval(progressTimer)
+        addLog('[Error] ' + err.message)
+        alert('เกิดข้อผิดพลาด: ' + err.message)
+        btnStartRender.disabled = false
+        if (btnStickyRender) {
+          btnStickyRender.disabled = false
+          btnStickyRender.innerHTML = '⚡ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)'
+        }
+        setBar(0, 'ล้มเหลว: ' + err.message)
+      }
+    }
+
+    window.switchPreviewMode = function (mode) {
+      const v = document.getElementById('reelPlayer')
+      const img = document.getElementById('reelThumbPreview')
+      const btnV = document.getElementById('tabPreviewVideo')
+      const btnT = document.getElementById('tabPreviewThumb')
+      if (mode === 'thumb') {
+        if (v) {
+          v.pause()
+          v.style.display = 'none'
+        }
+        if (img) {
+          const freshUrl = currentThumbUrl.includes('?') ? currentThumbUrl : (currentThumbUrl + '?t=' + Date.now())
+          img.src = freshUrl
+          img.style.display = 'block'
+        }
+        if (btnT) {
+          btnT.style.background = 'rgba(245,158,11,0.2)'
+          btnT.style.borderColor = 'rgba(245,158,11,0.6)'
+          btnT.style.color = '#b45309'
+        }
+        if (btnV) {
+          btnV.style.background = ''
+          btnV.style.borderColor = ''
+          btnV.style.color = ''
+        }
+      } else {
+        if (img) img.style.display = 'none'
+        if (v) v.style.display = 'block'
+        if (btnV) {
+          btnV.style.background = 'rgba(24,119,242,0.12)'
+          btnV.style.borderColor = 'rgba(24,119,242,0.4)'
+          btnV.style.color = '#1877f2'
+        }
+        if (btnT) {
+          btnT.style.background = ''
+          btnT.style.borderColor = ''
+          btnT.style.color = ''
         }
       }
     }
 
-    const a = document.createElement('a')
-    a.href = currentVideoBlob ? URL.createObjectURL(currentVideoBlob) : vidSrc
-    a.download = `LikesAuto_Reel_${Date.now()}.mp4`
-    a.target = '_blank'
-    a.click()
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(captionText).catch(() => { })
-    }
-    alert('✅ บันทึกวิดีโอและคัดลอกแคปชั่นเรียบร้อยแล้ว!\nคุณสามารถเปิดแอป Facebook Reels หรือ TikTok บนมือถือแล้วเลือกวิดีโอนี้เพื่อโพสต์ได้ทันที')
-  }
+    // Save Video & Thumbnail
+    document.getElementById('btnSaveVideo').addEventListener('click', () => {
+      const a = document.createElement('a')
+      a.href = currentVideoBlob ? URL.createObjectURL(currentVideoBlob) : reelPlayer.src
+      a.download = `LikesAuto_Reel_${Date.now()}.mp4`
+      a.target = '_blank'
+      a.click()
+    })
 
-    function copyFirstComment() {
-      const txt = document.getElementById('outFirstComment').value
-      navigator.clipboard.writeText(txt).then(() => {
-        alert('คัดลอกคอมเมนต์ปักหมุดเรียบร้อย!')
+    document.getElementById('btnSaveThumb').addEventListener('click', () => {
+      const a = document.createElement('a')
+      a.href = currentThumbUrl
+      a.download = `LikesAuto_Thumb_${Date.now()}.jpg`
+      a.target = '_blank'
+      a.click()
+    })
+
+    window.triggerMobileShare = async function () {
+      const title = document.getElementById('outTitle')?.value || 'รีวิวสินค้าสุดปัง'
+      const text = document.getElementById('outCaption')?.value || ''
+
+      if (!currentVideoBlob && reelPlayer.src) {
+        try {
+          currentVideoBlob = await (await fetch(reelPlayer.src)).blob()
+        } catch (_) {}
+      }
+
+      if (navigator.share) {
+        try {
+          if (currentVideoBlob && navigator.canShare && navigator.canShare({ files: [new File([currentVideoBlob], 'reel.mp4', { type: 'video/mp4' })] })) {
+            const videoFile = new File([currentVideoBlob], 'likes_auto_reel.mp4', { type: 'video/mp4' })
+            await navigator.share({
+              title,
+              text,
+              files: [videoFile]
+            })
+            return
+          } else {
+            await navigator.share({
+              title,
+              text: `${title}\n\n${text}\n\nลิงก์: ${location.href}`
+            })
+            return
+          }
+        } catch (err) {
+          if (err.name === 'AbortError') return
+        }
+      }
+      copyFullCaption()
+      document.getElementById('btnSaveVideo')?.click()
+      alert('📱 ดาวน์โหลดคลิปและคัดลอกแคปชันเรียบร้อยแล้ว สามารถนำไปโพสต์ลง Facebook Reels / TikTok ได้ทันทีครับ!')
+    }
+
+    window.copyFullCaption = function () {
+      const title = document.getElementById('outTitle')?.value || ''
+      const caption = document.getElementById('outCaption')?.value || ''
+      const fullText = `${title}\n\n${caption}`
+      navigator.clipboard.writeText(fullText).then(() => {
+        alert('✅ คัดลอกหัวข้อ แคปชัน และแฮชแท็กเรียบร้อยแล้ว!')
       }).catch(() => {
-        alert('คัดลอก: ' + txt)
+        prompt('คัดลอกแคปชันด้านล่างนี้:', fullText)
+      })
+    }
+
+    window.copyFirstComment = function () {
+      const comment = document.getElementById('outFirstComment')?.value || ''
+      navigator.clipboard.writeText(comment).then(() => {
+        alert('✅ คัดลอกคอมเมนต์ปักหมุดเรียบร้อยแล้ว!')
+      }).catch(() => {
+        prompt('คัดลอกคอมเมนต์ด้านล่างนี้:', comment)
       })
     }
 
@@ -1599,7 +3297,6 @@
       const subId = document.getElementById('shopeeSubId').value.trim() || 'reels_01'
       if (!rawUrl) return alert('กรุณากรอกลิงก์สินค้า Shopee')
 
-      // Encode custom link format
       let shortUrl = ''
       try {
         const u = new URL(rawUrl)
@@ -1817,21 +3514,6 @@
       document.getElementById('timeField').style.display = v === 'schedule' ? 'block' : 'none'
     }
 
-    async function getBase64Chunks(file, chunkSize) {
-      const buffer = await file.arrayBuffer()
-      const bytes = new Uint8Array(buffer)
-      const chunks = []
-      for (let i = 0; i < bytes.length; i += chunkSize) {
-        const slice = bytes.subarray(i, i + chunkSize)
-        let binary = ''
-        for (let j = 0; j < slice.length; j += 0x8000) {
-          binary += String.fromCharCode.apply(null, slice.subarray(j, j + 0x8000))
-        }
-        chunks.push(btoa(binary))
-      }
-      return chunks
-    }
-
     // --- Mobile Responsive & Multi-device UI Helpers ---
     window.switchMobileCol = function (col) {
       const colEd = document.getElementById('colEditor')
@@ -1882,62 +3564,6 @@
         alert('📋 คัดลอกลิงก์สตูดิโอเรียบร้อยแล้ว: ' + txt)
       }).catch(() => {
         prompt('คัดลอกลิงก์ด้านล่างนี้ได้เลย:', txt)
-      })
-    }
-
-    window.triggerMobileShare = async function () {
-      const title = document.getElementById('outTitle')?.value || 'รีวิวสินค้าสุดปัง'
-      const text = document.getElementById('outCaption')?.value || ''
-
-      if (!currentVideoBlob && reelPlayer.src) {
-        try {
-          currentVideoBlob = await (await fetch(reelPlayer.src)).blob()
-        } catch (_) {}
-      }
-
-      if (navigator.share) {
-        try {
-          if (currentVideoBlob && navigator.canShare && navigator.canShare({ files: [new File([currentVideoBlob], 'reel.mp4', { type: 'video/mp4' })] })) {
-            const videoFile = new File([currentVideoBlob], 'likes_auto_reel.mp4', { type: 'video/mp4' })
-            await navigator.share({
-              title,
-              text,
-              files: [videoFile]
-            })
-            return
-          } else {
-            await navigator.share({
-              title,
-              text: `${title}\n\n${text}\n\nลิงก์: ${location.href}`
-            })
-            return
-          }
-        } catch (err) {
-          if (err.name === 'AbortError') return
-        }
-      }
-      copyFullCaption()
-      document.getElementById('btnSaveVideo')?.click()
-      alert('📱 ดาวน์โหลดคลิปและคัดลอกแคปชันเรียบร้อยแล้ว สามารถนำไปโพสต์ลง Facebook Reels / TikTok ได้ทันทีครับ!')
-    }
-
-    window.copyFullCaption = function () {
-      const title = document.getElementById('outTitle')?.value || ''
-      const caption = document.getElementById('outCaption')?.value || ''
-      const fullText = `${title}\n\n${caption}`
-      navigator.clipboard.writeText(fullText).then(() => {
-        alert('✅ คัดลอกหัวข้อ แคปชัน และแฮชแท็กเรียบร้อยแล้ว!')
-      }).catch(() => {
-        prompt('คัดลอกแคปชันด้านล่างนี้:', fullText)
-      })
-    }
-
-    window.copyFirstComment = function () {
-      const comment = document.getElementById('outFirstComment')?.value || ''
-      navigator.clipboard.writeText(comment).then(() => {
-        alert('✅ คัดลอกคอมเมนต์ปักหมุดเรียบร้อยแล้ว!')
-      }).catch(() => {
-        prompt('คัดลอกคอมเมนต์ด้านล่างนี้:', comment)
       })
     }
 

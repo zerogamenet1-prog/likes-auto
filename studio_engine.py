@@ -324,18 +324,37 @@ def draw_star(draw, center, size, fill=(255, 215, 0)):
 
 def format_thumbnail_texts(title: str, detected_product: str) -> tuple[str, str]:
     """
-    Format title and product into a punchy 2-tier viral headline.
+    Format title and product into a punchy, high-CTR 2-tier viral headline.
     Line 1: Hero Keyword / Product (highlighted in sticker box)
-    Line 2: Punchline / Benefit / Hook
+    Line 2: Punchline / Benefit / Hook (crisp white text with heavy outline)
     """
-    p = detected_product.strip()
-    t = title.strip()
+    p = (detected_product or "").strip()
+    t = (title or "").strip()
     
+    stop_words = ["ด้วย", "กับ", "ของ", "โดย", "และ", "หรือ", "เพื่อ", "ที่", "มี", "ใน", "จาก", "ให้", "เป็น", "คือ", "ไว้", "กัน", "น้า", "นะ", "จ้า"]
+
+    def clean_sub(s: str) -> str:
+        s = s.strip(" :!-|,•–—/\\")
+        changed = True
+        while changed:
+            changed = False
+            for w in stop_words:
+                if s.endswith(" " + w) or s.endswith(w):
+                    s = s[:-len(w)].strip(" :!-|,•–—/\\")
+                    changed = True
+                if s.startswith(w + " "):
+                    s = s[len(w):].strip(" :!-|,•–—/\\")
+                    changed = True
+        return s.strip()
+
     if p and len(p) <= 30:
         hero = p
         if t and t != p:
-            sub = t.replace(p, "").strip(" :!-|,")
+            sub = t.replace(p, "").strip()
+            sub = clean_sub(sub)
             if len(sub) >= 4 and len(sub) <= 35:
+                if len(hero) <= 12 and len(sub) <= 18:
+                    return f"{hero} {sub}", "คุณภาพพรีเมียม คุ้มเกินราคา!"
                 return hero, sub
         return hero, "คุณภาพพรีเมียม คุ้มเกินราคา!"
         
@@ -344,20 +363,23 @@ def format_thumbnail_texts(title: str, detected_product: str) -> tuple[str, str]
             parts = [x.strip() for x in t.split(sep) if x.strip()]
             if len(parts) >= 2:
                 h = parts[0]
-                s = " ".join(parts[1:])
+                s = clean_sub(" ".join(parts[1:]))
                 if len(h) <= 28 and len(s) <= 35:
                     return h, s
                     
     if len(t) > 20:
         words = t.split()
         mid = len(words) // 2
-        return " ".join(words[:mid]), " ".join(words[mid:])
+        return " ".join(words[:mid]), clean_sub(" ".join(words[mid:]))
         
     return t or "ไอเทมเด็ดตัวท็อป", "ของดีบอกต่อ คุ้มเกินราคา!"
 
 
 def select_best_thumbnail_frame(video_path: Path) -> Image.Image:
-    """Select the sharpest, clearest, best-lit hero frame where the product is prominently presented."""
+    """
+    Select the sharpest, clearest, best-lit hero frame where the product is prominently presented
+    and there is ample headroom for titles (avoiding covering head/hat).
+    """
     if cv2 is not None:
         try:
             cap = cv2.VideoCapture(str(video_path))
@@ -368,7 +390,8 @@ def select_best_thumbnail_frame(video_path: Path) -> Image.Image:
                 
                 best_score = -1.0
                 best_frame = None
-                sample_percentages = [0.20, 0.32, 0.44, 0.56, 0.68, 0.78, 0.88]
+                # Prioritize early hook shots (0.08 - 0.28) where products are clearly showcased
+                sample_percentages = [0.08, 0.14, 0.20, 0.28, 0.38, 0.50, 0.65, 0.80]
                 for p in sample_percentages:
                     t = dur * p
                     cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)
@@ -377,12 +400,23 @@ def select_best_thumbnail_frame(video_path: Path) -> Image.Image:
                         continue
                     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                     h_f, w_f = gray.shape
+                    
+                    # ROI for product presentation (center zone)
                     roi = gray[int(h_f * 0.20):int(h_f * 0.85), int(w_f * 0.15):int(w_f * 0.85)]
                     lap = cv2.Laplacian(roi, cv2.CV_64F).var()
                     mean_val = float(roi.mean())
                     std_val = float(roi.std())
+                    
+                    # Headroom check: lower variance in top 16% means clean open sky/backdrop (no head overlap!)
+                    top_roi = gray[:int(h_f * 0.16), :]
+                    top_std = float(top_roi.std())
+                    headroom_bonus = max(0, 35 - top_std) * 3.0
+                    
+                    # Early hook bonus: the presenter holds the hero item front & center in opening seconds
+                    early_bonus = 35.0 if p <= 0.22 else 0.0
+                    
                     light_penalty = max(0, 50 - mean_val) * 1.5 + max(0, mean_val - 215) * 1.5
-                    score = lap * 0.75 + std_val * 2.2 - light_penalty
+                    score = lap * 0.5 + std_val * 2.0 + headroom_bonus + early_bonus - light_penalty
                     if score > best_score:
                         best_score = score
                         best_frame = frame
@@ -395,7 +429,7 @@ def select_best_thumbnail_frame(video_path: Path) -> Image.Image:
 
     # Fallback extraction via ffmpeg
     temp_frame = video_path.parent / f"temp_frame_{int(time.time())}.jpg"
-    cmd = ["ffmpeg", "-y", "-ss", "00:00:02.500", "-i", str(video_path), "-vframes", "1", "-q:v", "2", str(temp_frame)]
+    cmd = ["ffmpeg", "-y", "-ss", "00:00:01.000", "-i", str(video_path), "-vframes", "1", "-q:v", "2", str(temp_frame)]
     subprocess.run(cmd, capture_output=True)
     if temp_frame.exists():
         im = Image.open(temp_frame).convert("RGBA")
@@ -412,27 +446,26 @@ def create_viral_thumbnail(
     detected_product: str = '',
     badge_text: str = ''
 ) -> Path:
-    # 1. Select the sharpest, clearest product hero frame
+    # 1. Select the sharpest, clearest product hero frame with ample headroom
     base_img = select_best_thumbnail_frame(video_path)
     w, h = base_img.size
 
     # 2. Enhance contrast, saturation & micro-sharpness for high-end product presentation
-    base_img = ImageEnhance.Color(base_img).enhance(1.22)
-    base_img = ImageEnhance.Contrast(base_img).enhance(1.14)
-    base_img = ImageEnhance.Sharpness(base_img).enhance(1.20)
+    base_img = ImageEnhance.Color(base_img).enhance(1.15)
+    base_img = ImageEnhance.Contrast(base_img).enhance(1.08)
 
     overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
 
-    # 3. Smooth Vignette Scrim Overlays
-    top_scrim_h = int(min(340, h * 0.28))
+    # 3. Smooth Vignette Scrim Overlays (gentle top & bottom contrast without darkening subject)
+    top_scrim_h = int(min(220, h * 0.20))
     for y in range(top_scrim_h):
-        alpha = int(185 * (1.0 - (y / top_scrim_h) ** 1.3))
+        alpha = int(120 * (1.0 - (y / top_scrim_h) ** 1.3))
         draw.line([(0, y), (w, y)], fill=(0, 0, 0, alpha))
 
-    bot_scrim_h = int(min(220, h * 0.20))
+    bot_scrim_h = int(min(180, h * 0.16))
     for y in range(h - bot_scrim_h, h):
-        alpha = int(180 * (((y - (h - bot_scrim_h)) / bot_scrim_h) ** 1.3))
+        alpha = int(130 * (((y - (h - bot_scrim_h)) / bot_scrim_h) ** 1.3))
         draw.line([(0, y), (w, y)], fill=(0, 0, 0, alpha))
 
     # Fonts
@@ -440,11 +473,11 @@ def create_viral_thumbnail(
     if not font_bold_path.exists():
         font_bold_path = FONTS_DIR / "Prompt-Bold.ttf"
 
-    f_badge_sz = max(18, int(w * 0.036))
-    f_hero_sz = max(36, int(w * 0.072))
-    f_sub_sz = max(30, int(w * 0.058))
-    f_cta_sz = max(24, int(w * 0.044))
-    f_stamp_sz = max(18, int(w * 0.034))
+    f_badge_sz = max(15, int(w * 0.026))
+    f_hero_sz = max(26, int(w * 0.048))
+    f_sub_sz = max(20, int(w * 0.038))
+    f_cta_sz = max(16, int(w * 0.028))
+    f_stamp_sz = max(13, int(w * 0.022))
 
     font_badge = ImageFont.truetype(str(font_bold_path), f_badge_sz)
     font_hero = ImageFont.truetype(str(font_bold_path), f_hero_sz)
@@ -458,29 +491,29 @@ def create_viral_thumbnail(
     bb = font_badge.getbbox(badge_text)
     txt_w = bb[2] - bb[0]
     txt_h = bb[3] - bb[1]
-    star_pad = 32
-    bw = txt_w + 36 + star_pad
-    bh = txt_h + 16
+    star_pad = 24
+    bw = txt_w + 30 + star_pad
+    bh = txt_h + 12
     bx = (w - bw) // 2
-    by = int(h * 0.028)
+    by = int(h * 0.016)
 
-    draw.rounded_rectangle([bx + 2, by + 3, bx + bw + 2, by + bh + 3], radius=bh // 2, fill=(0, 0, 0, 140))
+    draw.rounded_rectangle([bx + 2, by + 2, bx + bw + 2, by + bh + 2], radius=bh // 2, fill=(0, 0, 0, 140))
     draw.rounded_rectangle([bx, by, bx + bw, by + bh], radius=bh // 2, fill=(225, 29, 72, 245), outline=(255, 255, 255, 230), width=2)
-    draw_star(draw, (bx + 18, by + bh // 2), 8, fill=(255, 230, 0, 255))
-    draw.text((bx + 18 + star_pad, by + (bh - txt_h) // 2 - 2), badge_text, font=font_badge, fill=(255, 255, 255))
+    draw_star(draw, (bx + 14, by + bh // 2), 6, fill=(255, 230, 0, 255))
+    draw.text((bx + 14 + star_pad, by + (bh - txt_h) // 2 - 2), badge_text, font=font_badge, fill=(255, 255, 255))
 
     # --- 2. Format 2-Tier Visual Headline (Hero Sticker Box + Contrasting Subtitle) ---
     hero_txt, sub_txt = format_thumbnail_texts(title, detected_product)
 
     # Line 1: Hero Sticker Box (Bright Neon Yellow with bold black text)
     hb = font_hero.getbbox(hero_txt)
-    hw = (hb[2] - hb[0]) + 36
-    hh = (hb[3] - hb[1]) + 18
+    hw = (hb[2] - hb[0]) + 28
+    hh = (hb[3] - hb[1]) + 14
     hx = (w - hw) // 2
-    hy = by + bh + int(h * 0.016)
+    hy = by + bh + int(h * 0.010)
 
-    draw.rounded_rectangle([hx + 3, hy + 4, hx + hw + 3, hy + hh + 4], radius=14, fill=(0, 0, 0, 160))
-    draw.rounded_rectangle([hx, hy, hx + hw, hy + hh], radius=14, fill=(255, 230, 0, 255), outline=(255, 255, 255, 255), width=3)
+    draw.rounded_rectangle([hx + 2, hy + 3, hx + hw + 2, hy + hh + 3], radius=10, fill=(0, 0, 0, 160))
+    draw.rounded_rectangle([hx, hy, hx + hw, hy + hh], radius=10, fill=(255, 230, 0, 255), outline=(255, 255, 255, 255), width=2)
     draw.text((hx + (hw - (hb[2] - hb[0])) // 2, hy + (hh - (hb[3] - hb[1])) // 2 - 3), hero_txt, font=font_hero, fill=(0, 0, 0))
 
     # Line 2: Benefit text (Pure White with heavy black outline + dropshadow)
@@ -488,46 +521,48 @@ def create_viral_thumbnail(
     sw = sb[2] - sb[0]
     sh = sb[3] - sb[1]
     sx = (w - sw) // 2
-    sy = hy + hh + int(h * 0.012)
+    sy = hy + hh + int(h * 0.008)
 
-    stroke_w = max(3, int(w * 0.006))
+    stroke_w = max(2, int(w * 0.005))
     for dx in range(-stroke_w, stroke_w + 1):
         for dy in range(-stroke_w, stroke_w + 1):
             if dx or dy:
                 draw.text((sx + dx, sy + dy), sub_txt, font=font_sub, fill=(0, 0, 0, 255))
-    draw.text((sx + 3, sy + 4), sub_txt, font=font_sub, fill=(0, 0, 0, 220))
+    draw.text((sx + 2, sy + 3), sub_txt, font=font_sub, fill=(0, 0, 0, 220))
     draw.text((sx, sy), sub_txt, font=font_sub, fill=(255, 255, 255))
 
-    # --- 3. Tilted Trust Stamp Sticker in Middle-Right ---
-    stamp_w, stamp_h = 170, 48
-    st_img = Image.new("RGBA", (stamp_w, stamp_h), (0, 0, 0, 0))
-    st_draw = ImageDraw.Draw(st_img)
-    st_draw.rounded_rectangle([2, 2, stamp_w - 2, stamp_h - 2], radius=12, fill=(15, 23, 42, 240), outline=(250, 204, 21, 255), width=2)
-    draw_star(st_draw, (22, stamp_h // 2), 9, fill=(255, 215, 0, 255))
+    # --- 3. Tilted Trust Stamp Sticker in Upper-Right ---
     st_txt = "4.9/5 ตรงปก 100%"
     st_bb = font_stamp.getbbox(st_txt)
-    st_draw.text((36, (stamp_h - (st_bb[3] - st_bb[1])) // 2 - 2), st_txt, font=font_stamp, fill=(254, 240, 138))
+    st_txt_w = st_bb[2] - st_bb[0]
+    star_s_pad = 18
+    stamp_w, stamp_h = st_txt_w + 26 + star_s_pad, 36
+    st_img = Image.new("RGBA", (stamp_w, stamp_h), (0, 0, 0, 0))
+    st_draw = ImageDraw.Draw(st_img)
+    st_draw.rounded_rectangle([2, 2, stamp_w - 2, stamp_h - 2], radius=8, fill=(15, 23, 42, 240), outline=(250, 204, 21, 255), width=2)
+    draw_star(st_draw, (14, stamp_h // 2), 6, fill=(255, 215, 0, 255))
+    st_draw.text((14 + star_s_pad, (stamp_h - (st_bb[3] - st_bb[1])) // 2 - 2), st_txt, font=font_stamp, fill=(254, 240, 138))
 
     st_rotated = st_img.rotate(4, resample=Image.BICUBIC, expand=True)
     rw, rh = st_rotated.size
-    rx = w - rw - int(w * 0.04)
-    ry = int(h * 0.32)
+    rx = w - rw - int(w * 0.030)
+    ry = sy + sh + int(h * 0.010)
     overlay.paste(st_rotated, (rx, ry), st_rotated)
 
-    # --- 4. Bottom CTA Button ---
+    # --- 4. Bottom CTA Button (Docked tight at bottom edge so product is never covered) ---
     cta_txt = "พิกัดส่วนลดในคลิป >> กดสั่งซื้อด่วน"
     cb = font_cta.getbbox(cta_txt)
-    cart_pad = 32
-    cw = (cb[2] - cb[0]) + 40 + cart_pad
-    ch = (cb[3] - cb[1]) + 22
+    cart_pad = 22
+    cw = (cb[2] - cb[0]) + 30 + cart_pad
+    ch = (cb[3] - cb[1]) + 14
     cx = (w - cw) // 2
-    cy = h - ch - int(h * 0.055)
+    cy = h - ch - 14
 
-    draw.rounded_rectangle([cx + 3, cy + 4, cx + cw + 3, cy + ch + 4], radius=24, fill=(0, 0, 0, 150))
-    draw.rounded_rectangle([cx, cy, cx + cw, cy + ch], radius=24, fill=(16, 185, 129, 250), outline=(255, 255, 255, 240), width=3)
-    draw.ellipse([cx + 18, cy + ch // 2 - 6, cx + 30, cy + ch // 2 + 6], fill=(255, 255, 255))
-    draw.polygon([(cx + 34, cy + ch // 2), (cx + 26, cy + ch // 2 - 5), (cx + 26, cy + ch // 2 + 5)], fill=(16, 185, 129))
-    draw.text((cx + 18 + cart_pad, cy + (ch - (cb[3] - cb[1])) // 2 - 2), cta_txt, font=font_cta, fill=(255, 255, 255))
+    draw.rounded_rectangle([cx + 2, cy + 3, cx + cw + 2, cy + ch + 3], radius=16, fill=(0, 0, 0, 150))
+    draw.rounded_rectangle([cx, cy, cx + cw, cy + ch], radius=16, fill=(16, 185, 129, 250), outline=(255, 255, 255, 240), width=2)
+    draw.ellipse([cx + 12, cy + ch // 2 - 5, cx + 22, cy + ch // 2 + 5], fill=(255, 255, 255))
+    draw.polygon([(cx + 26, cy + ch // 2), (cx + 19, cy + ch // 2 - 4), (cx + 19, cy + ch // 2 + 4)], fill=(16, 185, 129))
+    draw.text((cx + 12 + cart_pad, cy + (ch - (cb[3] - cb[1])) // 2 - 2), cta_txt, font=font_cta, fill=(255, 255, 255))
 
     final_img = Image.alpha_composite(base_img, overlay).convert("RGB")
     final_img.save(str(out_thumb_path), "JPEG", quality=95)

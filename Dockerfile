@@ -7,7 +7,7 @@ ENV ALLOW_DEMO_SEED=1
 ENV TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        libzbar0 curl \
+        libzbar0 curl ffmpeg \
         tesseract-ocr tesseract-ocr-eng tesseract-ocr-tha \
     && rm -rf /var/lib/apt/lists/* \
     && (test -d "$TESSDATA_PREFIX" || (test -d /usr/share/tesseract-ocr/4.00/tessdata && ln -s /usr/share/tesseract-ocr/4.00/tessdata /usr/share/tesseract-ocr/5/tessdata) || true) \

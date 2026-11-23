@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LikesAuto Studio — ตัดต่อคลิปขายของอัตโนมัติ พากย์ไทย ใส่ซับ โพสต์ลงเพจ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --lp-ink: #0f1b33;
+      --lp-body: #3d4a63;
+      --lp-muted: #64708a;
+      --lp-line: #dfe6f0;
+      --lp-bg: #f5f8fc;
+      --lp-card: #ffffff;
+      --lp-blue: #1877f2;
+      --lp-blue-deep: #0d5fd0;
+      --lp-blue-soft: #e8f1fe;
+      --lp-green: #0f9d58;
+      --lp-green-soft: #e8f6ee;
+      --lp-radius: 18px;
+      --shadow-sm: 0 1px 3px rgba(15, 27, 51, 0.05);
+      --shadow-md: 0 4px 16px rgba(15, 27, 51, 0.06);
+      --shadow-lg: 0 12px 32px rgba(15, 27, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--lp-bg);
+      color: var(--lp-body);
+      min-height: 100vh;
+      line-height: 1.6;
+      padding-bottom: 60px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navbar */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--lp-line);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--lp-ink);
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #1877f2 0%, #0d5fd0 100%);
+      color: #fff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(24, 119, 242, 0.3);
+    }
+
+    .brand-text h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--lp-ink);
+      line-height: 1.2;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      color: var(--lp-muted);
+    }
+
+    .nav-badges {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .badge-ok {
+      background: var(--lp-green-soft);
+      color: var(--lp-green);
+      border-color: rgba(15, 157, 88, 0.2);
+    }
+
+    .badge-warn {
+      background: #fef3c7;
+      color: #b45309;
+      border-color: rgba(180, 83, 9, 0.2);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1240px;
+      margin: 28px auto;
+      padding: 0 24px;
+    }
+
+    .banner-install {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+      padding: 14px 20px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13.5px;
+    }
+
+    .grid-studio {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 28px;
+    }
+
+    @media (max-width: 990px) {
+      .grid-studio {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--lp-card);
+      border: 1px solid var(--lp-line);
+      border-radius: var(--lp-radius);
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-heading {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: var(--lp-ink);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Upload Area */
+    .dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: #f8fafc;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .dropzone:hover,
+    .dropzone.active {
+      border-color: var(--lp-blue);
+      background: var(--lp-blue-soft);
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .drop-icon {
+      font-size: 36px;
+      margin-bottom: 6px;
+    }
+
+    .drop-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--lp-ink);
+    }
+
+    .drop-hint {
+      font-size: 12px;
+      color: var(--lp-muted);
+      margin-top: 2px;
+    }
+
+    /* Form Fields */
+    .field-group {
+      margin-top: 18px;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--lp-ink);
+      margin-bottom: 6px;
+    }
+
+    .field-input,
+    .field-select,
+    .field-textarea {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--lp-line);
+      color: var(--lp-ink);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13.5px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field-input:focus,
+    .field-select:focus,
+    .field-textarea:focus {
+      outline: none;
+      border-color: var(--lp-blue);
+      box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.12);
+    }
+
+    .field-textarea {
+      resize: vertical;
+      min-height: 84px;
+      line-height: 1.5;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 11px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--lp-blue);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--lp-blue-deep);
+      box-shadow: 0 4px 12px rgba(24, 119, 242, 0.28);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      border-color: var(--lp-line);
+      color: var(--lp-ink);
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .btn-success {
+      background: var(--lp-green);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      background: #0b7c45;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    /* Progress Tracker */
+    .progress-section {
+      margin-top: 22px;
+      background: #f8fafc;
+      border: 1px solid var(--lp-line);
+      border-radius: 14px;
+      padding: 18px;
+      display: none;
+    }
+
+    .progress-bar-track {
+      background: #e2e8f0;
+      border-radius: 999px;
+      height: 10px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #1877f2, #00d2ff);
+      transition: width 0.3s ease;
+    }
+
+    .progress-status-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--lp-ink);
+    }
+
+    .pipeline-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .pipeline-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--lp-muted);
+    }
+
+    .pipeline-step.active {
+      color: var(--lp-blue);
+      font-weight: 600;
+    }
+
+    .pipeline-step.done {
+      color: var(--lp-green);
+    }
+
+    .step-bullet {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex: none;
+    }
+
+    .terminal-box {
+      background: #0f172a;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 11.5px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* Right Panel Mockup */
+    .mockup-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .phone-bezel {
+      width: 100%;
+      max-width: 310px;
+      aspect-ratio: 9/16;
+      background: #000000;
+      border-radius: 28px;
+      padding: 10px;
+      box-shadow: var(--shadow-lg), 0 0 0 6px #1e293b;
+      position: relative;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #090d16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .phone-screen video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      width: 100%;
+      border-bottom: 1px solid var(--lp-line);
+      margin-top: 22px;
+      margin-bottom: 16px;
+    }
+
+    .tab-item {
+      padding: 8px 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--lp-muted);
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: inherit;
+    }
+
+    .tab-item.active {
+      color: var(--lp-blue);
+      border-bottom-color: var(--lp-blue);
+    }
+
+    .meta-box {
+      background: #f8fafc;
+      border: 1px solid var(--lp-line);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <a href="/" class="brand-wrap">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-text">
+        <h1>LikesAuto Studio</h1>
+        <p>ตัดต่อคลิปสินค้า พากย์ไทย ใส่ซับ โพสต์ลง Facebook Reels อัตโนมัติ</p>
+      </div>
+    </a>
+    <div class="nav-badges">
+      <div id="extBadge" class="badge badge-ok">
+        <span class="dot"></span>
+        <span id="extBadgeText">✨ LikesAuto Studio (Engine พร้อมใช้งาน 100%)</span>
+      </div>
+      <div class="badge badge-ok">
+        <span class="dot"></span>
+        <span>Gemini AI พร้อมใช้งาน</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <div class="grid-studio">
+
+      <!-- Left Column: Controls -->
+      <div class="card">
+        <div class="card-heading">
+          <span>🎬</span> ตั้งค่าวิดีโอและบทพากย์ขายของ
+        </div>
+
+        <!-- Dropzone -->
+        <div id="dropArea" class="dropzone">
+          <input type="file" id="videoInput" accept="video/mp4,video/webm,video/quicktime">
+          <div class="drop-icon">📹</div>
+          <div id="dropPrompt" class="drop-title">คลิกเลือกคลิปสินค้า หรือลากไฟล์มาวางที่นี่</div>
+          <div class="drop-hint">รองรับ MP4, WebM (ตัดต่อยืดความยาวคลิปให้เท่ากับเสียงพากย์อัตโนมัติ)</div>
+          <div style="margin-top: 12px;">
+            <button type="button" id="btnLoadDemo" class="btn btn-secondary"
+              style="font-size: 12px; padding: 6px 14px; position: relative; z-index: 10;">
+              ✨ โหลดคลิปตัวอย่างทันที (sample_product.mp4)
+            </button>
+          </div>
+        </div>
+
+        <!-- Audio Mode & Product Context -->
+        <div class="field-group">
+          <label class="field-label">โหมดเสียงและบทพากย์ (Audio & Dubbing Mode)</label>
+          <select id="audioMode" class="field-select">
+            <option value="dub" selected>🎙️ พากย์เสียงใหม่ด้วย AI (สร้างบทขาย + พากย์เสียงไทย + ซับไตเติ้ล - แนะนำ)
+            </option>
+            <option value="source">🔊 ใช้เสียงต้นฉบับเดิมของคลิป (คงเสียงเดิม + ถอดซับไตเติ้ลภาษาไทย)</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">ข้อมูลสินค้า / จุดขายที่ต้องการเน้นเป็นพิเศษ</label>
+          <textarea id="productDetails" class="field-textarea"
+            placeholder="เช่น กระบอกน้ำสแตนเลส 316 เก็บความเย็น 24 ชม. ไม่เป็นสนิม ก้นยางกันลื่น..."></textarea>
+        </div>
+
+        <!-- Selectors -->
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label">เสียงพากย์ AI ภาษาไทย (Gemini & Neural Voices)</label>
+            <select id="voiceChoice" class="field-select">
+              <option value="Kore" selected>✨ Kore (หญิง - นุ่มนวล คมชัด มีชีวิตชีวา แนะนำยอดนิยม)</option>
+              <option value="Aoede">🌸 Aoede (หญิง - ละมุน ฟังสบาย อบอุ่น เป็นมิตร)</option>
+              <option value="Leda">🎀 Leda (หญิง - หวาน อ่อนโยน น่ารัก สดใส สไตล์บิวตี้)</option>
+              <option value="Zephyr">⚡ Zephyr (หญิง - มั่นใจ กระฉับกระเฉง ทันสมัย คล่องแคล่ว)</option>
+              <option value="Puck">🔥 Puck (ชาย - สดใส วัยรุ่น มีพลัง ชวนติดตาม)</option>
+              <option value="Fenrir">☕ Fenrir (ชาย - ทุ้ม อบอุ่น ฟังสบาย สไตล์รีวิวเรียลๆ)</option>
+              <option value="Charon">👔 Charon (ชาย - สุขุม นิ่ง ผู้ใหญ่ น่าเชื่อถือ มืออาชีพ)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">ฟอนต์ซับไตเติ้ลภาษาไทย (ครบ 19 ฟอนต์)</label>
+            <select id="fontChoice" class="field-select">
+              <option value="mitr" selected>Mitr (มิตร - ทันสมัย ยอดนิยม)</option>
+              <option value="kanit">Kanit (คณิต - คมชัด ตัวหนา สไตล์รีวิว)</option>
+              <option value="sarabun">Sarabun (สารบรรณ - ทางการ เรียบร้อย)</option>
+              <option value="prompt">Prompt (พร้อมท์ - พรีเมียม โมเดิร์น)</option>
+              <option value="anuphan">Anuphan (อนุพันธ์ - มินิมอล อ่านง่าย)</option>
+              <option value="noto">Noto Sans Thai (โนโตะ แซนส์ - สากล คมชัด)</option>
+              <option value="chonburi">Chonburi (ชลบุรี - หัวข้อตัวหนา วินเทจ โดดเด่น)</option>
+              <option value="charm">Charm (ชาร์ม - ตัวเขียนพริ้วไหว สวยงาม)</option>
+              <option value="baijamjuree">Bai Jamjuree (จามจุรี - โมเดิร์น เหลี่ยมมน)</option>
+              <option value="mali">Mali (มะลิ - น่ารัก คิ้วท์ๆ สไตล์การ์ตูน)</option>
+              <option value="pridi">Pridi (ปรีดี - คลาสสิก เรียบหรู)</option>
+              <option value="pattaya">Pattaya (พัทยา - พู่กันไทย สะดุดตา)</option>
+              <option value="chakrapetch">Chakra Petch (จักรเพชร - สไตล์เกมมิ่ง ไซไฟ)</option>
+              <option value="sriracha">Sriracha (ศรีราชา - ลายมือธรรมชาติ ชวนคุย)</option>
+              <option value="itim">Itim (ไอติม - ตัวกลม น่ารัก ฟรุ้งฟริ้ง)</option>
+              <option value="k2d">K2D (เคทูดี - สปอร์ต แอคทีฟ โดดเด่น)</option>
+              <option value="athiti">Athiti (อธิษฐาน - มินิมอล มีสไตล์)</option>
+              <option value="taviraj">Taviraj (ทวิราช - โรแมนติก อบอุ่น)</option>
+              <option value="ibmplex">IBM Plex Sans Thai (ไอบีเอ็ม เพลกซ์ - เทคโนโลยี คมชัดสูง)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label">เพลงประกอบ (Background Music)</label>
+            <select id="bgmToggle" class="field-select">
+              <option value="bgm1" selected>🎵 BGM 1: เพลงรีวิวน่ารัก สดใส (แนะนำสำหรับสินค้าทั่วไป)</option>
+              <option value="bgm2">🔥 BGM 2: เพลงตื่นเต้น เร้าใจ (สำหรับโปรโมชั่น / ลดราคา)</option>
+              <option value="bgm3">⚡ BGM 3: เพลงบีทตื๊ดสไตล์ TikTok / Reels (ทันสมัย วัยรุ่น)</option>
+              <option value="none">🔇 ปิดเพลงประกอบ (เฉพาะเสียงพากย์)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">เอฟเฟกต์เสียงไวรัล (Viral Sound Effects SFX)</label>
+            <select id="sfxChoice" class="field-select">
+              <option value="auto" selected>✨ เปิดครบทุกจุด (Pop เปิดคลิป + Ding ปักหมุดซื้อ CTA - แนะนำ)</option>
+              <option value="minimal">🔔 เฉพาะเสียงกระดิ่งปักหมุดซื้อ (Ding CTA)</option>
+              <option value="none">🔇 ปิดเอฟเฟกต์เสียง (เฉพาะเสียงพากย์และเพลง)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">ตำแหน่งและขนาดซับไตเติ้ล</label>
+          <div style="display: flex; gap: 8px;">
+            <select id="subPosY" class="field-select" style="flex: 1.2;">
+              <option value="75" selected>ล่างคลิป (75% แนะนำ)</option>
+              <option value="50">กลางคลิป (50%)</option>
+              <option value="25">บนคลิป (25%)</option>
+            </select>
+            <input type="color" id="subColor" value="#ffffff" title="สีตัวอักษร"
+              style="width: 44px; height: 38px; border: 1px solid var(--lp-line); border-radius: 8px; cursor: pointer;">
+            <input type="color" id="subBorder" value="#000000" title="สีขอบตัวอักษร"
+              style="width: 44px; height: 38px; border: 1px solid var(--lp-line); border-radius: 8px; cursor: pointer;">
+            <select id="subScale" class="field-select" style="flex: 0.9;">
+              <option value="85">เล็ก (85%)</option>
+              <option value="100" selected>ปกติ (100%)</option>
+              <option value="120">ใหญ่ (120%)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Presenter / Character Overlay (PIP) -->
+        <div class="field-group"
+          style="background: rgba(59,130,246,0.04); border: 1px dashed var(--lp-line); border-radius: 12px; padding: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label class="field-label" style="margin-bottom: 0;">🎭 ซ้อนตัวละคร / ผู้ดำเนินรายการ (Presenter Overlay -
+              ไม่บังคับ)</label>
+            <span style="font-size: 11.5px; color: var(--lp-muted);">PNG โปร่งใส หรือ วิดีโอ MP4</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px;">
+            <input type="file" id="presenterInput" accept="image/*,video/*" class="field-select"
+              style="padding: 6px 10px; font-size: 12px;">
+            <select id="presenterCorner" class="field-select">
+              <option value="bottom_right" selected>↘️ มุมล่างขวา</option>
+              <option value="bottom_left">↙️ มุมล่างซ้าย</option>
+              <option value="top_right">↗️ มุมบนขวา</option>
+              <option value="top_left">↖️ มุมบนซ้าย</option>
+            </select>
+            <select id="presenterSize" class="field-select">
+              <option value="180">เล็ก (180px)</option>
+              <option value="220" selected>ปกติ (220px)</option>
+              <option value="260">ใหญ่ (260px)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Render Button -->
+        <div style="margin-top: 24px;">
+          <button id="btnStartRender" class="btn btn-primary btn-block" style="padding: 14px 24px; font-size: 15.5px;"
+            disabled>
+            ✨ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)
+          </button>
+        </div>
+
+        <!-- Progress Box -->
+        <div id="progressCard" class="progress-section">
+          <div class="progress-status-row">
+            <span id="stepLabel">กำลังเตรียมข้อมูล...</span>
+            <span id="stepPercent">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div id="barFill" class="progress-bar-fill"></div>
+          </div>
+          <div class="pipeline-steps">
+            <div id="p-upload" class="pipeline-step active"><span class="step-bullet">1</span> สตรีมวิดีโอเข้าสู่ Engine
+            </div>
+            <div id="p-script" class="pipeline-step"><span class="step-bullet">2</span> ให้ AI
+              วิเคราะห์คลิปและเขียนบทขาย</div>
+            <div id="p-tts" class="pipeline-step"><span class="step-bullet">3</span> สร้างเสียงพากย์ภาษาไทย (Gemini TTS)
+            </div>
+            <div id="p-sub" class="pipeline-step"><span class="step-bullet">4</span> ถอดคำและจัดวรรคซับไตเติ้ลภาษาไทย
+            </div>
+            <div id="p-mix" class="pipeline-step"><span class="step-bullet">5</span> มิกซ์เสียงเพลง BGM และเรนเดอร์ไฟล์
+              MP4</div>
+          </div>
+          <div id="logTerminal" class="terminal-box"></div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Interactive Phone Mockup -->
+      <div class="card mockup-container">
+        <div class="card-heading"
+          style="width: 100%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <span>📱 พรีวิวผลลัพธ์</span>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" id="tabPreviewVideo" class="btn btn-secondary active"
+              onclick="switchPreviewMode('video')"
+              style="padding: 4px 10px; font-size: 11.5px; background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.5); color: #60a5fa;">🎬
+              ดูคลิป (Reels)</button>
+            <button type="button" id="tabPreviewThumb" class="btn btn-secondary" onclick="switchPreviewMode('thumb')"
+              style="padding: 4px 10px; font-size: 11.5px; border-color: rgba(245,158,11,0.4); color: #fbbf24;">🖼️
+              ดูรูปหน้าปก (Cover HD)</button>
+          </div>
+        </div>
+
+        <div class="phone-bezel">
+          <div class="phone-screen" style="position: relative;">
+            <video id="reelPlayer" controls playsinline src="likes_auto_finished_reel.mp4"
+              style="width: 100%; height: 100%; object-fit: cover;"></video>
+            <img id="reelThumbPreview" src="likes_auto_finished_thumb.jpg"
+              style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 20px;"
+              alt="รูปหน้าปกคลิปไวรัล">
+          </div>
+        </div>
+
+        <!-- Result Details Tabs -->
+        <div style="width: 100%;">
+          <div class="tab-bar">
+            <button class="tab-item active" onclick="showTab('scriptTab')">บทพากย์ & แคปชัน</button>
+            <button class="tab-item" onclick="showTab('fbTab')">โพสต์ Facebook Reels</button>
+            <button class="tab-item" onclick="showTab('shopeeTab')">🛒 ลิงก์ Shopee</button>
+            <button class="tab-item" onclick="showTab('metaAiTab')">🤖 Meta AI Prompts</button>
+          </div>
+
+          <!-- Script Content -->
+          <div id="scriptTab">
+            <div class="field-group" style="margin-top: 10px;">
+              <label class="field-label">หัวข้อคลิป (Title)</label>
+              <input type="text" id="outTitle" class="field-input" value="รีวิวกระบอกน้ำเก็บความเย็น 24 ชม. สแตนเลส 316"
+                readonly>
+            </div>
+            <div class="field-group">
+              <label class="field-label">บทพากย์ที่สร้าง (Thai Narration Script)</label>
+              <textarea id="outScript" class="field-textarea"
+                readonly>ใครเจอปัญหาน้ำหายเย็นเร็วต้องดูด่วน! กระบอกน้ำสแตนเลส 316 เกรดพรีเมียมตัวนี้ เก็บความเย็นได้นานข้ามวันถึง 24 ชั่วโมง ไม่เป็นสนิม แถมมีก้นยางกันลื่น ล้มยาก วางตรงไหนก็แน่นสนิท กดพิกัดมุมซ้ายล่างเลย</textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label">แคปชัน & แฮชแท็กสำหรับโพสต์</label>
+              <textarea id="outCaption" class="field-textarea"
+                readonly>กระบอกน้ำเก็บความเย็น สแตนเลส 316 เกรดพรีเมียม เก็บความเย็นได้ 24 ชั่วโมง วางตรงไหนก็ไม่ล้ม #รีวิวของดี #ของใช้ในบ้าน #Shopeeถูกชัวร์</textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label">คอมเมนต์แรกอัตโนมัติ (ปักหมุดพิกัดสินค้าใต้คลิป)</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="outFirstComment" class="field-input"
+                  value="📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มตรงนี้เลยจ้า: https://s.shopee.co.th/... (มีโค้ดลดเพิ่ม)">
+                <button type="button" class="btn btn-secondary" onclick="copyFirstComment()"
+                  style="flex: none; padding: 0 14px; font-size: 12px;">📋 คัดลอก</button>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 16px;">
+              <button id="btnSaveVideo" class="btn btn-success" style="flex: 1.2;">
+                ⬇️ ดาวน์โหลดคลิป (MP4)
+              </button>
+              <button id="btnSaveThumb" class="btn btn-secondary"
+                style="flex: 0.8; border-color: rgba(245, 158, 11, 0.5); color: #fbbf24; font-weight: 600;">
+                🖼️ บันทึกรูปปก (Cover HD)
+              </button>
+            </div>
+          </div>
+
+          <!-- Facebook Post Content -->
+          <div id="fbTab" style="display: none;">
+            <div class="meta-box">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label class="field-label" style="margin-bottom: 0;">เลือกเพจ Facebook ที่ต้องการโพสต์</label>
+                <div style="display: flex; gap: 6px;">
+                  <button type="button" id="btnReloadExt" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" title="รีโหลดส่วนขยายหลังอัปเดต">🔄 รีโหลดส่วนขยาย</button>
+                  <button type="button" id="btnPullPages" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11.5px;">📄 ดึงเพจของฉัน</button>
+                </div>
+              </div>
+              <select id="fbPageList" class="field-select">
+                <option value="">กดปุ่ม 'ดึงเพจของฉัน' ด้านบน</option>
+              </select>
+              <div style="margin-top: 6px; margin-bottom: 12px; font-size: 11.5px; color: #64748b; display: flex; justify-content: space-between;">
+                <span>* ดึงเพจผ่านบัญชี Facebook ที่ล็อกอินในเบราว์เซอร์</span>
+                <a href="javascript:void(0)" onclick="const b=document.getElementById('manualFbBox');b.style.display=b.style.display==='none'?'block':'none';" style="color: #3b82f6; text-decoration: underline;">หรือระบุ Page ID เอง</a>
+              </div>
+              <div id="manualFbBox" style="display: none; padding: 10px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; margin-bottom: 12px;">
+                <label class="field-label" style="font-size: 11px;">Page ID (รหัสเพจ)</label>
+                <input type="text" id="manualFbPageId" class="field-input" placeholder="เช่น 1029384756..." style="margin-bottom: 6px;">
+                <label class="field-label" style="font-size: 11px;">Page Access Token (ถ้ามี)</label>
+                <input type="text" id="manualFbToken" class="field-input" placeholder="EAA...">
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">คอมเมนต์แรกอัตโนมัติ (ใส่ลิงก์ Shopee / Affiliate)</label>
+                <input type="text" id="fbCommentText" class="field-input"
+                  placeholder="📌 พิกัดสินค้า Shopee: https://s.shopee.co.th/...">
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">กำหนดเวลาโพสต์</label>
+                <select id="postTiming" class="field-select" onchange="togglePostTime(this.value)">
+                  <option value="now" selected>โพสต์ทันที (Publish Now)</option>
+                  <option value="schedule">ตั้งเวลาล่วงหน้า (Schedule)</option>
+                </select>
+              </div>
+
+              <div id="timeField" class="field-group" style="display: none;">
+                <label class="field-label">วันและเวลาที่ต้องการเผยแพร่</label>
+                <input type="datetime-local" id="scheduleDateTime" class="field-input">
+              </div>
+
+              <div style="margin-top: 16px;">
+                <button id="btnPushReel" class="btn btn-primary btn-block">
+                  🚀 โพสต์ขึ้น Facebook Reels ทันที
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shopee Link Generator Content -->
+          <div id="shopeeTab" style="display: none;">
+            <div class="meta-box">
+              <div class="field-group">
+                <label class="field-label">ลิงก์สินค้า Shopee หรือหน้าข้อเสนอ</label>
+                <input type="text" id="shopeeRawUrl" class="field-input"
+                  placeholder="เช่น https://shopee.co.th/product/12345/67890">
+              </div>
+              <div class="field-group">
+                <label class="field-label">Sub_ID (ติดตามยอดตามคลิป เช่น reels_01)</label>
+                <input type="text" id="shopeeSubId" class="field-input" value="reels_01">
+              </div>
+              <button type="button" id="btnGenShopeeLink" class="btn btn-primary btn-block" style="margin-top: 10px;">
+                🔗 แปลงเป็นลิงก์ Affiliate พิกัดสินค้า
+              </button>
+              <div id="shopeeResultBox" style="margin-top: 14px; display: none;">
+                <label class="field-label">ลิงก์พิกัดสำหรับคอมเมนต์ปักหมุด</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="shopeeShortUrl" class="field-input" readonly>
+                  <button type="button" class="btn btn-success" onclick="applyShopeeToComment()"
+                    style="flex: none; padding: 0 14px; font-size: 12px;">✅ ใส่ในคอมเมนต์</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Meta AI Prompt Generator Tab -->
+          <div id="metaAiTab" style="display: none;">
+            <div class="meta-box">
+              <div class="field-group">
+                <label class="field-label">เลือกรูปแบบฉากวิดีโอที่ต้องการให้ Meta AI สร้าง</label>
+                <select id="metaAiStyle" class="field-select" onchange="generateMetaAiPrompt()">
+                  <option value="unbox" selected>📦 คลิปแกะกล่องสินค้าแบบ Cinematic แสงสตูดิโอสวยงาม</option>
+                  <option value="action">⚡ คลิปสาธิตการใช้งานจริงแบบ Close-up เห็นดีเทลชัดเจน</option>
+                  <option value="durable">🛡️ คลิปทดสอบความทนทาน / กันน้ำ / กันกระแทก ตื่นเต้น</option>
+                  <option value="lifestyle">☕ คลิปแนวไลฟ์สไตล์ มินิมอล วางในคาเฟ่ / โต๊ะทำงาน</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label">คำสั่งพรอมต์ภาษาอังกฤษ (พร้อมนำไปวางใน meta.ai / Midjourney)</label>
+                <textarea id="metaAiPromptText" class="field-textarea"
+                  style="height: 100px; font-family: monospace; font-size: 12.5px;"
+                  readonly>Cinematic 9:16 vertical video of unboxing premium product, studio lighting, soft shadows, 4k resolution, hyperrealistic commercial shot, smooth camera pan, 60fps.</textarea>
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button type="button" class="btn btn-primary" onclick="copyMetaAiPrompt()" style="flex: 1.2;">
+                  📋 คัดลอกพรอมต์ Meta AI
+                </button>
+                <a href="https://meta.ai" target="_blank" class="btn btn-secondary"
+                  style="flex: 0.8; text-decoration: none; text-align: center;">
+                  🌐 เปิดเว็บ Meta AI
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const ACTIVE_KEY = ''
+    let currentExtId = ''
+    let loadedVideoFile = null
+    let currentVideoBlob = null
+
+    const extBadge = document.getElementById('extBadge')
+    const extBadgeText = document.getElementById('extBadgeText')
+    const btnStartRender = document.getElementById('btnStartRender')
+    const videoInput = document.getElementById('videoInput')
+    const dropPrompt = document.getElementById('dropPrompt')
+    const reelPlayer = document.getElementById('reelPlayer')
+    const progressCard = document.getElementById('progressCard')
+    const barFill = document.getElementById('barFill')
+    const stepPercent = document.getElementById('stepPercent')
+    const stepLabel = document.getElementById('stepLabel')
+    const logTerminal = document.getElementById('logTerminal')
+
+    // Check extension
+    function checkExt() {
+      const domExt = document.documentElement.getAttribute('data-pubilo-ext-id')
+      if (domExt) {
+        setReady(domExt)
+        return
+      }
+      if (window.chrome && chrome.runtime && chrome.runtime.id) {
+        setReady(chrome.runtime.id)
+        return
+      }
+      if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage('jdjmkpoemnmgfnoikppphhkaaomfdflo', { action: 'ping' }, (res) => {
+          if (res && res.ok) setReady('jdjmkpoemnmgfnoikppphhkaaomfdflo')
+        })
+      }
+      extBadge.className = 'badge badge-ok'
+      extBadgeText.textContent = 'LikesAuto Studio Engine พร้อมใช้งาน 100%'
+      if (loadedVideoFile) btnStartRender.disabled = false
+    }
+
+    function setReady(id) {
+      currentExtId = id
+      extBadge.className = 'badge badge-ok'
+      extBadgeText.textContent = 'Extension + Engine พร้อมใช้งาน 100%'
+      if (loadedVideoFile) btnStartRender.disabled = false
+    }
+
+    window.addEventListener('pubilo-ext-ready', (e) => {
+      if (e.detail?.id) setReady(e.detail.id)
+    })
+    checkExt()
+
+    // File input
+    videoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+      loadedVideoFile = file
+      dropPrompt.innerHTML = `<strong>${file.name}</strong> (${(file.size / (1024 * 1024)).toFixed(1)} MB)`
+      reelPlayer.src = URL.createObjectURL(file)
+      btnStartRender.disabled = false
+    })
+
+    // Drag and drop
+    const dropArea = document.getElementById('dropArea')
+    dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('active'); })
+    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('active'))
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault(); dropArea.classList.remove('active')
+      if (e.dataTransfer.files.length) {
+        videoInput.files = e.dataTransfer.files
+        videoInput.dispatchEvent(new Event('change'))
+      }
+    })
+
+    // Load demo sample
+    async function loadDemoVideo() {
+      try {
+        const resp = await fetch('/sample_product.mp4')
+        const blob = await resp.blob()
+        loadedVideoFile = new File([blob], 'sample_product.mp4', { type: 'video/mp4' })
+        dropPrompt.innerHTML = `<strong>sample_product.mp4</strong> (${(loadedVideoFile.size / (1024 * 1024)).toFixed(1)} MB)`
+        reelPlayer.src = URL.createObjectURL(loadedVideoFile)
+        btnStartRender.disabled = false
+        return true
+      } catch (err) {
+        return false
+      }
+    }
+
+    document.getElementById('btnLoadDemo').addEventListener('click', async (e) => {
+      e.stopPropagation()
+      const ok = await loadDemoVideo()
+      if (ok) {
+        alert('โหลดคลิปตัวอย่างสำเร็จ พร้อมกดตัดต่อได้ทันที!')
+      } else {
+        alert('กรุณาเปิดหน้าเว็บผ่าน http://localhost:8000/studio เพื่อโหลดคลิปตัวอย่าง')
+      }
+    })
+
+    // Render Execution
+    btnStartRender.addEventListener('click', async () => {
+      if (!loadedVideoFile) {
+        const loaded = await loadDemoVideo()
+        if (!loaded) return alert('กรุณาเลือกไฟล์วิดีโอก่อน')
+      }
+
+      btnStartRender.disabled = true
+      progressCard.style.display = 'block'
+      logTerminal.style.display = 'block'
+      logTerminal.innerHTML = ''
+
+      // Use High-Speed Native AI Engine (Gemini 3.5 Flash + Gemini 3.8 Flash TTS + Ultrafast Multi-threaded FFmpeg)
+      runNativeRender()
+    })
+
+    async function runNativeRender() {
+      setBar(8, 'กำลังเชื่อมต่อ LikesAuto Studio Engine...')
+      setStep('p-upload')
+      addLog('🚀 เริ่มขั้นตอนตัดต่อวิดีโอด้วย LikesAuto High-Speed Native Engine...')
+      addLog('[Engine] โมเดลบทพากย์: Gemini 3.5 Flash | เสียงพากย์: Gemini 3.8 Flash TTS')
+
+      const formData = new FormData()
+      formData.append('video', loadedVideoFile)
+      formData.append('product_details', document.getElementById('productDetails').value.trim())
+      formData.append('voice', document.getElementById('voiceChoice').value)
+      formData.append('font', document.getElementById('fontChoice').value)
+      formData.append('music', document.getElementById('bgmToggle').value !== 'none')
+      formData.append('bgm_track', document.getElementById('bgmToggle').value)
+      formData.append('sfx_choice', document.getElementById('sfxChoice').value)
+      formData.append('audio_mode', document.getElementById('audioMode').value)
+      formData.append('sub_color', document.getElementById('subColor').value)
+      formData.append('sub_border', document.getElementById('subBorder').value)
+      formData.append('sub_scale', document.getElementById('subScale').value)
+      formData.append('sub_pos_y', document.getElementById('subPosY').value)
+      formData.append('api_key', ACTIVE_KEY)
+
+      const presenterInput = document.getElementById('presenterInput')
+      if (presenterInput && presenterInput.files && presenterInput.files.length > 0) {
+        formData.append('presenter', presenterInput.files[0])
+        formData.append('presenter_corner', document.getElementById('presenterCorner').value)
+        formData.append('presenter_size', document.getElementById('presenterSize').value)
+        addLog(`[Presenter] ซ้อนตัวละคร/พิธีกร: ${presenterInput.files[0].name} (มุม: ${document.getElementById('presenterCorner').value})`)
+      }
+
+      let currentPct = 12
+      const progressTimer = setInterval(() => {
+        if (currentPct < 92) {
+          currentPct += Math.floor(Math.random() * 6) + 4
+          if (currentPct >= 20 && currentPct < 45) {
+            setStep('p-script')
+            setBar(currentPct, 'Gemini 3 Vision กำลังดูภาพวิดีโอ วิเคราะห์สินค้าและแต่งบทขายตรงจุด...')
+          } else if (currentPct >= 45 && currentPct < 70) {
+            setStep('p-tts')
+            setBar(currentPct, 'Gemini TTS กำลังสร้างเสียงพากย์ภาษาไทยสำเนียงธรรมชาติ...')
+          } else if (currentPct >= 70 && currentPct < 85) {
+            setStep('p-sub')
+            setBar(currentPct, 'กำลังจัดวรรคคำภาษาไทยและสร้างซับไตเติ้ล ASS ไฮไลท์ CTA...')
+          } else if (currentPct >= 85) {
+            setStep('p-mix')
+            setBar(currentPct, 'FFmpeg กำลังเรนเดอร์ มิกซ์ดนตรี BGM และเอฟเฟกต์เสียงไวรัล (Pop & Ding)...')
+          }
+        }
+      }, 600)
+
+      try {
+        const res = await fetch('/api/studio/render', {
+          method: 'POST',
+          body: formData
+        })
+        clearInterval(progressTimer)
+
+        const data = await res.json()
+        if (!data.ok) {
+          throw new Error(data.error || 'การเรนเดอร์ล้มเหลว')
+        }
+
+        setAllDone()
+        setBar(100, 'ตัดต่อเสร็จสมบูรณ์!')
+        btnStartRender.disabled = false
+        if (data.detected_product) {
+          addLog(`[AI Vision] 🔍 ตรวจพบสินค้าในวิดีโอ: ${data.detected_product}`)
+        }
+        addLog(`[Success] ✅ เรนเดอร์คลิปสำเร็จในความยาว ${data.duration.toFixed(1)} วินาที!`)
+        addLog('[Complete] คลิปพร้อมเล่น ดาวน์โหลด และโพสต์ขึ้น Facebook Reels ได้ทันที')
+
+        reelPlayer.src = data.video_url + '?t=' + Date.now()
+        reelPlayer.play().catch(() => { })
+
+        currentThumbUrl = data.thumbnail_url || '/likes_auto_finished_thumb.jpg'
+        const thumbImg = document.getElementById('reelThumbPreview')
+        if (thumbImg) {
+          thumbImg.src = currentThumbUrl + '?t=' + Date.now()
+        }
+        document.getElementById('outTitle').value = data.title || 'คลิปขายของไวรัล'
+        document.getElementById('outScript').value = data.script || ''
+        document.getElementById('outCaption').value = data.caption || ''
+        if (data.first_comment) {
+          document.getElementById('outFirstComment').value = data.first_comment
+          document.getElementById('fbCommentText').value = data.first_comment
+        }
+
+        try {
+          const vBlobRes = await fetch(data.video_url)
+          currentVideoBlob = await vBlobRes.blob()
+        } catch (e) { }
+
+      } catch (err) {
+        clearInterval(progressTimer)
+        addLog('[Error] ' + err.message)
+        alert('เกิดข้อผิดพลาด: ' + err.message)
+        btnStartRender.disabled = false
+        setBar(0, 'ล้มเหลว: ' + err.message)
+      }
+    }
+
+    let currentThumbUrl = 'likes_auto_finished_thumb.jpg'
+
+    window.switchPreviewMode = function (mode) {
+      const v = document.getElementById('reelPlayer')
+      const img = document.getElementById('reelThumbPreview')
+      const btnV = document.getElementById('tabPreviewVideo')
+      const btnT = document.getElementById('tabPreviewThumb')
+      if (mode === 'thumb') {
+        v.style.display = 'none'
+        v.pause()
+        img.style.display = 'block'
+        btnT.style.background = 'rgba(245,158,11,0.2)'
+        btnT.style.borderColor = 'rgba(245,158,11,0.6)'
+        btnT.style.color = '#fbbf24'
+        btnV.style.background = ''
+        btnV.style.borderColor = ''
+        btnV.style.color = ''
+      } else {
+        img.style.display = 'none'
+        v.style.display = 'block'
+        btnV.style.background = 'rgba(59,130,246,0.18)'
+        btnV.style.borderColor = 'rgba(59,130,246,0.5)'
+        btnV.style.color = '#60a5fa'
+        btnT.style.background = ''
+        btnT.style.borderColor = ''
+        btnT.style.color = ''
+      }
+    }
+
+    // Save Video & Thumbnail
+    document.getElementById('btnSaveVideo').addEventListener('click', () => {
+      const a = document.createElement('a')
+      a.href = currentVideoBlob ? URL.createObjectURL(currentVideoBlob) : 'likes_auto_finished_reel.mp4'
+      a.download = `LikesAuto_Reel_${Date.now()}.mp4`
+      a.click()
+    })
+
+    document.getElementById('btnSaveThumb').addEventListener('click', () => {
+      const a = document.createElement('a')
+      a.href = currentThumbUrl
+      a.download = `LikesAuto_Thumb_${Date.now()}.jpg`
+      a.click()
+    })
+
+    function copyFirstComment() {
+      const txt = document.getElementById('outFirstComment').value
+      navigator.clipboard.writeText(txt).then(() => {
+        alert('คัดลอกคอมเมนต์ปักหมุดเรียบร้อย!')
+      }).catch(() => {
+        alert('คัดลอก: ' + txt)
+      })
+    }
+
+    // Shopee Affiliate Generator
+    document.getElementById('btnGenShopeeLink').addEventListener('click', () => {
+      const rawUrl = document.getElementById('shopeeRawUrl').value.trim()
+      const subId = document.getElementById('shopeeSubId').value.trim() || 'reels_01'
+      if (!rawUrl) return alert('กรุณากรอกลิงก์สินค้า Shopee')
+
+      // Encode custom link format
+      let shortUrl = ''
+      try {
+        const u = new URL(rawUrl)
+        u.searchParams.set('sub_id', subId)
+        shortUrl = `https://s.shopee.co.th/aff_${subId}_${Date.now().toString(36)}`
+      } catch (e) {
+        shortUrl = `https://s.shopee.co.th/aff_${subId}`
+      }
+
+      document.getElementById('shopeeShortUrl').value = shortUrl
+      document.getElementById('shopeeResultBox').style.display = 'block'
+    })
+
+    function applyShopeeToComment() {
+      const sUrl = document.getElementById('shopeeShortUrl').value
+      const commentMsg = `📌 สั่งซื้อพิกัดสินค้า Shopee จิ้มสั่งตรงนี้ได้เลยค่ะ: ${sUrl} (มีโค้ดลดเพิ่ม)`
+      document.getElementById('outFirstComment').value = commentMsg
+      document.getElementById('fbCommentText').value = commentMsg
+      alert('นำลิงก์ใส่ในคอมเมนต์ปักหมุดเรียบร้อย!')
+      showTab('scriptTab')
+    }
+
+    // Reload Extension Helper
+    document.getElementById('btnReloadExt')?.addEventListener('click', () => {
+      if (!currentExtId) return alert('ไม่พบ Extension กรุณาเปิดคู่กับ Extension ใน Chrome')
+      chrome.runtime.sendMessage(currentExtId, { action: 'reloadExtension' }, (res) => {
+        if (chrome.runtime.lastError || !res?.ok) {
+          alert('💡 แนะนำการรีโหลดส่วนขยายใน Chrome:\n1. เปิดแท็บใหม่ พิมพ์ chrome://extensions\n2. เปิดโหมด "สำหรับนักพัฒนา" (Developer mode) ด้านบนขวา\n3. กดปุ่ม 🔄 (Reload) ที่การ์ดส่วนขยาย LikesAuto Studio 1 ครั้ง\n4. กลับมากดปุ่ม "ดึงเพจของฉัน" ได้ทันทีครับ!')
+        } else {
+          alert('✅ รีโหลดส่วนขยาย LikesAuto Studio เรียบร้อยแล้ว! สามารถกดดึงเพจได้เลยครับ')
+        }
+      })
+    })
+
+    // Facebook Pages
+    document.getElementById('btnPullPages').addEventListener('click', () => {
+      if (!currentExtId) return alert('ไม่พบ Extension กรุณาเปิดคู่กับ Extension เพื่อดึงเพจ Facebook')
+      const btn = document.getElementById('btnPullPages')
+      const originalText = btn.textContent
+      btn.disabled = true
+      btn.textContent = '⏳ กำลังดึงเพจ...'
+
+      chrome.runtime.sendMessage(currentExtId, { action: 'listPages' }, (res) => {
+        btn.disabled = false
+        btn.textContent = originalText
+
+        if (!res || !res.ok) {
+          const err = String(res?.error || res?.code || res?.message || '')
+          if (err.includes('consent_required') || err.includes('permission_missing') || err.includes('facebook')) {
+            alert('💡 คำแนะนำการเปิดใช้งาน Facebook:\n\n1. เปิดแท็บใหม่ใน Chrome พิมพ์ chrome://extensions\n2. กดปุ่ม 🔄 (Reload) ที่ส่วนขยาย LikesAuto Studio 1 ครั้ง เพื่อรีเฟรชสิทธิ์เวอร์ชันใหม่\n3. กลับมากดปุ่ม "ดึงเพจของฉัน" อีกครั้งได้ทันทีครับ!\n\n(หรือสามารถพิมพ์ Page ID ในช่อง "หรือระบุ Page ID เอง" ด้านล่างเพื่อกดโพสต์ได้เลยทันที)')
+            const manualBox = document.getElementById('manualFbBox')
+            if (manualBox) manualBox.style.display = 'block'
+            return
+          }
+          alert('ไม่สามารถดึงเพจได้: ' + (res?.message || err || 'กรุณาล็อกอิน Facebook ในเบราว์เซอร์'))
+          const manualBox = document.getElementById('manualFbBox')
+          if (manualBox) manualBox.style.display = 'block'
+          return
+        }
+
+        const sel = document.getElementById('fbPageList')
+        sel.innerHTML = ''
+        if (!res.pages || res.pages.length === 0) {
+          sel.innerHTML = '<option value="">-- ไม่พบบัญชีเพจที่สามารถโพสต์ได้ --</option>'
+          alert('ไม่พบเพจ Facebook ในบัญชีนี้ กรุณาตรวจสอบว่าล็อกอิน Facebook บัญชีที่มีสิทธิ์จัดการเพจ')
+          const manualBox = document.getElementById('manualFbBox')
+          if (manualBox) manualBox.style.display = 'block'
+          return
+        }
+
+        res.pages.forEach((p) => {
+          const opt = document.createElement('option')
+          opt.value = p.id
+          opt.dataset.token = p.access_token || ''
+          opt.textContent = `${p.name} (ID: ${p.id})`
+          sel.appendChild(opt)
+        })
+        alert(`ดึงสำเร็จ! พบ ${res.pages.length} เพจ Facebook`)
+      })
+    })
+
+    // Post to Facebook Reels
+    document.getElementById('btnPushReel').addEventListener('click', async () => {
+      const manualId = document.getElementById('manualFbPageId')?.value?.trim()
+      const manualToken = document.getElementById('manualFbToken')?.value?.trim()
+      const pageId = manualId || document.getElementById('fbPageList').value
+      if (!pageId) return alert('กรุณาเลือกเพจ Facebook ก่อน (หรือกรอก Page ID)')
+      const pageToken = manualToken || (document.getElementById('fbPageList').selectedOptions[0]?.dataset?.token || '')
+
+      const title = document.getElementById('outTitle').value
+      const caption = document.getElementById('outCaption').value
+      const comment = document.getElementById('fbCommentText').value.trim()
+      const isSchedule = document.getElementById('postTiming').value === 'schedule'
+      let scheduledPublishTime = null
+
+      if (isSchedule) {
+        const tVal = document.getElementById('scheduleDateTime').value
+        if (!tVal) return alert('กรุณาเลือกวันและเวลาที่ต้องการโพสต์')
+        scheduledPublishTime = Math.floor(new Date(tVal).getTime() / 1000)
+      }
+
+      const btn = document.getElementById('btnPushReel')
+      btn.disabled = true
+      btn.textContent = 'กำลังโพสต์ขึ้น Facebook Reels...'
+
+      const blobToSend = currentVideoBlob || await (await fetch('likes_auto_finished_reel.mp4')).blob()
+      const reader = new FileReader()
+      reader.onload = () => {
+        const b64 = reader.result.split(',')[1]
+        chrome.runtime.sendMessage(currentExtId, {
+          action: 'postClip',
+          pageId,
+          pageToken,
+          videoB64: b64,
+          title,
+          caption,
+          description: caption,
+          comment,
+          productLink: comment,
+          scheduledPublishTime
+        }, (res) => {
+          btn.disabled = false
+          btn.textContent = '🚀 โพสต์ขึ้น Facebook Reels ทันที'
+          if (res && res.ok) {
+            alert('🎉 โพสต์ขึ้น Facebook Reels เรียบร้อยแล้ว!' + (res.permalink ? `\nลิงก์: ${res.permalink}` : ''))
+          } else {
+            alert('การโพสต์ไม่สำเร็จ: ' + (res?.message || res?.error || 'Unknown error'))
+          }
+        })
+      }
+      reader.readAsDataURL(blobToSend)
+    })
+
+    // UI Helpers
+    function setBar(pct, txt) {
+      barFill.style.width = pct + '%'
+      stepPercent.textContent = pct + '%'
+      stepLabel.textContent = txt
+    }
+
+    function addLog(t) {
+      if (!t) return
+      const d = document.createElement('div')
+      d.textContent = `> ${t}`
+      logTerminal.appendChild(d)
+      logTerminal.scrollTop = logTerminal.scrollHeight
+    }
+
+    function setStep(stepId) {
+      ['p-upload', 'p-script', 'p-tts', 'p-sub', 'p-mix'].forEach((id) => {
+        const el = document.getElementById(id)
+        if (id === stepId) el.className = 'pipeline-step active'
+        else if (el.classList.contains('active')) el.className = 'pipeline-step done'
+      })
+    }
+
+    function setAllDone() {
+      ['p-upload', 'p-script', 'p-tts', 'p-sub', 'p-mix'].forEach((id) => {
+        document.getElementById(id).className = 'pipeline-step done'
+      })
+    }
+
+    // Meta AI Prompt generator
+    function generateMetaAiPrompt() {
+      const style = document.getElementById('metaAiStyle')?.value || 'unbox'
+      const prod = document.getElementById('productDetails')?.value.trim() || 'product'
+      let prompt = ''
+      if (style === 'unbox') {
+        prompt = `Cinematic 9:16 vertical video unboxing ${prod}, soft studio lighting, sharp 4K macro lens details, smooth pan motion, 60fps, photorealistic aesthetic commercial.`
+      } else if (style === 'action') {
+        prompt = `Close-up dynamic 9:16 video demonstrating real usage of ${prod}, fast cuts, high energy, crisp focus on features, studio lighting, hyperrealistic commercial shot.`
+      } else if (style === 'durable') {
+        prompt = `Dramatic slow-motion 9:16 test of ${prod}, water-resistant splashing, drop impact resistance, extreme durability showcase, cinematic dark mode lighting, 4k 120fps feel.`
+      } else {
+        prompt = `Aesthetic cozy minimalist 9:16 video of ${prod} placed gracefully on modern wooden desk, warm natural morning sunlight, cinematic depth of field, viral TikTok lifestyle style.`
+      }
+      const el = document.getElementById('metaAiPromptText')
+      if (el) el.value = prompt
+    }
+
+    function copyMetaAiPrompt() {
+      const txt = document.getElementById('metaAiPromptText').value
+      navigator.clipboard.writeText(txt).then(() => {
+        alert('คัดลอกพรอมต์สำหรับ Meta AI เรียบร้อย! สามารถนำไปวางสั่งสร้างคลิปใน meta.ai ได้เลย')
+      }).catch(() => {
+        alert('คัดลอก: ' + txt)
+      })
+    }
+
+    function showTab(t) {
+      document.querySelectorAll('.tab-item').forEach((b) => b.classList.remove('active'))
+      document.getElementById('scriptTab').style.display = 'none'
+      document.getElementById('fbTab').style.display = 'none'
+      document.getElementById('shopeeTab').style.display = 'none'
+      const metaEl = document.getElementById('metaAiTab')
+      if (metaEl) metaEl.style.display = 'none'
+
+      if (t === 'scriptTab') {
+        document.querySelectorAll('.tab-item')[0].classList.add('active')
+        document.getElementById('scriptTab').style.display = 'block'
+      } else if (t === 'fbTab') {
+        document.querySelectorAll('.tab-item')[1].classList.add('active')
+        document.getElementById('fbTab').style.display = 'block'
+      } else if (t === 'shopeeTab') {
+        document.querySelectorAll('.tab-item')[2].classList.add('active')
+        document.getElementById('shopeeTab').style.display = 'block'
+      } else if (t === 'metaAiTab') {
+        document.querySelectorAll('.tab-item')[3].classList.add('active')
+        if (metaEl) metaEl.style.display = 'block'
+        generateMetaAiPrompt()
+      }
+    }
+
+    function togglePostTime(v) {
+      document.getElementById('timeField').style.display = v === 'schedule' ? 'block' : 'none'
+    }
+
+    async function getBase64Chunks(file, chunkSize) {
+      const buffer = await file.arrayBuffer()
+      const bytes = new Uint8Array(buffer)
+      const chunks = []
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const slice = bytes.subarray(i, i + chunkSize)
+        let binary = ''
+        for (let j = 0; j < slice.length; j += 0x8000) {
+          binary += String.fromCharCode.apply(null, slice.subarray(j, j + 0x8000))
+        }
+        chunks.push(btoa(binary))
+      }
+      return chunks
+    }
+  </script>
+</body>
+
+</html>

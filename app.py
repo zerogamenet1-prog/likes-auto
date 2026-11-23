@@ -2,9 +2,10 @@ import hmac
 import json
 import os
 import time
+import asyncio
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -1014,3 +1015,113 @@ async def internal_pay_tg(request: Request, token: str = ""):
     if last == "paid":
         return {"ok": True, "payment_id": pid, "amount": amt}
     return {"ok": False, "reason": last}
+
+
+@app.get("/studio", response_class=HTMLResponse)
+async def studio_page():
+    for studio_path in [
+        Path(__file__).resolve().parent / "studio.html",
+        Path(__file__).resolve().parent / "templates" / "studio.html",
+        Path(__file__).resolve().parent.parent / "studio.html"
+    ]:
+        if studio_path.exists():
+            return HTMLResponse(content=studio_path.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>Studio page not found</h1>", status_code=404)
+
+
+@app.get("/sample_product.mp4")
+async def sample_video():
+    for p in [
+        Path(__file__).resolve().parent / "sample_product.mp4",
+        Path(__file__).resolve().parent.parent / "sample_product.mp4"
+    ]:
+        if p.exists():
+            return FileResponse(p, media_type="video/mp4")
+    return Response(status_code=404)
+
+
+@app.get("/likes_auto_finished_reel.mp4")
+async def finished_reel():
+    p = Path(__file__).resolve().parent.parent / "likes_auto_finished_reel.mp4"
+    if p.exists():
+        return FileResponse(p, media_type="video/mp4")
+    return Response(status_code=404)
+
+
+@app.get("/likes_auto_finished_thumb.jpg")
+async def finished_thumb():
+    p = Path(__file__).resolve().parent.parent / "likes_auto_finished_thumb.jpg"
+    if p.exists():
+        return FileResponse(p, media_type="image/jpeg")
+    return Response(status_code=404)
+
+
+@app.get("/rendered_clips/{filename}")
+async def get_rendered_clip(filename: str):
+    p = Path(__file__).resolve().parent.parent / "rendered_clips" / filename
+    if p.exists():
+        media_type = "image/jpeg" if filename.endswith((".jpg", ".jpeg")) else "video/mp4"
+        return FileResponse(p, media_type=media_type)
+    return Response(status_code=404)
+
+
+@app.post("/api/studio/render")
+async def studio_render_api(
+    video: UploadFile = File(...),
+    product_details: str = Form(""),
+    voice: str = Form("Kore"),
+    font: str = Form("mitr"),
+    music: bool = Form(True),
+    bgm_track: str = Form("bgm1"),
+    sfx_choice: str = Form("auto"),
+    audio_mode: str = Form("dub"),
+    sub_color: str = Form("#ffffff"),
+    sub_border: str = Form("#000000"),
+    sub_scale: int = Form(100),
+    sub_pos_y: int = Form(75),
+    presenter: UploadFile = File(None),
+    presenter_corner: str = Form("bottom_right"),
+    presenter_size: int = Form(220),
+    api_key: str = Form("")
+):
+    from studio_engine import process_studio_render
+    video_bytes = await video.read()
+    presenter_bytes = None
+    presenter_filename = ""
+    if presenter and presenter.filename:
+        try:
+            presenter_bytes = await presenter.read()
+            presenter_filename = presenter.filename
+        except Exception:
+            pass
+
+    try:
+        res = await asyncio.to_thread(
+            process_studio_render,
+            video_bytes=video_bytes,
+            product_details=product_details,
+            voice=voice,
+            font=font,
+            music=music,
+            bgm_track=bgm_track,
+            sfx_choice=sfx_choice,
+            audio_mode=audio_mode,
+            sub_color=sub_color,
+            sub_border=sub_border,
+            sub_scale=sub_scale,
+            sub_pos_y=sub_pos_y,
+            presenter_bytes=presenter_bytes,
+            presenter_filename=presenter_filename,
+            presenter_corner=presenter_corner,
+            presenter_size=presenter_size,
+            api_key=api_key
+        )
+        return JSONResponse(res)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+
+

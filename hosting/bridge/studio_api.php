@@ -63,7 +63,7 @@ if ($action === 'script') {
         ];
         $prompt = "You are an elite Thai viral video marketer on TikTok and Facebook Reels.\n" .
             "Look at this exact video frame carefully. Identify the exact product, brand, model, color and features shown in the video.\n" .
-            "Write a natural, high-converting Thai sales script matching this exact video 100%.\n" .
+            "Write a natural, high-converting Thai sales script matching this exact video 100% (duration ~22-26 seconds, around 55-70 words).\n" .
             ($product ? "Seller note: {$product}\n\n" : "\n") .
             "Return STRICTLY a JSON object with this exact schema (no markdown formatting, no backticks):\n" .
             "{\n" .
@@ -72,7 +72,8 @@ if ($action === 'script') {
             "  \"phrases\": [\n" .
             "    \"ใครกำลังมองหา (ชื่อสินค้าจริง) ตัวนี้บอกเลยว่าห้ามพลาด!\",\n" .
             "    \"จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานง่าย\",\n" .
-            "    \"ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ คุ้มค่าที่สุด\",\n" .
+            "    \"วัสดุพรีเมียม สวยตรงปก แข็งแรงทนทาน คุ้มค่าที่สุด\",\n" .
+            "    \"ดีลพิเศษลดราคาเฉพาะคลิปนี้ มีจำนวนจำกัด\",\n" .
             "    \"รีบจิ้มสั่งซื้อในตะกร้าส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
             "  ],\n" .
             "  \"caption\": \"ของดีบอกต่อ (ชื่อสินค้าจริง) คุณภาพเกินราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา\",\n" .
@@ -80,7 +81,7 @@ if ($action === 'script') {
             "}";
     } else {
         $prompt = "You are an elite Thai viral video marketer on TikTok and Facebook Reels.\n" .
-            "Write a high-converting Thai short sales script for this exact product: {$product}\n\n" .
+            "Write a high-converting Thai sales script for this exact product: {$product} (duration ~22-26 seconds, around 55-70 words).\n\n" .
             "Return STRICTLY a JSON object with this exact schema (no markdown formatting, no backticks):\n" .
             "{\n" .
             "  \"detected_product\": \"{$mainName}\",\n" .
@@ -88,7 +89,8 @@ if ($action === 'script') {
             "  \"phrases\": [\n" .
             "    \"ใครกำลังมองหา {$mainName} ตัวนี้บอกเลยว่าห้ามพลาด!\",\n" .
             "    \"จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานง่าย\",\n" .
-            "    \"ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ คุ้มค่าที่สุด\",\n" .
+            "    \"วัสดุพรีเมียม สวยตรงปก แข็งแรงทนทาน คุ้มค่าที่สุด\",\n" .
+            "    \"ดีลพิเศษลดราคาเฉพาะคลิปนี้ มีจำนวนจำกัด\",\n" .
             "    \"รีบจิ้มสั่งซื้อในตะกร้าส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
             "  ],\n" .
             "  \"caption\": \"ของดีบอกต่อ {$mainName} คุณภาพเกินราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา\",\n" .

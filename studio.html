@@ -3165,6 +3165,10 @@
         const blob = await resp.blob()
         const file = new File([blob], 'sample_product.mp4', { type: 'video/mp4' })
         handleVideoSelected(file)
+        const pDet = document.getElementById('productDetails')
+        if (pDet && !pDet.value) {
+          pDet.value = 'สมาร์ทโฟน iPhone พร้อมขาตั้งกล้องมือถือสำหรับไลฟ์สดและถ่ายคลิปสั้น'
+        }
       } catch (err) {
         if (promptEl) promptEl.innerHTML = 'แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ'
         alert('เกิดข้อผิดพลาดในการโหลดคลิปตัวอย่าง: ' + err.message + '\nแนะนำให้แตะปุ่ม "เลือกวิดีโอจากเครื่อง" เพื่อใช้วิดีโอของคุณได้เลยครับ')
@@ -3426,6 +3430,8 @@
           snapCanvas.width = 480
           snapCanvas.height = 854
           const snapCtx = snapCanvas.getContext('2d')
+          video.currentTime = Math.min(2.0, (video.duration || 5) * 0.25)
+          await new Promise(r => { video.onseeked = r; setTimeout(r, 400) })
           snapCtx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height)
           const dataUrl = snapCanvas.toDataURL('image/jpeg', 0.85)
           frameB64 = dataUrl.split(',')[1] || ''

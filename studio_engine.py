@@ -9,6 +9,7 @@ import asyncio
 import math
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
+import ffmpeg
 try:
     import cv2
 except Exception:
@@ -871,10 +872,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     has_pop = sfx_choice in ["auto"] and pop_path.exists()
     has_ding = sfx_choice in ["auto", "minimal"] and ding_path.exists()
 
-    ass_escaped = str(ass_path).replace("\\", "/").replace(":", "\\:")
-    fonts_escaped = str(FONTS_DIR).replace("\\", "/").replace(":", "\\:")
-
-    target_dur = f"{voice_dur + 0.35:.2f}"
+    target_dur_float = float(voice_dur + 0.35) if is_dub else float(max(voice_dur, 15.0))
+    if target_dur_float < 15.0:
+        target_dur_float = 15.0
+    target_dur = f"{target_dur_float:.2f}"
 
     # Handle Presenter / Character Overlay
     has_presenter = bool(presenter_bytes and len(presenter_bytes) > 0)
@@ -888,117 +889,96 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         presenter_path.write_bytes(presenter_bytes)
         is_img = ext in [".png", ".jpg", ".jpeg", ".webp"]
 
-    # Build FFmpeg command dynamically
-    cmd = ["ffmpeg", "-y"]
-    cmd.extend(["-stream_loop", "-1", "-i", str(src_video_path)])  # Input 0: Source Video
-    
-    current_input_idx = 1
-    voice_input_idx = None
-    if is_dub:
-        cmd.extend(["-i", str(voice_path)])  # Voice
-        voice_input_idx = current_input_idx
-        current_input_idx += 1
+    # Build video stream using ffmpeg-python with infinite loop (stream_loop=-1)
+    # If audio is 20s and video is 10s, it seamlessly loops to cover the full 20s without cutting!
+    v_in = ffmpeg.input(str(src_video_path), stream_loop=-1).video
+    try:
+        ass_path_str = ass_path.relative_to(Path.cwd()).as_posix()
+    except Exception:
+        ass_path_str = f"rendered_clips/{ass_path.name}"
+    try:
+        fonts_dir_str = FONTS_DIR.relative_to(Path.cwd()).as_posix()
+    except Exception:
+        fonts_dir_str = "likes_auto_studio_ext/studio/fonts"
+    v_curr = v_in.filter("subtitles", ass_path_str, fontsdir=fonts_dir_str)
 
-    bgm_input_idx = None
-    if has_bgm:
-        cmd.extend(["-stream_loop", "-1", "-i", str(bgm_path)])  # BGM
-        bgm_input_idx = current_input_idx
-        current_input_idx += 1
-
-    presenter_input_idx = None
-    if has_presenter:
+    if has_presenter and presenter_path and presenter_path.exists():
         if is_img:
-            cmd.extend(["-loop", "1", "-i", str(presenter_path)])
+            p_in = ffmpeg.input(str(presenter_path), loop=1).video
         else:
-            cmd.extend(["-stream_loop", "-1", "-i", str(presenter_path)])
-        presenter_input_idx = current_input_idx
-        current_input_idx += 1
+            p_in = ffmpeg.input(str(presenter_path), stream_loop=-1).video
+        p_scaled = p_in.filter("scale", max(100, int(presenter_size)), -1)
 
-    pop_input_idx = None
-    if has_pop:
-        cmd.extend(["-i", str(pop_path)])
-        pop_input_idx = current_input_idx
-        current_input_idx += 1
-
-    ding_input_idx = None
-    if has_ding:
-        cmd.extend(["-i", str(ding_path)])
-        ding_input_idx = current_input_idx
-        current_input_idx += 1
-
-    # Filters
-    filters = []
-    # Video subtitles filter
-    if has_presenter:
-        filters.append(f"[0:v]subtitles='{ass_escaped}':fontsdir='{fonts_escaped}'[v_sub]")
-        filters.append(f"[{presenter_input_idx}:v]scale={max(100, int(presenter_size))}:-1[p_scaled]")
-        
-        # Corner coordinates
         corner = (presenter_corner or "bottom_right").lower()
         if corner == "bottom_left":
-            ov_pos = "x=24:y=H-h-24"
+            ov_x, ov_y = 24, "H-h-24"
         elif corner == "top_right":
-            ov_pos = "x=W-w-24:y=24"
+            ov_x, ov_y = "W-w-24", 24
         elif corner == "top_left":
-            ov_pos = "x=24:y=24"
+            ov_x, ov_y = 24, 24
         else:
-            ov_pos = "x=W-w-24:y=H-h-24"
-            
-        filters.append(f"[v_sub][p_scaled]overlay={ov_pos}[v]")
-    else:
-        filters.append(f"[0:v]subtitles='{ass_escaped}':fontsdir='{fonts_escaped}'[v]")
+            ov_x, ov_y = "W-w-24", "H-h-24"
+        v_curr = ffmpeg.overlay(v_curr, p_scaled, x=ov_x, y=ov_y)
 
-    # Audio filters with SFX (Pop at 400ms, Ding at CTA)
+    # Build audio streams using ffmpeg-python
     cta_delay_ms = int(max(1.0, voice_dur - 3.2) * 1000)
+    audio_streams = []
 
-    audio_inputs = []
     if is_dub:
-        filters.append(f"[{voice_input_idx}:a]volume=1.2[voice]")
-        audio_inputs.append("[voice]")
+        if voice_path.exists():
+            a_voice = ffmpeg.input(str(voice_path)).filter("volume", 1.25)
+            audio_streams.append(a_voice)
     else:
         has_src_audio = check_has_audio(src_video_path)
         if has_src_audio:
-            filters.append(f"[0:a]volume=1.0[orig]")
-            audio_inputs.append("[orig]")
+            a_orig = ffmpeg.input(str(src_video_path), stream_loop=-1).audio.filter("volume", 1.0)
+            audio_streams.append(a_orig)
         else:
-            filters.append(f"aevalsrc=0:d={target_dur}:s=44100[orig]")
-            audio_inputs.append("[orig]")
+            a_silent = ffmpeg.input("anullsrc=r=44100:cl=stereo", f="lavfi").filter("atrim", duration=target_dur_float)
+            audio_streams.append(a_silent)
 
-    if has_bgm:
-        filters.append(f"[{bgm_input_idx}:a]volume=0.20[bgm]")
-        audio_inputs.append("[bgm]")
+    if has_bgm and bgm_path.exists():
+        a_bgm = ffmpeg.input(str(bgm_path), stream_loop=-1).filter("volume", 0.18)
+        audio_streams.append(a_bgm)
 
-    if has_pop:
-        filters.append(f"[{pop_input_idx}:a]adelay=400|400,volume=0.85[sfx_p]")
-        audio_inputs.append("[sfx_p]")
+    if has_pop and pop_path.exists():
+        a_pop = ffmpeg.input(str(pop_path)).filter("adelay", "400|400").filter("volume", 0.85)
+        audio_streams.append(a_pop)
 
-    if has_ding:
-        filters.append(f"[{ding_input_idx}:a]adelay={cta_delay_ms}|{cta_delay_ms},volume=0.85[sfx_d]")
-        audio_inputs.append("[sfx_d]")
+    if has_ding and ding_path.exists():
+        a_ding = ffmpeg.input(str(ding_path)).filter("adelay", f"{cta_delay_ms}|{cta_delay_ms}").filter("volume", 0.85)
+        audio_streams.append(a_ding)
 
-    if len(audio_inputs) > 1:
-        mix_inputs = "".join(audio_inputs)
-        filters.append(f"{mix_inputs}amix=inputs={len(audio_inputs)}:duration=first:dropout_transition=2[a]")
+    if len(audio_streams) > 1:
+        a_final = ffmpeg.filter(audio_streams, "amix", inputs=len(audio_streams), duration="first", dropout_transition=2)
+    elif len(audio_streams) == 1:
+        a_final = audio_streams[0]
     else:
-        filters.append(f"{audio_inputs[0]}anull[a]")
+        a_final = ffmpeg.input("anullsrc=r=44100:cl=stereo", f="lavfi").filter("atrim", duration=target_dur_float)
 
-    cmd.extend([
-        "-filter_complex", ";".join(filters),
-        "-map", "[v]",
-        "-map", "[a]",
-        "-c:v", "libx264",
-        "-preset", "ultrafast",
-        "-threads", "0",
-        "-pix_fmt", "yuv420p",
-        "-c:a", "aac",
-        "-b:a", "160k",
-        "-t", target_dur,
-        str(out_video_path)
-    ])
+    # Render with ffmpeg-python output node
+    out_node = (
+        ffmpeg
+        .output(
+            v_curr,
+            a_final,
+            str(out_video_path),
+            t=target_dur_float,
+            vcodec="libx264",
+            preset="ultrafast",
+            pix_fmt="yuv420p",
+            acodec="aac",
+            audio_bitrate="160k",
+            threads=0
+        )
+        .overwrite_output()
+    )
 
-    res = subprocess.run(cmd, capture_output=True, text=True)
-    if res.returncode != 0:
-        raise RuntimeError(f"FFmpeg render failed: {res.stderr[-300:]}")
+    try:
+        out_node.run(capture_stdout=True, capture_stderr=True)
+    except ffmpeg.Error as err_f:
+        err_msg = err_f.stderr.decode("utf-8", errors="ignore") if err_f.stderr else str(err_f)
+        raise RuntimeError(f"ffmpeg-python render failed: {err_msg[-300:]}")
 
     # 6. Generate Viral High-Converting Thumbnail
     thumb_path = CLIPS_DIR / f"{job_prefix}_thumb.jpg"
@@ -1039,5 +1019,5 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         "caption": f"{script_data.get('caption', '')}\n\n{' '.join(script_data.get('hashtags', []))}",
         "first_comment": script_data.get("first_comment", "📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มตรงนี้เลยจ้า: (ใส่ลิงก์พิกัดร้านค้าของคุณ)"),
         "hashtags": script_data.get("hashtags", []),
-        "duration": voice_dur
+        "duration": target_dur_float
     }

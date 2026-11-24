@@ -3,14 +3,17 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#1877f2">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>LikesAuto Studio — ตัดต่อคลิปขายของอัตโนมัติ พากย์ไทย ใส่ซับ โพสต์ลงเพจ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;600&family=Athiti:wght@400;600&family=Bai+Jamjuree:wght@400;600&family=Chakra+Petch:wght@400;600&family=Charm:wght@400;700&family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;600&family=Itim&family=K2D:wght@400;600&family=Kanit:wght@400;600&family=Mali:wght@400;600&family=Mitr:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;600;700&family=Pattaya&family=Pridi:wght@400;600&family=Prompt:wght@400;600&family=Sarabun:wght@400;600&family=Sriracha&family=Taviraj:wght@400;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;600&family=Athiti:wght@400;600&family=Bai+Jamjuree:wght@400;600&family=Chakra+Petch:wght@400;600&family=Charm:wght@400;700&family=Chonburi&family=IBM+Plex+Sans+Thai:wght@400;600&family=Itim&family=K2D:wght@400;600&family=Kanit:wght@400;600&family=Mali:wght@400;600&family=Mitr:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;600;700&family=Pattaya&family=Pridi:wght@400;600&family=Prompt:wght@400;600&family=Sarabun:wght@400;600&family=Sriracha&family=Taviraj:wght@400;600&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --lp-ink: #0f1b33;
@@ -81,8 +84,13 @@
     }
 
     @keyframes shimmerLine {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
     }
 
     .brand-wrap {
@@ -182,8 +190,17 @@
     }
 
     @keyframes pulseAnim {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.25); }
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(1.25);
+      }
     }
 
     /* Main Container */
@@ -333,8 +350,15 @@
     }
 
     @keyframes fadeInCard {
-      from { opacity: 0; transform: translateY(-6px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .mini-player-wrap {
@@ -552,18 +576,22 @@
       transition: all 0.2s ease;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
+
     .accordion-toggle-btn:hover {
       background: #f1f5f9;
       border-color: #cbd5e1;
     }
+
     .accordion-toggle-btn.is-open {
       border-color: #93c5fd;
       background: #f0f7ff;
     }
+
     .accordion-content {
       display: none;
       padding-top: 12px;
     }
+
     .accordion-content.open {
       display: block;
       animation: fadeIn 0.25s ease-out;
@@ -579,11 +607,13 @@
       flex-direction: column;
       gap: 22px;
     }
+
     .adv-section {
       display: flex;
       flex-direction: column;
       gap: 9px;
     }
+
     .adv-sec-header {
       display: flex;
       justify-content: space-between;
@@ -591,6 +621,7 @@
       flex-wrap: wrap;
       gap: 6px;
     }
+
     .adv-sec-title {
       font-size: 13.5px;
       font-weight: 700;
@@ -599,11 +630,13 @@
       align-items: center;
       gap: 6px;
     }
+
     .adv-sec-desc {
       font-size: 11.5px;
       color: var(--lp-muted);
       margin-top: -3px;
     }
+
     .adv-badge {
       font-size: 11px;
       font-weight: 600;
@@ -621,9 +654,11 @@
       padding-bottom: 2px;
       scrollbar-width: none;
     }
+
     .adv-tabs::-webkit-scrollbar {
       display: none;
     }
+
     .adv-tab-pill {
       padding: 5px 12px;
       border-radius: 20px;
@@ -637,10 +672,12 @@
       transition: all 0.15s ease;
       user-select: none;
     }
+
     .adv-tab-pill:hover {
       background: #f1f5f9;
       color: var(--lp-ink);
     }
+
     .adv-tab-pill.active {
       background: var(--lp-blue);
       color: #ffffff;
@@ -654,11 +691,13 @@
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 8px;
     }
+
     @media (max-width: 480px) {
       .voice-grid {
         grid-template-columns: 1fr 1fr;
       }
     }
+
     .voice-card {
       position: relative;
       border: 1.5px solid var(--lp-line);
@@ -673,15 +712,18 @@
       user-select: none;
       min-height: 80px;
     }
+
     .voice-card:hover {
       border-color: #93c5fd;
       background: #f8fafc;
     }
+
     .voice-card.selected {
       border-color: var(--lp-blue);
       background: #eff6ff;
       box-shadow: 0 2px 8px rgba(24, 119, 242, 0.15);
     }
+
     .adv-card-check {
       position: absolute;
       top: 6px;
@@ -697,16 +739,19 @@
       font-size: 10px;
       font-weight: 700;
     }
+
     .voice-card.selected .adv-card-check,
     .font-card.selected .adv-card-check {
       display: flex;
     }
+
     .voice-top-row {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 5px;
     }
+
     .voice-avatar {
       width: 32px;
       height: 32px;
@@ -718,15 +763,18 @@
       background: #f1f5f9;
       flex-shrink: 0;
     }
+
     .voice-card.selected .voice-avatar {
       background: #dbeafe;
     }
+
     .voice-name-title {
       font-size: 13px;
       font-weight: 700;
       color: var(--lp-ink);
       line-height: 1.2;
     }
+
     .voice-badge-tag {
       display: inline-block;
       font-size: 9.5px;
@@ -737,6 +785,7 @@
       color: #854d0e;
       margin-top: 2px;
     }
+
     .voice-desc {
       font-size: 10.5px;
       color: var(--lp-muted);
@@ -752,12 +801,14 @@
       overflow-y: auto;
       padding: 2px;
     }
+
     @media (max-width: 480px) {
       .font-grid {
         grid-template-columns: 1fr 1fr;
         max-height: 270px;
       }
     }
+
     .font-card {
       position: relative;
       border: 1.5px solid var(--lp-line);
@@ -768,15 +819,18 @@
       transition: all 0.18s ease;
       user-select: none;
     }
+
     .font-card:hover {
       border-color: #93c5fd;
       background: #f8fafc;
     }
+
     .font-card.selected {
       border-color: var(--lp-blue);
       background: #eff6ff;
       box-shadow: 0 2px 8px rgba(24, 119, 242, 0.15);
     }
+
     .font-card-name {
       font-size: 11.5px;
       font-weight: 700;
@@ -785,6 +839,7 @@
       justify-content: space-between;
       align-items: center;
     }
+
     .font-card-preview {
       font-size: 15px;
       color: var(--lp-ink);
@@ -794,6 +849,7 @@
       text-overflow: ellipsis;
       line-height: 1.4;
     }
+
     .font-card-tag {
       font-size: 10px;
       color: var(--lp-muted);
@@ -805,6 +861,7 @@
       gap: 6px;
       flex-wrap: wrap;
     }
+
     .seg-btn {
       flex: 1;
       min-width: 78px;
@@ -825,21 +882,25 @@
       gap: 2px;
       user-select: none;
     }
+
     .seg-btn:hover {
       border-color: #93c5fd;
       background: #f8fafc;
     }
+
     .seg-btn.selected {
       border-color: var(--lp-blue);
       background: #eff6ff;
       color: var(--lp-blue);
       box-shadow: 0 2px 6px rgba(24, 119, 242, 0.15);
     }
+
     .seg-btn-sub {
       font-size: 10px;
       color: var(--lp-muted);
       font-weight: normal;
     }
+
     .seg-btn.selected .seg-btn-sub {
       color: #3b82f6;
     }
@@ -851,6 +912,7 @@
       flex-wrap: wrap;
       align-items: center;
     }
+
     .color-preset-pill {
       display: inline-flex;
       align-items: center;
@@ -866,14 +928,17 @@
       transition: all 0.15s ease;
       user-select: none;
     }
+
     .color-preset-pill:hover {
       border-color: #93c5fd;
     }
+
     .color-preset-pill.selected {
       border-color: var(--lp-blue);
       background: #eff6ff;
       color: var(--lp-blue);
     }
+
     .color-dot {
       width: 13px;
       height: 13px;
@@ -897,6 +962,7 @@
       justify-content: center;
       align-items: center;
     }
+
     .sub-preview-top-tag {
       position: absolute;
       top: 6px;
@@ -908,6 +974,7 @@
       padding: 1px 7px;
       border-radius: 100px;
     }
+
     .sub-preview-pos-tag {
       position: absolute;
       top: 6px;
@@ -919,6 +986,7 @@
       padding: 1px 7px;
       border-radius: 100px;
     }
+
     .sub-preview-text {
       line-height: 1.4;
       transition: all 0.15s ease;
@@ -934,6 +1002,7 @@
       gap: 6px;
       max-width: 240px;
     }
+
     .pip-corner-btn {
       padding: 7px 8px;
       border: 1.5px solid var(--lp-line);
@@ -947,9 +1016,11 @@
       transition: all 0.15s ease;
       user-select: none;
     }
+
     .pip-corner-btn:hover {
       border-color: #93c5fd;
     }
+
     .pip-corner-btn.selected {
       border-color: var(--lp-blue);
       background: #eff6ff;
@@ -961,16 +1032,20 @@
         grid-template-columns: 1fr !important;
         gap: 12px !important;
       }
+
       .adv-panel {
         padding: 14px 12px;
         gap: 18px;
       }
+
       .font-grid {
         max-height: 250px;
       }
+
       .voice-grid {
         gap: 6px;
       }
+
       .voice-card {
         padding: 8px;
       }
@@ -1257,8 +1332,15 @@
     }
 
     @keyframes modalSlideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .modal-close {
@@ -1461,15 +1543,19 @@
       .mobile-nav-bar {
         display: flex;
       }
+
       .grid-studio {
         display: block;
       }
+
       .mobile-col {
         display: none;
       }
+
       .mobile-col.active {
         display: block;
       }
+
       .mobile-sticky-action {
         display: block;
         position: fixed;
@@ -1484,9 +1570,11 @@
         z-index: 95;
         box-shadow: 0 -4px 16px rgba(15, 27, 51, 0.08);
       }
+
       body {
         padding-bottom: 96px;
       }
+
       .style-cards-grid {
         grid-template-columns: 1fr;
       }
@@ -1496,49 +1584,62 @@
       header {
         padding: 10px 14px;
       }
+
       .brand-icon {
         width: 36px;
         height: 36px;
         font-size: 18px;
       }
+
       .brand-text h1 {
         font-size: 15px;
       }
+
       .brand-text p {
         display: none;
       }
+
       #btnOpenMobileModal,
       .header-secondary-badge {
         display: none !important;
       }
+
       .container {
         padding: 0 12px;
         margin: 12px auto;
       }
+
       .card {
         padding: 16px 14px;
         border-radius: 16px;
       }
+
       .form-row {
         grid-template-columns: 1fr;
         gap: 10px;
       }
+
       /* Prevent iOS Safari 16px input zoom */
-      .field-input, .field-select, .field-textarea {
+      .field-input,
+      .field-select,
+      .field-textarea {
         font-size: 16px !important;
         padding: 11px 14px;
         border-radius: 12px;
       }
+
       .btn {
         padding: 12px 16px;
         font-size: 14px;
         min-height: 46px;
       }
+
       .phone-bezel {
         max-width: 270px;
         border-radius: 28px;
         padding: 6px;
       }
+
       .phone-screen {
         border-radius: 20px;
       }
@@ -1561,7 +1662,9 @@
       </div>
     </a>
     <div class="nav-badges">
-      <button type="button" id="btnOpenMobileModal" class="badge" style="background: #f1f5f9; color: var(--lp-ink); border: 1px solid var(--lp-line); cursor: pointer;" onclick="openMobileModal()" title="สแกน QR Code เพื่อเปิดใช้งานบนมือถือ">
+      <button type="button" id="btnOpenMobileModal" class="badge"
+        style="background: #f1f5f9; color: var(--lp-ink); border: 1px solid var(--lp-line); cursor: pointer;"
+        onclick="openMobileModal()" title="สแกน QR Code เพื่อเปิดใช้งานบนมือถือ">
         <span>📱</span>
         <span>เปิดบนมือถือ</span>
       </button>
@@ -1569,7 +1672,8 @@
         <span class="dot dot-pulse"></span>
         <span id="extBadgeText">Engine พร้อมใช้งาน</span>
       </div>
-      <div class="badge badge-ok header-secondary-badge" style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1)); border-color: rgba(168,85,247,0.3); color: #7c3aed;">
+      <div class="badge badge-ok header-secondary-badge"
+        style="background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1)); border-color: rgba(168,85,247,0.3); color: #7c3aed;">
         <span class="dot" style="background: #a855f7;"></span>
         <span>Gemini 3.5 AI</span>
       </div>
@@ -1579,12 +1683,15 @@
   <div class="container">
 
     <!-- Free Trial Banner -->
-    <div id="cloudBanner" style="display: flex; background: linear-gradient(90deg, #10b981, #059669); color: #fff; padding: 12px 18px; border-radius: 14px; margin-bottom: 18px; font-size: 13.5px; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(16,185,129,0.2);">
+    <div id="cloudBanner"
+      style="display: flex; background: linear-gradient(90deg, #10b981, #059669); color: #fff; padding: 12px 18px; border-radius: 14px; margin-bottom: 18px; font-size: 13.5px; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(16,185,129,0.2);">
       <div style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
         <span style="font-size: 18px;">🎁</span>
-        <span><strong>โหมดทดลองใช้ฟรี:</strong> คุณกำลังใช้งาน LikesAuto Studio ทดลองสร้างคลิปรีวิวและรูปปกไวรัล AI ได้ฟรี!</span>
+        <span><strong>โหมดทดลองใช้ฟรี:</strong> คุณกำลังใช้งาน LikesAuto Studio ทดลองสร้างคลิปรีวิวและรูปปกไวรัล AI
+          ได้ฟรี!</span>
       </div>
-      <div style="background: rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;">
+      <div
+        style="background: rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;">
         ✨ ใช้งานฟรี
       </div>
     </div>
@@ -1618,12 +1725,14 @@
           <div class="drop-icon">📹</div>
           <div id="dropPrompt" class="drop-title">แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ</div>
           <div class="drop-hint">รองรับวิดีโอทุกขนาดจากมือถือและคอมพิวเตอร์ (MP4, MOV, WebM)</div>
-          <div style="margin-top: 14px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 10;">
+          <div
+            style="margin-top: 14px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 10;">
             <button type="button" class="btn btn-primary" onclick="event.stopPropagation();triggerFilePicker()"
               style="font-size: 13.5px; padding: 11px 20px; border-radius: 12px; font-weight: 700; box-shadow: 0 3px 10px rgba(24,119,242,0.28);">
               📁 เลือกวิดีโอจากเครื่อง
             </button>
-            <button type="button" id="btnLoadDemo" class="btn btn-secondary" onclick="event.stopPropagation();triggerLoadDemoVideo()"
+            <button type="button" id="btnLoadDemo" class="btn btn-secondary"
+              onclick="event.stopPropagation();triggerLoadDemoVideo()"
               style="font-size: 13.5px; padding: 11px 18px; border-radius: 12px; font-weight: 600;">
               ✨ ใช้คลิปตัวอย่าง (Demo)
             </button>
@@ -1645,10 +1754,12 @@
             </div>
           </div>
           <div class="video-actions-row">
-            <button type="button" class="btn btn-secondary" style="flex: 1; font-size: 13px; font-weight: 600; padding: 9px 12px;" onclick="triggerFilePicker()">
+            <button type="button" class="btn btn-secondary"
+              style="flex: 1; font-size: 13px; font-weight: 600; padding: 9px 12px;" onclick="triggerFilePicker()">
               🔄 เปลี่ยนคลิปวิดีโอ
             </button>
-            <button type="button" class="btn btn-secondary btn-danger-soft" style="font-size: 13px; font-weight: 600; padding: 9px 14px;" onclick="resetSelectedVideo()">
+            <button type="button" class="btn btn-secondary btn-danger-soft"
+              style="font-size: 13px; font-weight: 600; padding: 9px 14px;" onclick="resetSelectedVideo()">
               🗑️ ลบออก
             </button>
           </div>
@@ -1661,7 +1772,8 @@
             <span class="field-label-hint">Audio & Dubbing Mode</span>
           </label>
           <select id="audioMode" class="field-select">
-            <option value="dub" selected>🎙️ พากย์เสียงใหม่ด้วย AI (สร้างบทขาย + พากย์เสียงไทย + ซับไตเติ้ล - แนะนำ)</option>
+            <option value="dub" selected>🎙️ พากย์เสียงใหม่ด้วย AI (สร้างบทขาย + พากย์เสียงไทย + ซับไตเติ้ล - แนะนำ)
+            </option>
             <option value="source">🔊 ใช้เสียงต้นฉบับเดิมของคลิป (คงเสียงเดิม + ถอดซับไตเติ้ลภาษาไทย)</option>
           </select>
         </div>
@@ -1690,9 +1802,11 @@
           </select>
 
           <div class="style-cards-grid">
-            <div class="style-card-option selected" data-style="creator_viral" onclick="selectStyleCard('creator_viral')">
+            <div class="style-card-option selected" data-style="creator_viral"
+              onclick="selectStyleCard('creator_viral')">
               <div class="style-card-title">🔥 Creator ไฮอิมแพ็ค</div>
-              <div class="style-card-desc">3D Headline คมชัด + จุดเด่นเช็คลิสต์ 3 ข้อ (สไตล์ YouTuber & TikToker แนะนำ)</div>
+              <div class="style-card-desc">3D Headline คมชัด + จุดเด่นเช็คลิสต์ 3 ข้อ (สไตล์ YouTuber & TikToker แนะนำ)
+              </div>
               <div class="style-card-check">✓</div>
             </div>
 
@@ -1716,13 +1830,17 @@
           </div>
         </div>
 
-                <!-- Collapsible Advanced Settings (Voices, Fonts, Music, Subtitles) -->
-        <button type="button" class="accordion-toggle-btn" id="advAccordionBtn" onclick="toggleAccordion('advancedSettingsBox')">
+        <!-- Collapsible Advanced Settings (Voices, Fonts, Music, Subtitles) -->
+        <button type="button" class="accordion-toggle-btn" id="advAccordionBtn"
+          onclick="toggleAccordion('advancedSettingsBox')">
           <div style="display: flex; align-items: center; gap: 9px;">
-            <span style="display: inline-flex; width: 30px; height: 30px; border-radius: 8px; background: #e0f2fe; color: #0284c7; align-items: center; justify-content: center; font-size: 15px;">⚙️</span>
+            <span
+              style="display: inline-flex; width: 30px; height: 30px; border-radius: 8px; background: #e0f2fe; color: #0284c7; align-items: center; justify-content: center; font-size: 15px;">⚙️</span>
             <div style="text-align: left;">
-              <div style="font-weight: 700; color: var(--lp-ink); font-size: 13.5px;">ปรับแต่งขั้นสูง (เสียงพากย์, ฟอนต์, เพลง, ซับไตเติ้ล)</div>
-              <div style="font-size: 11px; color: var(--lp-muted); font-weight: 400;">เลือกเสียง AI 7 แบบ • ฟอนต์ 19 แบบ • เพลง & ซับ</div>
+              <div style="font-weight: 700; color: var(--lp-ink); font-size: 13.5px;">ปรับแต่งขั้นสูง (เสียงพากย์,
+                ฟอนต์, เพลง, ซับไตเติ้ล)</div>
+              <div style="font-size: 11px; color: var(--lp-muted); font-weight: 400;">เลือกเสียง AI 7 แบบ • ฟอนต์ 19 แบบ
+                • เพลง & ซับ</div>
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -1745,7 +1863,7 @@
                 </div>
               </div>
               <div class="adv-sec-desc">เลือกน้ำเสียงผู้บรรยายที่เข้ากับประเภทสินค้าและกลุ่มเป้าหมายของคุณ</div>
-              
+
               <div class="voice-grid" id="voiceGrid">
                 <!-- Female Voices -->
                 <div class="voice-card selected" data-voice="Kore" data-gender="female" onclick="selectVoice('Kore')">
@@ -1854,57 +1972,69 @@
                 <div class="font-card selected" data-font="mitr" data-category="popular" onclick="selectFont('mitr')">
                   <div class="adv-card-check">✓</div>
                   <div class="font-card-name"><span>Mitr (มิตร)</span><span class="font-card-tag">⭐ ยอดนิยม</span></div>
-                  <div class="font-card-preview" style="font-family: 'Mitr', sans-serif;">มิตรไมตรี ทันสมัย ยอดนิยม</div>
+                  <div class="font-card-preview" style="font-family: 'Mitr', sans-serif;">มิตรไมตรี ทันสมัย ยอดนิยม
+                  </div>
                 </div>
 
                 <div class="font-card" data-font="kanit" data-category="popular" onclick="selectFont('kanit')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Kanit (คณิต)</span><span class="font-card-tag">🎬 ฮิตในคลิป</span></div>
+                  <div class="font-card-name"><span>Kanit (คณิต)</span><span class="font-card-tag">🎬 ฮิตในคลิป</span>
+                  </div>
                   <div class="font-card-preview" style="font-family: 'Kanit', sans-serif;">คมชัด ตัวหนา สไตล์รีวิว</div>
                 </div>
 
                 <div class="font-card" data-font="prompt" data-category="popular" onclick="selectFont('prompt')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Prompt (พร้อมท์)</span><span class="font-card-tag">⚡ ทันสมัย</span></div>
-                  <div class="font-card-preview" style="font-family: 'Prompt', sans-serif;">พรีเมียม โมเดิร์น คลีนๆ</div>
+                  <div class="font-card-name"><span>Prompt (พร้อมท์)</span><span class="font-card-tag">⚡ ทันสมัย</span>
+                  </div>
+                  <div class="font-card-preview" style="font-family: 'Prompt', sans-serif;">พรีเมียม โมเดิร์น คลีนๆ
+                  </div>
                 </div>
 
                 <div class="font-card" data-font="anuphan" data-category="popular" onclick="selectFont('anuphan')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Anuphan (อนุพันธ์)</span><span class="font-card-tag">📱 มินิมอล</span></div>
-                  <div class="font-card-preview" style="font-family: 'Anuphan', sans-serif;">มินิมอล อ่านง่าย สบายตา</div>
+                  <div class="font-card-name"><span>Anuphan (อนุพันธ์)</span><span class="font-card-tag">📱
+                      มินิมอล</span></div>
+                  <div class="font-card-preview" style="font-family: 'Anuphan', sans-serif;">มินิมอล อ่านง่าย สบายตา
+                  </div>
                 </div>
 
                 <!-- Cute & Handwriting -->
                 <div class="font-card" data-font="mali" data-category="cute" onclick="selectFont('mali')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Mali (มะลิ)</span><span class="font-card-tag">🌸 คิ้วท์ๆ</span></div>
+                  <div class="font-card-name"><span>Mali (มะลิ)</span><span class="font-card-tag">🌸 คิ้วท์ๆ</span>
+                  </div>
                   <div class="font-card-preview" style="font-family: 'Mali', cursive;">น่ารัก คิ้วท์ๆ สไตล์การ์ตูน</div>
                 </div>
 
                 <div class="font-card" data-font="itim" data-category="cute" onclick="selectFont('itim')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Itim (ไอติม)</span><span class="font-card-tag">🍦 สายหวาน</span></div>
+                  <div class="font-card-name"><span>Itim (ไอติม)</span><span class="font-card-tag">🍦 สายหวาน</span>
+                  </div>
                   <div class="font-card-preview" style="font-family: 'Itim', cursive;">ตัวกลม น่ารัก ฟรุ้งฟริ้ง</div>
                 </div>
 
                 <div class="font-card" data-font="sriracha" data-category="cute" onclick="selectFont('sriracha')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Sriracha (ศรีราชา)</span><span class="font-card-tag">🎨 ลายมือธรรมชาติ</span></div>
+                  <div class="font-card-name"><span>Sriracha (ศรีราชา)</span><span class="font-card-tag">🎨
+                      ลายมือธรรมชาติ</span></div>
                   <div class="font-card-preview" style="font-family: 'Sriracha', cursive;">ลายมือธรรมชาติ ชวนคุย</div>
                 </div>
 
                 <div class="font-card" data-font="charm" data-category="cute" onclick="selectFont('charm')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Charm (ชาร์ม)</span><span class="font-card-tag">💖 พริ้วไหว</span></div>
+                  <div class="font-card-name"><span>Charm (ชาร์ม)</span><span class="font-card-tag">💖 พริ้วไหว</span>
+                  </div>
                   <div class="font-card-preview" style="font-family: 'Charm', cursive;">ตัวเขียนพริ้วไหว สวยงาม</div>
                 </div>
 
                 <!-- Bold & Impact -->
                 <div class="font-card" data-font="chonburi" data-category="bold" onclick="selectFont('chonburi')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Chonburi (ชลบุรี)</span><span class="font-card-tag">💥 หัวข้อตัวหนา</span></div>
-                  <div class="font-card-preview" style="font-family: 'Chonburi', serif;">หัวข้อตัวหนา วินเทจ โดดเด่น</div>
+                  <div class="font-card-name"><span>Chonburi (ชลบุรี)</span><span class="font-card-tag">💥
+                      หัวข้อตัวหนา</span></div>
+                  <div class="font-card-preview" style="font-family: 'Chonburi', serif;">หัวข้อตัวหนา วินเทจ โดดเด่น
+                  </div>
                 </div>
 
                 <div class="font-card" data-font="k2d" data-category="bold" onclick="selectFont('k2d')">
@@ -1915,56 +2045,72 @@
 
                 <div class="font-card" data-font="chakrapetch" data-category="bold" onclick="selectFont('chakrapetch')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Chakra Petch</span><span class="font-card-tag">🤖 เกมมิ่ง</span></div>
-                  <div class="font-card-preview" style="font-family: 'Chakra Petch', sans-serif;">จักรเพชร สไตล์เกมมิ่ง ไซไฟ</div>
+                  <div class="font-card-name"><span>Chakra Petch</span><span class="font-card-tag">🤖 เกมมิ่ง</span>
+                  </div>
+                  <div class="font-card-preview" style="font-family: 'Chakra Petch', sans-serif;">จักรเพชร สไตล์เกมมิ่ง
+                    ไซไฟ</div>
                 </div>
 
                 <div class="font-card" data-font="pattaya" data-category="bold" onclick="selectFont('pattaya')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Pattaya (พัทยา)</span><span class="font-card-tag">🏖️ พู่กันไทย</span></div>
+                  <div class="font-card-name"><span>Pattaya (พัทยา)</span><span class="font-card-tag">🏖️
+                      พู่กันไทย</span></div>
                   <div class="font-card-preview" style="font-family: 'Pattaya', sans-serif;">พู่กันไทย สะดุดตามาก</div>
                 </div>
 
                 <!-- Formal & Clean -->
                 <div class="font-card" data-font="noto" data-category="formal" onclick="selectFont('noto')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Noto Sans</span><span class="font-card-tag">🌐 มาตรฐานโลก</span></div>
-                  <div class="font-card-preview" style="font-family: 'Noto Sans Thai', sans-serif;">สากล คมชัด มาตรฐานโลก</div>
+                  <div class="font-card-name"><span>Noto Sans</span><span class="font-card-tag">🌐 มาตรฐานโลก</span>
+                  </div>
+                  <div class="font-card-preview" style="font-family: 'Noto Sans Thai', sans-serif;">สากล คมชัด
+                    มาตรฐานโลก</div>
                 </div>
 
                 <div class="font-card" data-font="sarabun" data-category="formal" onclick="selectFont('sarabun')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Sarabun (สารบรรณ)</span><span class="font-card-tag">📄 ทางการ</span></div>
-                  <div class="font-card-preview" style="font-family: 'Sarabun', sans-serif;">ทางการ เรียบร้อย สุภาพ</div>
+                  <div class="font-card-name"><span>Sarabun (สารบรรณ)</span><span class="font-card-tag">📄 ทางการ</span>
+                  </div>
+                  <div class="font-card-preview" style="font-family: 'Sarabun', sans-serif;">ทางการ เรียบร้อย สุภาพ
+                  </div>
                 </div>
 
-                <div class="font-card" data-font="baijamjuree" data-category="formal" onclick="selectFont('baijamjuree')">
+                <div class="font-card" data-font="baijamjuree" data-category="formal"
+                  onclick="selectFont('baijamjuree')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Bai Jamjuree</span><span class="font-card-tag">🏢 เหลี่ยมมน</span></div>
-                  <div class="font-card-preview" style="font-family: 'Bai Jamjuree', sans-serif;">จามจุรี โมเดิร์น เหลี่ยมมน</div>
+                  <div class="font-card-name"><span>Bai Jamjuree</span><span class="font-card-tag">🏢 เหลี่ยมมน</span>
+                  </div>
+                  <div class="font-card-preview" style="font-family: 'Bai Jamjuree', sans-serif;">จามจุรี โมเดิร์น
+                    เหลี่ยมมน</div>
                 </div>
 
                 <div class="font-card" data-font="pridi" data-category="formal" onclick="selectFont('pridi')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Pridi (ปรีดี)</span><span class="font-card-tag">🖋️ คลาสสิก</span></div>
+                  <div class="font-card-name"><span>Pridi (ปรีดี)</span><span class="font-card-tag">🖋️ คลาสสิก</span>
+                  </div>
                   <div class="font-card-preview" style="font-family: 'Pridi', serif;">คลาสสิก เรียบหรู มีสไตล์</div>
                 </div>
 
                 <div class="font-card" data-font="ibmplex" data-category="formal" onclick="selectFont('ibmplex')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>IBM Plex Sans</span><span class="font-card-tag">💻 ไฮเทค</span></div>
-                  <div class="font-card-preview" style="font-family: 'IBM Plex Sans Thai', sans-serif;">ไอบีเอ็ม เพลกซ์ ทันสมัย</div>
+                  <div class="font-card-name"><span>IBM Plex Sans</span><span class="font-card-tag">💻 ไฮเทค</span>
+                  </div>
+                  <div class="font-card-preview" style="font-family: 'IBM Plex Sans Thai', sans-serif;">ไอบีเอ็ม เพลกซ์
+                    ทันสมัย</div>
                 </div>
 
                 <div class="font-card" data-font="athiti" data-category="formal" onclick="selectFont('athiti')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Athiti (อธิษฐาน)</span><span class="font-card-tag">✨ อาร์ต</span></div>
-                  <div class="font-card-preview" style="font-family: 'Athiti', sans-serif;">มินิมอล มีสไตล์ แตกต่าง</div>
+                  <div class="font-card-name"><span>Athiti (อธิษฐาน)</span><span class="font-card-tag">✨ อาร์ต</span>
+                  </div>
+                  <div class="font-card-preview" style="font-family: 'Athiti', sans-serif;">มินิมอล มีสไตล์ แตกต่าง
+                  </div>
                 </div>
 
                 <div class="font-card" data-font="taviraj" data-category="formal" onclick="selectFont('taviraj')">
                   <div class="adv-card-check">✓</div>
-                  <div class="font-card-name"><span>Taviraj (ทวิราช)</span><span class="font-card-tag">📜 โรแมนติก</span></div>
+                  <div class="font-card-name"><span>Taviraj (ทวิราช)</span><span class="font-card-tag">📜
+                      โรแมนติก</span></div>
                   <div class="font-card-preview" style="font-family: 'Taviraj', serif;">โรแมนติก นุ่มนวล อบอุ่น</div>
                 </div>
               </div>
@@ -2026,7 +2172,8 @@
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;" class="media-stack-row">
                 <!-- Position -->
                 <div>
-                  <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">ตำแหน่งในคลิป:</div>
+                  <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">
+                    ตำแหน่งในคลิป:</div>
                   <div class="seg-group">
                     <div class="seg-btn selected" data-pos="75" onclick="selectSubPos('75')">
                       <span>🔽 ล่างคลิป</span>
@@ -2045,7 +2192,8 @@
 
                 <!-- Size -->
                 <div>
-                  <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">ขนาดตัวอักษร:</div>
+                  <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">
+                    ขนาดตัวอักษร:</div>
                   <div class="seg-group">
                     <div class="seg-btn" data-scale="85" onclick="selectSubScale('85')">
                       <span>เล็ก</span>
@@ -2065,31 +2213,38 @@
 
               <!-- Color Presets + Custom Color Pickers -->
               <div style="margin-top: 4px;">
-                <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">โทนสีซับไตเติ้ลยอดฮิต:</div>
+                <div style="font-size: 11.5px; font-weight: 600; color: var(--lp-ink); margin-bottom: 5px;">
+                  โทนสีซับไตเติ้ลยอดฮิต:</div>
                 <div class="color-preset-group">
-                  <div class="color-preset-pill selected" id="presetWhite" onclick="selectColorPreset('#ffffff', '#000000', this)">
+                  <div class="color-preset-pill selected" id="presetWhite"
+                    onclick="selectColorPreset('#ffffff', '#000000', this)">
                     <span class="color-dot" style="background:#ffffff; box-shadow: inset 0 0 0 1px #cbd5e1;"></span>
                     <span>⚪ ขาวขอบดำ (ยอดนิยม)</span>
                   </div>
-                  <div class="color-preset-pill" id="presetYellow" onclick="selectColorPreset('#fde047', '#000000', this)">
+                  <div class="color-preset-pill" id="presetYellow"
+                    onclick="selectColorPreset('#fde047', '#000000', this)">
                     <span class="color-dot" style="background:#fde047;"></span>
                     <span>🟡 เหลืองขอบดำ (สไตล์ไวรัล)</span>
                   </div>
-                  <div class="color-preset-pill" id="presetGreen" onclick="selectColorPreset('#4ade80', '#090d16', this)">
+                  <div class="color-preset-pill" id="presetGreen"
+                    onclick="selectColorPreset('#4ade80', '#090d16', this)">
                     <span class="color-dot" style="background:#4ade80;"></span>
                     <span>🟢 เขียวขอบดำ</span>
                   </div>
-                  <div class="color-preset-pill" id="presetCyan" onclick="selectColorPreset('#38bdf8', '#090d16', this)">
+                  <div class="color-preset-pill" id="presetCyan"
+                    onclick="selectColorPreset('#38bdf8', '#090d16', this)">
                     <span class="color-dot" style="background:#38bdf8;"></span>
                     <span>🔵 ฟ้าขอบดำ</span>
                   </div>
-                  
+
                   <div style="display: inline-flex; align-items: center; gap: 4px; margin-left: auto;">
                     <label style="font-size: 11px; color: var(--lp-muted);" for="subColor">สีตัวอักษร:</label>
                     <input type="color" id="subColor" value="#ffffff" title="สีตัวอักษร" oninput="onCustomColorChange()"
                       style="width: 32px; height: 30px; border: 1px solid var(--lp-line); border-radius: 6px; cursor: pointer; padding: 1px;">
-                    <label style="font-size: 11px; color: var(--lp-muted); margin-left: 4px;" for="subBorder">สีขอบ:</label>
-                    <input type="color" id="subBorder" value="#000000" title="สีขอบตัวอักษร" oninput="onCustomColorChange()"
+                    <label style="font-size: 11px; color: var(--lp-muted); margin-left: 4px;"
+                      for="subBorder">สีขอบ:</label>
+                    <input type="color" id="subBorder" value="#000000" title="สีขอบตัวอักษร"
+                      oninput="onCustomColorChange()"
                       style="width: 32px; height: 30px; border: 1px solid var(--lp-line); border-radius: 6px; cursor: pointer; padding: 1px;">
                   </div>
                 </div>
@@ -2099,14 +2254,16 @@
               <div class="sub-preview-box">
                 <span class="sub-preview-top-tag">👁️ ตัวอย่างซับไตเติ้ลจริงบนคลิป</span>
                 <span class="sub-preview-pos-tag" id="subLiveFontBadge">Mitr • 100%</span>
-                <div class="sub-preview-text" id="subLivePreviewText" style="font-family: 'Mitr', sans-serif; color: #ffffff; -webkit-text-stroke: 1.5px #000000; font-size: 18px; font-weight: 700;">
+                <div class="sub-preview-text" id="subLivePreviewText"
+                  style="font-family: 'Mitr', sans-serif; color: #ffffff; -webkit-text-stroke: 1.5px #000000; font-size: 18px; font-weight: 700;">
                   "🔥 สินค้าตัวนี้บอกเลยว่าปังมาก! รีบกดสั่งในตะกร้าด่วน"
                 </div>
               </div>
             </div>
 
             <!-- 5. Presenter / Character Overlay (PIP) -->
-            <div class="adv-section" style="background: #f8fafc; border: 1px dashed var(--lp-line); border-radius: 12px; padding: 12px;">
+            <div class="adv-section"
+              style="background: #f8fafc; border: 1px dashed var(--lp-line); border-radius: 12px; padding: 12px;">
               <div class="adv-sec-header">
                 <div class="adv-sec-title">🎭 ซ้อนตัวละคร / พิธีกร (Presenter PIP)</div>
                 <span style="font-size: 11px; color: var(--lp-muted);">ทางเลือกเสริม (Optional)</span>
@@ -2120,30 +2277,41 @@
                     style="background: #ffffff; border: 1.5px solid var(--lp-line); font-size: 12px; padding: 7px 12px; width: 100%; justify-content: flex-start;">
                     📁 เลือกไฟล์รูป/วิดีโอพิธีกร (PNG, MP4)
                   </button>
-                  <div id="presenterFileInfo" style="display: none; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; color: var(--lp-ink);">
-                    <span id="presenterFileName" style="font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                  <div id="presenterFileInfo"
+                    style="display: none; align-items: center; gap: 6px; margin-top: 5px; font-size: 11px; color: var(--lp-ink);">
+                    <span id="presenterFileName"
+                      style="font-weight: 600; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
                     <span id="presenterFileSize" style="color: var(--lp-muted);"></span>
-                    <button type="button" onclick="clearPresenterFile()" style="background: none; border: none; color: #ef4444; font-size: 11px; cursor: pointer; padding: 0 4px;">✕ ลบออก</button>
+                    <button type="button" onclick="clearPresenterFile()"
+                      style="background: none; border: none; color: #ef4444; font-size: 11px; cursor: pointer; padding: 0 4px;">✕
+                      ลบออก</button>
                   </div>
                 </div>
 
                 <!-- 4 Corner Grid -->
                 <div>
-                  <div style="font-size: 11px; font-weight: 600; color: var(--lp-muted); margin-bottom: 4px;">มุมวางพิธีกร:</div>
+                  <div style="font-size: 11px; font-weight: 600; color: var(--lp-muted); margin-bottom: 4px;">
+                    มุมวางพิธีกร:</div>
                   <div class="pip-corner-grid">
-                    <div class="pip-corner-btn" data-corner="top_left" onclick="selectPresenterCorner('top_left')">↖️ บนซ้าย</div>
-                    <div class="pip-corner-btn" data-corner="top_right" onclick="selectPresenterCorner('top_right')">↗️ บนขวา</div>
-                    <div class="pip-corner-btn" data-corner="bottom_left" onclick="selectPresenterCorner('bottom_left')">↙️ ล่างซ้าย</div>
-                    <div class="pip-corner-btn selected" data-corner="bottom_right" onclick="selectPresenterCorner('bottom_right')">↘️ ล่างขวา</div>
+                    <div class="pip-corner-btn" data-corner="top_left" onclick="selectPresenterCorner('top_left')">↖️
+                      บนซ้าย</div>
+                    <div class="pip-corner-btn" data-corner="top_right" onclick="selectPresenterCorner('top_right')">↗️
+                      บนขวา</div>
+                    <div class="pip-corner-btn" data-corner="bottom_left"
+                      onclick="selectPresenterCorner('bottom_left')">↙️ ล่างซ้าย</div>
+                    <div class="pip-corner-btn selected" data-corner="bottom_right"
+                      onclick="selectPresenterCorner('bottom_right')">↘️ ล่างขวา</div>
                   </div>
                 </div>
 
                 <!-- Size -->
                 <div>
-                  <div style="font-size: 11px; font-weight: 600; color: var(--lp-muted); margin-bottom: 4px;">ขนาด:</div>
+                  <div style="font-size: 11px; font-weight: 600; color: var(--lp-muted); margin-bottom: 4px;">ขนาด:
+                  </div>
                   <div class="seg-group" style="min-width: 140px;">
                     <div class="seg-btn" data-pipsize="180" onclick="selectPresenterSize('180')">180px เล็ก</div>
-                    <div class="seg-btn selected" data-pipsize="220" onclick="selectPresenterSize('220')">220px ปกติ</div>
+                    <div class="seg-btn selected" data-pipsize="220" onclick="selectPresenterSize('220')">220px ปกติ
+                    </div>
                     <div class="seg-btn" data-pipsize="260" onclick="selectPresenterSize('260')">260px ใหญ่</div>
                   </div>
                 </div>
@@ -2151,7 +2319,8 @@
             </div>
 
             <!-- Hidden native form elements for 100% backend synchronization -->
-            <div style="position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; overflow: hidden;" aria-hidden="true">
+            <div style="position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; overflow: hidden;"
+              aria-hidden="true">
               <select id="voiceChoice">
                 <option value="Kore" selected>Kore</option>
                 <option value="Aoede">Aoede</option>
@@ -2222,8 +2391,8 @@
 
         <!-- Render Button -->
         <div style="margin-top: 22px;">
-          <button id="btnStartRender" class="btn btn-primary btn-block" style="padding: 14px 24px; font-size: 15.5px; box-shadow: 0 4px 14px rgba(24,119,242,0.3);"
-            disabled>
+          <button id="btnStartRender" class="btn btn-primary btn-block"
+            style="padding: 14px 24px; font-size: 15.5px; box-shadow: 0 4px 14px rgba(24,119,242,0.3);" disabled>
             ✨ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)
           </button>
         </div>
@@ -2238,11 +2407,16 @@
             <div id="barFill" class="progress-bar-fill"></div>
           </div>
           <div class="pipeline-steps">
-            <div id="p-upload" class="pipeline-step active"><span class="step-bullet">1</span> สตรีมวิดีโอเข้าสู่ Engine</div>
-            <div id="p-script" class="pipeline-step"><span class="step-bullet">2</span> ให้ AI วิเคราะห์คลิปและเขียนบทขาย</div>
-            <div id="p-tts" class="pipeline-step"><span class="step-bullet">3</span> สร้างเสียงพากย์ภาษาไทย (Gemini TTS)</div>
-            <div id="p-sub" class="pipeline-step"><span class="step-bullet">4</span> ถอดคำและจัดวรรคซับไตเติ้ลภาษาไทย</div>
-            <div id="p-mix" class="pipeline-step"><span class="step-bullet">5</span> มิกซ์ดนตรี BGM และเรนเดอร์ MP4</div>
+            <div id="p-upload" class="pipeline-step active"><span class="step-bullet">1</span> สตรีมวิดีโอเข้าสู่ Engine
+            </div>
+            <div id="p-script" class="pipeline-step"><span class="step-bullet">2</span> ให้ AI
+              วิเคราะห์คลิปและเขียนบทขาย</div>
+            <div id="p-tts" class="pipeline-step"><span class="step-bullet">3</span> สร้างเสียงพากย์ภาษาไทย (Gemini TTS)
+            </div>
+            <div id="p-sub" class="pipeline-step"><span class="step-bullet">4</span> ถอดคำและจัดวรรคซับไตเติ้ลภาษาไทย
+            </div>
+            <div id="p-mix" class="pipeline-step"><span class="step-bullet">5</span> มิกซ์ดนตรี BGM และเรนเดอร์ MP4
+            </div>
           </div>
           <div id="logTerminal" class="terminal-box"></div>
         </div>
@@ -2335,10 +2509,12 @@
               </div>
             </div>
             <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">
-              <button type="button" class="btn btn-secondary" style="flex: 1 1 140px; font-size: 12px; padding: 9px 12px;" onclick="copyFullCaption()">
+              <button type="button" class="btn btn-secondary"
+                style="flex: 1 1 140px; font-size: 12px; padding: 9px 12px;" onclick="copyFullCaption()">
                 📋 คัดลอกแคปชันทั้งหมด
               </button>
-              <button type="button" class="btn btn-secondary" style="flex: 1 1 140px; font-size: 12px; padding: 9px 12px;" onclick="copyFirstComment()">
+              <button type="button" class="btn btn-secondary"
+                style="flex: 1 1 140px; font-size: 12px; padding: 9px 12px;" onclick="copyFirstComment()">
                 💬 คัดลอกคอมเมนต์ปักหมุด
               </button>
             </div>
@@ -2347,14 +2523,20 @@
           <!-- Facebook Post Content -->
           <div id="fbTab" style="display: none;">
             <div class="meta-box">
-              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #166534; line-height: 1.5;">
-                💡 <strong>วิธีเชื่อมต่อ Facebook:</strong> ตรวจสอบว่าล็อกอิน Facebook ใน Chrome แล้ว จากนั้นไปที่ <code>chrome://extensions</code> กดปุ่ม 🔄 (Reload) ที่ <strong>LikesAuto Studio</strong> 1 ครั้ง แล้วกดปุ่ม <strong>"ดึงเพจของฉัน"</strong> ได้ทันทีครับ
+              <div
+                style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 12px; color: #166534; line-height: 1.5;">
+                💡 <strong>วิธีเชื่อมต่อ Facebook:</strong> ตรวจสอบว่าล็อกอิน Facebook ใน Chrome แล้ว จากนั้นไปที่
+                <code>chrome://extensions</code> กดปุ่ม 🔄 (Reload) ที่ <strong>LikesAuto Studio</strong> 1 ครั้ง
+                แล้วกดปุ่ม <strong>"ดึงเพจของฉัน"</strong> ได้ทันทีครับ
               </div>
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <label class="field-label" style="margin-bottom: 0;">เลือกเพจ Facebook ที่ต้องการโพสต์</label>
                 <div style="display: flex; gap: 6px;">
-                  <button type="button" id="btnReloadExt" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" title="รีโหลดส่วนขยายหลังอัปเดต">🔄 รีโหลดส่วนขยาย</button>
-                  <button type="button" id="btnPullPages" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11.5px;">📄 ดึงเพจของฉัน</button>
+                  <button type="button" id="btnReloadExt" class="btn btn-secondary"
+                    style="padding: 4px 8px; font-size: 11px;" title="รีโหลดส่วนขยายหลังอัปเดต">🔄
+                    รีโหลดส่วนขยาย</button>
+                  <button type="button" id="btnPullPages" class="btn btn-secondary"
+                    style="padding: 4px 10px; font-size: 11.5px;">📄 ดึงเพจของฉัน</button>
                 </div>
               </div>
               <select id="fbPageList" class="field-select">
@@ -2474,8 +2656,9 @@
         <div class="creator-profile">
           <div class="creator-avatar-wrap">
             <img src="/bank_avatar.jpg" alt="Bank Chakkrit Kawinram" class="creator-avatar"
-                 onerror="this.style.display='none'; document.getElementById('creatorFallbackAvatar').style.display='flex';">
-            <div id="creatorFallbackAvatar" class="creator-avatar" style="display: none; background: #e2e8f0; color: #475569;">👨‍💻</div>
+              onerror="this.style.display='none'; document.getElementById('creatorFallbackAvatar').style.display='flex';">
+            <div id="creatorFallbackAvatar" class="creator-avatar"
+              style="display: none; background: #e2e8f0; color: #475569;">👨‍💻</div>
             <div class="creator-status-dot" title="Online Developer"></div>
           </div>
           <div class="creator-details">
@@ -2494,7 +2677,8 @@
         <div class="creator-actions">
           <a href="https://facebook.com/BankJukkirt/" target="_blank" rel="noopener noreferrer" class="btn-creator-fb">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              <path
+                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
             </svg>
             <span>Facebook</span>
           </a>
@@ -2521,7 +2705,9 @@
 
   <!-- Mobile Sticky Floating Render Button -->
   <div class="mobile-sticky-action" id="mobileStickyBar">
-    <button type="button" id="btnStickyRender" class="btn btn-primary btn-block" style="box-shadow: 0 4px 14px rgba(24,119,242,0.35); font-size: 15px; padding: 13px;" onclick="handleMobileStickyRender()">
+    <button type="button" id="btnStickyRender" class="btn btn-primary btn-block"
+      style="box-shadow: 0 4px 14px rgba(24,119,242,0.35); font-size: 15px; padding: 13px;"
+      onclick="handleMobileStickyRender()">
       ⚡ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)
     </button>
   </div>
@@ -2532,16 +2718,20 @@
       <button class="modal-close" onclick="closeMobileModal()" aria-label="Close">✕</button>
       <div style="text-align: center;">
         <div style="font-size: 34px; margin-bottom: 6px;">📱</div>
-        <h3 style="font-size: 18px; font-weight: 700; color: var(--lp-ink); margin-bottom: 4px;">เปิดสตูดิโอบนมือถือ</h3>
+        <h3 style="font-size: 18px; font-weight: 700; color: var(--lp-ink); margin-bottom: 4px;">เปิดสตูดิโอบนมือถือ
+        </h3>
         <p style="font-size: 13px; color: var(--lp-muted); margin-bottom: 16px;">
           สแกน QR Code ด้วยกล้องมือถือ เพื่อตัดต่อและดาวน์โหลดคลิปบนสมาร์ตโฟน
         </p>
-        
-        <div style="background: #f8fafc; border: 1px solid var(--lp-line); border-radius: 16px; padding: 14px; display: inline-block; margin-bottom: 14px;">
-          <img id="mobileQrImg" src="" alt="QR Code" style="width: 200px; height: 200px; display: block; border-radius: 8px;">
+
+        <div
+          style="background: #f8fafc; border: 1px solid var(--lp-line); border-radius: 16px; padding: 14px; display: inline-block; margin-bottom: 14px;">
+          <img id="mobileQrImg" src="" alt="QR Code"
+            style="width: 200px; height: 200px; display: block; border-radius: 8px;">
         </div>
 
-        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #1e40af; margin-bottom: 14px; word-break: break-all; font-family: monospace;">
+        <div
+          style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #1e40af; margin-bottom: 14px; word-break: break-all; font-family: monospace;">
           <span id="mobileUrlText"></span>
         </div>
 
@@ -2555,7 +2745,8 @@
         </div>
 
         <div style="margin-top: 12px; font-size: 11.5px; color: #94a3b8; text-align: left; line-height: 1.5;">
-          💡 <strong>เคล็ดลับ:</strong> สำหรับเครื่องคอมพิวเตอร์ ให้เชื่อมต่อมือถือและคอมพิวเตอร์ใน Wi-Fi วงเดียวกัน เพื่อเรนเดอร์ผ่าน Engine ในเครื่องด้วยความเร็วสูงสุด
+          💡 <strong>เคล็ดลับ:</strong> สำหรับเครื่องคอมพิวเตอร์ ให้เชื่อมต่อมือถือและคอมพิวเตอร์ใน Wi-Fi วงเดียวกัน
+          เพื่อเรนเดอร์ผ่าน Engine ในเครื่องด้วยความเร็วสูงสุด
         </div>
       </div>
     </div>
@@ -2841,11 +3032,11 @@
       }
     }
     // Initialize initial preview on load
-    setTimeout(function() {
+    setTimeout(function () {
       try {
         updateSubPreview()
         updateAdvSummary()
-      } catch (err) {}
+      } catch (err) { }
     }, 50)
 
     // Visual Style Card Selection
@@ -2869,7 +3060,7 @@
     window.handleVideoSelected = function (file) {
       if (!file) return
       loadedVideoFile = file
-      const sizeMB = file.size > 1024 * 1024 
+      const sizeMB = file.size > 1024 * 1024
         ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
         : (file.size / 1024).toFixed(0) + ' KB'
 
@@ -3277,7 +3468,7 @@
         try {
           audioCtx = new AudioCtxClass()
           if (audioCtx.state === 'suspended') {
-            await audioCtx.resume().catch(() => {})
+            await audioCtx.resume().catch(() => { })
           }
           audioDest = audioCtx.createMediaStreamDestination()
 
@@ -3479,13 +3670,21 @@
       let popPlayed = false
       let dingPlayed = false
 
+      // Automatic video looping: when audio is 20s but video is 10s, seamlessly loop video to match full duration
+      const voiceDur = (voiceBuffer && voiceBuffer.duration) ? voiceBuffer.duration : 0
+      const totalDuration = Math.max(video.duration || 0, voiceDur > 0 ? (voiceDur + 0.35) : 15, 15)
+      video.loop = true
+      addLog(`[Device RAM] ⏱️ ความยาวตัดต่อสุทธิ: ${totalDuration.toFixed(1)} วินาที (วิดีโอต้นฉบับ ${(video.duration || 0).toFixed(1)}s, ลูปต่อเนื่องจนจบเสียง)`)
+
       let renderInterval = null
       let isRendering = true
+      let renderStartTime = 0
 
       function drawFrame() {
         if (!isRendering) return
-        const t = video.currentTime || 0
-        const total = duration || 15
+        const elapsedSec = renderStartTime ? (performance.now() - renderStartTime) / 1000 : (video.currentTime || 0)
+        const t = Math.min(elapsedSec, totalDuration)
+        const total = totalDuration
 
         const currentProgress = Math.min(95, Math.round(75 + (t / total) * 20))
         setBar(currentProgress, `กำลังเรนเดอร์... (${t.toFixed(1)} / ${total.toFixed(0)} วินาที)`)
@@ -3531,6 +3730,7 @@
 
       recorder.start(250)
       video.currentTime = 0
+      renderStartTime = performance.now()
       try {
         await video.play()
       } catch (playErr) {
@@ -3548,12 +3748,13 @@
 
       await new Promise(resolve => {
         const cleanup = () => {
+          if (!isRendering) return
           isRendering = false
           if (renderInterval) clearInterval(renderInterval)
+          try { video.pause() } catch (e) { }
           resolve()
         }
-        video.onended = cleanup
-        setTimeout(cleanup, (duration + 2.5) * 1000)
+        setTimeout(cleanup, (totalDuration + 0.3) * 1000)
       })
 
       let thumbBlob = null
@@ -3587,7 +3788,7 @@
         ok: true,
         video_url: videoBlobUrl,
         thumbnail_url: thumbBlobUrl,
-        duration: duration,
+        duration: totalDuration,
         detected_product: detectedProd,
         title: generatedTitle,
         script: scriptPhrases.join(' '),
@@ -3852,7 +4053,7 @@
       if (!currentVideoBlob && reelPlayer.src) {
         try {
           currentVideoBlob = await (await fetch(reelPlayer.src)).blob()
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (navigator.share) {

@@ -3018,7 +3018,7 @@
 
     function drawCanvasStyleOverlay(ctx, style, t, duration, w, h, prodName) {
       ctx.save()
-      if (style === 'ecommerce_sale') {
+      if (style === 'ecommerce_sale' || style === 'ecommerce_shop') {
         const badgeW = 560, badgeH = 70, badgeX = (w - badgeW) / 2, badgeY = 70
         ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
         ctx.shadowBlur = 14
@@ -3208,6 +3208,7 @@
       const rawDetails = (document.getElementById('productDetails') || {}).value || ''
       const prodName = rawDetails.trim() || 'สินค้าโปรโมชั่นสุดคุ้ม'
       const style = options.style || 'creator_viral'
+      const voice = options.voice || 'Kore'
       const font = options.font || 'mitr'
       const subColor = options.sub_color || '#ffffff'
       const subBorder = options.sub_border || '#000000'
@@ -3217,25 +3218,57 @@
       const sfxChoice = options.sfx_choice || 'auto'
 
       // Check if user edited or provided custom script
-      const customScript = (document.getElementById('outScript') || {}).value || ''
+      let customScript = (document.getElementById('outScript') || {}).value || ''
       let scriptPhrases = []
-      if (customScript.trim().length > 10) {
-        scriptPhrases = customScript.split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
-      }
-      if (!scriptPhrases || scriptPhrases.length === 0) {
-        scriptPhrases = [
-          `🔥 ${prodName} ตัวนี้บอกเลยว่าห้ามพลาด!`,
-          '✨ การันตีของแท้ 100% คุณภาพดีเกินราคา',
-          '⚡ ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้',
-          '👉 รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!'
-        ]
+      let detectedProd = prodName
+      let generatedTitle = `🔥 รีวิว ${prodName} ของแท้ลดราคาพิเศษ`
+      let generatedCaption = `ของดีบอกต่อ ${prodName} คุณภาพดี คุ้มราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา`
+      let generatedComment = '📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!'
+
+      // 1. Fetch AI Sales Script tailored directly to the product
+      try {
+        addLog(`[AI Script] 🧠 กำลังวิเคราะห์และแต่งบทขายให้ตรงกับสินค้า: "${prodName}"...`)
+        const scriptRes = await fetch(`/studio/api.php?action=script&product=${encodeURIComponent(prodName)}&style=${encodeURIComponent(style)}`)
+        if (scriptRes.ok) {
+          const sData = await scriptRes.json()
+          if (sData && sData.phrases && sData.phrases.length > 0) {
+            scriptPhrases = sData.phrases
+            if (sData.detected_product) detectedProd = sData.detected_product
+            if (sData.title) generatedTitle = sData.title
+            if (sData.caption) generatedCaption = sData.caption
+            if (sData.first_comment) generatedComment = sData.first_comment
+            addLog(`[AI Script] ✍️ สร้างบทขายตรงสินค้า: "${detectedProd}" (${scriptPhrases.length} วรรค)`)
+          }
+        }
+      } catch (err) {
+        console.warn('Script API notice:', err)
       }
 
+      if (!scriptPhrases || scriptPhrases.length === 0) {
+        if (customScript.trim().length > 10) {
+          scriptPhrases = customScript.split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
+        } else {
+          scriptPhrases = [
+            `🔥 ใครกำลังมองหา ${prodName} ตัวนี้บอกเลยว่าห้ามพลาด!`,
+            '✨ จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานคุ้มค่า',
+            '⚡ ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ พลาดไม่ได้',
+            '👉 รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!'
+          ]
+        }
+      }
+
+      // Pre-fill result text fields
+      if (document.getElementById('outTitle')) document.getElementById('outTitle').value = generatedTitle
+      if (document.getElementById('outScript')) document.getElementById('outScript').value = scriptPhrases.join(' ')
+      if (document.getElementById('outCaption')) document.getElementById('outCaption').value = generatedCaption
+      if (document.getElementById('outFirstComment')) document.getElementById('outFirstComment').value = generatedComment
+
       setStep('p-tts')
-      setBar(45, 'กำลังโหลดและมิกซ์ดนตรี BGM + ซาวด์เอฟเฟกต์...')
+      setBar(45, 'กำลังสร้างเสียงพากย์ AI ภาษาไทยและโหลดดนตรี BGM...')
       const AudioCtxClass = window.AudioContext || window.webkitAudioContext
       let audioCtx = null
       let audioDest = null
+      let voiceBuffer = null
       let bgmBuffer = null
       let dingBuffer = null
       let popBuffer = null
@@ -3244,20 +3277,35 @@
         try {
           audioCtx = new AudioCtxClass()
           if (audioCtx.state === 'suspended') {
-            await audioCtx.resume()
+            await audioCtx.resume().catch(() => {})
           }
           audioDest = audioCtx.createMediaStreamDestination()
 
           try {
             const vSource = audioCtx.createMediaElementSource(video)
             const vGain = audioCtx.createGain()
-            vGain.gain.value = 1.0
+            vGain.gain.value = 0.8
             vSource.connect(vGain)
             vGain.connect(audioDest)
           } catch (e) {
             console.warn('Video audio source notice:', e)
           }
 
+          // Synthesize Tailored Thai Voiceover (Gemini Neural TTS)
+          try {
+            addLog(`[Gemini TTS] 🎙️ กำลังสร้างเสียงพากย์ AI ภาษาไทยสำเนียงธรรมชาติ (เสียง: ${voice})...`)
+            const ttsFullText = scriptPhrases.join(' ')
+            const ttsRes = await fetch(`/studio/api.php?action=tts&voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(ttsFullText)}`)
+            if (ttsRes.ok) {
+              const ttsArray = await ttsRes.arrayBuffer()
+              voiceBuffer = await audioCtx.decodeAudioData(ttsArray)
+              addLog(`[Gemini TTS] ✅ ได้รับเสียงพากย์ภาษาไทยความยาว: ${voiceBuffer.duration.toFixed(1)} วินาที`)
+            }
+          } catch (ttsErr) {
+            console.warn('TTS Synthesis notice:', ttsErr)
+          }
+
+          // Load BGM Track
           if (bgmTrack !== 'none') {
             try {
               const bgmRes = await fetch(`/studio/music/${bgmTrack}.mp3`)
@@ -3270,6 +3318,7 @@
             }
           }
 
+          // Load SFX
           if (sfxChoice !== 'none') {
             try {
               const dingRes = await fetch('/studio/sfx/sfx_ding.wav')
@@ -3362,6 +3411,21 @@
         if (e.data && e.data.size > 0) chunks.push(e.data)
       }
 
+      // Audio Nodes Setup (Voiceover + BGM + SFX)
+      let voiceSourceNode = null
+      if (audioCtx && voiceBuffer) {
+        try {
+          voiceSourceNode = audioCtx.createBufferSource()
+          voiceSourceNode.buffer = voiceBuffer
+          const voiceGain = audioCtx.createGain()
+          voiceGain.gain.value = 1.35 // Prominent Thai voiceover
+          voiceSourceNode.connect(voiceGain)
+          voiceGain.connect(audioDest)
+        } catch (e) {
+          console.warn('Voice source setup notice:', e)
+        }
+      }
+
       let bgmSourceNode = null
       if (audioCtx && bgmBuffer) {
         try {
@@ -3369,10 +3433,9 @@
           bgmSourceNode.buffer = bgmBuffer
           bgmSourceNode.loop = true
           const bgmGain = audioCtx.createGain()
-          bgmGain.gain.value = 0.18
+          bgmGain.gain.value = voiceBuffer ? 0.12 : 0.20 // Auto-duck BGM to 12% so voiceover is crisp
           bgmSourceNode.connect(bgmGain)
           bgmGain.connect(audioDest)
-          bgmSourceNode.start()
         } catch (e) { }
       }
 
@@ -3449,6 +3512,12 @@
       } catch (playErr) {
         console.warn('Video play notice:', playErr)
       }
+      if (voiceSourceNode) {
+        try { voiceSourceNode.start(0) } catch (e) { }
+      }
+      if (bgmSourceNode) {
+        try { bgmSourceNode.start(0) } catch (e) { }
+      }
 
       renderInterval = setInterval(drawFrame, 33)
       drawFrame()
@@ -3472,6 +3541,9 @@
         recorder.stop()
         await new Promise(r => { recorder.onstop = r })
       }
+      if (voiceSourceNode) {
+        try { voiceSourceNode.stop() } catch (e) { }
+      }
       if (bgmSourceNode) {
         try { bgmSourceNode.stop() } catch (e) { }
       }
@@ -3492,10 +3564,11 @@
         video_url: videoBlobUrl,
         thumbnail_url: thumbBlobUrl,
         duration: duration,
-        title: `🔥 รีวิว ${prodName} ของแท้ลดราคาพิเศษ`,
+        detected_product: detectedProd,
+        title: generatedTitle,
         script: scriptPhrases.join(' '),
-        caption: `ของดีบอกต่อ ${prodName} คุณภาพดี คุ้มราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ`,
-        first_comment: '📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!'
+        caption: generatedCaption,
+        first_comment: generatedComment
       }
     }
 

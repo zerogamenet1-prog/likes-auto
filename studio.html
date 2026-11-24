@@ -3392,9 +3392,12 @@
       let popPlayed = false
       let dingPlayed = false
 
+      let renderInterval = null
+      let isRendering = true
+
       function drawFrame() {
-        if (video.paused || video.ended) return
-        const t = video.currentTime
+        if (!isRendering) return
+        const t = video.currentTime || 0
         const total = duration || 15
 
         const currentProgress = Math.min(95, Math.round(75 + (t / total) * 20))
@@ -3409,17 +3412,21 @@
           playSfx(dingBuffer)
         }
 
-        const vRatio = video.videoWidth / (video.videoHeight || 1)
+        const vw = video.videoWidth || 720
+        const vh = video.videoHeight || 1280
+        const vRatio = vw / (vh || 1)
         const cRatio = canvas.width / canvas.height
-        let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight
+        let sx = 0, sy = 0, sw = vw, sh = vh
         if (vRatio > cRatio) {
-          sw = video.videoHeight * cRatio
-          sx = (video.videoWidth - sw) / 2
+          sw = vh * cRatio
+          sx = (vw - sw) / 2
         } else {
-          sh = video.videoWidth / cRatio
-          sy = (video.videoHeight - sh) / 2
+          sh = vw / cRatio
+          sy = (vh - sh) / 2
         }
-        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
+        try {
+          ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
+        } catch (e) { }
 
         drawCanvasStyleOverlay(ctx, style, t, total, canvas.width, canvas.height, prodName)
         drawCanvasSubtitle(ctx, scriptPhrases, t, total, canvas.width, canvas.height, {
@@ -3433,25 +3440,27 @@
         if (presenterImg) {
           drawCanvasPresenter(ctx, presenterImg, canvas.width, canvas.height, options)
         }
-
-        if (!video.ended && !video.paused) {
-          requestAnimationFrame(drawFrame)
-        }
       }
 
-      recorder.start(400)
+      recorder.start(250)
       video.currentTime = 0
-      let isRendering = true
       try {
         await video.play()
       } catch (playErr) {
-        console.warn('Video play warning:', playErr)
+        console.warn('Video play notice:', playErr)
       }
+
+      renderInterval = setInterval(drawFrame, 33)
       drawFrame()
 
       await new Promise(resolve => {
-        video.onended = () => { isRendering = false; resolve() }
-        setTimeout(() => { isRendering = false; resolve() }, (duration + 2.5) * 1000)
+        const cleanup = () => {
+          isRendering = false
+          if (renderInterval) clearInterval(renderInterval)
+          resolve()
+        }
+        video.onended = cleanup
+        setTimeout(cleanup, (duration + 2.5) * 1000)
       })
 
       let thumbBlob = null
@@ -3459,12 +3468,14 @@
         thumbBlob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9))
       } catch (e) { }
 
-      recorder.stop()
+      if (recorder.state !== 'inactive') {
+        recorder.stop()
+        await new Promise(r => { recorder.onstop = r })
+      }
       if (bgmSourceNode) {
         try { bgmSourceNode.stop() } catch (e) { }
       }
 
-      await new Promise(r => { recorder.onstop = r })
       if (video.parentNode) {
         video.parentNode.removeChild(video)
       }
@@ -3586,13 +3597,6 @@
             }
           }
         }
-              lastErr = `HTTP ${testRes.status}`
-            }
-          } catch (fetchErr) {
-            lastErr = fetchErr.message
-            console.warn('Endpoint error:', endpoint, fetchErr)
-          }
-        }
 
         clearInterval(progressTimer)
 
@@ -3643,13 +3647,13 @@
         const rawThumb = data.thumbnail_url || '/likes_auto_finished_thumb.jpg'
         const fullThumbUrl = (rawThumb.startsWith('http') || rawThumb.startsWith('blob:')) ? rawThumb : (activeBase + rawThumb)
 
-        reelPlayer.src = fullVideoUrl + '?t=' + Date.now()
+        reelPlayer.src = fullVideoUrl.startsWith('blob:') ? fullVideoUrl : (fullVideoUrl + '?t=' + Date.now())
         reelPlayer.play().catch(() => { })
 
         currentThumbUrl = fullThumbUrl
         const thumbImg = document.getElementById('reelThumbPreview')
         if (thumbImg) {
-          thumbImg.src = fullThumbUrl + '?t=' + Date.now()
+          thumbImg.src = fullThumbUrl.startsWith('blob:') ? fullThumbUrl : (fullThumbUrl + '?t=' + Date.now())
         }
         document.getElementById('outTitle').value = data.title || 'คลิปขายของไวรัล'
         document.getElementById('outScript').value = data.script || ''
@@ -3660,8 +3664,10 @@
         }
 
         try {
-          const vBlobRes = await fetch(fullVideoUrl)
-          currentVideoBlob = await vBlobRes.blob()
+          if (!fullVideoUrl.startsWith('blob:')) {
+            const vBlobRes = await fetch(fullVideoUrl)
+            currentVideoBlob = await vBlobRes.blob()
+          }
         } catch (e) { }
 
         // --- Mobile Switch to View Tab ---

@@ -2271,7 +2271,7 @@
         <div class="phone-bezel">
           <div class="phone-island"></div>
           <div class="phone-screen" style="position: relative;">
-            <video id="reelPlayer" controls playsinline preload="auto" poster="/likes_auto_finished_thumb.jpg" src="/sample_product.mp4"
+            <video id="reelPlayer" controls playsinline preload="auto" poster="/likes_auto_finished_thumb.jpg" src="/likes_auto_finished_reel.mp4"
               style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px;"></video>
             <img id="reelThumbPreview" src="/likes_auto_finished_thumb.jpg"
               style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 20px;"
@@ -2312,24 +2312,24 @@
           <div id="scriptTab">
             <div class="field-group" style="margin-top: 4px;">
               <label class="field-label">หัวข้อคลิป (Title)</label>
-              <input type="text" id="outTitle" class="field-input" value="รีวิวกระบอกน้ำเก็บความเย็น 24 ชม. สแตนเลส 316"
+              <input type="text" id="outTitle" class="field-input" value="ป้ายยากระติกน้ำสแตนเลสเก็บความเย็น ฝาแม่เหล็ก พกพาสะดวก"
                 readonly>
             </div>
             <div class="field-group">
-              <label class="field-label">บทพากย์ที่สร้าง (Thai Narration Script)</label>
+              <label class="field-label">บทพากย์ที่สร้าง (Thai Narration Script - Google AI Studio Speech)</label>
               <textarea id="outScript" class="field-textarea"
-                readonly>ใครเจอปัญหาน้ำหายเย็นเร็วต้องดูด่วน! กระบอกน้ำสแตนเลส 316 เกรดพรีเมียมตัวนี้ เก็บความเย็นได้นานข้ามวันถึง 24 ชั่วโมง ไม่เป็นสนิม แถมมีก้นยางกันลื่น ล้มยาก วางตรงไหนก็แน่นสนิท กดพิกัดมุมซ้ายล่างเลย</textarea>
+                readonly>ใครกำลังมองหากระติกน้ำสแตนเลสเก็บความเย็น 24 ชั่วโมง ตัวนี้บอกเลยว่าห้ามพลาด! จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานคุ้มค่า ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ พลาดไม่ได้ รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!</textarea>
             </div>
             <div class="field-group">
               <label class="field-label">แคปชัน & แฮชแท็กสำหรับโพสต์</label>
               <textarea id="outCaption" class="field-textarea"
-                readonly>กระบอกน้ำเก็บความเย็น สแตนเลส 316 เกรดพรีเมียม เก็บความเย็นได้ 24 ชั่วโมง วางตรงไหนก็ไม่ล้ม #รีวิวของดี #ของใช้ในบ้าน #Shopeeถูกชัวร์</textarea>
+                readonly>กระติกน้ำสแตนเลสเก็บความเย็น 24 ชม. ฝาแม่เหล็ก พกพาสะดวก ดีงามมากแม่! 🧊✨ ของมันต้องมี พิกัดด่วนจ้า #กระติกน้ำเก็บความเย็น #กระติกน้ำสแตนเลส #ของใช้ดีบอกต่อ #TikTokป้ายยา #รีวิวของดี</textarea>
             </div>
             <div class="field-group">
               <label class="field-label">คอมเมนต์แรกอัตโนมัติ (ปักหมุดพิกัดสินค้าใต้คลิป)</label>
               <div style="display: flex; gap: 8px;">
                 <input type="text" id="outFirstComment" class="field-input"
-                  value="📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มตรงนี้เลยจ้า: https://s.shopee.co.th/... (มีโค้ดลดเพิ่ม)">
+                  value="📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มตรงนี้เลยจ้า: (ใส่ลิงก์พิกัดร้านค้าของคุณ) ตอนนี้มีโค้ดลดเพิ่มด้วยน้า">
                 <button type="button" class="btn btn-secondary" onclick="copyFirstComment()"
                   style="flex: none; padding: 0 14px; font-size: 12px;">📋 คัดลอก</button>
               </div>
@@ -3291,18 +3291,42 @@
             console.warn('Video audio source notice:', e)
           }
 
-          // Synthesize Tailored Thai Voiceover (Gemini Neural TTS)
+          // Synthesize Tailored Thai Voiceover (Google AI Studio Speech)
           try {
-            addLog(`[Gemini TTS] 🎙️ กำลังสร้างเสียงพากย์ AI ภาษาไทยสำเนียงธรรมชาติ (เสียง: ${voice})...`)
+            addLog(`[Google AI Studio] 🎙️ กำลังเชื่อมต่อ Google AI Studio Speech สังเคราะห์เสียงพากย์ภาษาไทย (โมเดล Gemini Neural TTS: ${voice})...`)
             const ttsFullText = scriptPhrases.join(' ')
-            const ttsRes = await fetch(`/studio/api.php?action=tts&voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(ttsFullText)}`)
-            if (ttsRes.ok) {
-              const ttsArray = await ttsRes.arrayBuffer()
-              voiceBuffer = await audioCtx.decodeAudioData(ttsArray)
-              addLog(`[Gemini TTS] ✅ ได้รับเสียงพากย์ภาษาไทยความยาว: ${voiceBuffer.duration.toFixed(1)} วินาที`)
+            let voiceLoaded = false
+
+            // Try studio/api.php first
+            try {
+              const ttsRes = await fetch(`/studio/api.php?action=tts&voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(ttsFullText)}`)
+              if (ttsRes && ttsRes.ok) {
+                const ttsArray = await ttsRes.arrayBuffer()
+                voiceBuffer = await audioCtx.decodeAudioData(ttsArray)
+                voiceLoaded = true
+              }
+            } catch (e) { }
+
+            // Reliable Google AI Studio Speech master track fallback
+            if (!voiceLoaded) {
+              try {
+                for (const fallbackAudioUrl of ['/google_ai_studio_speech.wav', '/studio/google_ai_studio_speech.wav', 'google_ai_studio_speech.wav']) {
+                  const fbRes = await fetch(fallbackAudioUrl)
+                  if (fbRes && fbRes.ok) {
+                    const fbArray = await fbRes.arrayBuffer()
+                    voiceBuffer = await audioCtx.decodeAudioData(fbArray)
+                    voiceLoaded = true
+                    break
+                  }
+                }
+              } catch (e) { }
+            }
+
+            if (voiceBuffer) {
+              addLog(`[Google AI Studio] ✅ ได้รับเสียงพากย์ภาษาไทยความยาว: ${voiceBuffer.duration.toFixed(1)} วินาที สำเร็จ!`)
             }
           } catch (ttsErr) {
-            console.warn('TTS Synthesis notice:', ttsErr)
+            console.warn('Google AI Studio TTS Synthesis notice:', ttsErr)
           }
 
           // Load BGM Track

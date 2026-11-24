@@ -2780,6 +2780,7 @@
     let ACTIVE_KEY = localStorage.getItem('google_ai_studio_api_key') || ''
     let currentExtId = ''
     let loadedVideoFile = null
+    window.loadedVideoFile = null
     let currentVideoBlob = null
     let currentThumbUrl = '/likes_auto_finished_thumb.jpg'
 
@@ -3357,9 +3358,6 @@
           ctx.textBaseline = 'middle'
           ctx.fillText('👉 พิกัดส่วนลดในคลิป กดสั่งซื้อเลย!', 360, ctaY + ctaH / 2)
         }
-          ctx.textBaseline = 'middle'
-          ctx.fillText('✨ พิกัดส่วนลดในคลิป >> กดสั่งซื้อเลย! ✨', 360, ctaY + ctaH / 2)
-        }
 
         const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
         currentThumbUrl = dataUrl
@@ -3380,6 +3378,7 @@
     window.handleVideoSelected = function (file) {
       if (!file) return
       loadedVideoFile = file
+      window.loadedVideoFile = file
       const sizeMB = file.size > 1024 * 1024
         ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
         : (file.size / 1024).toFixed(0) + ' KB'
@@ -3491,6 +3490,7 @@
           pDet.value = 'สมาร์ทโฟน iPhone พร้อมขาตั้งกล้องมือถือสำหรับไลฟ์สดและถ่ายคลิปสั้น'
         }
         handleVideoSelected(file)
+        return file
       } catch (err) {
         if (promptEl) promptEl.innerHTML = 'แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ'
         alert('เกิดข้อผิดพลาดในการโหลดคลิปตัวอย่าง: ' + err.message + '\nแนะนำให้แตะปุ่ม "เลือกวิดีโอจากเครื่อง" เพื่อใช้วิดีโอของคุณได้เลยครับ')
@@ -4365,6 +4365,7 @@
       }
     }
 
+    window.runNativeRender = runNativeRender
     async function runNativeRender() {
       btnStartRender.disabled = true
       if (btnStickyRender) {

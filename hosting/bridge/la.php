@@ -4,9 +4,18 @@
  */
 declare(strict_types=1);
 
+define('LA_PRODUCTION_FALLBACK_BACKEND', 'https://likes-auto.onrender.com');
+
 $config = require __DIR__ . '/la-config.php';
 $base = rtrim((string) ($config['backend_base'] ?? ''), '/');
 $host = (string) ($config['backend_host'] ?? 'likes-auto.com');
+
+// ── Anti-Downtime Guard: Ephemeral Tunnel Protection ──
+// Ephemeral tunnels (trycloudflare, loca.lt, ngrok) expire and cause 502.
+// Automatically enforce the production Render backend unless explicitly overridden.
+if ($base === '' || (preg_match('#(trycloudflare\.com|loca\.lt|ngrok|localhost|127\.0\.0\.1)#i', $base) && empty($config['allow_tunnel']))) {
+    $base = LA_PRODUCTION_FALLBACK_BACKEND;
+}
 
 $uri = $_SERVER['REQUEST_URI'] ?? '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -397,15 +406,92 @@ if ($isMultipart) {
 curl_setopt_array($ch, $opts);
 
 $raw = curl_exec($ch);
+$code = ($raw !== false) ? (int) curl_getinfo($ch, CURLINFO_HTTP_CODE) : 0;
+$headerSize = ($raw !== false) ? (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE) : 0;
+
+// ── Multi-Layer Automatic Failover Protection ──
+// If the primary backend failed (DNS failure, unreachable tunnel, connection refused, or 502/503/504),
+// and it is not already pointing to Render, automatically retry using the permanent Render backend!
+if (($raw === false || ($code >= 502 && $code <= 504)) && $base !== LA_PRODUCTION_FALLBACK_BACKEND) {
+    $fallbackUrl = LA_PRODUCTION_FALLBACK_BACKEND . $forwardUri;
+    $fbCh = curl_init($fallbackUrl);
+    $fbOpts = $opts;
+    $fbHeaders = [];
+    foreach ($headers as $hdr) {
+        if (stripos($hdr, 'Host:') === 0) {
+            $fbHeaders[] = 'Host: ' . (parse_url(LA_PRODUCTION_FALLBACK_BACKEND, PHP_URL_HOST) ?: 'likes-auto.onrender.com');
+        } else {
+            $fbHeaders[] = $hdr;
+        }
+    }
+    $fbOpts[CURLOPT_HTTPHEADER] = $fbHeaders;
+    curl_setopt_array($fbCh, $fbOpts);
+    $fbRaw = curl_exec($fbCh);
+    if ($fbRaw !== false) {
+        $fbCode = (int) curl_getinfo($fbCh, CURLINFO_HTTP_CODE);
+        if ($fbCode < 500) {
+            curl_close($ch);
+            $ch = $fbCh;
+            $raw = $fbRaw;
+            $code = $fbCode;
+            $headerSize = (int) curl_getinfo($fbCh, CURLINFO_HEADER_SIZE);
+        } else {
+            curl_close($fbCh);
+        }
+    } else {
+        curl_close($fbCh);
+    }
+}
+
+// ── Static Disk Fallback & Graceful Maintenance (Never Blank 502!) ──
 if ($raw === false) {
-    http_response_code(502);
-    header('Content-Type: text/plain; charset=utf-8');
-    echo 'Backend unreachable: ' . curl_error($ch);
+    // 1. Try serving static HTML snapshot from local host disk for GET requests
+    if ($method === 'GET' || $method === 'HEAD') {
+        $candidates = [];
+        if ($path === '/' || $path === '') {
+            $candidates[] = __DIR__ . '/index.html';
+        } else {
+            $candidates[] = __DIR__ . $path . '/index.html';
+            $candidates[] = __DIR__ . $path . '.html';
+            $candidates[] = __DIR__ . $path;
+        }
+        foreach ($candidates as $file) {
+            if (is_file($file)) {
+                if (str_ends_with($file, '.html')) {
+                    header('Content-Type: text/html; charset=utf-8');
+                }
+                header('X-Fallback-Serving: local-static');
+                if ($method === 'HEAD') {
+                    exit;
+                }
+                readfile($file);
+                curl_close($ch);
+                exit;
+            }
+        }
+    }
+
+    // 2. High-availability graceful error page with auto-retry (NEVER raw 502 text!)
+    http_response_code(503);
+    header('Content-Type: text/html; charset=utf-8');
+    header('Retry-After: 5');
+    echo '<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">';
+    echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
+    echo '<title>กำลังเชื่อมต่อระบบ | Likes Auto</title>';
+    echo '<meta http-equiv="refresh" content="5">';
+    echo '<style>body{margin:0;padding:2rem;background:#0b0f19;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;display:flex;min-height:80vh;align-items:center;justify-content:center}';
+    echo '.box{max-width:440px;background:#1e293b;border:1px solid #334155;border-radius:16px;padding:2.5rem 2rem;text-align:center;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5)}';
+    echo '.spin{width:48px;height:48px;border:4px solid #38bdf8;border-top-color:transparent;border-radius:50%;margin:0 auto 1.5rem;animation:s 1s linear infinite}';
+    echo '@keyframes s{to{transform:rotate(360deg)}}';
+    echo 'h1{font-size:1.25rem;margin:0 0 .5rem;color:#fff}p{font-size:.9rem;color:#94a3b8;margin:0 0 1.5rem;line-height:1.5}';
+    echo 'a{display:inline-block;padding:.6rem 1.2rem;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px;font-size:.875rem}';
+    echo '</style></head><body><div class="box"><div class="spin"></div><h1>ระบบกำลังเชื่อมต่อบริการ...</h1>';
+    echo '<p>เซิร์ฟเวอร์กำลังเชื่อมต่อข้อมูล กรุณารอสักครู่ ระบบจะโหลดใหม่อัตโนมัติใน 5 วินาที</p>';
+    echo '<a href="' . htmlspecialchars($uri) . '">กดเพื่อโหลดใหม่ทันที</a></div></body></html>';
     curl_close($ch);
     exit;
 }
-$code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+
 curl_close($ch);
 
 $rawHeaders = substr($raw, 0, $headerSize);

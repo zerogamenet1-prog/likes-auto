@@ -2562,7 +2562,7 @@
   </div>
 
   <script>
-    const ONLINE_TUNNEL_URL = 'https://judicial-sociology-speech-inventory.trycloudflare.com'
+    const ONLINE_TUNNEL_URL = ''
     const ACTIVE_KEY = ''
     let currentExtId = ''
     let loadedVideoFile = null
@@ -2963,7 +2963,7 @@
       if (promptEl) promptEl.innerHTML = '⏳ กำลังดาวน์โหลดคลิปตัวอย่าง...'
       try {
         let resp = null
-        for (const url of ['/sample_product.mp4', ONLINE_TUNNEL_URL + '/sample_product.mp4']) {
+        for (const url of ['/sample_product.mp4', '/studio/sample_product.mp4', 'sample_product.mp4']) {
           try {
             resp = await fetch(url)
             if (resp && resp.ok) break
@@ -3186,14 +3186,18 @@
       setBar(15, 'โหลดวิดีโอเข้าสู่ RAM ของอุปกรณ์...')
 
       const video = document.createElement('video')
-      video.muted = false
+      video.muted = true
+      video.defaultMuted = true
       video.playsInline = true
-      video.crossOrigin = 'anonymous'
+      video.setAttribute('playsinline', 'true')
+      video.setAttribute('muted', 'true')
+      video.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:160px;height:90px;opacity:0.001;pointer-events:none;'
+      document.body.appendChild(video)
       video.src = URL.createObjectURL(videoFile)
 
       await new Promise((resolve, reject) => {
         video.onloadedmetadata = () => resolve()
-        video.onerror = () => reject(new Error('เบราว์เซอร์ไม่สามารถอ่านไฟล์วิดีโอนี้ได้'))
+        video.onerror = () => reject(new Error('เบราว์เซอร์ไม่สามารถเปิดอ่านไฟล์วิดีโอนี้ได้'))
       })
 
       const duration = video.duration || 15
@@ -3201,7 +3205,8 @@
       setStep('p-script')
       setBar(30, 'จัดเตรียมบทขายและคำบรรยายซับไตเติ้ล...')
 
-      const prodName = (document.getElementById('productDetails') || {}).value || 'สินค้าโปรโมชั่นสุดคุ้ม'
+      const rawDetails = (document.getElementById('productDetails') || {}).value || ''
+      const prodName = rawDetails.trim() || 'สินค้าโปรโมชั่นสุดคุ้ม'
       const style = options.style || 'creator_viral'
       const font = options.font || 'mitr'
       const subColor = options.sub_color || '#ffffff'
@@ -3211,12 +3216,20 @@
       const bgmTrack = options.bgm_track || 'bgm1'
       const sfxChoice = options.sfx_choice || 'auto'
 
-      const scriptPhrases = [
-        `🔥 ${prodName} ตัวนี้บอกเลยว่าห้ามพลาด!`,
-        '✨ การันตีของแท้ 100% คุณภาพดีเกินราคา',
-        '⚡ ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้',
-        '👉 รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!'
-      ]
+      // Check if user edited or provided custom script
+      const customScript = (document.getElementById('outScript') || {}).value || ''
+      let scriptPhrases = []
+      if (customScript.trim().length > 10) {
+        scriptPhrases = customScript.split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
+      }
+      if (!scriptPhrases || scriptPhrases.length === 0) {
+        scriptPhrases = [
+          `🔥 ${prodName} ตัวนี้บอกเลยว่าห้ามพลาด!`,
+          '✨ การันตีของแท้ 100% คุณภาพดีเกินราคา',
+          '⚡ ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้',
+          '👉 รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!'
+        ]
+      }
 
       setStep('p-tts')
       setBar(45, 'กำลังโหลดและมิกซ์ดนตรี BGM + ซาวด์เอฟเฟกต์...')
@@ -3428,12 +3441,17 @@
 
       recorder.start(400)
       video.currentTime = 0
-      await video.play()
+      let isRendering = true
+      try {
+        await video.play()
+      } catch (playErr) {
+        console.warn('Video play warning:', playErr)
+      }
       drawFrame()
 
       await new Promise(resolve => {
-        video.onended = () => resolve()
-        setTimeout(resolve, (duration + 3) * 1000)
+        video.onended = () => { isRendering = false; resolve() }
+        setTimeout(() => { isRendering = false; resolve() }, (duration + 2.5) * 1000)
       })
 
       let thumbBlob = null
@@ -3447,6 +3465,9 @@
       }
 
       await new Promise(r => { recorder.onstop = r })
+      if (video.parentNode) {
+        video.parentNode.removeChild(video)
+      }
 
       const videoBlob = new Blob(chunks, { type: mime.split(';')[0] })
       currentVideoBlob = videoBlob
@@ -3529,39 +3550,42 @@
 
       try {
         let renderCandidates = []
+        if (ONLINE_TUNNEL_URL && !ONLINE_TUNNEL_URL.includes('trycloudflare.com')) {
+          renderCandidates.push(ONLINE_TUNNEL_URL + '/api/studio/render')
+        }
         if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
-          renderCandidates = [
-            '/api/studio/render',
-            ONLINE_TUNNEL_URL + '/api/studio/render'
-          ]
-        } else {
-          renderCandidates = [
-            ONLINE_TUNNEL_URL + '/api/studio/render',
-            '/api/studio/render',
-            'http://127.0.0.1:8000/api/studio/render'
-          ]
+          renderCandidates.push('/api/studio/render')
         }
 
         let res = null
         let activeBase = ''
         let lastErr = null
 
-        for (const endpoint of renderCandidates) {
-          try {
-            addLog(`[Network] ส่งงานไปยัง Engine: ${endpoint.includes('trycloudflare') ? 'Cloudflare Online Engine' : endpoint}...`)
-            const testRes = await fetch(endpoint, {
-              method: 'POST',
-              body: formData
-            })
-            if (testRes && testRes.ok) {
-              res = testRes
-              if (endpoint.startsWith('http')) {
-                activeBase = new URL(endpoint).origin
-              } else {
-                activeBase = window.location.origin
+        if (renderCandidates.length > 0) {
+          for (const endpoint of renderCandidates) {
+            try {
+              addLog(`[Network] ตรวจสอบ Engine: ${endpoint}...`)
+              const ctrl = new AbortController()
+              const timer = setTimeout(() => ctrl.abort(), 1200)
+              const testRes = await fetch(endpoint, {
+                method: 'POST',
+                body: formData,
+                signal: ctrl.signal
+              })
+              clearTimeout(timer)
+              if (testRes && testRes.ok) {
+                res = testRes
+                activeBase = endpoint.startsWith('http') ? new URL(endpoint).origin : window.location.origin
+                break
+              } else if (testRes && !testRes.ok) {
+                lastErr = `HTTP ${testRes.status}`
               }
-              break
-            } else if (testRes && !testRes.ok) {
+            } catch (fetchErr) {
+              lastErr = fetchErr.message
+              console.warn('Endpoint probe notice:', endpoint, fetchErr)
+            }
+          }
+        }
               lastErr = `HTTP ${testRes.status}`
             }
           } catch (fetchErr) {

@@ -136,12 +136,12 @@ def generate_script(src_video_path: Path = None, product_details: str = "", api_
     parts.append({"text": system_prompt})
 
     models = [
-        "gemini-3.5-flash-lite",
+        "gemini-2.5-flash",
         "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
         "gemini-3.8-flash",
+        "gemini-flash-latest",
         "gemini-flash-lite-latest",
-        "gemini-3.1-flash-lite",
-        "gemini-3-flash-preview",
     ]
     for model_name in models:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={effective_key}"
@@ -215,13 +215,14 @@ def synthesize_voice_edge(script_text: str, voice_name: str, out_wav_path: Path)
 def synthesize_voice(script_text: str, voice_name: str = "Kore", api_key: str = DEFAULT_API_KEY, out_wav_path: Path = None):
     """
     Synthesizes voiceover exclusively using Google AI Studio (https://aistudio.google.com/generate-speech).
-    Uses official Gemini TTS models (gemini-3.8-flash-lite-tts, gemini-3.1-flash-tts-preview) for 100% natural, lifelike human voice.
+    Uses official Gemini TTS models (gemini-2.5-flash-preview-tts, gemini-3.8-flash-lite-tts, gemini-2.5-pro-preview-tts) for 100% natural, lifelike human voice.
     """
     tts_models = [
+        "gemini-2.5-flash-preview-tts",
         "gemini-3.8-flash-lite-tts",
+        "gemini-2.5-pro-preview-tts",
         "gemini-3.1-flash-tts-preview",
         "gemini-3.8-flash-tts",
-        "gemini-2.5-flash-preview-tts",
     ]
     clean_voice = voice_name if voice_name in ["Kore", "Aoede", "Puck", "Fenrir", "Charon", "Leda", "Zephyr"] else "Kore"
     effective_key = api_key if (api_key and len(api_key) > 10) else DEFAULT_API_KEY
@@ -239,35 +240,38 @@ def synthesize_voice(script_text: str, voice_name: str = "Kore", api_key: str = 
     }
     encoded_payload = json.dumps(payload).encode("utf-8")
 
-    for model in tts_models:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={effective_key}"
-        req = urllib.request.Request(
-            url,
-            data=encoded_payload,
-            headers={"Content-Type": "application/json", "x-goog-api-key": effective_key}
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                res = json.loads(resp.read().decode("utf-8"))
-                inline = res["candidates"][0]["content"]["parts"][0]["inlineData"]
-                raw_bytes = base64.b64decode(inline["data"])
-                
-                # If RIFF header is present (standard WAV from gemini-3.8-flash-lite-tts)
-                if raw_bytes.startswith(b"RIFF"):
-                    out_wav_path.write_bytes(raw_bytes)
-                else:
-                    # Headerless 24kHz 16-bit mono PCM (from gemini-3.1-flash-tts-preview)
-                    with wave.open(str(out_wav_path), "wb") as wf:
-                        wf.setnchannels(1)
-                        wf.setsampwidth(2)
-                        wf.setframerate(24000)
-                        wf.writeframes(raw_bytes)
-                return
-        except Exception:
-            continue
+    last_error = None
+    for attempt in range(3):
+        for model in tts_models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={effective_key}"
+            req = urllib.request.Request(
+                url,
+                data=encoded_payload,
+                headers={"Content-Type": "application/json", "x-goog-api-key": effective_key}
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    res = json.loads(resp.read().decode("utf-8"))
+                    inline = res["candidates"][0]["content"]["parts"][0]["inlineData"]
+                    raw_bytes = base64.b64decode(inline["data"])
+                    
+                    # If RIFF header is present
+                    if raw_bytes.startswith(b"RIFF"):
+                        out_wav_path.write_bytes(raw_bytes)
+                    else:
+                        # 24kHz 16-bit mono PCM from Google AI Studio Speech
+                        with wave.open(str(out_wav_path), "wb") as wf:
+                            wf.setnchannels(1)
+                            wf.setsampwidth(2)
+                            wf.setframerate(24000)
+                            wf.writeframes(raw_bytes)
+                    return out_wav_path
+            except Exception as e:
+                last_error = e
+                continue
+        time.sleep(1.0)
 
-    # Fallback to Neural Edge-TTS if all Google AI Studio models fail or network disconnects
-    synthesize_voice_edge(script_text, voice_name, out_wav_path)
+    raise RuntimeError(f"Google AI Studio Speech synthesis failed: {last_error}")
 
 
 def wrap_thai_title(raw_text: str, font_title=None, max_px_width: int = 580):

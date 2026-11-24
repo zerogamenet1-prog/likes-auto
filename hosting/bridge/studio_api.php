@@ -34,14 +34,12 @@ foreach ($envPaths as $p) {
 }
 
 // -------------------------------------------------------------
-// ACTION: SCRIPT (Generate Tailored Thai Sales Script)
+// ACTION: SCRIPT (Generate Tailored Thai Sales Script from Video & Product)
 // -------------------------------------------------------------
 if ($action === 'script') {
     header('Content-Type: application/json; charset=utf-8');
     $product = trim($_GET['product'] ?? ($_POST['product'] ?? ''));
-    if (empty($product)) {
-        $product = 'กระติกน้ำสแตนเลสเก็บความเย็น 24 ชั่วโมง ฝาแม่เหล็ก พกพาสะดวก';
-    }
+    $frameData = $_POST['frame'] ?? '';
     $style = trim($_GET['style'] ?? ($_POST['style'] ?? 'creator_viral'));
 
     $cleanProd = mb_substr($product, 0, 80);
@@ -50,50 +48,86 @@ if ($action === 'script') {
     if (mb_strlen($mainName) > 40) {
         $mainName = mb_substr($mainName, 0, 40);
     }
+    if (empty($mainName)) {
+        $mainName = 'สินค้าคุณภาพพรีเมียม';
+    }
 
-    $prompt = "You are an elite Thai viral video marketer on TikTok and Facebook Reels.\n" .
-        "Write a high-converting Thai short sales script for this exact product: {$product}\n\n" .
-        "Return STRICTLY a JSON object with this exact schema (no markdown formatting, no backticks):\n" .
-        "{\n" .
-        "  \"detected_product\": \"{$mainName}\",\n" .
-        "  \"title\": \"🔥 รีวิว {$mainName} ของแท้ลดราคาพิเศษ\",\n" .
-        "  \"phrases\": [\n" .
-        "    \"ใครกำลังมองหา {$mainName} ตัวนี้บอกเลยว่าห้ามพลาด!\",\n" .
-        "    \"จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานง่าย\",\n" .
-        "    \"ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ คุ้มค่าที่สุด\",\n" .
-        "    \"รีบจิ้มสั่งซื้อในตะกร้าส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
-        "  ],\n" .
-        "  \"caption\": \"ของดีบอกต่อ {$mainName} คุณภาพเกินราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา\",\n" .
-        "  \"first_comment\": \"📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
-        "}";
+    $parts = [];
+    if (!empty($frameData)) {
+        $cleanB64 = preg_replace('#^data:image/\w+;base64,#i', '', $frameData);
+        $parts[] = [
+            "inlineData" => [
+                "mimeType" => "image/jpeg",
+                "data" => $cleanB64
+            ]
+        ];
+        $prompt = "You are an elite Thai viral video marketer on TikTok and Facebook Reels.\n" .
+            "Look at this exact video frame carefully. Identify the exact product, brand, model, color and features shown in the video.\n" .
+            "Write a natural, high-converting Thai sales script matching this exact video 100%.\n" .
+            ($product ? "Seller note: {$product}\n\n" : "\n") .
+            "Return STRICTLY a JSON object with this exact schema (no markdown formatting, no backticks):\n" .
+            "{\n" .
+            "  \"detected_product\": \"ชื่อสินค้าและแบรนด์ที่เห็นในภาพจริง\",\n" .
+            "  \"title\": \"🔥 รีวิว (ชื่อสินค้าจริง) ของแท้ลดราคาพิเศษ\",\n" .
+            "  \"phrases\": [\n" .
+            "    \"ใครกำลังมองหา (ชื่อสินค้าจริง) ตัวนี้บอกเลยว่าห้ามพลาด!\",\n" .
+            "    \"จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานง่าย\",\n" .
+            "    \"ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ คุ้มค่าที่สุด\",\n" .
+            "    \"รีบจิ้มสั่งซื้อในตะกร้าส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
+            "  ],\n" .
+            "  \"caption\": \"ของดีบอกต่อ (ชื่อสินค้าจริง) คุณภาพเกินราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา\",\n" .
+            "  \"first_comment\": \"📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
+            "}";
+    } else {
+        $prompt = "You are an elite Thai viral video marketer on TikTok and Facebook Reels.\n" .
+            "Write a high-converting Thai short sales script for this exact product: {$product}\n\n" .
+            "Return STRICTLY a JSON object with this exact schema (no markdown formatting, no backticks):\n" .
+            "{\n" .
+            "  \"detected_product\": \"{$mainName}\",\n" .
+            "  \"title\": \"🔥 รีวิว {$mainName} ของแท้ลดราคาพิเศษ\",\n" .
+            "  \"phrases\": [\n" .
+            "    \"ใครกำลังมองหา {$mainName} ตัวนี้บอกเลยว่าห้ามพลาด!\",\n" .
+            "    \"จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานง่าย\",\n" .
+            "    \"ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ คุ้มค่าที่สุด\",\n" .
+            "    \"รีบจิ้มสั่งซื้อในตะกร้าส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
+            "  ],\n" .
+            "  \"caption\": \"ของดีบอกต่อ {$mainName} คุณภาพเกินราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา\",\n" .
+            "  \"first_comment\": \"📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
+            "}";
+    }
+    $parts[] = ["text" => $prompt];
 
     $result = null;
 
-    // Call Gemini 3.5 Flash Lite
+    // Call Gemini 2.5 Flash / Gemini 3.5 Flash Lite
     if (strlen($apiKey) > 10) {
-        $ch = curl_init("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=" . urlencode($apiKey));
-        $payload = json_encode([
-            "contents" => [["parts" => [["text" => $prompt]]]],
-            "generationConfig" => ["responseMimeType" => "application/json"]
-        ]);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $payload,
-            CURLOPT_HTTPHEADER => ["Content-Type: application/json"],
-            CURLOPT_TIMEOUT => 8,
-            CURLOPT_SSL_VERIFYPEER => false
-        ]);
-        $resp = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        $models = ["gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-3.5-flash"];
+        foreach ($models as $m) {
+            $ch = curl_init("https://generativelanguage.googleapis.com/v1beta/models/{$m}:generateContent?key=" . urlencode($apiKey));
+            $payload = json_encode([
+                "contents" => [["parts" => $parts]],
+                "generationConfig" => ["responseMimeType" => "application/json"]
+            ]);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $payload,
+                CURLOPT_HTTPHEADER => ["Content-Type: application/json"],
+                CURLOPT_TIMEOUT => 12,
+                CURLOPT_SSL_VERIFYPEER => false
+            ]);
+            $resp = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
 
-        if ($httpCode === 200 && $resp) {
-            $j = json_decode($resp, true);
-            $rawText = $j['candidates'][0]['content']['parts'][0]['text'] ?? '';
-            $parsed = json_decode($rawText, true);
-            if (!empty($parsed) && !empty($parsed['phrases'])) {
-                $result = $parsed;
+            if ($httpCode === 200 && $resp) {
+                $j = json_decode($resp, true);
+                $rawText = $j['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                $parsed = json_decode($rawText, true);
+                if (!empty($parsed) && !empty($parsed['phrases'])) {
+                    $result = $parsed;
+                    break;
+                }
             }
         }
     }
@@ -138,9 +172,15 @@ if ($action === 'tts') {
         $voice = "Kore";
     }
 
-    // Try Gemini Neural TTS
+    // Try Google AI Studio Speech exclusively
     $wavData = null;
-    $ttsModels = ["gemini-3.1-flash-tts-preview", "gemini-3.8-flash-tts"];
+    $ttsModels = [
+        "gemini-2.5-flash-preview-tts",
+        "gemini-3.8-flash-lite-tts",
+        "gemini-2.5-pro-preview-tts",
+        "gemini-3.1-flash-tts-preview",
+        "gemini-3.8-flash-tts"
+    ];
 
     foreach ($ttsModels as $model) {
         $ch = curl_init("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . urlencode($apiKey));
@@ -160,7 +200,7 @@ if ($action === 'tts') {
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $payload,
             CURLOPT_HTTPHEADER => ["Content-Type: application/json"],
-            CURLOPT_TIMEOUT => 12,
+            CURLOPT_TIMEOUT => 15,
             CURLOPT_SSL_VERIFYPEER => false
         ]);
         $resp = curl_exec($ch);
@@ -205,30 +245,10 @@ if ($action === 'tts') {
         exit;
     }
 
-    // Fallback: Google Translate TTS (MP3)
-    $ttsUrl = 'https://translate.google.com/translate_tts?ie=UTF-8&tl=th&client=tw-ob&q=' . urlencode(mb_substr($text, 0, 180));
-    $ch = curl_init($ttsUrl);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        CURLOPT_TIMEOUT => 6,
-        CURLOPT_SSL_VERIFYPEER => false
-    ]);
-    $mp3Data = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($httpCode === 200 && strlen($mp3Data) > 500) {
-        header('Content-Type: audio/mpeg');
-        header('Content-Length: ' . strlen($mp3Data));
-        header('Cache-Control: public, max-age=86400');
-        echo $mp3Data;
-        exit;
-    }
-
     http_response_code(500);
     header('Content-Type: application/json');
-    echo json_encode(["ok" => false, "error" => "TTS synthesis failed"]);
+    echo json_encode(["ok" => false, "error" => "Google AI Studio Speech synthesis failed"]);
+    exit;
     exit;
 }
 

@@ -14,28 +14,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $action = $_GET['action'] ?? ($_POST['action'] ?? '');
-$apiKey = getenv('GEMINI_API_KEY') ?: '';
+$customApiKey = trim($_GET['api_key'] ?? ($_POST['api_key'] ?? ($_SERVER['HTTP_X_GOOG_API_KEY'] ?? '')));
+if (!empty($customApiKey) && strlen($customApiKey) > 10) {
+    $apiKey = $customApiKey;
+} else {
+    $apiKey = getenv('GEMINI_API_KEY') ?: '';
 
-// Try reading local .env if available
-$envPaths = [__DIR__ . '/.env', dirname(__DIR__) . '/.env', dirname(dirname(__DIR__)) . '/.env', dirname(dirname(dirname(__DIR__))) . '/.env'];
-foreach ($envPaths as $p) {
-    if (file_exists($p)) {
-        $lines = file($p, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        foreach ($lines as $line) {
-            if (strpos(trim($line), 'GEMINI_API_KEY=') === 0) {
-                $val = trim(substr(trim($line), 15), " \"'");
-                if (strlen($val) > 10) {
-                    $apiKey = $val;
-                    break 2;
+    // Try reading local .env if available
+    $envPaths = [__DIR__ . '/.env', dirname(__DIR__) . '/.env', dirname(dirname(__DIR__)) . '/.env', dirname(dirname(dirname(__DIR__))) . '/.env'];
+    foreach ($envPaths as $p) {
+        if (file_exists($p)) {
+            $lines = file($p, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                if (strpos(trim($line), 'GEMINI_API_KEY=') === 0) {
+                    $val = trim(substr(trim($line), 15), " \"'");
+                    if (strlen($val) > 10) {
+                        $apiKey = $val;
+                        break 2;
+                    }
                 }
             }
         }
     }
-}
 
-if (empty($apiKey)) {
-    // Dynamic fallback loader from secured runtime credentials
-    $apiKey = base64_decode("QVEuQWI4Uk42SmxJdDVqdVFPQUVaNXg2SU1sbnpjVlBySHBHTW55V2drNi1SS0xJanF2dUE=");
+    if (empty($apiKey)) {
+        // Dynamic fallback loader from secured runtime credentials
+        $apiKey = base64_decode("QVEuQWI4Uk42SmxJdDVqdVFPQUVaNXg2SU1sbnpjVlBySHBHTW55V2drNi1SS0xJanF2dUE=");
+    }
 }
 
 // -------------------------------------------------------------
@@ -252,56 +257,16 @@ if ($action === 'tts') {
         exit;
     }
 
-    // Google Neural Speech Synthesis Fallback (Ensures speech is ALWAYS 100% matched to text even if quota is exhausted)
-    $cleanText = preg_replace('/[🔥✨⚡👉🛒📌✔⭐]/u', '', $text);
-    $cleanText = trim(preg_replace('/\s+/', ' ', $cleanText));
-    if (empty($cleanText)) $cleanText = $text;
-
-    $chunks = [];
-    $words = preg_split('/(?<=[,\.\s!])/u', $cleanText, -1, PREG_SPLIT_NO_EMPTY);
-    $curr = '';
-    foreach ($words as $w) {
-        if (mb_strlen($curr . ' ' . $w) < 130) {
-            $curr = empty($curr) ? $w : ($curr . ' ' . $w);
-        } else {
-            $chunks[] = trim($curr);
-            $curr = $w;
-        }
-    }
-    if (!empty($curr)) $chunks[] = trim($curr);
-    if (empty($chunks)) $chunks = [$cleanText];
-
-    $combinedAudio = '';
-    foreach ($chunks as $chunk) {
-        if (empty($chunk)) continue;
-        $ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" . urlencode($chunk) . "&tl=th&client=tw-ob";
-        $ch = curl_init($ttsUrl);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            CURLOPT_TIMEOUT => 8,
-            CURLOPT_SSL_VERIFYPEER => false
-        ]);
-        $chunkAudio = curl_exec($ch);
-        $cCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($cCode === 200 && $chunkAudio && strlen($chunkAudio) > 200) {
-            $combinedAudio .= $chunkAudio;
-        }
-    }
-
-    if (strlen($combinedAudio) > 500) {
-        header('Content-Type: audio/mpeg');
-        header('Content-Length: ' . strlen($combinedAudio));
-        header('Cache-Control: public, max-age=86400');
-        echo $combinedAudio;
-        exit;
-    }
-
-    http_response_code(500);
-    header('Content-Type: application/json');
-    echo json_encode(["ok" => false, "error" => "Google AI Studio Speech synthesis failed"]);
-    exit;
+    // STRICT REQUIREMENT: Only Google AI Studio Speech (gemini-*-tts) is allowed.
+    // If quota is exhausted or key is invalid, return an explicit 429 so user can provide a fresh Google AI Studio API key.
+    http_response_code(429);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        "ok" => false,
+        "error" => "Google AI Studio Speech quota exceeded or key invalid. Please provide your Google AI Studio API key in the studio settings.",
+        "code" => 429,
+        "service" => "google_ai_studio_speech"
+    ]);
     exit;
 }
 

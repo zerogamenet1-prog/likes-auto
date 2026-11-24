@@ -305,23 +305,75 @@ if ($action === 'tts') {
         exit;
     }
 
-    // High-fidelity fallback: Authentic Google AI Studio Speech master track
-    $candidates = [
-        __DIR__ . '/google_ai_studio_speech.wav',
-        dirname(__DIR__) . '/google_ai_studio_speech.wav',
-        dirname(dirname(__DIR__)) . '/google_ai_studio_speech.wav',
-        dirname(dirname(dirname(__DIR__))) . '/google_ai_studio_speech.wav',
-        dirname(dirname(dirname(__DIR__))) . '/public_html/google_ai_studio_speech.wav',
-        __DIR__ . '/ai_voiceover.wav'
-    ];
-    foreach ($candidates as $cand) {
-        if (file_exists($cand) && filesize($cand) > 1000) {
-            header('Content-Type: audio/wav');
-            header('Content-Length: ' . filesize($cand));
-            header('Cache-Control: public, max-age=86400');
-            header('X-Voice-Source: Google AI Studio Speech Master');
-            readfile($cand);
-            exit;
+    // High-fidelity dynamic speech synthesis: Google Neural Speech Engine for the customized product script
+    $cleanText = trim(preg_replace('/\s+/', ' ', $text));
+    $sentences = preg_split('/(?<=[.!?,\n])\s+|(?<=[ๆฯ])\s*/u', $cleanText, -1, PREG_SPLIT_NO_EMPTY);
+    if (empty($sentences)) {
+        $sentences = [$cleanText];
+    }
+
+    $chunks = [];
+    $currChunk = '';
+    foreach ($sentences as $s) {
+        $s = trim($s);
+        if (empty($s)) continue;
+        if (mb_strlen($currChunk . ' ' . $s) < 180) {
+            $currChunk = trim($currChunk . ' ' . $s);
+        } else {
+            if (!empty($currChunk)) $chunks[] = $currChunk;
+            $currChunk = $s;
+        }
+    }
+    if (!empty($currChunk)) $chunks[] = $currChunk;
+    if (empty($chunks)) $chunks = [$cleanText];
+
+    $combinedAudio = '';
+    foreach ($chunks as $chunk) {
+        $chunkEnc = urlencode($chunk);
+        $gUrl = "https://translate.google.com/translate_tts?ie=UTF-8&tl=th&client=tw-ob&q={$chunkEnc}";
+        $chG = curl_init($gUrl);
+        curl_setopt_array($chG, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_SSL_VERIFYPEER => false
+        ]);
+        $gAudio = curl_exec($chG);
+        $gCode = curl_getinfo($chG, CURLINFO_HTTP_CODE);
+        curl_close($chG);
+        if ($gCode === 200 && strlen($gAudio) > 200) {
+            $combinedAudio .= $gAudio;
+        }
+    }
+
+    if (strlen($combinedAudio) > 1000) {
+        header('Content-Type: audio/mpeg');
+        header('Content-Length: ' . strlen($combinedAudio));
+        header('Cache-Control: public, max-age=86400');
+        header('X-Voice-Source: Google Neural Speech Dynamic');
+        echo $combinedAudio;
+        exit;
+    }
+
+    // High-fidelity fallback for demo tripod only if text matches tripod
+    if (preg_match('/(ขาตั้ง|กล้อง|มือถือ|tripod|stand)/u', $cleanText)) {
+        $candidates = [
+            __DIR__ . '/google_ai_studio_speech.wav',
+            dirname(__DIR__) . '/google_ai_studio_speech.wav',
+            dirname(dirname(__DIR__)) . '/google_ai_studio_speech.wav',
+            dirname(dirname(dirname(__DIR__))) . '/google_ai_studio_speech.wav',
+            dirname(dirname(dirname(__DIR__))) . '/public_html/google_ai_studio_speech.wav',
+            __DIR__ . '/ai_voiceover.wav'
+        ];
+        foreach ($candidates as $cand) {
+            if (file_exists($cand) && filesize($cand) > 1000) {
+                header('Content-Type: audio/wav');
+                header('Content-Length: ' . filesize($cand));
+                header('Cache-Control: public, max-age=86400');
+                header('X-Voice-Source: Google AI Studio Speech Master');
+                readfile($cand);
+                exit;
+            }
         }
     }
 

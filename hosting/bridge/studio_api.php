@@ -206,8 +206,6 @@ if ($action === 'script') {
     echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     exit;
 }
-    exit;
-}
 
 // -------------------------------------------------------------
 // ACTION: TTS (Synthesize Thai Speech into WAV)

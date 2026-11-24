@@ -2510,17 +2510,17 @@
             <div class="field-group" style="margin-top: 4px;">
               <label class="field-label">หัวข้อคลิป (Title)</label>
               <input type="text" id="outTitle" class="field-input"
-                value="ป้ายยากระติกน้ำสแตนเลสเก็บความเย็น ฝาแม่เหล็ก พกพาสะดวก" readonly>
+                placeholder="หัวข้อคลิปที่สร้างด้วย AI ตามสินค้าจริง..." readonly>
             </div>
             <div class="field-group">
               <label class="field-label">บทพากย์ที่สร้าง (Thai Narration Script - Google AI Studio Speech)</label>
               <textarea id="outScript" class="field-textarea"
-                readonly>ใครกำลังมองหากระติกน้ำสแตนเลสเก็บความเย็น 24 ชั่วโมง ตัวนี้บอกเลยว่าห้ามพลาด! จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานคุ้มค่า ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ พลาดไม่ได้ รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!</textarea>
+                placeholder="บทพากย์ที่สร้างขึ้นอัตโนมัติตรงกับคลิปสินค้า 100%..." readonly></textarea>
             </div>
             <div class="field-group">
               <label class="field-label">แคปชัน & แฮชแท็กสำหรับโพสต์</label>
               <textarea id="outCaption" class="field-textarea"
-                readonly>กระติกน้ำสแตนเลสเก็บความเย็น 24 ชม. ฝาแม่เหล็ก พกพาสะดวก ดีงามมากแม่! 🧊✨ ของมันต้องมี พิกัดด่วนจ้า #กระติกน้ำเก็บความเย็น #กระติกน้ำสแตนเลส #ของใช้ดีบอกต่อ #TikTokป้ายยา #รีวิวของดี</textarea>
+                placeholder="แคปชันและแฮชแท็กที่ตรงกับสินค้าสำหรับโพสต์ TikTok / Reels..." readonly></textarea>
             </div>
             <div class="field-group">
               <label class="field-label">คอมเมนต์แรกอัตโนมัติ (ปักหมุดพิกัดสินค้าใต้คลิป)</label>
@@ -3421,6 +3421,10 @@
       if (dropArea) dropArea.style.display = 'none'
       if (videoLoadedCard) videoLoadedCard.style.display = 'flex'
 
+      if (document.getElementById('outTitle')) document.getElementById('outTitle').value = ''
+      if (document.getElementById('outScript')) document.getElementById('outScript').value = ''
+      if (document.getElementById('outCaption')) document.getElementById('outCaption').value = ''
+
       btnStartRender.disabled = false
       if (btnStickyRender) {
         btnStickyRender.disabled = false
@@ -3885,7 +3889,7 @@
       }
 
       if (!scriptPhrases || scriptPhrases.length === 0) {
-        if (customScript.trim().length > 10) {
+        if (customScript.trim().length > 10 && !customScript.includes('กระติกน้ำสแตนเลส')) {
           scriptPhrases = customScript.split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
         } else {
           const pLower = (prodName + ' ' + (loadedVideoFile ? loadedVideoFile.name : '')).toLowerCase()

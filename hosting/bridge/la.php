@@ -66,6 +66,37 @@ if (str_ends_with($path, '.php') && is_file(__DIR__ . $path) && basename($path) 
     exit;
 }
 
+// ── Serve static media and asset files directly from host disk if they exist ──
+$candidateFile = __DIR__ . $path;
+if (is_file($candidateFile)) {
+    $ext = strtolower(pathinfo($candidateFile, PATHINFO_EXTENSION));
+    $mimes = [
+        'mp3' => 'audio/mpeg',
+        'wav' => 'audio/wav',
+        'ogg' => 'audio/ogg',
+        'mp4' => 'video/mp4',
+        'webm' => 'video/webm',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'svg' => 'image/svg+xml',
+        'css' => 'text/css',
+        'js' => 'application/javascript',
+        'json' => 'application/json',
+        'html' => 'text/html; charset=utf-8',
+        'txt' => 'text/plain; charset=utf-8'
+    ];
+    if (isset($mimes[$ext])) {
+        header('Content-Type: ' . $mimes[$ext]);
+    }
+    if ($method === 'HEAD') {
+        exit;
+    }
+    readfile($candidateFile);
+    exit;
+}
+
 // ── Dedicated Updates Page Handler (/updates) ──
 if ($path === '/updates') {
     $updatesFile = __DIR__ . '/updates_card.php';

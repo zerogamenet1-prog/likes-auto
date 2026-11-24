@@ -2998,6 +2998,475 @@
       runNativeRender()
     })
 
+
+    // ========================================================
+    // IN-BROWSER CLIENT-SIDE RENDER ENGINE (DEVICE RAM & GPU 100%)
+    // ========================================================
+    function roundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath()
+      ctx.moveTo(x + radius, y)
+      ctx.lineTo(x + width - radius, y)
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius)
+      ctx.lineTo(x + width, y + height - radius)
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height)
+      ctx.lineTo(x + radius, y + height)
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius)
+      ctx.lineTo(x, y + radius)
+      ctx.quadraticCurveTo(x, y, x + radius, y)
+      ctx.closePath()
+    }
+
+    function drawCanvasStyleOverlay(ctx, style, t, duration, w, h, prodName) {
+      ctx.save()
+      if (style === 'ecommerce_sale') {
+        const badgeW = 560, badgeH = 70, badgeX = (w - badgeW) / 2, badgeY = 70
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
+        ctx.shadowBlur = 14
+        ctx.shadowOffsetY = 4
+        const grad = ctx.createLinearGradient(badgeX, badgeY, badgeX + badgeW, badgeY)
+        grad.addColorStop(0, '#ef4444')
+        grad.addColorStop(1, '#f97316')
+        ctx.fillStyle = grad
+        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 35)
+        ctx.fill()
+
+        ctx.shadowColor = 'transparent'
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 28px "Kanit", sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('⚡ FLASH SALE โปรโมชั่นพิเศษวันนี้ ⚡', w / 2, badgeY + badgeH / 2)
+
+        const rateW = 400, rateH = 42, rateX = (w - rateW) / 2, rateY = 150
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'
+        roundRect(ctx, rateX, rateY, rateW, rateH, 21)
+        ctx.fill()
+        ctx.fillStyle = '#fef08a'
+        ctx.font = '600 18px "Kanit", sans-serif'
+        ctx.fillText('⭐ 5.0 (รีวิว 10,000+ ชิ้น) · ของแท้ 100%', w / 2, rateY + rateH / 2)
+
+        const ctaW = 520, ctaH = 66, ctaX = (w - ctaW) / 2, ctaY = h - 140
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
+        ctx.shadowBlur = 16
+        const ctaGrad = ctx.createLinearGradient(ctaX, ctaY, ctaX + ctaW, ctaY)
+        ctaGrad.addColorStop(0, '#1877f2')
+        ctaGrad.addColorStop(1, '#3b82f6')
+        ctx.fillStyle = ctaGrad
+        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 33)
+        ctx.fill()
+        ctx.shadowColor = 'transparent'
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 26px "Kanit", sans-serif'
+        ctx.fillText('🛒 สั่งซื้อในตะกร้าด้านล่างได้เลย', w / 2, ctaY + ctaH / 2)
+
+      } else if (style === 'lifestyle_food') {
+        const badgeW = 460, badgeH = 62, badgeX = (w - badgeW) / 2, badgeY = 70
+        ctx.fillStyle = '#fbcfe8'
+        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 16)
+        ctx.fill()
+        ctx.fillStyle = '#9d174d'
+        ctx.font = 'bold 26px "Mali", cursive, sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('🎀 รีวิวของดีบอกต่อ ชวนลอง 🌸', w / 2, badgeY + badgeH / 2)
+
+        const ctaW = 440, ctaH = 58, ctaX = (w - ctaW) / 2, ctaY = h - 130
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
+        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 29)
+        ctx.fill()
+        ctx.fillStyle = '#db2777'
+        ctx.font = 'bold 24px "Mali", cursive, sans-serif'
+        ctx.fillText('✨ พิกัดความอร่อยในตะกร้า ✨', w / 2, ctaY + ctaH / 2)
+
+      } else if (style === 'curated_picker') {
+        const badgeW = 500, badgeH = 64, badgeX = (w - badgeW) / 2, badgeY = 70
+        ctx.fillStyle = '#fde047'
+        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 12)
+        ctx.fill()
+        ctx.fillStyle = '#0f172a'
+        ctx.font = 'bold 28px "Prompt", sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('📌 ชี้เป้าพิกัดของแท้ 100%', w / 2, badgeY + badgeH / 2)
+
+        const shipW = 360, shipH = 40, shipX = (w - shipW) / 2, shipY = 145
+        ctx.fillStyle = '#16a34a'
+        roundRect(ctx, shipX, shipY, shipW, shipH, 20)
+        ctx.fill()
+        ctx.fillStyle = '#ffffff'
+        ctx.font = '600 18px "Prompt", sans-serif'
+        ctx.fillText('🚚 ส่งฟรีทั่วไทย มีเก็บเงินปลายทาง', w / 2, shipY + shipH / 2)
+
+        const ctaW = 480, ctaH = 62, ctaX = (w - ctaW) / 2, ctaY = h - 130
+        ctx.fillStyle = '#0f172a'
+        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 31)
+        ctx.fill()
+        ctx.fillStyle = '#fde047'
+        ctx.font = 'bold 24px "Prompt", sans-serif'
+        ctx.fillText('👉 จิ้มสั่งซื้อที่ตะกร้ามุมซ้ายล่าง', w / 2, ctaY + ctaH / 2)
+
+      } else {
+        const badgeW = 520, badgeH = 66, badgeX = (w - badgeW) / 2, badgeY = 70
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)'
+        ctx.strokeStyle = '#3b82f6'
+        ctx.lineWidth = 2
+        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 16)
+        ctx.fill()
+        ctx.stroke()
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 26px "Kanit", sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText('🔥 ไอเทมเด็ดที่ต้องมีติดบ้าน!', w / 2, badgeY + badgeH / 2)
+
+        const ctaW = 480, ctaH = 62, ctaX = (w - ctaW) / 2, ctaY = h - 130
+        ctx.fillStyle = 'rgba(24, 119, 242, 0.92)'
+        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 31)
+        ctx.fill()
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 24px "Kanit", sans-serif'
+        ctx.fillText('🛒 สั่งซื้อในตะกร้าด้านล่างได้เลย', w / 2, ctaY + ctaH / 2)
+      }
+      ctx.restore()
+    }
+
+    function drawCanvasSubtitle(ctx, phrases, t, duration, w, h, opts) {
+      if (!phrases || phrases.length === 0) return
+      const phraseIndex = Math.min(phrases.length - 1, Math.floor((t / (duration || 15)) * phrases.length))
+      const line = phrases[phraseIndex]
+      if (!line) return
+
+      ctx.save()
+      const fontSize = Math.round(44 * (opts.scale / 100))
+      ctx.font = `bold ${fontSize}px ${opts.fontFamily}`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+
+      const y = (h * opts.posY) / 100
+
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.85)'
+      ctx.shadowBlur = 12
+      ctx.lineWidth = Math.round(8 * (opts.scale / 100))
+      ctx.strokeStyle = opts.border || '#000000'
+      ctx.strokeText(line, w / 2, y)
+
+      ctx.fillStyle = opts.color || '#ffffff'
+      ctx.fillText(line, w / 2, y)
+      ctx.restore()
+    }
+
+    function drawCanvasPresenter(ctx, img, w, h, opts) {
+      if (!img) return
+      const size = parseInt(opts.presenter_size || 220)
+      const corner = opts.presenter_corner || 'bottom_right'
+      let x = w - size - 24, y = h - size - 160
+      if (corner === 'bottom_left') {
+        x = 24
+        y = h - size - 160
+      } else if (corner === 'top_right') {
+        x = w - size - 24
+        y = 150
+      } else if (corner === 'top_left') {
+        x = 24
+        y = 150
+      }
+
+      ctx.save()
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
+      ctx.shadowBlur = 12
+      roundRect(ctx, x, y, size, size, 16)
+      ctx.clip()
+      ctx.drawImage(img, x, y, size, size)
+      ctx.restore()
+    }
+
+    async function renderVideoOnClient(videoFile, options = {}) {
+      addLog('[Device RAM] 🚀 เริ่มต้นกระบวนการเรนเดอร์ผ่าน RAM & GPU ของอุปกรณ์ (100% Client-Side)...')
+      setStep('p-upload')
+      setBar(15, 'โหลดวิดีโอเข้าสู่ RAM ของอุปกรณ์...')
+
+      const video = document.createElement('video')
+      video.muted = false
+      video.playsInline = true
+      video.crossOrigin = 'anonymous'
+      video.src = URL.createObjectURL(videoFile)
+
+      await new Promise((resolve, reject) => {
+        video.onloadedmetadata = () => resolve()
+        video.onerror = () => reject(new Error('เบราว์เซอร์ไม่สามารถอ่านไฟล์วิดีโอนี้ได้'))
+      })
+
+      const duration = video.duration || 15
+      addLog(`[Device RAM] วิดีโอความยาว: ${duration.toFixed(1)} วิ, ขนาดภาพ: ${video.videoWidth}x${video.videoHeight}`)
+      setStep('p-script')
+      setBar(30, 'จัดเตรียมบทขายและคำบรรยายซับไตเติ้ล...')
+
+      const prodName = (document.getElementById('productDetails') || {}).value || 'สินค้าโปรโมชั่นสุดคุ้ม'
+      const style = options.style || 'creator_viral'
+      const font = options.font || 'mitr'
+      const subColor = options.sub_color || '#ffffff'
+      const subBorder = options.sub_border || '#000000'
+      const subScale = parseInt(options.sub_scale || 100)
+      const subPosY = parseInt(options.sub_pos_y || 75)
+      const bgmTrack = options.bgm_track || 'bgm1'
+      const sfxChoice = options.sfx_choice || 'auto'
+
+      const scriptPhrases = [
+        `🔥 ${prodName} ตัวนี้บอกเลยว่าห้ามพลาด!`,
+        '✨ การันตีของแท้ 100% คุณภาพดีเกินราคา',
+        '⚡ ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้',
+        '👉 รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!'
+      ]
+
+      setStep('p-tts')
+      setBar(45, 'กำลังโหลดและมิกซ์ดนตรี BGM + ซาวด์เอฟเฟกต์...')
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext
+      let audioCtx = null
+      let audioDest = null
+      let bgmBuffer = null
+      let dingBuffer = null
+      let popBuffer = null
+
+      if (AudioCtxClass) {
+        try {
+          audioCtx = new AudioCtxClass()
+          if (audioCtx.state === 'suspended') {
+            await audioCtx.resume()
+          }
+          audioDest = audioCtx.createMediaStreamDestination()
+
+          try {
+            const vSource = audioCtx.createMediaElementSource(video)
+            const vGain = audioCtx.createGain()
+            vGain.gain.value = 1.0
+            vSource.connect(vGain)
+            vGain.connect(audioDest)
+          } catch (e) {
+            console.warn('Video audio source notice:', e)
+          }
+
+          if (bgmTrack !== 'none') {
+            try {
+              const bgmRes = await fetch(`/studio/music/${bgmTrack}.mp3`)
+              if (bgmRes.ok) {
+                const arr = await bgmRes.arrayBuffer()
+                bgmBuffer = await audioCtx.decodeAudioData(arr)
+              }
+            } catch (e) {
+              console.warn('Load BGM notice:', e)
+            }
+          }
+
+          if (sfxChoice !== 'none') {
+            try {
+              const dingRes = await fetch('/studio/sfx/sfx_ding.wav')
+              if (dingRes.ok) {
+                const arr = await dingRes.arrayBuffer()
+                dingBuffer = await audioCtx.decodeAudioData(arr)
+              }
+              const popRes = await fetch('/studio/sfx/sfx_pop.wav')
+              if (popRes.ok) {
+                const arr = await popRes.arrayBuffer()
+                popBuffer = await audioCtx.decodeAudioData(arr)
+              }
+            } catch (e) {
+              console.warn('Load SFX notice:', e)
+            }
+          }
+        } catch (e) {
+          console.warn('AudioContext notice:', e)
+        }
+      }
+
+      setStep('p-sub')
+      setBar(60, 'กำลังเปิดฮาร์ดแวร์เร่งความเร็ว Canvas GPU...')
+      const canvas = document.createElement('canvas')
+      canvas.width = 720
+      canvas.height = 1280
+      const ctx = canvas.getContext('2d')
+
+      const fontFamilies = {
+        mitr: "'Mitr', sans-serif",
+        kanit: "'Kanit', sans-serif",
+        sarabun: "'Sarabun', sans-serif",
+        prompt: "'Prompt', sans-serif",
+        anuphan: "'Anuphan', sans-serif",
+        noto: "'Noto Sans Thai', sans-serif",
+        chonburi: "'Chonburi', serif",
+        charm: "'Charm', cursive",
+        baijamjuree: "'Bai Jamjuree', sans-serif",
+        mali: "'Mali', cursive",
+        pridi: "'Pridi', serif",
+        pattaya: "'Pattaya', sans-serif",
+        chakrapetch: "'Chakra Petch', sans-serif",
+        sriracha: "'Sriracha', cursive",
+        itim: "'Itim', cursive",
+        k2d: "'K2D', sans-serif",
+        athiti: "'Athiti', sans-serif",
+        taviraj: "'Taviraj', serif",
+        ibmplex: "'IBM Plex Sans Thai', sans-serif"
+      }
+      const activeFontFamily = fontFamilies[font] || "'Mitr', sans-serif"
+
+      let presenterImg = null
+      const presenterInput = document.getElementById('presenterInput')
+      if (presenterInput && presenterInput.files && presenterInput.files.length > 0) {
+        try {
+          const pFile = presenterInput.files[0]
+          if (pFile.type.startsWith('image/')) {
+            presenterImg = new Image()
+            presenterImg.src = URL.createObjectURL(pFile)
+            await new Promise(r => { presenterImg.onload = r; presenterImg.onerror = r })
+          }
+        } catch (e) { }
+      }
+
+      setStep('p-mix')
+      setBar(75, 'กำลังประมวลผลเรนเดอร์และบันทึกเฟรม (Device RAM)...')
+      const stream = canvas.captureStream(30)
+      if (audioDest && audioDest.stream.getAudioTracks().length > 0) {
+        stream.addTrack(audioDest.stream.getAudioTracks()[0])
+      }
+
+      let mime = 'video/webm'
+      if (MediaRecorder.isTypeSupported('video/mp4;codecs="avc1.42E01E,mp4a.40.2"')) {
+        mime = 'video/mp4;codecs="avc1.42E01E,mp4a.40.2"'
+      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        mime = 'video/mp4'
+      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
+        mime = 'video/webm;codecs=vp9,opus'
+      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) {
+        mime = 'video/webm;codecs=h264'
+      }
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: mime,
+        videoBitsPerSecond: 4_500_000
+      })
+
+      const chunks = []
+      recorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) chunks.push(e.data)
+      }
+
+      let bgmSourceNode = null
+      if (audioCtx && bgmBuffer) {
+        try {
+          bgmSourceNode = audioCtx.createBufferSource()
+          bgmSourceNode.buffer = bgmBuffer
+          bgmSourceNode.loop = true
+          const bgmGain = audioCtx.createGain()
+          bgmGain.gain.value = 0.18
+          bgmSourceNode.connect(bgmGain)
+          bgmGain.connect(audioDest)
+          bgmSourceNode.start()
+        } catch (e) { }
+      }
+
+      function playSfx(buf) {
+        if (!audioCtx || !buf) return
+        try {
+          const sNode = audioCtx.createBufferSource()
+          sNode.buffer = buf
+          const sGain = audioCtx.createGain()
+          sGain.gain.value = 0.6
+          sNode.connect(sGain)
+          sGain.connect(audioDest)
+          sNode.start()
+        } catch (e) { }
+      }
+
+      let popPlayed = false
+      let dingPlayed = false
+
+      function drawFrame() {
+        if (video.paused || video.ended) return
+        const t = video.currentTime
+        const total = duration || 15
+
+        const currentProgress = Math.min(95, Math.round(75 + (t / total) * 20))
+        setBar(currentProgress, `กำลังเรนเดอร์... (${t.toFixed(1)} / ${total.toFixed(0)} วินาที)`)
+
+        if (t >= 0.3 && !popPlayed && popBuffer) {
+          popPlayed = true
+          playSfx(popBuffer)
+        }
+        if (t >= (total - 3.5) && !dingPlayed && dingBuffer) {
+          dingPlayed = true
+          playSfx(dingBuffer)
+        }
+
+        const vRatio = video.videoWidth / (video.videoHeight || 1)
+        const cRatio = canvas.width / canvas.height
+        let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight
+        if (vRatio > cRatio) {
+          sw = video.videoHeight * cRatio
+          sx = (video.videoWidth - sw) / 2
+        } else {
+          sh = video.videoWidth / cRatio
+          sy = (video.videoHeight - sh) / 2
+        }
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
+
+        drawCanvasStyleOverlay(ctx, style, t, total, canvas.width, canvas.height, prodName)
+        drawCanvasSubtitle(ctx, scriptPhrases, t, total, canvas.width, canvas.height, {
+          fontFamily: activeFontFamily,
+          color: subColor,
+          border: subBorder,
+          scale: subScale,
+          posY: subPosY
+        })
+
+        if (presenterImg) {
+          drawCanvasPresenter(ctx, presenterImg, canvas.width, canvas.height, options)
+        }
+
+        if (!video.ended && !video.paused) {
+          requestAnimationFrame(drawFrame)
+        }
+      }
+
+      recorder.start(400)
+      video.currentTime = 0
+      await video.play()
+      drawFrame()
+
+      await new Promise(resolve => {
+        video.onended = () => resolve()
+        setTimeout(resolve, (duration + 3) * 1000)
+      })
+
+      let thumbBlob = null
+      try {
+        thumbBlob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9))
+      } catch (e) { }
+
+      recorder.stop()
+      if (bgmSourceNode) {
+        try { bgmSourceNode.stop() } catch (e) { }
+      }
+
+      await new Promise(r => { recorder.onstop = r })
+
+      const videoBlob = new Blob(chunks, { type: mime.split(';')[0] })
+      currentVideoBlob = videoBlob
+      const videoBlobUrl = URL.createObjectURL(videoBlob)
+      const thumbBlobUrl = thumbBlob ? URL.createObjectURL(thumbBlob) : '/likes_auto_finished_thumb.jpg'
+
+      addLog(`[Device RAM] ✅ เรนเดอร์สำเร็จ! ขนาดไฟล์: ${(videoBlob.size / (1024 * 1024)).toFixed(2)} MB`)
+
+      return {
+        ok: true,
+        video_url: videoBlobUrl,
+        thumbnail_url: thumbBlobUrl,
+        duration: duration,
+        title: `🔥 รีวิว ${prodName} ของแท้ลดราคาพิเศษ`,
+        script: scriptPhrases.join(' '),
+        caption: `ของดีบอกต่อ ${prodName} คุณภาพดี คุ้มราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ`,
+        first_comment: '📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!'
+      }
+    }
+
     async function runNativeRender() {
       btnStartRender.disabled = true
       if (btnStickyRender) {
@@ -3103,18 +3572,32 @@
 
         clearInterval(progressTimer)
 
-        if (!res || !res.ok) {
-          btnStartRender.disabled = false
-          if (btnStickyRender) {
-            btnStickyRender.disabled = false
-            btnStickyRender.innerHTML = '⚡ เริ่มตัดต่อคลิปด้วย AI (Auto Clip)'
+        let data = null
+        if (res && res.ok) {
+          try {
+            data = await res.json()
+          } catch (e) {
+            data = null
           }
-          throw new Error(lastErr || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์เรนเดอร์ได้ กรุณาลองใหม่อีกครั้ง')
         }
 
-        const data = await res.json()
-        if (!data.ok) {
-          throw new Error(data.error || 'การเรนเดอร์ล้มเหลว')
+        // --- AUTOMATIC CLIENT DEVICE RAM ENGINE FALLBACK ---
+        if (!data || !data.ok) {
+          addLog('[Device RAM] ⚡ เซิร์ฟเวอร์ออฟไลน์ สลับไปประมวลผลบนเครื่อง (ใช้ RAM & GPU อุปกรณ์ 100%)...')
+          data = await renderVideoOnClient(loadedVideoFile, {
+            style: (document.getElementById('thumbStyle') || {}).value || 'creator_viral',
+            voice: (document.getElementById('voiceChoice') || {}).value || 'Kore',
+            font: (document.getElementById('fontChoice') || {}).value || 'mitr',
+            sub_color: (document.getElementById('subColor') || {}).value || '#ffffff',
+            sub_border: (document.getElementById('subBorder') || {}).value || '#000000',
+            sub_scale: (document.getElementById('subScale') || {}).value || '100',
+            sub_pos_y: (document.getElementById('subPosY') || {}).value || '75',
+            bgm_track: (document.getElementById('bgmToggle') || {}).value || 'bgm1',
+            sfx_choice: (document.getElementById('sfxChoice') || {}).value || 'auto',
+            presenter_corner: (document.getElementById('presenterCorner') || {}).value || 'bottom_right',
+            presenter_size: (document.getElementById('presenterSize') || {}).value || '220',
+            product_details: (document.getElementById('productDetails') || {}).value || ''
+          })
         }
 
         setAllDone()
@@ -3132,9 +3615,9 @@
         addLog('[Complete] คลิปพร้อมเล่น ดาวน์โหลด และแชร์ได้ทันที')
 
         const rawVideo = data.video_url || ''
-        const fullVideoUrl = rawVideo.startsWith('http') ? rawVideo : (activeBase + rawVideo)
+        const fullVideoUrl = (rawVideo.startsWith('http') || rawVideo.startsWith('blob:')) ? rawVideo : (activeBase + rawVideo)
         const rawThumb = data.thumbnail_url || '/likes_auto_finished_thumb.jpg'
-        const fullThumbUrl = rawThumb.startsWith('http') ? rawThumb : (activeBase + rawThumb)
+        const fullThumbUrl = (rawThumb.startsWith('http') || rawThumb.startsWith('blob:')) ? rawThumb : (activeBase + rawThumb)
 
         reelPlayer.src = fullVideoUrl + '?t=' + Date.now()
         reelPlayer.play().catch(() => { })

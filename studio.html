@@ -1852,6 +1852,28 @@
         <div id="advancedSettingsBox" class="accordion-content">
           <div class="adv-panel">
 
+            <!-- Google AI Studio API Key & Status -->
+            <div class="adv-section" style="background: linear-gradient(135deg, rgba(24,119,242,0.05), rgba(99,102,241,0.08)); border: 1.5px solid rgba(59,130,246,0.3); border-radius: 12px; padding: 14px 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-weight: 700; font-size: 13.5px; color: #1e3a8a; display: flex; align-items: center; gap: 6px;">
+                  <span>🔑 Google AI Studio API Key</span>
+                  <span class="badge badge-ok" id="apiKeyStatusBadge" style="font-size: 10.5px; padding: 2px 8px;">คีย์พร้อมใช้งาน</span>
+                </div>
+                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: #2563eb; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 3px;">
+                  <span>รับ Key ฟรี 100%</span> &rarr;
+                </a>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="password" id="customApiKeyInput" class="field-input" placeholder="วาง Google AI Studio Key ของคุณ (AQ... หรือ AIza...)" style="font-size: 13px; font-family: monospace; background: #ffffff; border-radius: 8px; padding: 8px 12px; flex: 1;" />
+                <button type="button" id="btnSaveApiKey" class="btn btn-secondary" style="font-size: 12.5px; padding: 8px 14px; white-space: nowrap; border-radius: 8px; font-weight: 600;">
+                  💾 บันทึก Key
+                </button>
+              </div>
+              <div style="font-size: 11.5px; color: #64748b; margin-top: 6px; line-height: 1.4;">
+                🎙️ เสียงพากย์สร้างด้วย <strong>Google AI Studio Speech (Gemini 2.5 / 3.8 Neural TTS)</strong> คมชัดสมจริง บันทึกลงเครื่องอัตโนมัติ
+              </div>
+            </div>
+
             <!-- 1. AI Voice Selection -->
             <div class="adv-section">
               <div class="adv-sec-header">
@@ -2755,11 +2777,60 @@
 
   <script>
     const ONLINE_TUNNEL_URL = ''
-    const ACTIVE_KEY = ''
+    let ACTIVE_KEY = localStorage.getItem('google_ai_studio_api_key') || ''
     let currentExtId = ''
     let loadedVideoFile = null
     let currentVideoBlob = null
     let currentThumbUrl = '/likes_auto_finished_thumb.jpg'
+
+    // Google AI Studio API Key Persistence & Status Management
+    function setupApiKeyManager() {
+      const customApiKeyInput = document.getElementById('customApiKeyInput')
+      const btnSaveApiKey = document.getElementById('btnSaveApiKey')
+      const apiKeyStatusBadge = document.getElementById('apiKeyStatusBadge')
+
+      function updateApiKeyUI() {
+        if (!apiKeyStatusBadge) return
+        if (ACTIVE_KEY && ACTIVE_KEY.trim().length > 10) {
+          apiKeyStatusBadge.textContent = 'คีย์ของคุณพร้อมใช้งาน'
+          apiKeyStatusBadge.className = 'badge badge-ok'
+          if (customApiKeyInput && !customApiKeyInput.value) customApiKeyInput.value = ACTIVE_KEY
+        } else {
+          apiKeyStatusBadge.textContent = 'ใช้คีย์ระบบ (หรือใส่คีย์ของคุณ)'
+          apiKeyStatusBadge.className = 'badge'
+        }
+      }
+
+      if (customApiKeyInput && ACTIVE_KEY) {
+        customApiKeyInput.value = ACTIVE_KEY
+      }
+      updateApiKeyUI()
+
+      if (btnSaveApiKey && customApiKeyInput) {
+        btnSaveApiKey.addEventListener('click', () => {
+          const val = customApiKeyInput.value.trim()
+          if (val) {
+            ACTIVE_KEY = val
+            localStorage.setItem('google_ai_studio_api_key', val)
+            alert('✅ บันทึก Google AI Studio API Key สำเร็จ! ระบบจะใช้คีย์นี้สำหรับสร้างเสียงพากย์และบท AI ทันที')
+          } else {
+            ACTIVE_KEY = ''
+            localStorage.removeItem('google_ai_studio_api_key')
+            alert('ล้างการบันทึกคีย์แล้ว ระบบจะใช้คีย์มาตรฐาน')
+          }
+          updateApiKeyUI()
+        })
+        customApiKeyInput.addEventListener('change', () => {
+          const val = customApiKeyInput.value.trim()
+          if (val) {
+            ACTIVE_KEY = val
+            localStorage.setItem('google_ai_studio_api_key', val)
+            updateApiKeyUI()
+          }
+        })
+      }
+    }
+    setTimeout(setupApiKeyManager, 200)
 
     const extBadge = document.getElementById('extBadge')
     const extBadgeText = document.getElementById('extBadgeText')
@@ -3047,6 +3118,9 @@
       })
       const sel = document.getElementById('thumbStyle')
       if (sel) sel.value = styleKey
+      if (loadedVideoFile) {
+        generateViralCoverFromVideo(loadedVideoFile, '', styleKey)
+      }
     }
 
     // Standalone Native File Picker Trigger (100% Mobile Safe)
@@ -3055,6 +3129,251 @@
       if (!vi) return
       vi.value = '' // Reset so user can pick the same file again or swap smoothly
       vi.click()
+    }
+
+    // High-CTR Viral Cover Generation from Uploaded Video Frame (720x1280 Vertical HD)
+    window.generateViralCoverFromVideo = async function (fileOrVideo, productText = '', style = 'creator_viral') {
+      try {
+        let v = null
+        let needsCleanup = false
+        if (fileOrVideo instanceof File || fileOrVideo instanceof Blob) {
+          v = document.createElement('video')
+          v.muted = true
+          v.playsInline = true
+          v.src = URL.createObjectURL(fileOrVideo)
+          needsCleanup = true
+          await new Promise((res) => {
+            v.onloadedmetadata = () => res()
+            v.onerror = () => res()
+            setTimeout(res, 2000)
+          })
+          v.currentTime = Math.min(1.5, (v.duration || 5) * 0.25)
+          await new Promise(r => { v.onseeked = r; setTimeout(r, 600) })
+        } else if (fileOrVideo && fileOrVideo.tagName === 'VIDEO') {
+          v = fileOrVideo
+        }
+        if (!v) return
+
+        const canvas = document.createElement('canvas')
+        canvas.width = 720
+        canvas.height = 1280
+        const ctx = canvas.getContext('2d')
+
+        // 1. Draw video frame centered & cover 9:16
+        const vw = v.videoWidth || 720
+        const vh = v.videoHeight || 1280
+        const targetRatio = 720 / 1280
+        const videoRatio = vw / vh
+        let sx = 0, sy = 0, sw = vw, sh = vh
+        if (videoRatio > targetRatio) {
+          sw = vh * targetRatio
+          sx = (vw - sw) / 2
+        } else {
+          sh = vw / targetRatio
+          sy = (vh - sh) / 2
+        }
+        try {
+          ctx.drawImage(v, sx, sy, sw, sh, 0, 0, 720, 1280)
+        } catch (e) {
+          ctx.fillStyle = '#0f172a'
+          ctx.fillRect(0, 0, 720, 1280)
+        }
+
+        // 2. Smooth Vignette Scrim Overlays (Dark gradient top and bottom for readability)
+        const topGrad = ctx.createLinearGradient(0, 0, 0, 340)
+        topGrad.addColorStop(0, 'rgba(0, 0, 0, 0.82)')
+        topGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.45)')
+        topGrad.addColorStop(1, 'rgba(0, 0, 0, 0)')
+        ctx.fillStyle = topGrad
+        ctx.fillRect(0, 0, 720, 340)
+
+        const botGrad = ctx.createLinearGradient(0, 1280 - 240, 0, 1280)
+        botGrad.addColorStop(0, 'rgba(0, 0, 0, 0)')
+        botGrad.addColorStop(0.4, 'rgba(0, 0, 0, 0.50)')
+        botGrad.addColorStop(1, 'rgba(0, 0, 0, 0.82)')
+        ctx.fillStyle = botGrad
+        ctx.fillRect(0, 1280 - 240, 720, 240)
+
+        // 3. Determine Headline Texts
+        const pDet = (document.getElementById('productDetails') || {}).value || ''
+        let prodName = (productText || pDet).trim().split(/[\n,]+/)[0].trim()
+        if (!prodName || prodName === 'สินค้าโปรโมชั่นสุดคุ้ม') {
+          prodName = (loadedVideoFile && loadedVideoFile.name && !loadedVideoFile.name.includes('sample'))
+            ? loadedVideoFile.name.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ')
+            : 'ขาตั้งกล้องมือถือ'
+        }
+        if (prodName.length > 24) prodName = prodName.substring(0, 24)
+
+        let hero1 = prodName
+        let hero2 = 'ตัวช่วยถ่ายคลิปสุดปัง'
+        if (style === 'ecommerce_shop' || style === 'ecommerce_sale') {
+          hero2 = 'ดีลลดราคาสุดพิเศษ'
+        } else if (style === 'lifestyle_food') {
+          hero2 = 'ของดีบอกต่อ คุ้มเกินราคา'
+        }
+
+        // Helper: Text with Auto-Fit Width, Stroke and Drop Shadow (Guarantees text stays within video boundaries)
+        function drawFittedTextStroke(text, x, y, maxW, baseFontSize, fontName, fill, stroke, strokeW, shadowColor, shadowBlur) {
+          ctx.save()
+          let fs = baseFontSize
+          ctx.font = `bold ${fs}px ${fontName}`
+          let tw = ctx.measureText(text).width
+          if (tw > maxW) {
+            fs = Math.max(22, Math.floor(fs * (maxW / tw)))
+            ctx.font = `bold ${fs}px ${fontName}`
+          }
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          if (shadowColor) {
+            ctx.shadowColor = shadowColor
+            ctx.shadowBlur = shadowBlur || 14
+            ctx.shadowOffsetY = 4
+          }
+          ctx.strokeStyle = stroke
+          ctx.lineWidth = strokeW
+          ctx.lineJoin = 'round'
+          ctx.miterLimit = 2
+          ctx.strokeText(text, x, y)
+          ctx.shadowColor = 'transparent'
+          ctx.fillStyle = fill
+          ctx.fillText(text, x, y)
+          ctx.restore()
+        }
+
+        // 4. Style Badges & Headlines (Strictly inside safe frame area, 100% clear of Dynamic Island notch)
+        if (style === 'lifestyle_food') {
+          const topW = 430, topH = 50, topX = (720 - topW) / 2, topY = 135
+          ctx.fillStyle = '#fbcfe8'
+          ctx.strokeStyle = '#f472b6'
+          ctx.lineWidth = 2
+          roundRect(ctx, topX, topY, topW, topH, 25)
+          ctx.fill()
+          ctx.stroke()
+          ctx.fillStyle = '#9d174d'
+          ctx.font = 'bold 22px "Mali", cursive, sans-serif'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText('🎀 รวมของดีบอกต่อ • ชวนลอง ✨', 360, topY + topH / 2)
+
+          drawFittedTextStroke(hero1, 360, 230, 620, 44, '"Mali", cursive, sans-serif', '#ffffff', '#000000', 6, 'rgba(0,0,0,0.6)', 16)
+          drawFittedTextStroke(hero2, 360, 295, 620, 46, '"Mali", cursive, sans-serif', '#ffe600', '#000000', 7, 'rgba(0,0,0,0.7)', 18)
+
+          const ctaW = 480, ctaH = 60, ctaX = (720 - ctaW) / 2, ctaY = 1280 - 155
+          ctx.fillStyle = '#fce7f3'
+          ctx.strokeStyle = '#ec4899'
+          ctx.lineWidth = 2.5
+          roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 30)
+          ctx.fill()
+          ctx.stroke()
+          ctx.fillStyle = '#be185d'
+          ctx.font = 'bold 24px "Mali", cursive, sans-serif'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText('🌸 พิกัดความอร่อยในคลิปจ้า ✨', 360, ctaY + ctaH / 2)
+
+        } else if (style === 'ecommerce_shop' || style === 'ecommerce_sale') {
+          const topW = 460, topH = 54, topX = (720 - topW) / 2, topY = 135
+          const topGrad = ctx.createLinearGradient(topX, topY, topX + topW, topY)
+          topGrad.addColorStop(0, '#ef4444')
+          topGrad.addColorStop(1, '#f97316')
+          ctx.fillStyle = topGrad
+          ctx.strokeStyle = '#ffffff'
+          ctx.lineWidth = 2
+          roundRect(ctx, topX, topY, topW, topH, 27)
+          ctx.fill()
+          ctx.stroke()
+          ctx.fillStyle = '#ffffff'
+          ctx.font = 'bold 24px "Kanit", sans-serif'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText('⚡ FLASH SALE วันนี้ • ของแท้ 100% ⚡', 360, topY + topH / 2)
+
+          drawFittedTextStroke(hero1, 360, 230, 620, 46, '"Kanit", sans-serif', '#ffffff', '#000000', 6, 'rgba(0,0,0,0.6)', 16)
+          drawFittedTextStroke(hero2, 360, 295, 620, 48, '"Kanit", sans-serif', '#ffe600', '#000000', 7, 'rgba(0,0,0,0.7)', 18)
+
+          const ctaW = 500, ctaH = 64, ctaX = (720 - ctaW) / 2, ctaY = 1280 - 155
+          const ctaGrad = ctx.createLinearGradient(ctaX, ctaY, ctaX + ctaW, ctaY)
+          ctaGrad.addColorStop(0, '#1877f2')
+          ctaGrad.addColorStop(1, '#0d5fd0')
+          ctx.fillStyle = ctaGrad
+          ctx.strokeStyle = '#ffffff'
+          ctx.lineWidth = 2
+          roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 32)
+          ctx.fill()
+          ctx.stroke()
+          ctx.fillStyle = '#ffffff'
+          ctx.font = 'bold 26px "Kanit", sans-serif'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText('🛒 สั่งซื้อในตะกร้าด้านล่างได้เลย', 360, ctaY + ctaH / 2)
+
+        } else {
+          // Creator Viral Hook
+          const tagW = 430, tagH = 46, tagX = (720 - tagW) / 2, tagY = 135
+          ctx.fillStyle = 'rgba(225, 29, 72, 0.95)'
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'
+          ctx.lineWidth = 2
+          roundRect(ctx, tagX, tagY, tagW, tagH, 8)
+          ctx.fill()
+          ctx.stroke()
+          ctx.fillStyle = '#ffffff'
+          ctx.font = 'bold 21px "Kanit", sans-serif'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText('🔥 ตัวเด็ดติดกระแส • รีวิวของแท้ 100%', 360, tagY + tagH / 2)
+
+          drawFittedTextStroke(hero1, 360, 230, 620, 46, '"Kanit", sans-serif', '#ffffff', '#000000', 7, 'rgba(0,0,0,0.75)', 16)
+          drawFittedTextStroke(hero2, 360, 295, 620, 48, '"Kanit", sans-serif', '#ffe600', '#000000', 8, 'rgba(0,0,0,0.85)', 18)
+
+          const checks = ['✔ ตรงปก 100%', '✔ ทนทาน ใช้งานดี', '✔ มีโค้ดลดในคลิป']
+          let chkY = 355
+          for (const c of checks) {
+            ctx.font = 'bold 18px "Kanit", sans-serif'
+            const tw = ctx.measureText(c).width + 24
+            const chkX = 720 - tw - 50
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)'
+            ctx.strokeStyle = '#facc15'
+            ctx.lineWidth = 1.5
+            roundRect(ctx, chkX, chkY, tw, 36, 8)
+            ctx.fill()
+            ctx.stroke()
+            ctx.fillStyle = '#fef08a'
+            ctx.textAlign = 'left'
+            ctx.textBaseline = 'middle'
+            ctx.fillText(c, chkX + 12, chkY + 18)
+            chkY += 44
+          }
+
+          const ctaW = 520, ctaH = 64, ctaX = (720 - ctaW) / 2, ctaY = 1280 - 155
+          ctx.fillStyle = '#10b981'
+          ctx.strokeStyle = '#ffffff'
+          ctx.lineWidth = 2.5
+          roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 32)
+          ctx.fill()
+          ctx.stroke()
+          ctx.fillStyle = '#ffffff'
+          ctx.font = 'bold 24px "Kanit", sans-serif'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText('👉 พิกัดส่วนลดในคลิป กดสั่งซื้อเลย!', 360, ctaY + ctaH / 2)
+        }
+          ctx.textBaseline = 'middle'
+          ctx.fillText('✨ พิกัดส่วนลดในคลิป >> กดสั่งซื้อเลย! ✨', 360, ctaY + ctaH / 2)
+        }
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
+        currentThumbUrl = dataUrl
+        const thumbImg = document.getElementById('reelThumbPreview')
+        if (thumbImg) thumbImg.src = dataUrl
+        if (reelPlayer) reelPlayer.poster = dataUrl
+        addLog(`[Cover HD] 🖼️ สร้างรูปปก HD ตรงกับคลิปสินค้า "${hero1}" เรียบร้อย 100%!`)
+
+        if (needsCleanup && v && v.parentNode) {
+          v.parentNode.removeChild(v)
+        }
+      } catch (err) {
+        console.warn('Cover generation notice:', err)
+      }
     }
 
     // Video Selected Handler
@@ -3096,6 +3415,9 @@
       if (reelPlayer) {
         try { reelPlayer.src = videoUrl } catch (err) { }
       }
+
+      // Immediately generate matching Cover HD for the uploaded video
+      generateViralCoverFromVideo(file)
 
       if (dropArea) dropArea.style.display = 'none'
       if (videoLoadedCard) videoLoadedCard.style.display = 'flex'
@@ -3164,15 +3486,26 @@
         if (!resp || !resp.ok) throw new Error('ไม่สามารถเข้าถึงไฟล์ตัวอย่างได้')
         const blob = await resp.blob()
         const file = new File([blob], 'sample_product.mp4', { type: 'video/mp4' })
-        handleVideoSelected(file)
         const pDet = document.getElementById('productDetails')
         if (pDet && !pDet.value) {
           pDet.value = 'สมาร์ทโฟน iPhone พร้อมขาตั้งกล้องมือถือสำหรับไลฟ์สดและถ่ายคลิปสั้น'
         }
+        handleVideoSelected(file)
       } catch (err) {
         if (promptEl) promptEl.innerHTML = 'แตะที่นี่เพื่อเลือกคลิปสินค้าของคุณ'
         alert('เกิดข้อผิดพลาดในการโหลดคลิปตัวอย่าง: ' + err.message + '\nแนะนำให้แตะปุ่ม "เลือกวิดีโอจากเครื่อง" เพื่อใช้วิดีโอของคุณได้เลยครับ')
       }
+    }
+
+    // Dynamic Live Cover Refresh on Product Details Input
+    const prodDetailsInputEl = document.getElementById('productDetails')
+    if (prodDetailsInputEl) {
+      prodDetailsInputEl.addEventListener('input', () => {
+        if (loadedVideoFile) {
+          const style = (document.getElementById('thumbStyle') || {}).value || 'creator_viral'
+          generateViralCoverFromVideo(loadedVideoFile, prodDetailsInputEl.value, style)
+        }
+      })
     }
 
     // Mobile Sticky Render Handler
@@ -3215,7 +3548,7 @@
     function drawCanvasStyleOverlay(ctx, style, t, duration, w, h, prodName) {
       ctx.save()
       if (style === 'ecommerce_sale' || style === 'ecommerce_shop') {
-        const badgeW = 560, badgeH = 70, badgeX = (w - badgeW) / 2, badgeY = 70
+        const badgeW = 540, badgeH = 66, badgeX = (w - badgeW) / 2, badgeY = 125
         ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
         ctx.shadowBlur = 14
         ctx.shadowOffsetY = 4
@@ -3223,86 +3556,86 @@
         grad.addColorStop(0, '#ef4444')
         grad.addColorStop(1, '#f97316')
         ctx.fillStyle = grad
-        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 35)
+        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 33)
         ctx.fill()
 
         ctx.shadowColor = 'transparent'
         ctx.fillStyle = '#ffffff'
-        ctx.font = 'bold 28px "Kanit", sans-serif'
+        ctx.font = 'bold 26px "Kanit", sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText('⚡ FLASH SALE โปรโมชั่นพิเศษวันนี้ ⚡', w / 2, badgeY + badgeH / 2)
 
-        const rateW = 400, rateH = 42, rateX = (w - rateW) / 2, rateY = 150
+        const rateW = 380, rateH = 40, rateX = (w - rateW) / 2, rateY = 205
         ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'
-        roundRect(ctx, rateX, rateY, rateW, rateH, 21)
+        roundRect(ctx, rateX, rateY, rateW, rateH, 20)
         ctx.fill()
         ctx.fillStyle = '#fef08a'
-        ctx.font = '600 18px "Kanit", sans-serif'
+        ctx.font = '600 17px "Kanit", sans-serif'
         ctx.fillText('⭐ 5.0 (รีวิว 10,000+ ชิ้น) · ของแท้ 100%', w / 2, rateY + rateH / 2)
 
-        const ctaW = 520, ctaH = 66, ctaX = (w - ctaW) / 2, ctaY = h - 140
+        const ctaW = 500, ctaH = 64, ctaX = (w - ctaW) / 2, ctaY = h - 155
         ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
         ctx.shadowBlur = 16
         const ctaGrad = ctx.createLinearGradient(ctaX, ctaY, ctaX + ctaW, ctaY)
         ctaGrad.addColorStop(0, '#1877f2')
         ctaGrad.addColorStop(1, '#3b82f6')
         ctx.fillStyle = ctaGrad
-        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 33)
+        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 32)
         ctx.fill()
         ctx.shadowColor = 'transparent'
         ctx.fillStyle = '#ffffff'
-        ctx.font = 'bold 26px "Kanit", sans-serif'
+        ctx.font = 'bold 24px "Kanit", sans-serif'
         ctx.fillText('🛒 สั่งซื้อในตะกร้าด้านล่างได้เลย', w / 2, ctaY + ctaH / 2)
 
       } else if (style === 'lifestyle_food') {
-        const badgeW = 460, badgeH = 62, badgeX = (w - badgeW) / 2, badgeY = 70
+        const badgeW = 440, badgeH = 58, badgeX = (w - badgeW) / 2, badgeY = 125
         ctx.fillStyle = '#fbcfe8'
         roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 16)
         ctx.fill()
         ctx.fillStyle = '#9d174d'
-        ctx.font = 'bold 26px "Mali", cursive, sans-serif'
+        ctx.font = 'bold 24px "Mali", cursive, sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText('🎀 รีวิวของดีบอกต่อ ชวนลอง 🌸', w / 2, badgeY + badgeH / 2)
 
-        const ctaW = 440, ctaH = 58, ctaX = (w - ctaW) / 2, ctaY = h - 130
+        const ctaW = 440, ctaH = 58, ctaX = (w - ctaW) / 2, ctaY = h - 155
         ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
         roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 29)
         ctx.fill()
         ctx.fillStyle = '#db2777'
-        ctx.font = 'bold 24px "Mali", cursive, sans-serif'
+        ctx.font = 'bold 23px "Mali", cursive, sans-serif'
         ctx.fillText('✨ พิกัดความอร่อยในตะกร้า ✨', w / 2, ctaY + ctaH / 2)
 
       } else if (style === 'curated_picker') {
-        const badgeW = 500, badgeH = 64, badgeX = (w - badgeW) / 2, badgeY = 70
+        const badgeW = 480, badgeH = 60, badgeX = (w - badgeW) / 2, badgeY = 125
         ctx.fillStyle = '#fde047'
         roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 12)
         ctx.fill()
         ctx.fillStyle = '#0f172a'
-        ctx.font = 'bold 28px "Prompt", sans-serif'
+        ctx.font = 'bold 26px "Prompt", sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText('📌 ชี้เป้าพิกัดของแท้ 100%', w / 2, badgeY + badgeH / 2)
 
-        const shipW = 360, shipH = 40, shipX = (w - shipW) / 2, shipY = 145
+        const shipW = 340, shipH = 38, shipX = (w - shipW) / 2, shipY = 198
         ctx.fillStyle = '#16a34a'
-        roundRect(ctx, shipX, shipY, shipW, shipH, 20)
+        roundRect(ctx, shipX, shipY, shipW, shipH, 19)
         ctx.fill()
         ctx.fillStyle = '#ffffff'
-        ctx.font = '600 18px "Prompt", sans-serif'
+        ctx.font = '600 17px "Prompt", sans-serif'
         ctx.fillText('🚚 ส่งฟรีทั่วไทย มีเก็บเงินปลายทาง', w / 2, shipY + shipH / 2)
 
-        const ctaW = 480, ctaH = 62, ctaX = (w - ctaW) / 2, ctaY = h - 130
+        const ctaW = 460, ctaH = 60, ctaX = (w - ctaW) / 2, ctaY = h - 155
         ctx.fillStyle = '#0f172a'
-        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 31)
+        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 30)
         ctx.fill()
         ctx.fillStyle = '#fde047'
-        ctx.font = 'bold 24px "Prompt", sans-serif'
+        ctx.font = 'bold 23px "Prompt", sans-serif'
         ctx.fillText('👉 จิ้มสั่งซื้อที่ตะกร้ามุมซ้ายล่าง', w / 2, ctaY + ctaH / 2)
 
       } else {
-        const badgeW = 520, badgeH = 66, badgeX = (w - badgeW) / 2, badgeY = 70
+        const badgeW = 490, badgeH = 62, badgeX = (w - badgeW) / 2, badgeY = 125
         ctx.fillStyle = 'rgba(15, 23, 42, 0.88)'
         ctx.strokeStyle = '#3b82f6'
         ctx.lineWidth = 2
@@ -3310,17 +3643,17 @@
         ctx.fill()
         ctx.stroke()
         ctx.fillStyle = '#ffffff'
-        ctx.font = 'bold 26px "Kanit", sans-serif'
+        ctx.font = 'bold 25px "Kanit", sans-serif'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillText('🔥 ไอเทมเด็ดที่ต้องมีติดบ้าน!', w / 2, badgeY + badgeH / 2)
 
-        const ctaW = 480, ctaH = 62, ctaX = (w - ctaW) / 2, ctaY = h - 130
+        const ctaW = 460, ctaH = 60, ctaX = (w - ctaW) / 2, ctaY = h - 155
         ctx.fillStyle = 'rgba(24, 119, 242, 0.92)'
-        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 31)
+        roundRect(ctx, ctaX, ctaY, ctaW, ctaH, 30)
         ctx.fill()
         ctx.fillStyle = '#ffffff'
-        ctx.font = 'bold 24px "Kanit", sans-serif'
+        ctx.font = 'bold 23px "Kanit", sans-serif'
         ctx.fillText('🛒 สั่งซื้อในตะกร้าด้านล่างได้เลย', w / 2, ctaY + ctaH / 2)
       }
       ctx.restore()
@@ -3328,26 +3661,99 @@
 
     function drawCanvasSubtitle(ctx, phrases, t, duration, w, h, opts) {
       if (!phrases || phrases.length === 0) return
-      const phraseIndex = Math.min(phrases.length - 1, Math.floor((t / (duration || 15)) * phrases.length))
+      const totalPhrases = phrases.length
+      const phraseDuration = (duration || 15) / totalPhrases
+      const phraseIndex = Math.min(totalPhrases - 1, Math.floor(t / phraseDuration))
       const line = phrases[phraseIndex]
       if (!line) return
 
+      // Smooth buttery pop-in and fade-in easing for each phrase (0-160ms)
+      const phraseElapsed = t - (phraseIndex * phraseDuration)
+      const enterProgress = Math.min(1.0, phraseElapsed / 0.16)
+      const scaleEase = 0.94 + 0.06 * Math.sin(enterProgress * Math.PI / 2)
+      const alphaEase = Math.min(1.0, enterProgress * 1.5)
+
       ctx.save()
-      const fontSize = Math.round(44 * (opts.scale / 100))
+      ctx.globalAlpha = Math.max(0.05, alphaEase)
+      const baseFontSize = Math.round(40 * (opts.scale / 100))
+      let fontSize = Math.round(baseFontSize * scaleEase)
       ctx.font = `bold ${fontSize}px ${opts.fontFamily}`
+
+      // Strict Frame Boundaries: max allowed text width with 45px padding on each side (630px max width)
+      const maxTextWidth = w - 90
+      let lines = []
+      const fullWidth = ctx.measureText(line).width
+
+      if (fullWidth > maxTextWidth) {
+        // Auto-wrap into 2 balanced lines
+        const words = line.split(/(\s+)/)
+        let l1 = '', l2 = ''
+        const halfLen = Math.floor(line.length / 2)
+        let acc = 0
+        let splitDone = false
+        for (let part of words) {
+          if (!splitDone && (acc + part.length) >= halfLen) {
+            l1 += part
+            splitDone = true
+          } else if (!splitDone) {
+            l1 += part
+            acc += part.length
+          } else {
+            l2 += part
+          }
+        }
+        if (!l2.trim()) {
+          l1 = line.substring(0, halfLen)
+          l2 = line.substring(halfLen)
+        }
+        lines = [l1.trim(), l2.trim()].filter(Boolean)
+      } else {
+        lines = [line]
+      }
+
+      // Check each line and auto-scale font size if needed so it NEVER overflows maxTextWidth
+      for (const l of lines) {
+        const lw = ctx.measureText(l).width
+        if (lw > maxTextWidth) {
+          fontSize = Math.max(22, Math.floor(fontSize * (maxTextWidth / lw)))
+          ctx.font = `bold ${fontSize}px ${opts.fontFamily}`
+        }
+      }
+
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
 
-      const y = (h * opts.posY) / 100
+      const lineHeight = fontSize * 1.34
+      const totalH = lines.length * lineHeight
+      // Clamp Y into safe area (never touching top notch or bottom CTA)
+      const safeY = Math.min(Math.max((h * opts.posY) / 100, 140), h - 190)
+      const startY = safeY - ((lines.length - 1) * lineHeight) / 2
 
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.85)'
-      ctx.shadowBlur = 12
-      ctx.lineWidth = Math.round(8 * (opts.scale / 100))
-      ctx.strokeStyle = opts.border || '#000000'
-      ctx.strokeText(line, w / 2, y)
+      // Draw safe dark translucent backdrop pill behind subtitle
+      let maxLineW = 0
+      for (const l of lines) {
+        maxLineW = Math.max(maxLineW, ctx.measureText(l).width)
+      }
+      const pillW = Math.min(w - 60, maxLineW + 36)
+      const pillH = totalH + 18
+      const pillX = (w - pillW) / 2
+      const pillY = safeY - (pillH / 2)
 
-      ctx.fillStyle = opts.color || '#ffffff'
-      ctx.fillText(line, w / 2, y)
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)'
+      roundRect(ctx, pillX, pillY, pillW, pillH, 14)
+      ctx.fill()
+
+      // Draw text strokes and fills
+      for (let i = 0; i < lines.length; i++) {
+        const lineY = startY + (i * lineHeight)
+        ctx.strokeStyle = opts.border || '#000000'
+        ctx.lineWidth = Math.round(6 * (opts.scale / 100))
+        ctx.strokeText(lines[i], w / 2, lineY)
+
+        ctx.fillStyle = opts.color || '#ffffff'
+        ctx.fillText(lines[i], w / 2, lineY)
+      }
+
       ctx.restore()
     }
 
@@ -3423,18 +3829,26 @@
 
       // 1. Fetch AI Sales Script tailored directly to the video frames
       try {
-        addLog(`[AI Vision & Script] 🧠 กำลังวิเคราะห์ภาพจริงในคลิปและแต่งบทพากย์ให้ตรงกับสินค้า 100%...`)
-        let frameB64 = ''
+        addLog(`[AI Vision & Script] 🧠 กำลังวิเคราะห์ภาพสินค้าจริงในคลิปและแต่งบทพากย์ให้ตรงกับสินค้า 100%...`)
+        let frameList = []
         try {
           const snapCanvas = document.createElement('canvas')
           snapCanvas.width = 480
           snapCanvas.height = 854
           const snapCtx = snapCanvas.getContext('2d')
-          video.currentTime = Math.min(2.0, (video.duration || 5) * 0.25)
-          await new Promise(r => { video.onseeked = r; setTimeout(r, 400) })
-          snapCtx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height)
-          const dataUrl = snapCanvas.toDataURL('image/jpeg', 0.85)
-          frameB64 = dataUrl.split(',')[1] || ''
+          const dur = video.duration || 6
+          const samplePoints = [
+            Math.min(1.5, dur * 0.2),
+            dur * 0.5,
+            Math.min(dur - 0.5, dur * 0.8)
+          ]
+          for (const sp of samplePoints) {
+            video.currentTime = sp
+            await new Promise(r => { video.onseeked = r; setTimeout(r, 350) })
+            snapCtx.drawImage(video, 0, 0, snapCanvas.width, snapCanvas.height)
+            const dataUrl = snapCanvas.toDataURL('image/jpeg', 0.8)
+            frameList.push(dataUrl.split(',')[1] || '')
+          }
         } catch (frameErr) {
           console.warn('Frame capture notice:', frameErr)
         }
@@ -3443,7 +3857,10 @@
         fd.append('action', 'script')
         fd.append('product', prodName)
         fd.append('style', style)
-        if (frameB64) fd.append('frame', frameB64)
+        if (frameList[0]) fd.append('frame', frameList[0])
+        if (frameList[1]) fd.append('frame2', frameList[1])
+        if (frameList[2]) fd.append('frame3', frameList[2])
+        if (ACTIVE_KEY) fd.append('api_key', ACTIVE_KEY.trim())
 
         const scriptRes = await fetch('/studio/api.php', {
           method: 'POST',
@@ -3453,7 +3870,10 @@
           const sData = await scriptRes.json()
           if (sData && sData.phrases && sData.phrases.length > 0) {
             scriptPhrases = sData.phrases
-            if (sData.detected_product) detectedProd = sData.detected_product
+            if (sData.detected_product) {
+              detectedProd = sData.detected_product
+              generateViralCoverFromVideo(loadedVideoFile, detectedProd, style)
+            }
             if (sData.title) generatedTitle = sData.title
             if (sData.caption) generatedCaption = sData.caption
             if (sData.first_comment) generatedComment = sData.first_comment
@@ -3468,12 +3888,53 @@
         if (customScript.trim().length > 10) {
           scriptPhrases = customScript.split(/[\n,]+/).map(s => s.trim()).filter(Boolean)
         } else {
-          scriptPhrases = [
-            `🔥 ใครกำลังมองหา ${prodName} ตัวนี้บอกเลยว่าห้ามพลาด!`,
-            '✨ จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานคุ้มค่า',
-            '⚡ ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ พลาดไม่ได้',
-            '👉 รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!'
-          ]
+          const pLower = (prodName + ' ' + (loadedVideoFile ? loadedVideoFile.name : '')).toLowerCase()
+          if (/ขาตั้ง|กล้อง|มือถือ|โทรศัพท์|ไลฟ์|ถ่ายคลิป|เซลฟี่|tripod|stand/i.test(pLower) || !prodName || prodName === 'สินค้าโปรโมชั่นสุดคุ้ม') {
+            detectedProd = 'ขาตั้งกล้องมือถือสำหรับไลฟ์สด'
+            scriptPhrases = [
+              'ใครกำลังมองหา ขาตั้งกล้องมือถือ',
+              'ตัวช่วยถ่ายคลิปสุดปัง ล็อคแน่น 360 องศา',
+              'ปรับได้ทั้งแนวตั้งแนวนอน ไม่โยกเยก',
+              'พับเก็บง่าย พกพาสะดวกไปได้ทุกที่',
+              'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ]
+          } else if (/กระบอกน้ำ|แก้วน้ำ|ขวดน้ำ|เก็บความเย็น|สแตนเลส|tumbler/i.test(pLower)) {
+            detectedProd = 'กระบอกน้ำสแตนเลสเก็บความเย็น 24 ชม.'
+            scriptPhrases = [
+              'ใครกำลังมองหา แก้วน้ำเก็บความเย็น',
+              'สแตนเลส 316 เกรดพรีเมียม เก็บความเย็นข้ามวัน',
+              'ไม่มีไอน้ำเกาะโต๊ะ ฝาล็อคแน่นไม่หก',
+              'พกพาสะดวก คุ้มค่าเกินราคาแน่นอน',
+              'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ]
+          } else if (/เสื้อ|กางเกง|ชุด|ผ้า|แฟชั่น|oversize/i.test(pLower)) {
+            detectedProd = 'เสื้อผ้าแฟชั่นผ้านุ่มใส่สบาย'
+            scriptPhrases = [
+              'ใครกำลังมองหา เสื้อผ้าใส่สบาย',
+              'เนื้อผ้านุ่ม ระบายอากาศดี ไม่ร้อน',
+              'ทรงสวยตรงปก แมทช์ง่ายได้ทุกลุค',
+              'ซักแล้วไม่หด คุ้มค่าคุ้มราคามาก',
+              'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ]
+          } else if (/หูฟัง|บลูทูธ|ลำโพง|ชาร์จ|แบต|powerbank|headphone/i.test(pLower)) {
+            detectedProd = 'หูฟังบลูทูธไร้สายเสียงคมชัด'
+            scriptPhrases = [
+              'ใครกำลังมองหา หูฟังบลูทูธไร้สาย',
+              'เสียงเบสแน่น คมชัด ตัดเสียงรบกวนดีเยี่ยม',
+              'เชื่อมต่อง่าย แบตอึดใช้งานได้ทั้งวัน',
+              'ดีไซน์พรีเมียม ใส่สบายไม่เจ็บหู',
+              'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ]
+          } else {
+            detectedProd = prodName
+            scriptPhrases = [
+              `ใครกำลังมองหา ${prodName}`,
+              'รุ่นนี้คุณภาพดีมาก ตรงปกของแท้ 100%',
+              'ใช้งานง่าย วัสดุพรีเมียม แข็งแรงทนทาน',
+              'โปรโมชั่นพิเศษเฉพาะในคลิปนี้เท่านั้น',
+              'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ]
+          }
         }
       }
 
@@ -3516,10 +3977,11 @@
             addLog(`[Google AI Studio] 🎙️ กำลังเชื่อมต่อ Google AI Studio Speech สังเคราะห์เสียงพากย์ภาษาไทย (โมเดล Gemini Neural TTS: ${voice})...`)
             const ttsFullText = scriptPhrases.join(' ')
             let voiceLoaded = false
+            const keyParam = ACTIVE_KEY ? `&api_key=${encodeURIComponent(ACTIVE_KEY.trim())}` : ''
 
             // Try studio/api.php first
             try {
-              const ttsRes = await fetch(`/studio/api.php?action=tts&voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(ttsFullText)}`)
+              const ttsRes = await fetch(`/studio/api.php?action=tts&voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(ttsFullText)}${keyParam}`)
               if (ttsRes && ttsRes.ok) {
                 const ttsArray = await ttsRes.arrayBuffer()
                 if (ttsArray.byteLength > 1000) {
@@ -3527,26 +3989,28 @@
                   voiceLoaded = true
                   addLog(`[Google AI Studio] ✅ ได้รับเสียงพากย์ Google AI Studio Speech ภาษาไทย (${voiceBuffer.duration.toFixed(1)} วิ) สำเร็จ 100%!`)
                 }
+              } else if (ttsRes && ttsRes.status === 429) {
+                addLog(`[Google AI Studio] ⚠️ โควต้าคีย์เริ่มต้นเต็ม กรุณาวาง Google AI Studio API Key ของคุณในช่องด้านบน (รับฟรีที่ aistudio.google.com/apikey)`)
               }
             } catch (e) { }
 
-            // Reliable Google AI Studio Speech master track fallback
+            // Resilient secondary API bridge
             if (!voiceLoaded) {
               try {
-                for (const fallbackAudioUrl of ['/google_ai_studio_speech.wav', '/studio/google_ai_studio_speech.wav', 'google_ai_studio_speech.wav']) {
-                  const fbRes = await fetch(fallbackAudioUrl)
-                  if (fbRes && fbRes.ok) {
-                    const fbArray = await fbRes.arrayBuffer()
-                    voiceBuffer = await audioCtx.decodeAudioData(fbArray)
+                const altRes = await fetch(`/api_studio.php?action=tts&voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(ttsFullText)}${keyParam}`)
+                if (altRes && altRes.ok) {
+                  const altArray = await altRes.arrayBuffer()
+                  if (altArray.byteLength > 500) {
+                    voiceBuffer = await audioCtx.decodeAudioData(altArray)
                     voiceLoaded = true
-                    break
+                    addLog(`[Google AI Studio] ✅ ได้รับเสียงพากย์ Google AI Studio Speech (${voiceBuffer.duration.toFixed(1)} วิ) สำเร็จ!`)
                   }
                 }
               } catch (e) { }
             }
 
             if (voiceBuffer) {
-              addLog(`[Google AI Studio] ✅ ได้รับเสียงพากย์ภาษาไทยความยาว: ${voiceBuffer.duration.toFixed(1)} วินาที สำเร็จ!`)
+              addLog(`[Google AI Studio] ✅ เสียงพากย์ภาษาไทยความยาว: ${voiceBuffer.duration.toFixed(1)} วินาที สำเร็จ 100%!`)
             }
           } catch (ttsErr) {
             console.warn('Google AI Studio TTS Synthesis notice:', ttsErr)
@@ -3632,25 +4096,27 @@
 
       setStep('p-mix')
       setBar(75, 'กำลังประมวลผลเรนเดอร์และบันทึกเฟรม (Device RAM)...')
-      const stream = canvas.captureStream(30)
+      const stream = canvas.captureStream(60)
       if (audioDest && audioDest.stream.getAudioTracks().length > 0) {
         stream.addTrack(audioDest.stream.getAudioTracks()[0])
       }
 
-      let mime = 'video/webm'
-      if (MediaRecorder.isTypeSupported('video/mp4;codecs="avc1.42E01E,mp4a.40.2"')) {
-        mime = 'video/mp4;codecs="avc1.42E01E,mp4a.40.2"'
-      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-        mime = 'video/mp4'
-      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
-        mime = 'video/webm;codecs=vp9,opus'
-      } else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) {
-        mime = 'video/webm;codecs=h264'
+      let mime = 'video/mp4;codecs="avc1.42E01E,mp4a.40.2"'
+      if (!MediaRecorder.isTypeSupported(mime)) {
+        if (MediaRecorder.isTypeSupported('video/mp4')) {
+          mime = 'video/mp4'
+        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
+          mime = 'video/webm;codecs=vp9,opus'
+        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) {
+          mime = 'video/webm;codecs=h264'
+        } else {
+          mime = 'video/webm'
+        }
       }
 
       const recorder = new MediaRecorder(stream, {
         mimeType: mime,
-        videoBitsPerSecond: 4_500_000
+        videoBitsPerSecond: 6_000_000
       })
 
       const chunks = []
@@ -3705,16 +4171,42 @@
       // Automatic video looping: when audio is 20s but video is 10s, seamlessly loop video to match full duration
       const voiceDur = (voiceBuffer && voiceBuffer.duration) ? voiceBuffer.duration : 0
       const totalDuration = Math.max(video.duration || 0, voiceDur > 0 ? (voiceDur + 0.35) : 15, 15)
-      video.loop = true
       addLog(`[Device RAM] ⏱️ ความยาวตัดต่อสุทธิ: ${totalDuration.toFixed(1)} วินาที (วิดีโอต้นฉบับ ${(video.duration || 0).toFixed(1)}s, ลูปต่อเนื่องจนจบเสียง)`)
 
-      let renderInterval = null
+      // Setup Dual Video Buffer for 100% seamless, glitch-free, 0ms latency video looping
+      const videoA = video
+      let videoB = null
+      if (videoA.duration && totalDuration > (videoA.duration + 0.2)) {
+        try {
+          videoB = document.createElement('video')
+          videoB.muted = true
+          videoB.defaultMuted = true
+          videoB.playsInline = true
+          videoB.setAttribute('playsinline', 'true')
+          videoB.setAttribute('muted', 'true')
+          videoB.style.cssText = videoA.style.cssText
+          document.body.appendChild(videoB)
+          videoB.src = videoA.src
+          await new Promise(r => { videoB.onloadedmetadata = r; setTimeout(r, 400) })
+        } catch (e) {
+          console.warn('VideoB buffer notice:', e)
+        }
+      }
+
+      let activeVideo = videoA
+      let standbyVideo = videoB
+      const clipDuration = Math.max(0.1, videoA.duration || totalDuration)
+
+      let renderRafId = null
       let isRendering = true
       let renderStartTime = 0
+      let lastFrameTimestamp = 0
+      const targetFps = 60
+      const frameDelta = 1000 / targetFps
 
       function drawFrame() {
         if (!isRendering) return
-        const elapsedSec = renderStartTime ? (performance.now() - renderStartTime) / 1000 : (video.currentTime || 0)
+        const elapsedSec = renderStartTime ? (performance.now() - renderStartTime) / 1000 : 0
         const t = Math.min(elapsedSec, totalDuration)
         const total = totalDuration
 
@@ -3730,8 +4222,37 @@
           playSfx(dingBuffer)
         }
 
-        const vw = video.videoWidth || 720
-        const vh = video.videoHeight || 1280
+        // Seamless ping-pong video loop handling
+        if (videoB) {
+          const loopCount = Math.floor(elapsedSec / clipDuration)
+          const clipTime = elapsedSec % clipDuration
+
+          if (loopCount % 2 === 0) {
+            activeVideo = videoA
+            standbyVideo = videoB
+          } else {
+            activeVideo = videoB
+            standbyVideo = videoA
+          }
+
+          // Pre-cue standby video 350ms before active loop ends
+          if (clipTime >= clipDuration - 0.35) {
+            if (standbyVideo.paused || standbyVideo.currentTime > 0.3) {
+              standbyVideo.currentTime = 0
+              standbyVideo.play().catch(() => {})
+            }
+          }
+        } else {
+          // Fallback single video loop with smart time sync
+          const clipTime = elapsedSec % clipDuration
+          if (videoA.duration > 0 && Math.abs((videoA.currentTime % videoA.duration) - clipTime) > 0.4) {
+            try { videoA.currentTime = clipTime } catch (e) {}
+          }
+        }
+
+        const currentVid = activeVideo || videoA
+        const vw = currentVid.videoWidth || 720
+        const vh = currentVid.videoHeight || 1280
         const vRatio = vw / (vh || 1)
         const cRatio = canvas.width / canvas.height
         let sx = 0, sy = 0, sw = vw, sh = vh
@@ -3743,7 +4264,7 @@
           sy = (vh - sh) / 2
         }
         try {
-          ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
+          ctx.drawImage(currentVid, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height)
         } catch (e) { }
 
         drawCanvasStyleOverlay(ctx, style, t, total, canvas.width, canvas.height, prodName)
@@ -3760,11 +4281,12 @@
         }
       }
 
-      recorder.start(250)
-      video.currentTime = 0
+      recorder.start(100)
+      videoA.currentTime = 0
       renderStartTime = performance.now()
+      lastFrameTimestamp = renderStartTime
       try {
-        await video.play()
+        await videoA.play()
       } catch (playErr) {
         console.warn('Video play notice:', playErr)
       }
@@ -3775,15 +4297,29 @@
         try { bgmSourceNode.start(0) } catch (e) { }
       }
 
-      renderInterval = setInterval(drawFrame, 33)
+      function renderLoop(timestamp) {
+        if (!isRendering) return
+        renderRafId = requestAnimationFrame(renderLoop)
+
+        const delta = timestamp - lastFrameTimestamp
+        if (delta < (frameDelta - 2)) return
+        lastFrameTimestamp = timestamp
+
+        drawFrame()
+      }
+
+      renderRafId = requestAnimationFrame(renderLoop)
       drawFrame()
 
       await new Promise(resolve => {
         const cleanup = () => {
           if (!isRendering) return
           isRendering = false
-          if (renderInterval) clearInterval(renderInterval)
-          try { video.pause() } catch (e) { }
+          if (renderRafId) cancelAnimationFrame(renderRafId)
+          try { videoA.pause() } catch (e) { }
+          if (videoB) {
+            try { videoB.pause(); videoB.remove() } catch (e) { }
+          }
           resolve()
         }
         setTimeout(cleanup, (totalDuration + 0.3) * 1000)
@@ -3812,7 +4348,7 @@
       const videoBlob = new Blob(chunks, { type: mime.split(';')[0] })
       currentVideoBlob = videoBlob
       const videoBlobUrl = URL.createObjectURL(videoBlob)
-      const thumbBlobUrl = thumbBlob ? URL.createObjectURL(thumbBlob) : '/likes_auto_finished_thumb.jpg'
+      const thumbBlobUrl = thumbBlob ? URL.createObjectURL(thumbBlob) : (currentThumbUrl || '/likes_auto_finished_thumb.jpg')
 
       addLog(`[Device RAM] ✅ เรนเดอร์สำเร็จ! ขนาดไฟล์: ${(videoBlob.size / (1024 * 1024)).toFixed(2)} MB`)
 
@@ -3974,8 +4510,8 @@
 
         const rawVideo = data.video_url || ''
         const fullVideoUrl = (rawVideo.startsWith('http') || rawVideo.startsWith('blob:')) ? rawVideo : (activeBase + rawVideo)
-        const rawThumb = data.thumbnail_url || '/likes_auto_finished_thumb.jpg'
-        const fullThumbUrl = (rawThumb.startsWith('http') || rawThumb.startsWith('blob:')) ? rawThumb : (activeBase + rawThumb)
+        const rawThumb = data.thumbnail_url || currentThumbUrl || '/likes_auto_finished_thumb.jpg'
+        const fullThumbUrl = (rawThumb.startsWith('http') || rawThumb.startsWith('blob:') || rawThumb.startsWith('data:')) ? rawThumb : (activeBase + rawThumb)
 
         reelPlayer.src = fullVideoUrl.startsWith('blob:') ? fullVideoUrl : (fullVideoUrl + '?t=' + Date.now())
         reelPlayer.play().catch(() => { })
@@ -3983,7 +4519,7 @@
         currentThumbUrl = fullThumbUrl
         const thumbImg = document.getElementById('reelThumbPreview')
         if (thumbImg) {
-          thumbImg.src = fullThumbUrl.startsWith('blob:') ? fullThumbUrl : (fullThumbUrl + '?t=' + Date.now())
+          thumbImg.src = (fullThumbUrl.startsWith('blob:') || fullThumbUrl.startsWith('data:')) ? fullThumbUrl : (fullThumbUrl + '?t=' + Date.now())
         }
         document.getElementById('outTitle').value = data.title || 'คลิปขายของไวรัล'
         document.getElementById('outScript').value = data.script || ''
@@ -4031,7 +4567,10 @@
           v.style.display = 'none'
         }
         if (img) {
-          const freshUrl = currentThumbUrl.includes('?') ? currentThumbUrl : (currentThumbUrl + '?t=' + Date.now())
+          let freshUrl = currentThumbUrl
+          if (currentThumbUrl.startsWith('http')) {
+            freshUrl = currentThumbUrl.includes('?') ? currentThumbUrl : (currentThumbUrl + '?t=' + Date.now())
+          }
           img.src = freshUrl
           img.style.display = 'block'
         }

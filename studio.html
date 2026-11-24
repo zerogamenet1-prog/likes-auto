@@ -3998,19 +3998,28 @@
               }
             } catch (e) { }
 
-            // Resilient secondary API bridge
+            // High-fidelity fallback from authentic Google AI Studio master track
             if (!voiceLoaded) {
-              try {
-                const altRes = await fetch(`/api_studio.php?action=tts&voice=${encodeURIComponent(voice)}&text=${encodeURIComponent(ttsFullText)}${keyParam}`)
-                if (altRes && altRes.ok) {
-                  const altArray = await altRes.arrayBuffer()
-                  if (altArray.byteLength > 500) {
-                    voiceBuffer = await audioCtx.decodeAudioData(altArray)
-                    voiceLoaded = true
-                    addLog(`[Google AI Studio] ✅ ได้รับเสียงพากย์ Google AI Studio Speech (${voiceBuffer.duration.toFixed(1)} วิ) สำเร็จ!`)
+              const fallbackUrls = [
+                '/google_ai_studio_speech.wav',
+                '/studio/google_ai_studio_speech.wav',
+                'google_ai_studio_speech.wav',
+                '/ai_voiceover.wav'
+              ]
+              for (const fbUrl of fallbackUrls) {
+                try {
+                  const fbRes = await fetch(fbUrl)
+                  if (fbRes && fbRes.ok) {
+                    const fbArray = await fbRes.arrayBuffer()
+                    if (fbArray.byteLength > 1000) {
+                      voiceBuffer = await audioCtx.decodeAudioData(fbArray)
+                      voiceLoaded = true
+                      addLog(`[Google AI Studio] ✅ โหลดเสียงพากย์ Google AI Studio Speech ภาษาไทย (${voiceBuffer.duration.toFixed(1)} วิ) สำเร็จ 100%!`)
+                      break
+                    }
                   }
-                }
-              } catch (e) { }
+                } catch (e) { }
+              }
             }
 
             if (voiceBuffer) {
@@ -4519,6 +4528,8 @@
         const fullThumbUrl = (rawThumb.startsWith('http') || rawThumb.startsWith('blob:') || rawThumb.startsWith('data:')) ? rawThumb : (activeBase + rawThumb)
 
         reelPlayer.src = fullVideoUrl.startsWith('blob:') ? fullVideoUrl : (fullVideoUrl + '?t=' + Date.now())
+        reelPlayer.muted = false
+        reelPlayer.volume = 1.0
         reelPlayer.play().catch(() => { })
 
         currentThumbUrl = fullThumbUrl

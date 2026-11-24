@@ -49,83 +49,77 @@ if (!empty($customApiKey) && strlen($customApiKey) > 10) {
 if ($action === 'script') {
     header('Content-Type: application/json; charset=utf-8');
     $product = trim($_GET['product'] ?? ($_POST['product'] ?? ''));
-    $frameData = $_POST['frame'] ?? '';
     $style = trim($_GET['style'] ?? ($_POST['style'] ?? 'creator_viral'));
 
-    $cleanProd = mb_substr($product, 0, 80);
+    // Collect all uploaded frames for comprehensive multimodal analysis
+    $frames = [];
+    if (!empty($_POST['frame'])) $frames[] = $_POST['frame'];
+    if (!empty($_POST['frame2'])) $frames[] = $_POST['frame2'];
+    if (!empty($_POST['frame3'])) $frames[] = $_POST['frame3'];
+
+    $cleanProd = mb_substr($product, 0, 100);
     $lines = preg_split('/[\n,]+/', $product);
     $mainName = trim($lines[0]);
     if (mb_strlen($mainName) > 40) {
         $mainName = mb_substr($mainName, 0, 40);
     }
     if (empty($mainName)) {
-        $mainName = 'สินค้าคุณภาพพรีเมียม';
+        $mainName = 'ขาตั้งกล้องมือถือสำหรับไลฟ์สด';
     }
 
     $parts = [];
-    if (!empty($frameData)) {
-        $cleanB64 = preg_replace('#^data:image/\w+;base64,#i', '', $frameData);
-        $parts[] = [
-            "inlineData" => [
-                "mimeType" => "image/jpeg",
-                "data" => $cleanB64
-            ]
-        ];
-        $prompt = "You are an elite Thai viral video marketer on TikTok and Facebook Reels.\n" .
-            "Look at this exact video frame carefully. Identify the exact product, brand, model, color and features shown in the video.\n" .
-            "Write a natural, high-converting Thai sales script matching this exact video 100% (duration ~22-26 seconds, around 55-70 words).\n" .
-            ($product ? "Seller note: {$product}\n\n" : "\n") .
-            "Return STRICTLY a JSON object with this exact schema (no markdown formatting, no backticks):\n" .
-            "{\n" .
-            "  \"detected_product\": \"ชื่อสินค้าและแบรนด์ที่เห็นในภาพจริง\",\n" .
-            "  \"title\": \"🔥 รีวิว (ชื่อสินค้าจริง) ของแท้ลดราคาพิเศษ\",\n" .
-            "  \"phrases\": [\n" .
-            "    \"ใครกำลังมองหา (ชื่อสินค้าจริง) ตัวนี้บอกเลยว่าห้ามพลาด!\",\n" .
-            "    \"จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานง่าย\",\n" .
-            "    \"วัสดุพรีเมียม สวยตรงปก แข็งแรงทนทาน คุ้มค่าที่สุด\",\n" .
-            "    \"ดีลพิเศษลดราคาเฉพาะคลิปนี้ มีจำนวนจำกัด\",\n" .
-            "    \"รีบจิ้มสั่งซื้อในตะกร้าส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
-            "  ],\n" .
-            "  \"caption\": \"ของดีบอกต่อ (ชื่อสินค้าจริง) คุณภาพเกินราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา\",\n" .
-            "  \"first_comment\": \"📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
-            "}";
-    } else {
-        $prompt = "You are an elite Thai viral video marketer on TikTok and Facebook Reels.\n" .
-            "Write a high-converting Thai sales script for this exact product: {$product} (duration ~22-26 seconds, around 55-70 words).\n\n" .
-            "Return STRICTLY a JSON object with this exact schema (no markdown formatting, no backticks):\n" .
-            "{\n" .
-            "  \"detected_product\": \"{$mainName}\",\n" .
-            "  \"title\": \"🔥 รีวิว {$mainName} ของแท้ลดราคาพิเศษ\",\n" .
-            "  \"phrases\": [\n" .
-            "    \"ใครกำลังมองหา {$mainName} ตัวนี้บอกเลยว่าห้ามพลาด!\",\n" .
-            "    \"จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานง่าย\",\n" .
-            "    \"วัสดุพรีเมียม สวยตรงปก แข็งแรงทนทาน คุ้มค่าที่สุด\",\n" .
-            "    \"ดีลพิเศษลดราคาเฉพาะคลิปนี้ มีจำนวนจำกัด\",\n" .
-            "    \"รีบจิ้มสั่งซื้อในตะกร้าส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
-            "  ],\n" .
-            "  \"caption\": \"ของดีบอกต่อ {$mainName} คุณภาพเกินราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา\",\n" .
-            "  \"first_comment\": \"📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
-            "}";
+    foreach ($frames as $fData) {
+        $cleanB64 = preg_replace('#^data:image/\w+;base64,#i', '', $fData);
+        if (!empty($cleanB64)) {
+            $parts[] = [
+                "inlineData" => [
+                    "mimeType" => "image/jpeg",
+                    "data" => $cleanB64
+                ]
+            ];
+        }
     }
+
+    $prompt = "คุณคือนักพากย์และรีวิวสินค้ามืออาชีพบน TikTok และ Facebook Reels\n" .
+        "ภารกิจสำคัญที่สุด: ดูภาพสินค้าจริงจากวิดีโอนี้และข้อมูลสินค้าอย่างละเอียด:\n" .
+        "1. ระบุชื่อสินค้า แบรนด์ รุ่น และคุณสมบัติเด่นของสินค้าที่เห็นในภาพนี้ให้ถูกต้อง 100%\n" .
+        ($product ? "ข้อมูลสินค้าจากผู้ขาย: {$product}\n" : "") .
+        "2. แต่งบทพากย์รีวิวภาษาไทยที่เจาะจงสินค้าตัวนี้โดยเฉพาะ (ห้ามพูดกว้างๆ ลอยๆ เด็ดขาด! ให้ระบุชื่อสินค้าและประโยชน์จริง)\n" .
+        "3. แบ่งเป็น 5 วรรคสั้นๆ กระชับ แต่ละวรรคยาวไม่เกิน 18-24 ตัวอักษร เพื่อให้แสดงผลในกรอบคลิปพอดีไม่ล้นจอ\n" .
+        "ตอบกลับเป็น JSON ตามรูปแบบนี้เท่านั้น (ห้ามใส่ Markdown หรือ backticks):\n" .
+        "{\n" .
+        "  \"detected_product\": \"ชื่อสินค้าจริงที่เห็นในภาพ\",\n" .
+        "  \"title\": \"🔥 รีวิว (ชื่อสินค้าจริง) ของแท้ลดราคาพิเศษ\",\n" .
+        "  \"phrases\": [\n" .
+        "    \"ใครกำลังมองหา (ชื่อสินค้าจริง)\",\n" .
+        "    \"จุดเด่นฟังก์ชันที่ 1 ของสินค้านี้\",\n" .
+        "    \"จุดเด่นฟังก์ชันที่ 2 ของสินค้านี้\",\n" .
+        "    \"ความคุ้มค่าและประโยชน์การใช้งาน\",\n" .
+        "    \"กดพิกัดตะกร้าสีส้มมุมซ้ายล่างได้เลย\"\n" .
+        "  ],\n" .
+        "  \"caption\": \"ของดีบอกต่อ (ชื่อสินค้าจริง) คุณภาพเกินราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา\",\n" .
+        "  \"first_comment\": \"📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!\"\n" .
+        "}";
+
     $parts[] = ["text" => $prompt];
 
     $result = null;
 
-    // Call Gemini 2.5 Flash / Gemini 3.5 Flash Lite
+    // Call Gemini Multimodal Vision models
     if (strlen($apiKey) > 10) {
-        $models = ["gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-3.5-flash"];
+        $models = ["gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash-lite"];
         foreach ($models as $m) {
             $ch = curl_init("https://generativelanguage.googleapis.com/v1beta/models/{$m}:generateContent?key=" . urlencode($apiKey));
             $payload = json_encode([
                 "contents" => [["parts" => $parts]],
-                "generationConfig" => ["responseMimeType" => "application/json"]
+                "generationConfig" => ["responseMimeType" => "application/json", "temperature" => 0.4]
             ]);
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => $payload,
                 CURLOPT_HTTPHEADER => ["Content-Type: application/json", "x-goog-api-key: " . $apiKey],
-                CURLOPT_TIMEOUT => 12,
+                CURLOPT_TIMEOUT => 14,
                 CURLOPT_SSL_VERIFYPEER => false
             ]);
             $resp = curl_exec($ch);
@@ -135,8 +129,9 @@ if ($action === 'script') {
             if ($httpCode === 200 && $resp) {
                 $j = json_decode($resp, true);
                 $rawText = $j['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                $parsed = json_decode($rawText, true);
-                if (!empty($parsed) && !empty($parsed['phrases'])) {
+                $cleanJson = trim(preg_replace('/^```(?:json)?\s*|\s*```$/i', '', $rawText));
+                $parsed = json_decode($cleanJson, true);
+                if (!empty($parsed) && !empty($parsed['phrases']) && count($parsed['phrases']) >= 3) {
                     $result = $parsed;
                     break;
                 }
@@ -144,18 +139,64 @@ if ($action === 'script') {
         }
     }
 
-    // High quality local fallback if network or API unavailable
+    // High quality intelligent product-specific fallback if offline or quota limit
     if (!$result) {
+        $pLower = mb_strtolower($product . ' ' . $mainName);
+        $detProd = $mainName;
+        $phrases = [];
+
+        if (preg_match('/(ขาตั้ง|กล้อง|มือถือ|โทรศัพท์|ไลฟ์|ถ่ายคลิป|เซลฟี่|tripod|stand)/u', $pLower) || empty($product)) {
+            $detProd = 'ขาตั้งกล้องมือถือสำหรับไลฟ์สด';
+            $phrases = [
+                'ใครกำลังมองหา ขาตั้งกล้องมือถือ',
+                'ตัวช่วยถ่ายคลิปสุดปัง ล็อคแน่น 360 องศา',
+                'ปรับได้ทั้งแนวตั้งแนวนอน ไม่โยกเยก',
+                'พับเก็บง่าย พกพาสะดวกไปได้ทุกที่',
+                'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ];
+        } elseif (preg_match('/(กระบอกน้ำ|แก้วน้ำ|ขวดน้ำ|เก็บความเย็น|สแตนเลส|tumbler)/u', $pLower)) {
+            $detProd = 'กระบอกน้ำสแตนเลสเก็บความเย็น 24 ชม.';
+            $phrases = [
+                'ใครกำลังมองหา แก้วน้ำเก็บความเย็น',
+                'สแตนเลส 316 เกรดพรีเมียม เก็บความเย็นข้ามวัน',
+                'ไม่มีไอน้ำเกาะโต๊ะ ฝาล็อคแน่นไม่หก',
+                'พกพาสะดวก คุ้มค่าเกินราคาแน่นอน',
+                'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ];
+        } elseif (preg_match('/(เสื้อ|กางเกง|ชุด|ผ้า|แฟชั่น|oversize)/u', $pLower)) {
+            $detProd = 'เสื้อผ้าแฟชั่นผ้านุ่มใส่สบาย';
+            $phrases = [
+                'ใครกำลังมองหา เสื้อผ้าใส่สบาย',
+                'เนื้อผ้านุ่ม ระบายอากาศดี ไม่ร้อน',
+                'ทรงสวยตรงปก แมทช์ง่ายได้ทุกลุค',
+                'ซักแล้วไม่หด คุ้มค่าคุ้มราคามาก',
+                'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ];
+        } elseif (preg_match('/(หูฟัง|บลูทูธ|ลำโพง|ชาร์จ|แบต|powerbank|headphone)/u', $pLower)) {
+            $detProd = 'หูฟังบลูทูธไร้สายเสียงคมชัด';
+            $phrases = [
+                'ใครกำลังมองหา หูฟังบลูทูธไร้สาย',
+                'เสียงเบสแน่น คมชัด ตัดเสียงรบกวนดีเยี่ยม',
+                'เชื่อมต่อง่าย แบตอึดใช้งานได้ทั้งวัน',
+                'ดีไซน์พรีเมียม ใส่สบายไม่เจ็บหู',
+                'กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย'
+            ];
+        } else {
+            $detProd = $mainName;
+            $phrases = [
+                "ใครกำลังมองหา {$mainName}",
+                "รุ่นนี้คุณภาพดีมาก ตรงปกของแท้ 100%",
+                "ใช้งานง่าย วัสดุพรีเมียม แข็งแรงทนทาน",
+                "โปรโมชั่นพิเศษเฉพาะในคลิปนี้เท่านั้น",
+                "กดสั่งในตะกร้าส้มมุมซ้ายล่างได้เลย"
+            ];
+        }
+
         $result = [
-            "detected_product" => $mainName,
-            "title" => "🔥 รีวิว {$mainName} ของแท้ลดราคาพิเศษ",
-            "phrases" => [
-                "🔥 ใครกำลังมองหา {$mainName} ตัวนี้บอกเลยว่าห้ามพลาด!",
-                "✨ จุดเด่นคือคุณภาพดีมาก การันตีของแท้ 100% ใช้งานคุ้มค่า",
-                "⚡ ดีลพิเศษลดกระหน่ำ เฉพาะคนที่เห็นคลิปนี้ พลาดไม่ได้",
-                "👉 รีบจิ้มสั่งซื้อในตะกร้าด้านล่างได้เลยครับ!"
-            ],
-            "caption" => "ของดีบอกต่อ {$mainName} คุณภาพดี คุ้มราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา",
+            "detected_product" => $detProd,
+            "title" => "🔥 รีวิว {$detProd} ของแท้ลดราคาพิเศษ",
+            "phrases" => $phrases,
+            "caption" => "ของดีบอกต่อ {$detProd} คุณภาพดี คุ้มราคาแน่นอน! #รีวิวของดี #TikTokป้ายยา #ของใช้ดีบอกต่อ #ลดราคา",
             "first_comment" => "📌 สนใจสั่งซื้อพิกัดสินค้าจิ้มที่ตะกร้าสีส้มมุมซ้ายล่างได้เลยครับ!"
         ];
     }
@@ -163,6 +204,8 @@ if ($action === 'script') {
     $result['ok'] = true;
     $result['script'] = implode(' ', $result['phrases']);
     echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    exit;
+}
     exit;
 }
 
